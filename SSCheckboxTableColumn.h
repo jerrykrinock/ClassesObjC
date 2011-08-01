@@ -1,0 +1,7 @@
+
+@interface SSCheckboxTableColumn : NSTableColumn
+{
+}
+
+@end
+
