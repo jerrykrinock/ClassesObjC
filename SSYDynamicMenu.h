@@ -50,7 +50,11 @@
  Handy for updating nonhierarchical menus, SSYDynamicMenu also provides instance
  variables for the current represented objects and selected represented object.
  */
-@interface SSYDynamicMenu : NSMenu {
+@interface SSYDynamicMenu : NSMenu
+#if (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5) 
+	<NSMenuDelegate> 
+#endif
+{
 	id m_target ;
 	SEL m_selector ;
 	id m_targetInfo ;

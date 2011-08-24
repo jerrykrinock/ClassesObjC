@@ -44,10 +44,23 @@ typedef struct SSYVersionStruct_struct SSYVersionStruct ;
 } 
 
 /*!
- @brief    For a given bundle on the system, getss 
+ @brief    For a given bundle , gets 
  CFBundleShortVersionString if found.  Otherwise, gets CFBundleVersion if found.
  Then reformats the string by using +versionTripletFromString followed
  by - string.
+ @result   The value of either CFBundleShortVersionString or CFBundleVersion, or nil
+ */
++ (NSString*)rawVersionStringFromBundle:(NSBundle*)bundle ;
+
+/*!
+ @brief    For a given bundle identifier on the system, gets 
+ CFBundleShortVersionString if found.  Otherwise, gets CFBundleVersion if found.
+ Then reformats the string by using +versionTripletFromString followed
+ by - string.
+ @details  This method is not reliable, particularly if more than one instance
+ of the app is installed on the system, because it relies on Launch Services
+ to get the path for the given bundle identifier.    If you've got the bundle,
+ use +rawVersionStringFromBundle: instead.
  @param    bundleIdentifier The bundle identifier of the target bundle
  @result   The value of either CFBundleShortVersionString or CFBundleVersion, or nil
  */
@@ -75,7 +88,7 @@ typedef struct SSYVersionStruct_struct SSYVersionStruct ;
  as described in versionTripletFromString:
  
  @details  This function is not reliable because it relies on -rawVersionStringFromBundleIdentifier
- which is also not reliable.  
+ which is also not reliable.  If you've got the bundle, use +rawVersionStringFromBundle: instead.
  @param    bundleIdentifier The bundle identifier of the target bundle
  @result   An autoreleased version triplet, or nil. 
  */

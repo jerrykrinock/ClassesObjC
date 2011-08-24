@@ -16,6 +16,12 @@
 	NSMutableDictionary* m_soundIds ;
 }
 
+/*!
+ @brief    Plays a desired sound
+
+ @details  
+ @param    name  The name of a sound file, not including the .aiff extension.
+*/
 - (void)playAlertSoundNamed:(NSString*)name ;
 
 + (SSYAlertSounder*)sharedSounder ;

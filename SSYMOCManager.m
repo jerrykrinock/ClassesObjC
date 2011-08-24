@@ -133,12 +133,24 @@ static SSYMOCManager* sharedMOCManager = nil ;
 			// In case the user already did this, movePath:toPath:handler requires
 			// that the destination not already exist, so we must "remove" it first.
 			NSFileManager* fm = [NSFileManager defaultManager] ;
+
+			/*
+			 If you are developing with the 10.5 SDK, MAC_OS_X_VERSION_MAX_ALLOWED = 1050, MAC_OS_X_VERSION_10_5 = 1050 and the following #if will be true.
+			 If you are developing with the 10.6 SDK, MAC_OS_X_VERSION_MAX_ALLOWED = 1060, MAC_OS_X_VERSION_10_5 = 1050 and the following #if will be false.
+			 */
+#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_5) 
 			[fm removeFileAtPath:newPath
 						 handler:nil] ;
 			BOOL ok = [fm movePath:oldPath
 							toPath:newPath
 						   handler:nil] ;
-			
+#else
+			[fm removeItemAtPath:newPath
+						   error:NULL] ;
+			BOOL ok = [fm moveItemAtPath:oldPath
+								  toPath:newPath
+								   error:NULL] ;
+#endif
 			// Since the old corrupted file is gone, +[SSYMOCManager addPersistentStoreWithType:::::]
 			// will create a new file the next time it is invoked.  Problem should be solved.
 			break ;
@@ -173,7 +185,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 	NSManagedObjectModel* mergedMOM = [NSManagedObjectModel mergedModelFromBundles:bundles] ;
 	NSPersistentStoreCoordinator* newPSC = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:mergedMOM] ;
 
-   if ([storeType isEqualToString:NSSQLiteStoreType]) {
+	if ([storeType isEqualToString:NSSQLiteStoreType]) {
 		NSURL* url = [self sqliteStoreURLWithIdentifier:identifier] ;
 		// i.e file://localhost/Users/jk/Library/Application%20Support/BookMacster/BookMacster.sql
 		
@@ -189,37 +201,43 @@ static SSYMOCManager* sharedMOCManager = nil ;
 		if (fileExists && !isDirectory) {
 			// Someone put a file where our directory should be
 			ok = [fm removeItemAtPath:parentPath
-						   error:error_p] ;
+								error:error_p] ;
 		}
 		
+		NSError* error = nil ;
 		if (ok && ((fileExists && !isDirectory) || !fileExists)) {
 			// Create parent directory
+#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_5) 
 			ok = [fm createDirectoryAtPath:parentPath
 								attributes:nil] ;
-		}
-		
-		if (ok) {
-		}
-		else {
-			NSString* msg = [NSString stringWithFormat:
-							 @"Could not create directory at path %@",
-							 parentPath] ;
-			NSLog(@"%@", msg) ;
-			if (error_p) { 
-				*error_p = SSYMakeError(95745, msg) ;
-			}
-		}
+#else
+			ok = [fm createDirectoryAtPath:parentPath
+			   withIntermediateDirectories:YES
+								attributes:nil
+									 error:&error] ;
+#endif
+}
+	   
+	   if (!ok) {
+		   NSString* msg = [NSString stringWithFormat:
+							@"Could not create directory at path %@",
+							parentPath] ;
+		   NSLog(@"%@", msg) ;
+		   if (error_p) { 
+			   *error_p = [SSYMakeError(95745, msg) errorByAddingUnderlyingError:error];
+		   }
+	   }
 	   
 	   if (ok) {	
 		   NSDictionary* options ;
 		   if (momdName) {
 			   // Using Multi-Hop Migration
 			   ok = [SSYPersistentDocumentMultiMigrator migrateIfNeededStoreAtUrl:url
-																 storeOptions:nil
-																	storeType:NSSQLiteStoreType
-																	 momdName:momdName
-																	 document:nil
-																	  error_p:error_p] ;
+																	 storeOptions:nil
+																		storeType:NSSQLiteStoreType
+																		 momdName:momdName
+																		 document:nil
+																		  error_p:error_p] ;
 			   options = nil ;
 		   }
 		   else {
@@ -279,8 +297,8 @@ static SSYMOCManager* sharedMOCManager = nil ;
 			   NSString* tildefiedPath = [originalPath tildefiedPath] ;
 			   NSError* moveError = nil ;
 			   BOOL movedOk = [[NSFileManager defaultManager] moveItemAtPath:originalPath
-																	 toPath:tildefiedPath
-																	  error:&moveError] ;
+																	  toPath:tildefiedPath
+																	   error:&moveError] ;
 			   if (!movedOk) {
 				   // The following error may be expected, because depending on how
 				   // bad the subject file is, sometimes Core Data may have already
@@ -290,18 +308,18 @@ static SSYMOCManager* sharedMOCManager = nil ;
 			   }
 		   }
 	   }
-	}
-	else if ([storeType isEqualToString:NSInMemoryStoreType]) {
-		persistentStore = [newPSC addPersistentStoreWithType:NSInMemoryStoreType
-											   configuration:nil
-														 URL:nil
-													 options:nil
-													   error:error_p] ;
-		
-		if (!persistentStore) {
-			NSLog(@"Internal Error 535-1498.  Failed to create inMemory persistent store") ;
-		}
-	}
+   }
+   else if ([storeType isEqualToString:NSInMemoryStoreType]) {
+	   persistentStore = [newPSC addPersistentStoreWithType:NSInMemoryStoreType
+											  configuration:nil
+														URL:nil
+													options:nil
+													  error:error_p] ;
+	   
+	   if (!persistentStore) {
+		   NSLog(@"Internal Error 535-1498.  Failed to create inMemory persistent store") ;
+	   }
+   }
 	
 	if (!persistentStore) {
 		// If persistentStore could not be added, we don't want the

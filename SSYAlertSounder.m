@@ -44,39 +44,69 @@ static SSYAlertSounder* static_sharedSounder = nil ;
     return static_sharedSounder ;
 }
 
-- (void)playAlertSoundNamed:(NSString*)name {
-	SystemSoundID soundId = [[[self soundIds] objectForKey:name] longValue] ;
-	// Used -longValue because SystemSoundID is a UInt32
+- (SystemSoundID)soundIdForPath:(NSString*)path
+					 rememberAs:(NSString*)name {
+	SystemSoundID soundId = 0 ;
 	
-	if (!soundId) {
-		NSString* path = [[NSBundle mainBundle] pathForResource:name
-														 ofType:@"aiff"] ;
-		if (!path) {
-			path = @"/System/Library/Sounds" ;
-			path = [path stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"aiff"]] ;
-		}
+	if (path) {
 		CFURLRef url = (CFURLRef)[NSURL fileURLWithPath:path] ;
-		
 		if (url) {
 			OSStatus err ;
 			err = AudioServicesCreateSystemSoundID(url, &soundId) ;
 			
 			if (err) {
+				// This will happen if file was not found.
 				soundId = 0 ;
 			}
 			else {
 				[[self soundIds] setObject:[NSNumber numberWithLong:soundId]
-									  forKey:name] ;
+									forKey:name] ;
 			}
 		}
-		
-		else {
-			NSBeep() ;
-		}
 	}
+	
+	return soundId ;
+}
 
+
+- (void)playAlertSoundNamed:(NSString*)name {
+	// First, see if we've got this sound cached
+	SystemSoundID soundId = [[[self soundIds] objectForKey:name] longValue] ;
+	// Used -longValue because SystemSoundID is a UInt32
+	
+	NSString* path ;
+	
+	// If not found, look in the current application's bundle
+	if (!soundId) {
+		path = [[NSBundle mainBundle] pathForResource:name
+											   ofType:@"aiff"] ;
+
+		soundId = [self soundIdForPath:path
+							rememberAs:name] ;
+		// If not found, look in current user's library
+		if (!soundId) {
+			path = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Sounds"] ;
+			path = [path stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"aiff"]] ;
+			
+			soundId = [self soundIdForPath:path
+								rememberAs:name] ;
+
+			// If not found, look in system's library
+			if (!soundId) {
+				path = @"/System/Library/Sounds" ;
+				path = [path stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"aiff"]] ;
+				
+				soundId = [self soundIdForPath:path
+									rememberAs:name] ;
+			}		
+		}		
+	}
+	
 	if (soundId) {
 		AudioServicesPlayAlertSound(soundId) ;
+	}
+	else {
+		NSBeep() ;
 	}
 }
 

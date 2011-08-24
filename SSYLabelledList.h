@@ -9,7 +9,11 @@
  
  @details  May be used, for example for a user to select several items from a list.
  */
-@interface SSYLabelledList : NSView {
+@interface SSYLabelledList : NSView
+#if (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5) 
+	<NSTableViewDataSource, NSTableViewDelegate>
+#endif
+{
 	NSTextField* labelView ;
 	NSScrollView* scrollView ;
 	NSArray* choices ;

@@ -264,17 +264,18 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 			[subdomains addObjectsFromArray:possibleSubdomains] ;
 		}
 		for (NSString* subdomain in subdomains) {
+			NSString* hostWithSub = host ;
 			if ([subdomain length] > 0) {
-				host = [NSString stringWithFormat:
+				hostWithSub = [NSString stringWithFormat:
 						@"%@.%@",
 						subdomain,
 						host] ;
 			}
 			
-			const char *hostC = [host UTF8String] ;
+			const char *hostC = [hostWithSub UTF8String] ;
 			attribute.length = strlen(hostC) ;
 			attribute.data = (void*)hostC ;
-			// strlen(0) causes a crash but we've already checked that this length > 0
+			// strlen(0) causes a crash but we've already checked that [host length] > 0
 			int lengthHost = hostC ? strlen(hostC) : 0 ;
 			
 			OSStatus findResult = SecKeychainFindInternetPassword (

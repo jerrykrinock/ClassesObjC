@@ -11,15 +11,31 @@ enum {
 /*!
  @brief    This is an addition to Apple's anonymous enumeration containing
  NSAlertDefaultReturn, NSAlertAlternateReturn, NSAlertOtherReturn and NSAlertErrorReturn.
+ 
+ @details  These values are reflected in the 'Sheep Systems Suite'
+ AppleScript terminology.  Any changes you make here should be reflected
+ in there.
 */
-enum {
-    SSYAlertRecoveryWasNoError         = 99,
-	SSYAlertRecoverySucceeded		   = 100,
-	SSYAlertRecoveryFailed             = 101,
-	SSYAlertRecoveryNotAttempted       = 102,
-	SSYAlertRecoveryWentAsynchronous   = 103,
-	//SSYAlertRecoveryReturnedToScripter = 104
+enum SSYAlertRecovery_enum {
+    SSYAlertRecoveryThereWasNoError          = 99,
+	SSYAlertRecoverySucceeded		         = 100,
+	SSYAlertRecoveryFailed                   = 101,
+	SSYAlertRecoveryNotAttempted             = 102,
+	SSYAlertRecoveryAttemptedAsynchronously  = 103,
+	SSYAlertRecoveryErrorIsHidden            = 104,
+	SSYAlertRecoveryUserCancelledPreviously  = 105
 } ;
+typedef enum SSYAlertRecovery_enum SSYAlertRecovery ;
+enum SSYAlertRecoveryApplescriptCode_enum {
+    SSYAlertRecoveryAppleScriptCodeThereWasNoError          = 'Nerr',
+	SSYAlertRecoveryAppleScriptCodeSucceeded		        = 'ReSx',
+	SSYAlertRecoveryAppleScriptCodeFailed                   = 'ReFa',
+	SSYAlertRecoveryAppleScriptCodeNotAttempted             = 'NoAt',
+	SSYAlertRecoveryAppleScriptCodeAttemptedAsynchronously  = 'AtAs',
+	SSYAlertRecoveryAppleScriptCodeErrorIsHidden            = 'ErHd',
+	SSYAlertRecoveryAppleScriptCodeUserCancelledPreviously  = 'UsCn'	
+} ;
+typedef enum SSYAlertRecoveryAppleScriptCode_enum SSYAlertRecoveryAppleScriptCode ;
 
 /*!
  @brief    Key used in the contextInfo sent to attemptRecoveryFromError:::::
@@ -113,8 +129,6 @@ extern NSString* const SSYAlertDidProcessErrorNotification ;
  displayed or no-op.
 
  @details  If error is nil, this method should return YES
- @param    error  
- @result   
 */
 - (BOOL)shouldHideError:(NSError*)error ;
 
@@ -612,14 +626,14 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  @result   If recovery was not attempted, will be NSAlertDefaultReturn, NSAlertAlternateReturn,
  or NSAlertOtherReturn depending on whether user clicked the first, second, or third button.
  If recovery was attempted, result will be SSYAlertRecoverySucceeded, SSYAlertRecoveryFailed,
- or SSYAlertRecoveryWentAsynchronous.
+ or SSYAlertRecoveryAttemptedAsynchronously.
  */
-- (int)alertError:(NSError*)error ;
+- (SSYAlertRecovery)alertError:(NSError*)error ;
 
 /*!
  @brief    Invokes -alertError: on the application's shared alert.
 */ 
-+ (int)alertError:(NSError*)error ;
++ (SSYAlertRecovery)alertError:(NSError*)error ;
 
 /*!
  @brief    Creates an alert sheet on a given window and displays a given

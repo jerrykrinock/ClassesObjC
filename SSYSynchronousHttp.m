@@ -83,7 +83,9 @@ enum {
 - (void)connection:(NSURLConnection*)connection
   didFailWithError:(NSError*)error {
 	[self setResponse:nil] ;
-	[self setResponseData:nil] ;
+	// The following was commented out in BookMacster 1.7/1.6.8, because when
+	// Diigo sends a throttling error it puts a "message" in the response data.
+	// [self setResponseData:nil] ;
 	[self setUnderlyingError:error] ;
 	[self setConnectionState:SSYSynchronousHttpStateConnectionFailed] ;
 	[self endConnection:connection] ;	

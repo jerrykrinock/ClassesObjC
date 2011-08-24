@@ -167,12 +167,27 @@
 		
 		if([self undoManagerState] == kGCUndoCollectingTasks)
 		{
+			// if this action is discardable, create userInfo indicating such
 			GCUndoGroup* topGroup = [self peekUndo] ;
 			NSDictionary* userInfo = nil ;
 			if ([topGroup actionIsDiscardable]) {
+				// If the deployment target is 10.7 or later, the NSUndoManagerGroupIsDiscardableKey global is available,
+				// otherwise we just rely on it's string value, which is unlikely to change.
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
 				userInfo = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:NSUndoManagerGroupIsDiscardableKey] ;
+#else
+				userInfo = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:@"NSUndoManagerGroupIsDiscardableKey"] ;
+#endif
 			}
-			[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerDidCloseUndoGroupNotification object:self userInfo:userInfo];
+
+			NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+			// If the deployment target is 10.7 or later, the NSUndoManagerDidCloseUndoGroupNotification global is available,
+			// otherwise we just rely on it's string value, which is unlikely to change.
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
+			[notificationCenter postNotificationName:NSUndoManagerDidCloseUndoGroupNotification object:self userInfo:userInfo];
+#else
+			[notificationCenter postNotificationName:@"NSUndoManagerDidCloseUndoGroupNotification" object:self userInfo:userInfo];
+#endif
 		}
 	}
 }

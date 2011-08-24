@@ -17,15 +17,42 @@ extern id ssyDebugGlobalObject ;
 #endif
 
 /*!
- @brief    Returns a string containing the current backtrace, prefixed
- by a table of useful library load addresses (slides).
+ @brief    Returns a string containing the complete current backtrace,
+ beginning with the caller of this function, prefixed by a table of
+ useful library load addresses (slides).
 
- @details  Slides for system libraries, those in directories 
+ @details  This is the most verbose function in this file, the
+ one whose output you'll want to include in your error reports.
+ 
+ Slides for system libraries, those in directories 
  /usr/lib/ or /System/Library, are not included in the table
  of slides because they are useless and noise up the result with
  many lines of useless text.
  */
 NSString* SSYDebugBacktrace() ;
+
+/*!
+ @brief    Returns a string containing the current backtrace, to a
+ given depth.
+
+ @param    depth  Determines what this function will return, per this table…
+ depth  This function will return
+ -----  -------------------------
+ 0      nil 
+ 1      1 line of text, containing the caller of the function that called this function
+ 2      2 lines of text, as in (1), plus another line consisting of the caller of the caller
+ …      …
+ 
+ Note that this function never returns the caller of this function, since you
+ should already know that or can get it by __PRETTY_FUNCTION__.
+*/
+NSString* SSYDebugBacktraceDepth(NSUInteger depth) ;
+
+/*!
+ @brief    Returns a string consisting of the symbol name of the
+ caller of the function that called it.
+*/
+NSString* SSYDebugCaller() ;
 
 void SSYDebugLogBacktrace() ;
 

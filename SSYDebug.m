@@ -35,7 +35,7 @@ NSString* SSYDebugBacktrace() {
 	NSInteger frames = backtrace(callstack, 514) ;
 	char** strs = backtrace_symbols(callstack, frames) ;
 	NSInteger iFrame ;
-	for (iFrame = 0; iFrame < frames; ++iFrame) {
+	for (iFrame = 1; iFrame < frames; ++iFrame) {
 		NSString* moreString = [NSString stringWithCString:strs[iFrame]
 												  encoding:NSUTF8StringEncoding] ;
 		[nsString appendString:moreString] ;
@@ -53,7 +53,6 @@ void SSYDebugLogBacktrace () {
 	NSLog(@"\n%@", SSYDebugBacktrace()) ;
 }
 
-
 NSInteger SSYDebugStackDepth() {
 	// An infinite loop will "blow its stack" at 512 calls, so
 	// we allow a little more than that.
@@ -62,5 +61,61 @@ NSInteger SSYDebugStackDepth() {
 	return frames ;
 }
 
+NSString* SSYDebugBacktraceDepth(NSUInteger depth) {
+	if (depth < 1) {
+		return nil ;
+	}
+
+	// Omit this function, and the function that called it
+	depth += 2 ;
+	NSMutableString* nsString = [[NSMutableString alloc] init] ;
+	
+	void* callstack[depth] ;
+	NSInteger frames = backtrace(callstack, depth) ;
+	char** strs = backtrace_symbols(callstack, frames) ;
+	NSInteger iFrame ;
+	for (iFrame = 2; iFrame < frames; ++iFrame) {
+		NSString* moreString = [NSString stringWithCString:strs[iFrame]
+												  encoding:NSUTF8StringEncoding] ;
+		[nsString appendString:moreString] ;
+		[nsString appendString:@"\n"] ;
+	}
+	free(strs) ;
+	
+	NSString* answer = [nsString copy] ;
+	[nsString release] ;
+	
+	return [answer autorelease] ;
+}
+
+NSString* SSYDebugCaller() {
+	void* callstack[3] ;
+	NSInteger frames = backtrace(callstack, 3) ;
+	char** strs = backtrace_symbols(callstack, frames) ;
+	NSString* caller = [NSString stringWithCString:strs[2]
+										  encoding:NSUTF8StringEncoding] ;
+	free(strs) ;
+	// caller is, e.g., "2   AppKit                              0x9a13352e -[NSCustomObject nibInstantiate] + 385"
+	NSMutableString* mutant = [caller mutableCopy] ;
+	NSUInteger oldLength ;
+	do {
+		oldLength = [mutant length] ;		
+		[mutant replaceOccurrencesOfString:@"  "
+								withString:@" "
+								   options:0
+									 range:NSMakeRange(0, [mutant length])] ;
+	} while ([mutant length] < oldLength) ;
+	caller = [NSString stringWithString:mutant] ;
+	[mutant release] ;
+	NSArray* comps = [caller componentsSeparatedByString:@" "] ;
+	caller = [comps objectAtIndex:3] ;
+	if ([comps count] > 6) {
+		// caller is an Objective-C method name, which includes a space.
+		// Thus it consists of two components which we now re-concatenate
+		caller = [caller stringByAppendingString:@" "] ;
+		caller = [caller stringByAppendingString:[comps objectAtIndex:4]] ;
+	}
+	return caller ;
+}
 
 

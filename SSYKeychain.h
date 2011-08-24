@@ -131,11 +131,10 @@ extern NSString* const SSYKeychainItemRef ;
  If either username or host are nil or empty strings, will return nil.
  @param    host  A hostname for which account names will be searched.
  Example: @"google.com".
- @param    host  If 'url' is not given, the host for which the password will
- be added.  Example: @"google.com".
  @param    possibleSubdomains  An array of strings, each of which are possible
  subdomains which will be prepended to the host with a "." when searching for
  the password.  May be nil or empty to search only the given host.
+ @param    domain  The "security domain" within the host.  Usually, this is nil.
  @param    keychainitemRef  Upon return, pointer to a SecKeychainItemRef if a
  password was found.  Pass NULL if you don't need this.
 */

@@ -4,7 +4,7 @@
 
 #if DEBUG
 // Do not ship with this because method names will be logged so crackers can see.
-#if 0
+#if 1
 #warning Logging SSYOperationLinker Operations (a cracking risk)
 #define LOGGING_SSYOPERATIONLINKER_OPERATIONS 1
 #import "BkmxGlobals.h"
@@ -28,6 +28,7 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 @synthesize info = m_info ;
 @synthesize selector = m_selector ;
 @synthesize operationQueue = m_operationQueue ;
+@synthesize cancellor = m_cancellor ;
 
 - (id)owner {
 	return m_owner ;
@@ -37,8 +38,13 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 	m_owner = owner ;
 }
 
+- (void)cancel {
+	[[self cancellor] invoke] ;
+}
+
 - (void)dealloc {
     [m_info release] ;
+	[m_cancellor release] ;
 	
     [super dealloc] ;
 }

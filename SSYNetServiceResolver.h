@@ -13,7 +13,11 @@ enum SSYNetServiceResolverState_enum {
 } ;
 typedef enum SSYNetServiceResolverState_enum SSYNetServiceResolverState ;
 
-@interface SSYNetServiceResolver : NSObject {
+@interface SSYNetServiceResolver : NSObject
+#if (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5) 
+	<NSNetServiceDelegate>
+#endif
+{
 	SSYNetServiceResolverState state ;
 	NSNetService* service ;
 	NSError* error ;

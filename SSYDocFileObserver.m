@@ -61,8 +61,14 @@ NSString* const SSYDocFileObserverErrorDomain = @"SSYDocFileObserverErrorDomain"
 		
 		if ([[NSFileManager defaultManager] fileIsPermanentAtPath:path]) {		
 			NSError* underlyingError ;
+#if 0
+#warning Doc file is observer is being overly sensitive
+			NSInteger watchFlags = (SSYPathObserverChangeFlagsRename | SSYPathObserverChangeFlagsData | SSYPathObserverChangeFlagsAttributes) ;
+#else
+			NSInteger watchFlags = SSYPathObserverChangeFlagsRename ;
+#endif
 			ok = [[self pathObserver] addPath:path
-								   watchFlags:SSYPathObserverChangeFlagsRename
+								   watchFlags:watchFlags
 								 notifyThread:nil
 									 userInfo:nil
 									  error_p:&underlyingError] ;
@@ -135,7 +141,7 @@ end:
 - (void)pathChangedNote:(NSNotification*)note {
 	// No need to look at flags since we registered for only SSYPathObserverChangeFlagsRename.
 	
-#if 0
+#if 1
 #warning Debugging SSYDocFileObserver
 	NSLog(@"Received notification of filesystem change:\n"
 		  "   Path:           %@\n"

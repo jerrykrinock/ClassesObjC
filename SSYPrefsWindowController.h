@@ -1,4 +1,8 @@
-@interface SSYPrefsWindowController : NSWindowController {
+@interface SSYPrefsWindowController : NSWindowController
+#if (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5) 
+	<NSToolbarDelegate>
+#endif
+{
 	IBOutlet NSTabView*		ibOutlet_tabView ;	///< The tabless tab-view that we're a switcher for.
 	NSMutableDictionary*	itemsList ;			///< Auto-generated from tab view's items.
 	NSString*				baseWindowName ;	///< Auto-fetched at awakeFromNib time. We append a colon and the name of the current page to the actual window title.

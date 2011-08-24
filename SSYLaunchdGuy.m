@@ -19,9 +19,19 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 	return [[NSHomeDirectory() stringByAppendingPathComponent:@"Library"] stringByAppendingPathComponent:@"LaunchAgents"] ;
 }
 
+
 + (NSSet*)installedLaunchdAgentLabelsWithPrefix:(NSString*)prefix {
+#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_5) 
 	NSArray* allAgentNames = [[NSFileManager defaultManager] directoryContentsAtPath:[self homeLaunchAgentsPath]] ;
-	NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
+#else
+	NSError* error = nil ;
+	NSArray* allAgentNames = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:[self homeLaunchAgentsPath]
+																				 error:&error] ;
+	if ([error isNotFileNotFoundError]) {
+			NSLog(@"Internal Error 257-8032 %@", error) ;
+	}
+#endif
+NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 	if (prefix) {
 		for (NSString* agentName in allAgentNames) {
 			if ([agentName hasPrefix:prefix]) {
@@ -180,8 +190,18 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 	BOOL ok = YES ;
 	NSString* myAgentDirectory = [self homeLaunchAgentsPath] ;
 	
+#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_5) 
 	NSArray* existingFilenames = [[NSFileManager defaultManager] directoryContentsAtPath:myAgentDirectory] ;
-	
+#else
+	NSError* error = nil ;
+	NSArray* existingFilenames = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:myAgentDirectory
+																					 error:&error] ;
+	if ([error isNotFileNotFoundError]) {
+		NSLog(@"Internal Error 923-5347 %@" , error) ;
+		return NO ;
+	}
+#endif
+
 	// Unload and remove file for all agents with given identifier
 	if (prefix) {
 		for (NSString* filename in existingFilenames) {
@@ -260,13 +280,20 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 	// interpret the remainder of the digits as hexidecimal.  It's C !
 	NSDictionary* attributes = [NSDictionary dictionaryWithObject:octal644
 														   forKey:NSFilePosixPermissions] ;
+	NSError* error = nil ;
+#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_5) 
 	ok =[[NSFileManager defaultManager] changeFileAttributes:attributes
 													  atPath:path] ;
-	if (!ok) {
+#else
+	ok =[[NSFileManager defaultManager] setAttributes:attributes
+										 ofItemAtPath:path
+												error:&error] ;
+#endif
+if (!ok) {
 		NSString* msg = [NSString stringWithFormat:
 						 @"Could not set permissions for agent %@",
 						 path] ;
-		*error_p = SSYMakeError(32457, msg) ;
+		*error_p = [SSYMakeError(32457, msg) errorByAddingUnderlyingError:error] ;
 		goto end ;
 	}
 	
@@ -445,9 +472,9 @@ end:;
 	return ok ;
 }
 
-#if 0
-+ (BOOL)unloadAgentWithLabel:(NSString*)label
-					 error_p:(NSError**)error_p {
++ (BOOL)agentLoad:(BOOL)load
+			label:(NSString*)label
+		  error_p:(NSError**)error_p {
 	if (!label) {
 		return YES ;
 	}
@@ -455,14 +482,16 @@ end:;
 	NSString* filename = [label stringByAppendingPathExtension:@"plist"] ;
 	NSString* directory = [self homeLaunchAgentsPath] ;
 	NSString* plistPath = [directory stringByAppendingPathComponent:filename] ;
+	NSString* subcmd = load ? @"load" : @"unload" ;
+	NSArray* arguments = [NSArray arrayWithObjects:
+						  subcmd,
+						  @"-wF",
+						  plistPath,
+						  nil] ;
 	
 	NSError* error = nil ;
 	NSInteger result = [SSYShellTasker doShellTaskCommand:@"/bin/launchctl"
-												arguments:[NSArray arrayWithObjects:
-														   @"unload",
-														   @"-wF",
-														   plistPath,
-														   nil]
+												arguments:arguments
 											  inDirectory:nil
 												stdinData:nil
 											 stdoutData_p:NULL
@@ -476,6 +505,6 @@ end:;
 	
 	return (result == 0) ;
 }
-#endif
+
 
 @end

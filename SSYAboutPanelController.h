@@ -4,7 +4,11 @@ extern NSString* const SSYAboutPanelHelpAnchorAcknowledgements ;
 
 @class ScrollingTextView;
 
-@interface SSYAboutPanelController : NSObject {
+@interface SSYAboutPanelController : NSObject 
+#if (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5)
+	<NSWindowDelegate>
+#endif
+{
     //	This panel exists in the nib file, but the user never sees it, because
     //	we rip out its contents and place them in “panelToDisplay”.
     IBOutlet NSPanel			*panelInNib;

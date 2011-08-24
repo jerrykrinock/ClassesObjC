@@ -3,8 +3,8 @@
 extern NSString* const SSYLaunchdGuyErrorDomain ;
 
 /*!
- @brief    A class for adding and removing launchd agents in 
- the current user's Mac account.
+ @brief    A class for manipulating launchd agents.  All methods in this
+ class manipulate only launchd agents in the current user's Mac account.
 
  @details   Agent names will be of the form:
     identifier.agentIndex
@@ -98,13 +98,11 @@ extern NSString* const SSYLaunchdGuyErrorDomain ;
 
 /*!
  @brief    Unloads and removes the plist file, or else unloads and then
- reloads an existing launchd agent,
- in a separate process, so that, if used carefully, this method can
- unload the agent which launched the process that called it.
+ reloads, an existing launchd agent, in a separate process.
 
- @details  If the given label is nil, or if the file in ~/Library/LaunchAgents
- which it indicates does not exist, this method returns YES immediately and
- does not unload, reload  nor remove anything.
+ @details  The reason for the separate process is so that, if used
+ carefully, this method can unload the agent which launched the process
+ that called it.
  
  This method writes to a temporary file a shell
  script which does the following:
@@ -119,16 +117,16 @@ extern NSString* const SSYLaunchdGuyErrorDomain ;
  Otherwise, it returns YES immediately.
  
  Executing the shell script in a separate process is important
- because, in the first step of the script there,
+ because, when unloading a job,
  launchctl will either not return until any running process launched
- by the agent to be unloaded has exitted, or else quit that process,
- or after a timeout whose default value is 25 seconds, and kill the
+ by the agent to be unloaded has exitted, or quit that process,
+ or after a timeout whose default value is 25 seconds, and kill that
  process.  Therefore, if you want to remove the agent which started
  the calling process, you need to know T = how much more time your
  process might need before it exits, and then…
 
  *  Make sure that T < 25 seconds
- *  Pass afterDelay: > T
+ *  Pass delay: > T
  *  Pass timeout = 0.0
  
  One usage is to work around the fact that launchd does not support
@@ -146,7 +144,9 @@ extern NSString* const SSYLaunchdGuyErrorDomain ;
  to the given label, per the convention stated in man launchd.plist(5)
  "for launchd property list files to be named <Label>.plist",
  the path to the user's Launch Agents, i.e. ~/Library/LaunchAgents/,
- is prepended.  May be nil in which case this method is no-op.  
+ is prepended.  If the given label is nil, or if the file in
+ ~/Library/LaunchAgents which it indicates does not exist, this method
+ returns YES immediately and does not unload, reload nor remove anything.
  @param    delay  Time in seconds which the script will sleep
  before unloading the agent.
  @param    justReload  If YES, will not remove the specified
@@ -187,5 +187,25 @@ extern NSString* const SSYLaunchdGuyErrorDomain ;
 						   deletingAgentsExpiredBeyond:(NSTimeInterval)expireTimeInterval
 											   timeout:(NSTimeInterval)timeout ;
 
+/*!
+ @brief    Loads or unloads a specified launchd agent.
+
+ @details  This method will probably give unexpected results if you attempt
+ to unload the job which launched the invoking process.  If you want to do
+ that, use removeAgentWithLabel:::: instead.
+ @param    load  YES to load, NO to unload
+ @param    label  A string which is used to specify the path
+ to the plist file.  After appending the file extension "plist"
+ to the given label, per the convention stated in man launchd.plist(5)
+ "for launchd property list files to be named <Label>.plist",
+ the path to the user's Launch Agents, i.e. ~/Library/LaunchAgents/,
+ is prepended.
+ @param    error_p  If not NULL and if an error occurs, upon return,
+           will point to an error object encapsulating the error.
+ @result   YES if the method completed successfully, otherwise NO
+*/
++ (BOOL)agentLoad:(BOOL)load
+			label:(NSString*)label
+		  error_p:(NSError**)error_p ;
 
 @end

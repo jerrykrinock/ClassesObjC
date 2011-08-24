@@ -9,7 +9,14 @@
 
 #import <libkern/OSAtomic.h>
 #import <objc/message.h>
-
+/*
+ If you are developing with the 10.5 SDK, MAC_OS_X_VERSION_MAX_ALLOWED = 1050, MAC_OS_X_VERSION_10_5 = 1050 and the following #if will be true.
+ If you are developing with the 10.6 SDK, MAC_OS_X_VERSION_MAX_ALLOWED = 1060, MAC_OS_X_VERSION_10_5 = 1050 and the following #if will be false.
+ */
+#if (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5) 
+// For some reason, this was not needed when I was using the 10.5 SDK
+#import <objc/objc-auto.h>
+#endif
 
 @interface MAKVObservation : NSObject
 {

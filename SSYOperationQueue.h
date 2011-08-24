@@ -213,8 +213,6 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  any of your method selectors, the error registered by your method selector
  will be returned as the value of the key constKeyLinkedOperationError in 
  this dictionary.
- <p>SSYOperationLinker does not retain this object.  You must make sure that this
- object is retained until all method selectors have completed executing.</p>
  @param    block  YES if you would like this method to block until all
  operations have been completed.  NO if you would like it to return
  immediately, after queueing the operations.&nbsp; This method simply sends 

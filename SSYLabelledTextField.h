@@ -7,7 +7,11 @@
  @details  May be used, for example for a user to fill in a <i>Name</i>, <i>Password</i>
  <i>Favorite Animal</i>, etc. etc.  Any single line of text.
 */
-@interface SSYLabelledTextField : NSControl {
+@interface SSYLabelledTextField : NSControl
+#if (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5) 
+	<NSTextFieldDelegate>
+#endif
+{
 	NSTextField* keyField ;
 	NSTextField* valueField ;
 	SEL validationSelector ;

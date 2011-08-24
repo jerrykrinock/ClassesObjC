@@ -38,13 +38,13 @@
     //	Offer key-down events to the delegats
     if ([theEvent type] == NSKeyDown)
         if ([[self delegate] respondsToSelector: @selector(handlesKeyDown:inWindow:)])
-            if ([[self delegate] handlesKeyDown: theEvent  inWindow: self])
+            if ([(id)[self delegate] handlesKeyDown: theEvent  inWindow: self])
                 return;
 
     //	Offer mouse-down events (lefty or righty) to the delegate
     if ( ([theEvent type] == NSLeftMouseDown) || ([theEvent type] == NSRightMouseDown) )
         if ([[self delegate] respondsToSelector: @selector(handlesMouseDown:inWindow:)])
-            if ([[self delegate] handlesMouseDown: theEvent  inWindow: self])
+            if ([(id)[self delegate] handlesMouseDown: theEvent  inWindow: self])
                 return;
 
     //	Delegate wasn’t interested, so do the usual routing.

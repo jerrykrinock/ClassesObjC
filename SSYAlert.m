@@ -454,6 +454,39 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 #pragma mark * Private Methods
 
+/*!
+ @brief    Translates from the 'recovery option' as expressed in our -doLayoutError:
+ method to the 'recovery option index' expressed in Cocoa's error presentation method,
+ -presentError:.
+
+ @details  Cocoa's arrangement allows an unlimited number of error recovery options,
+ indexed from 0.  Our -doLayoutError: method only allows three options, which are
+ indexed like the buttons in NSAlert.  In particular, note that the values 
+ represented by 0 and 1 are reversed.
+*/
++ (NSUInteger)recoveryOptionIndexForRecoveryOption:(NSInteger)recoveryOption {
+	NSUInteger recoveryOptionIndex ;
+	switch (recoveryOption) {
+		case NSAlertDefaultReturn /* 1 */ :
+			recoveryOptionIndex = 0 ;
+			break;
+		case NSAlertAlternateReturn /* 0 */ :
+			recoveryOptionIndex = 1 ;
+			break;
+		case NSAlertOtherReturn /* -1 */ :
+			recoveryOptionIndex = 2 ;
+			break;
+		default:
+			// This should never happen since we only have 3 buttons and return
+			// one of the above three values like NSAlert.
+			NSLog(@"Warning 520-3840 %d", recoveryOption) ;
+			recoveryOptionIndex = recoveryOption ;
+			break;
+	}
+	
+	return recoveryOptionIndex ;
+}
+
 + (NSInteger)tryRecoveryAttempterForError:(NSError*)error
 						   recoveryOption:(NSUInteger)recoveryOption
 							  contextInfo:(NSMutableDictionary*)infoDictionary {
@@ -471,10 +504,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			NSInvocation* invocation = [error didRecoverInvocation] ;
 			id delegate = [invocation target] ;
 			SEL didRecoverSelector = [invocation selector] ;
-			// It seems that the "Cocoa way" of recovering, using the delegate and
-			// didRecoverSelector, only works if didRecoverSelector has no arguments.
-			// That's why I put the whole invocation into the context info.  I believe
-			// it's alot cleaner anyhow.
+			// I put the whole invocation into the context info, believing it to be alot cleaner.
 			if (invocation) {
 				// Before we invoke the didRecoverInvocation, we also put it into the
 				// current infoDictionary in case an error occurs again and we need
@@ -482,18 +512,62 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 				[infoDictionary setObject:invocation
 								   forKey:SSYAlertDidRecoverInvocationKey] ;
 			}
-			[recoveryAttempter attemptRecoveryFromError:[[error retain] autorelease]
+			[recoveryAttempter attemptRecoveryFromError:[[deepestRecoverableError retain] autorelease]
 										 recoveryOption:recoveryOption
 											   delegate:delegate   
 									 didRecoverSelector:didRecoverSelector
 											contextInfo:[[infoDictionary retain] autorelease]] ;
 			// Also, the retain] autorelease] is probably not necessary since I'm invoking attemptRecoveryFromError:::::
 			// directly, but I'm always fearful of crashes due to invalid contextInfo.
-			result = SSYAlertRecoveryWentAsynchronous ;
+			result = SSYAlertRecoveryAttemptedAsynchronously ;
+		}
+		else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:)]) {
+			/* This is an error produced by Cocoa.
+			 In particular, in Mac OS X 10.7, it might be one like this:
+			 Error Domain = NSCocoaErrorDomain
+			 Code = 67000
+			 UserInfo = {
+			 •   NSLocalizedRecoverySuggestion=Click Save Anyway to keep your changes and save the
+			 changes made by the other application as a version, or click Revert to keep the changes from the other
+			 application and save your changes as a version.
+			 •   NSLocalizedFailureReason=The file has been changed by another application.
+			 •   NSLocalizedDescription=This document’s file has been changed by another application.
+			 •   NSLocalizedRecoveryOptions = ("Save Anyway", "Revert")
+			 }
+			*/
+			NSInvocation* invocation = [error didRecoverInvocation] ;
+			id delegate = [invocation target] ;
+			SEL didRecoverSelector = [invocation selector] ;
+			// I put the whole invocation into the context info, believing it to be alot cleaner.
+			if (invocation) {
+				// Before we invoke the didRecoverInvocation, we also put it into the
+				// current infoDictionary in case an error occurs again and we need
+				// to re-recover.
+				[infoDictionary setObject:invocation
+								   forKey:SSYAlertDidRecoverInvocationKey] ;
+			}
+			NSInteger recoveryOptionIndex = [self recoveryOptionIndexForRecoveryOption:recoveryOption] ;
+			
+			[recoveryAttempter attemptRecoveryFromError:[[deepestRecoverableError retain] autorelease]
+											optionIndex:recoveryOptionIndex
+											   delegate:delegate   
+									 didRecoverSelector:didRecoverSelector
+											contextInfo:[[infoDictionary retain] autorelease]] ;
+			// Also, the retain] autorelease] is probably not necessary since I'm invoking attemptRecoveryFromError:::::
+			// directly, but I'm always fearful of crashes due to invalid contextInfo.
+			result = SSYAlertRecoveryAttemptedAsynchronously ;
 		}
 		else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:recoveryOption:)]) {
-			BOOL ok = [recoveryAttempter attemptRecoveryFromError:error
-													  recoveryOption:recoveryOption] ;
+			BOOL ok = [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
+												   recoveryOption:recoveryOption] ;
+			
+			result = ok ? SSYAlertRecoverySucceeded : SSYAlertRecoveryFailed ;
+		}
+		else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:optionIndex:)]) {
+			// This is an error produced by Cocoa.
+			NSInteger recoveryOptionIndex = [self recoveryOptionIndexForRecoveryOption:recoveryOption] ;
+			BOOL ok = [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
+													  optionIndex:recoveryOptionIndex] ;
 			
 			result = ok ? SSYAlertRecoverySucceeded : SSYAlertRecoveryFailed ;
 		}
@@ -1900,19 +1974,20 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[self noteError:error] ;
 }
 
-- (int)alertError:(NSError*)error {
+- (SSYAlertRecovery)alertError:(NSError*)error {
 	if (!error) {
-		return SSYAlertRecoveryWasNoError ;
+		return SSYAlertRecoveryThereWasNoError ;
 	}
 	
-	int alertReturn_ = NSAlertErrorReturn ;
+	int alertReturn ;
 
-	if (
-		![gSSYAlertErrorHideManager shouldHideError:error]
-		&&
-		!(([[error domain] isEqualToString:NSCocoaErrorDomain]) && ([error code] == NSUserCancelledError))
-		) {
-		
+	if ([gSSYAlertErrorHideManager shouldHideError:error]) {
+		alertReturn = SSYAlertRecoveryErrorIsHidden ;
+	}
+	else if ([[error domain] isEqualToString:NSCocoaErrorDomain] && ([error code] == NSUserCancelledError)) {
+		alertReturn = SSYAlertRecoveryAppleScriptCodeUserCancelledPreviously ;
+	}
+	else {
 		[self doLayoutError:error] ;
 		[self display] ;
 		
@@ -1923,26 +1998,26 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		[NSApp runModalForWindow:[self window]] ;
 		// Will block here until user clicks a button
 
-		alertReturn_ = [self alertReturn] ;
+		alertReturn = [self alertReturn] ;
 		NSInteger recoveryResult = [SSYAlert tryRecoveryAttempterForError:error
-														   recoveryOption:alertReturn_
+														   recoveryOption:alertReturn
 															  contextInfo:nil] ;
 		if (recoveryResult != SSYAlertRecoveryNotAttempted) {
-			alertReturn_ = recoveryResult ;
+			alertReturn = recoveryResult ;
 		}
 	}
 	
 	[self noteError:error] ;
 	
-	return alertReturn_ ;
+	return alertReturn ;
 }
 
-+ (int)alertError:(NSError*)error {
++ (SSYAlertRecovery)alertError:(NSError*)error {
 	// In BookMacster 1.1.10, I found that Core Data migration, specifically
 	// -[Bkmx007-008MigrationPolicy createDestinationInstancesForSourceInstance:::]
 	// was spending 99% of its time creating SSYAlerts for nil errors!  Fix…
 	if (!error) {
-		return SSYAlertRecoveryWasNoError ;
+		return SSYAlertRecoveryThereWasNoError ;
 	}
 	
 	return [[SSYAlert alert] alertError:error] ;

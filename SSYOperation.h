@@ -27,6 +27,7 @@
 	SEL m_selector ;
 	id m_owner ; // weak
 	SSYOperationQueue* m_operationQueue ;  // weak
+	NSInvocation* m_cancellor ;
 }
 
 /*!
@@ -36,6 +37,13 @@
 @property (retain) NSMutableDictionary* info ;
 @property (assign) SEL selector ;
 @property (assign) SSYOperationQueue* operationQueue ;
+
+/*!
+ @brief    An invocation which will be invoked whenever the receiver
+ receives a -cancel message
+ */
+@property (retain) NSInvocation* cancellor ;
+
 
 /*!
  @brief    Returns a new SSYOperation

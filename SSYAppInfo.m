@@ -71,7 +71,14 @@ static SSYAppInfo *sharedInfo = nil ;
 }
 
 + (SSYVersionTriplet*)rawCurrentVersionTriplet {
-	SSYVersionTriplet* cvt = [SSYVersionTriplet versionTripletFromBundleIdentifier:[[NSBundle mainBundle] bundleIdentifier]] ;
+	// Prior BookMacster 1.6.8/1.7.0, we used this:
+	// 	SSYVersionTriplet* cvt = [SSYVersionTriplet versionTripletFromBundleIdentifier:[[NSBundle mainBundle] bundleIdentifier]] ;
+	// which was bad because it allowed Launch Services to give us the bundle, which
+	// may have been from a different app instance if different versions of thisapp
+	// are installed on this Mac.  That was pretty stupid, but probably is because
+	// originally that method was used to get versions of *other* apps.
+	NSString* versionString = [SSYVersionTriplet rawVersionStringFromBundle:[NSBundle mainBundle]] ; 
+	SSYVersionTriplet* cvt = [SSYVersionTriplet versionTripletFromString:versionString] ;
 	return cvt ;
 }
 

@@ -2,6 +2,17 @@
 
 @implementation SSYVersionTriplet
 
++ (NSString*)rawVersionStringFromBundle:(NSBundle*)bundle {
+	NSString* versionNumberString = [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"] ;
+
+	// Shiira does not have a CFBundleShortVersionString, but it has CFBundleVersion
+	if (versionNumberString == nil) {
+		versionNumberString = [bundle objectForInfoDictionaryKey:@"CFBundleVersion"] ;
+	}
+	
+	return versionNumberString;
+}
+
 + (NSString*)rawVersionStringFromBundleIdentifier:(NSString*)bundleIdentifier {
 	NSString* bundlePath = [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleIdentifier] ;
 	// Note: The above is more reliable than -fullPathForApplication,
@@ -28,12 +39,8 @@
 	
 	NSBundle* bundle = [NSBundle bundleWithPath:bundlePath] ;
 	
-	NSString* versionNumberString = [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"] ;
+	NSString* versionNumberString = [self rawVersionStringFromBundle:bundle] ;
 
-	// Shiira does not have a CFBundleShortVersionString, but it has CFBundleVersion
-	if (versionNumberString == nil) {
-		versionNumberString = [bundle objectForInfoDictionaryKey:@"CFBundleVersion"] ;
-	}
 
 	return versionNumberString ;
 }

@@ -13,7 +13,7 @@ extern NSString* const SSYDocFileObserverErrorDomain ;
 
 /*!
  @brief    An observer class which sends out a notification forthwith if
- the file underlying its subject document is ever moved or replaced with
+ the file underlying its subject document is moved or replaced with
  another file.
  
  @details  One would think that an alternative to using this class would

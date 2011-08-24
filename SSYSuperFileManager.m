@@ -235,9 +235,18 @@ static SSYSuperFileManager* defaultManager = nil ;
 - (BOOL)canExecutePath:(NSString *)fullPath
 			   groupID:(uid_t)groupID
 				userID:(uid_t)userID {
+#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_5) 
 	NSDictionary* attributes = [self fileAttributesAtPath:fullPath
 											 traverseLink:YES] ;
-	BOOL canX = NO ;
+#else
+	NSError* error = nil ;
+	NSDictionary* attributes = [self attributesOfItemAtPath:fullPath
+													  error:&error] ;
+	if (error) {
+		NSLog(@"Internal Error 529-2390 %@", error) ;
+	}
+#endif
+BOOL canX = NO ;
 	long unsigned posixPermissions = [[attributes objectForKey:NSFilePosixPermissions] intValue] ;
 	// See if anyone can execute it
 	if ((posixPermissions & S_IXOTH) != 0) {
