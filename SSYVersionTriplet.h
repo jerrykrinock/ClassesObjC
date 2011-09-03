@@ -132,8 +132,9 @@ typedef struct SSYVersionStruct_struct SSYVersionStruct ;
 /*!
  @brief    Compares receiver to another SSYVersionTriplet
  @param    otherTriplet other triplet to be compared
- @result   Result "Ascending" or "Descending" should be interpreted
- as if "going from receiver to otherTriplet" with "later = higher"
+ @result   Any "ascending" result, > SSYEqual, means that the receiver
+ is earlier than otherTriplet.  Any "descending" result, < SSYEqual,
+ means that the receiver is later than the otherTriplet.
  */
 - (enum SSYVersionTripletComparisonResult)compare:(SSYVersionTriplet*)otherTriplet ;
 
