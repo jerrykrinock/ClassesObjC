@@ -1,5 +1,6 @@
 #import "SSYDictionaryDebugger.h"
 
+#ifdef SSY_DEBUGGING_MUTABLE_DICTIONARY_INCLUDED
 
 @implementation SSYDebuggingMutableDictionary
 
@@ -10,10 +11,59 @@
 		dic = [[NSMutableDictionary alloc] init] ;
 		
 	}
+#if SSY_DEBUGGING_MUTABLE_DICTIONARY_LOG_MEMORY_MANAGEMENT
+	NSLog(@"info %p has been initted", self) ;
+#endif
 	return self;
 }
 
+- (NSString*)description {
+	return [dic description] ;
+}
 
+- (id)forwardingTargetForSelector:(SEL)sel {
+	return dic ;
+}
+
+- (void)setValue:(id)value
+ forUndefinedKey:key {
+	[dic setValue:value
+		   forKey:key] ;;
+}
+
+- (void)dealloc {
+#if SSY_DEBUGGING_MUTABLE_DICTIONARY_LOG_MEMORY_MANAGEMENT
+	NSLog(@"info %p is being deallocced", self) ;
+#endif
+	[dic release] ;
+	
+	[super dealloc] ;
+}
+
+#if SSY_DEBUGGING_MUTABLE_DICTIONARY_LOG_MEMORY_MANAGEMENT
+
+- (id)retain {
+	id x = [super retain] ;
+	NSLog(@"info %p retained to %d by %@", self, [self retainCount], SSYDebugCaller()) ;
+	return x ;
+}
+
+- (id)autorelease {
+	id x = [super autorelease] ;
+	NSLog(@"info %p autoreleased by %@", self, SSYDebugCaller()) ;
+	return x ;
+}
+
+- (oneway void)release {
+	NSInteger rc = [self retainCount] ;
+	[super release] ;
+	NSLog(@"info %p released fr %d by %@", self, rc, SSYDebugCaller()) ;
+}
+
+#endif
+
+
+#if SSY_DEBUGGING_MUTABLE_DICTIONARY_LOG_CONTENTS_CHANGED
 
 - (void)setValue:(id)value forKey:(NSString *)key {
 	NSLog(@"12686-01 %s", __PRETTY_FUNCTION__) ;
@@ -45,18 +95,9 @@
 	[dic setObject:anObject forKey:aKey] ;
 }
 
-- (NSString*)description {
-	return [dic description] ;
-}
+#endif
 
-- (id)forwardingTargetForSelector:(SEL)sel {
-	return dic ;
-}
-
-- (void)dealloc {
-	[dic release];
-
-	[super dealloc];
-}
 
 @end
+
+#endif
