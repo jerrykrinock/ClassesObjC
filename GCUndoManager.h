@@ -107,10 +107,10 @@ GCUndoTaskCoalescingKind;
 
 // sets the action name of the undo group currently atop the undo stack or redo stack, but only if the priority is equal or
 //  higher (lower value) than any previously-set action name priority for the relevant undo group.
-//  normally, sets the action name of the undo group currently atop the undo stack.  If undoing, sets the action name of
+//  if not undoing, sets the action name of the undo group currently atop the undo stack.  If undoing, sets the action name of
 // the undo group currently atop the redo stack.  If the priority value is less than (higher value) than the previously-set
 //  action name priority, this method is a no-op.
-//  parameter 'name' is he localized action name to be set.
+//  parameter 'name' is the localized action name to be set.
 //  parameter 'priority' is the strength by which this setting may override previous settings of the action name.  A lower number
 //  is a stronger, higher priority.
 - (void)				setActionName:(NSString*) name priority:(NSInteger) priority;
@@ -245,7 +245,7 @@ GCUndoTaskCoalescingKind;
 - (GCConcreteUndoTask*)	lastTaskIfConcrete;
 - (NSArray*)			tasks;
 - (NSArray*)			tasksWithTarget:(id) target selector:(SEL) selector;
-- (BOOL)				isEmpty;
+- (BOOL)				hasTask;
 
 - (void)				removeTasksWithTarget:(id) aTarget undoManager:(GCUndoManager*) um;
 
