@@ -13,6 +13,9 @@
 		case SSYModelChangeActionSort:
 			return @"\xe2\x97\x83" ; // Right triangle
 			break;
+		case SSYModelChangeActionMosh:
+			return @"\xe2\x9c\xa3" ; // Four Balloon-spoked asterisk
+			break;
 		case SSYModelChangeActionSlide:
 			return @"\xe2\x86\x95" ; // Up-and-down arrow
 			break;
