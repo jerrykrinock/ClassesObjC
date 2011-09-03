@@ -8,7 +8,7 @@
  <i>Favorite Animal</i>, etc. etc.  Any single line of text.
 */
 @interface SSYLabelledTextField : NSControl
-#if (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5) 
+#if (MAC_OS_X_VERSION_MAX_ALLOWED >= 1060) 
 	<NSTextFieldDelegate>
 #endif
 {

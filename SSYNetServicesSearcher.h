@@ -16,7 +16,7 @@ enum SSYNetServicesSearcherState_enum {
 typedef enum SSYNetServicesSearcherState_enum SSYNetServicesSearcherState ;
 
 @interface SSYNetServicesSearcher : NSObject
-#if (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5) 
+#if (MAC_OS_X_VERSION_MAX_ALLOWED >= 1060) 
 	<NSNetServiceBrowserDelegate>
 #endif
 {

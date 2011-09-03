@@ -134,11 +134,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 			// that the destination not already exist, so we must "remove" it first.
 			NSFileManager* fm = [NSFileManager defaultManager] ;
 
-			/*
-			 If you are developing with the 10.5 SDK, MAC_OS_X_VERSION_MAX_ALLOWED = 1050, MAC_OS_X_VERSION_10_5 = 1050 and the following #if will be true.
-			 If you are developing with the 10.6 SDK, MAC_OS_X_VERSION_MAX_ALLOWED = 1060, MAC_OS_X_VERSION_10_5 = 1050 and the following #if will be false.
-			 */
-#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_5) 
+#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
 			[fm removeFileAtPath:newPath
 						 handler:nil] ;
 			BOOL ok = [fm movePath:oldPath
@@ -207,7 +203,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 		NSError* error = nil ;
 		if (ok && ((fileExists && !isDirectory) || !fileExists)) {
 			// Create parent directory
-#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_5) 
+#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
 			ok = [fm createDirectoryAtPath:parentPath
 								attributes:nil] ;
 #else

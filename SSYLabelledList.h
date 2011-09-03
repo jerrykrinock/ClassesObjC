@@ -10,7 +10,7 @@
  @details  May be used, for example for a user to select several items from a list.
  */
 @interface SSYLabelledList : NSView
-#if (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_5) 
+#if (MAC_OS_X_VERSION_MAX_ALLOWED >= 1060) 
 	<NSTableViewDataSource, NSTableViewDelegate>
 #endif
 {

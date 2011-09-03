@@ -235,7 +235,7 @@ static SSYSuperFileManager* defaultManager = nil ;
 - (BOOL)canExecutePath:(NSString *)fullPath
 			   groupID:(uid_t)groupID
 				userID:(uid_t)userID {
-#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_5) 
+#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
 	NSDictionary* attributes = [self fileAttributesAtPath:fullPath
 											 traverseLink:YES] ;
 #else

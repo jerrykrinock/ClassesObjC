@@ -4,6 +4,7 @@
 #import "SSYSuperFileManager.h"
 #import "NSError+SSYAdds.h"
 #import "NSString+MorePaths.h"
+#import "NSDocument+SyncModDate.h"
 
 NSString* const SSYPersistentDocumentMultiMigratorErrorDomain = @"SSYPersistentDocumentMultiMigratorErrorDomain" ;
 NSString* const SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification = @"SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification" ;

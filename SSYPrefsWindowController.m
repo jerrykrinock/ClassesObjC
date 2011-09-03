@@ -226,11 +226,13 @@ Subclasses should over-ride this to provide tooltips for each toobar item
 		automagically select the appropriate item when it is clicked.
    -------------------------------------------------------------------------- */
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_3
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1030
+
 -(NSArray*) toolbarSelectableItemIdentifiers: (NSToolbar*)toolbar
 {
 	return [itemsList allKeys];
 }
+
 #endif
 
 

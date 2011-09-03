@@ -21,7 +21,7 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 
 
 + (NSSet*)installedLaunchdAgentLabelsWithPrefix:(NSString*)prefix {
-#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_5) 
+#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
 	NSArray* allAgentNames = [[NSFileManager defaultManager] directoryContentsAtPath:[self homeLaunchAgentsPath]] ;
 #else
 	NSError* error = nil ;
@@ -190,7 +190,7 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 	BOOL ok = YES ;
 	NSString* myAgentDirectory = [self homeLaunchAgentsPath] ;
 	
-#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_5) 
+#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
 	NSArray* existingFilenames = [[NSFileManager defaultManager] directoryContentsAtPath:myAgentDirectory] ;
 #else
 	NSError* error = nil ;
@@ -281,7 +281,7 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 	NSDictionary* attributes = [NSDictionary dictionaryWithObject:octal644
 														   forKey:NSFilePosixPermissions] ;
 	NSError* error = nil ;
-#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_5) 
+#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
 	ok =[[NSFileManager defaultManager] changeFileAttributes:attributes
 													  atPath:path] ;
 #else

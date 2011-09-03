@@ -768,7 +768,7 @@ end:
 - (BOOL)checkpointAndCloseError_p:(NSError**)error_p {
 	if (!m_db) {
 		return YES ;
-		// because sqlite3_wal_checkpoint(NULL, NULL) will crash
+	    // because sqlite3_wal_checkpoint(NULL, NULL) will crash
 	}
 	
 	int result ;

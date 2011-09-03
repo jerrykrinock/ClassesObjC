@@ -4,8 +4,8 @@
 #import "NSString+SSYExtraUtils.h"
 #import "NSFileManager+SomeMore.h"
 
-#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_5) \
-|| (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4)
+#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060)
+
 /*!
 @brief    Declares stuff which is defined in the 10.6 SDK,
 to eliminate compiler warnings.
@@ -24,6 +24,7 @@ typedef NSUInteger NSPropertyListReadOptions ;
 					 error:(NSError**)error ;
 
 @end
+
 #endif
 
 NSString* const SSYOtherApperErrorDomain = @"SSYOtherApperErrorDomain" ;

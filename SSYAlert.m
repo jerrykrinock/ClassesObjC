@@ -572,7 +572,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			result = ok ? SSYAlertRecoverySucceeded : SSYAlertRecoveryFailed ;
 		}
 		else {
-			NSLog(@"Internal Error 342-5587.  Given Recovery Attempter %@ does not respond to either attemptRecoveryFromError:... method", recoveryAttempter) ;
+			NSLog(@"Internal Error 342-5587.  Given Recovery Attempter %@ does not respond to any attemptRecoveryFromError:... method", recoveryAttempter) ;
 		}
 	}
 	else if (docOpeningError) {
