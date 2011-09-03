@@ -876,6 +876,24 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	[progBar setHidden:NO] ;
 }
 
+- (double)unsafeMaxValue {
+	double maxValue = _progBar ? [_progBar maxValue] : 0.0 ; 
+	return maxValue ;
+}
+
+- (double)maxValue {
+	NSInvocation* invoc = [NSInvocation invokeOnMainThreadTarget:self
+														selector:@selector(unsafeMaxValue)
+												 retainArguments:YES
+												   waitUntilDone:YES
+											   argumentAddresses:NULL] ;
+	[invoc invoke] ;
+	double maxValue ;
+	[invoc getReturnValue:&maxValue] ;
+	
+	return maxValue ;
+}
+
 - (void)setMaxValue:(double)value {
 	[self setNextProgressUpdate:0.0] ;
 	[NSInvocation invokeOnMainThreadTarget:self

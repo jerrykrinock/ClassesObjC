@@ -122,6 +122,12 @@ extern NSString* const constKeyActionValue ;
 							  action:(SEL)action ;
 
 /*!
+ @brief    Returns the -maxValue of the receiver's progress bar, or
+ 0.0 if the receiver does not have a progress bar
+*/
+- (double)maxValue ;
+
+/*!
  @brief    Sets the receiver to show a determinate progress bar,
  or making the existing progress bar determinate,  and sets its
  maximum value.
