@@ -4,6 +4,7 @@
 extern NSString* const constKeySSYOperationQueueDoneTarget ;
 extern NSString* const constKeySSYOperationQueueError ;
 extern NSString* const constKeySSYOperationGroup ;
+extern NSString* const constKeySSYOperationQueueDoneSelectorName ;
 
 @class SSYOperation ;
 
@@ -60,8 +61,7 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
 	NSError* m_error ;	
 	NSScriptCommand* m_scriptCommand ;
 	id m_scriptResult ;
-	NSMutableDictionary* m_errorRetryDic ;
-	NSMutableArray* m_errorRetryKeys ;
+	NSMutableArray* m_errorRetryInvocations ;
 	NSString* m_skipOperationsExceptGroup ;
 }
 
@@ -80,16 +80,6 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  */
 + (BOOL)operationGroupsSameInfo:(NSDictionary*)info
 					  otherInfo:(NSDictionary*)otherInfo ;
-
-/*!
- @brief    My version of the +mainQueue which is only available in
- Mac OS 10.6 or later.  This works in Mac OS 10.5.
-
- @details  Could probably call this +mainQueue, but at one point
- I was worried about conflicting with Apple's +mainQueue at some
- future date when this is compiled with the 10.6 SDK.
-*/
-+ (SSYOperationQueue*)maenQueue ;
 
 /*!
  @brief    Any error encountered during linked operations.
@@ -166,31 +156,31 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
 /*!
  @brief    Executes a group of method selectors as operations in
  the queue of the receiver and adds the current invocation of this
- method to the receiver's errorRetryInvocation.
+ method to the receiver's errorRetryInvocations.
 
  @details  Each method selector will be manufactured into an
- SSYOperation.&nbsp; The recommended idiom is to write a category 
+ SSYOperation.  The recommended idiom is to write a category 
  of SSYOperation (which is itself a subclass of NSOperation), and
- implement the method selectors you need performed in that category.&nbsp; 
+ implement the method selectors you need performed in that category.  
  The methods in the category must take no arguments and return void;
  data is passed in the SSYOperation's 'info' dictionary.
 
  The first selector/operation manufactured is made dependent on any
  pre-existing operations in the queue, so that none of them will start
- until all pre-existing operations have been finished.&nbsp; Because they
+ until all pre-existing operations have been finished.  Because they
  are SSYOperations, subsequent operations will be no-op if any
- previous operation sets an error.&nbsp; However, the last operation,
+ previous operation sets an error.  However, the last operation,
  specified by the doneTarget and doneSelector, will execute even if there
  is an error.
  
  Typically, the doneThread, doneTarget and doneSelector arguments are
- used to return final results, and return and/or the error object.&nbsp; 
+ used to return final results, and/or return the error object.  
  Typically, the doneThread is the main thread.
  
  When adding the invocation to the errorRetryInvocations, a
  (mutable) *copy* of the parameter 'info' is used, so that changes to the
  given 'info' dictionary in the process of execution will not affect
- subsequent re-invocations.
+ subsequent re-invocations for error recovery.
  
  @param    group  An arbitrary name you provide for this new group.  If
  nil, [[NSDate date] description] will be generated and used.  Typically,
@@ -215,16 +205,16 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  this dictionary.
  @param    block  YES if you would like this method to block until all
  operations have been completed.  NO if you would like it to return
- immediately, after queueing the operations.&nbsp; This method simply sends 
+ immediately, after queueing the operations.  This method simply sends 
  -waitUntilAllOperationsAreFinished to your <i>queue</i>.  Again, if you
  pass NO, remember to retain the arguments <i>queue</i> and <i>info</i>.
  @param    owner  An object which will be passed as the 'owner' to each of
  the SSYOperations which are manufactured by the receiver during execution
- of this method.  See -[SSYOperation initWithInfo:selector:owner:operationQueue:].
+ of this method.  See -[SSYOperation initWithInfo::::::].
  @param    doneThread  The thread in which a message will be sent after
  the last operation in selectorNames is completed.  If doneThread is nil,
  the default thread assumed will be the currentThread (the thread on which
- performSelectorNames:::::::: is sent).&nbsp;  You may want to pass
+ performSelectorNames:::::::: is sent).   You may want to pass
  [NSThread mainThread].
  @param    doneTarget  The target object to which a message will be sent
  after the last operation in selectorNames is completed.  If doneTarget
@@ -234,7 +224,7 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  has been an error.  The doneSelector should take one parameter, to which
  will be passed the receiver's 'info'.  If doneSelector is nil, no such
  message will be sent.
- @param    holdForMore  This is very difficult to explain.  One of these
+ @param    keepWithNext  This is very difficult to explain.  One of these
  days I should figure it out.
  */
 - (void)queueGroup:(NSString*)group
@@ -246,10 +236,10 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
 		doneThread:(NSThread*)doneThread
 		doneTarget:(id)doneTarget
 	  doneSelector:(SEL)doneSelector
-	   holdForMore:(BOOL)holdForMore ;		
+	   keepWithNext:(BOOL)keepWithNext ;		
 
 /*!
- @brief    Returns an array containing invocations which will re-invoke
+ @brief    Returns an invocation which will re-invoke
  any of your previous invocations of queueGroup:::::::::, ordered as they
  were originally invoked, and excluding any which have already completed
  all of their operations including the isDoneSelector, if any, and excluding
@@ -267,15 +257,9 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  invocation of invocations, and add the resulting "errorRetryInvocation"
  to the -userInfo of your error object.
  
- After invoking your isDoneSelector, unless you passed holdForMore:YES,
- SSYOperationQueue will automatically make the following
- adjustments to its errorRetry invocations…  If
- the group succeeeded without setting an error, and if the group does
- not have holdForMore set YES, it will remove its error
- retry invocation from the receiver.
+ After invoking your isDoneSelector, unless you passed keepWithNext:YES,
+ SSYOperationQueue will forget and release all of its error retry invocations.
 */
-- (NSInvocation*)errorRetryInvocationForGroup:(NSString*)group ;
-
-- (void)performErrorRecovery ;
+- (NSInvocation*)errorRetryInvocation ;
 
 @end

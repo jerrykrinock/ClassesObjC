@@ -4,7 +4,6 @@
 #import "BkmxGlobals.h"
 #import "Extore.h"
 #import "NSError+SSYAdds.h"
-#import "SSYInvocationOperation.h"
 #import "NSInvocation+Quick.h"
 #import "NSInvocation+Nesting.h"
 #import "SSYOperation.h"
@@ -18,10 +17,8 @@ NSString* const constKeySSYOperationQueueDoneTarget = @"SSYOperationQueueDoneTar
 NSString* const constKeySSYOperationQueueDoneSelectorName = @"SSYOperationQueueDoneSelectorName" ;
 NSString* const constKeySSYOperationQueueInfo = @"SSYOperationQueueInfo" ;
 NSString* const constKeySSYOperationQueueError = @"SSYOperationQueueError" ;
-NSString* const constKeySSYOperationQueueHoldForMore = @"SSYOperationQueueHoldForMore" ;
+NSString* const constKeySSYOperationQueueKeepWithNext = @"SSYOperationQueueKeepWithNext" ;
 NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
-
-static SSYOperationQueue* maenQueue = nil ;
 
 
 // No longer needed since override of -[SSYOperationQueue setError:] does this.  @implementation NSError (SSYOperationQueueExtras)
@@ -82,71 +79,29 @@ static SSYOperationQueue* maenQueue = nil ;
 	operationGroup:operationGroup] ;
 }
 
-- (NSMutableDictionary*)errorRetryDic {
-	if (!m_errorRetryDic) {
-		m_errorRetryDic = [[NSMutableDictionary alloc] init] ;
+- (NSInvocation*)errorRetryInvocation {
+	NSInvocation* answer ;
+	if (m_errorRetryInvocations) {
+		answer = [NSInvocation invocationWithInvocations:m_errorRetryInvocations] ;
+	}
+	else {
+		answer = nil ;
 	}
 	
-	return m_errorRetryDic ;
+	return answer ;
 }
 
-- (NSMutableArray*)errorRetryKeys {
-	if (!m_errorRetryKeys) {
-		m_errorRetryKeys = [[NSMutableArray alloc] init] ;
+- (void)appendErrorRetryInvocation:(NSInvocation*)invocation {
+	if (!m_errorRetryInvocations) {
+		m_errorRetryInvocations = [[NSMutableArray alloc] init] ;
 	}
 	
-	return m_errorRetryKeys ;
-}
-
-- (NSArray*)errorRetryInvocations {
-	NSMutableArray* array = [[NSMutableArray alloc] init] ;
-	for (NSString* group in [self errorRetryKeys]) {
-		[array addObject:[[self errorRetryDic] objectForKey:group]] ;
-	}
-	
-	NSArray* answer = [array copy] ;
-	[array release] ;
-	
-	return [answer autorelease] ;
-}
-
-- (NSInvocation*)errorRetryInvocationForGroup:(NSString*)group {
-	return [[self errorRetryDic] objectForKey:group] ;
-}
-
-- (void)setErrorRetryInvocation:(NSInvocation*)invocation
-							forGroup:(NSString*)group {
-	if (invocation) {
-		[[self errorRetryDic] setObject:invocation
-								 forKey:group] ;
-		[[self errorRetryKeys] addObject:group] ;
-	}
-}
-
-- (void)removeErrorRetryInvocationForGroup:(NSString*)group {
-	[[self errorRetryDic] removeObjectForKey:group] ;
-	[[self errorRetryKeys] removeObject:group] ;
+	[m_errorRetryInvocations addObject:invocation] ;
 }
 
 - (void)removeAllErrorRetryInvocations {
-	[[self errorRetryDic] removeAllObjects] ;
-	[[self errorRetryKeys] removeAllObjects] ;
-}
-
-- (void)performErrorRecovery {
-	NSInvocation* invocation = [NSInvocation invocationWithInvocations:[self errorRetryInvocations]] ;
-	[invocation invoke] ;
-
-	// The following was commented out in BookMacster 1.6, after I discovered
-	// that this made repeated error recoveries impossible, for example if there
-	// is a constBkmxErrorNotAvailableAtThisTime (Delicious banning), and you
-	// click retry once, it worked, but the second time it failed silently
-	// because errorRetryInvocations had been emptied on the first pass
-	// through this method and was therefore nil on the second pass.
-	// I'm not sure what the advantage of removing these is, other than for
-	// cleanup.  Maybe I'll understand it better as I see more usage of
-	// this method.
-	// [self removeAllErrorRetryInvocations] ;
+	[m_errorRetryInvocations release] ;
+	m_errorRetryInvocations = nil ;
 }
 
 - (id)init {
@@ -172,8 +127,7 @@ static SSYOperationQueue* maenQueue = nil ;
 	[m_error release] ;
 	[m_scriptCommand release] ;
 	[m_scriptResult release] ;
-	[m_errorRetryKeys release] ;
-	[m_errorRetryDic release] ;
+	[m_errorRetryInvocations release] ;
 	[m_skipOperationsExceptGroup release] ;
 	
 	[super dealloc] ;
@@ -203,17 +157,6 @@ static SSYOperationQueue* maenQueue = nil ;
 	}
 	
 	return NO ;
-}
-
-+ (SSYOperationQueue*)maenQueue {
-	@synchronized(self) {
-        if (!maenQueue) {
-            maenQueue = [[self alloc] init] ; 
-        }
-    }
-	
-	// No autorelease.  This sticks around forever.
-    return maenQueue ;
 }
 
 - (void)postQueueDidBeginWorkForObject:(id)object {
@@ -344,18 +287,8 @@ static SSYOperationQueue* maenQueue = nil ;
 					 withObject:realInfo
 				  waitUntilDone:YES] ;
 	
-	if (![[doneInfo objectForKey:constKeySSYOperationQueueHoldForMore] boolValue]) {
-		if (!error) {
-			NSString* group = [realInfo objectForKey:constKeySSYOperationGroup] ;
-			if (group) {
-				[self removeErrorRetryInvocationForGroup:group] ;
-			}
-			else {
-				// As you can see from the code in queueGroup:::::::::, all
-				// operations' info should have a constKeySSYOperationGroup
-				NSLog(@"Internal Error 626-0239 doneInfo: %@", doneInfo) ;
-			}
-		}
+	if (![[doneInfo objectForKey:constKeySSYOperationQueueKeepWithNext] boolValue]) {
+		[self removeAllErrorRetryInvocations] ;
 	}
 }
 
@@ -368,30 +301,36 @@ static SSYOperationQueue* maenQueue = nil ;
 		doneThread:(NSThread*)doneThread
 		doneTarget:(id)doneTarget
 	  doneSelector:(SEL)doneSelector
-	   holdForMore:(BOOL)holdForMore {
+	   keepWithNext:(BOOL)keepWithNext {
 	if (!group) {
-		group = [[NSDate date] description] ;
+		group = [NSString stringWithFormat:@"%f", [[NSDate date] timeIntervalSince1970]] ;
 	}
-	NSString* uniquifiedGroup = group ;
-	NSInteger i = 2 ;
-	if (!addon) {
-		while ([[self errorRetryKeys] indexOfObject:uniquifiedGroup] != NSNotFound) {
-			uniquifiedGroup = [group stringByAppendingFormat:@"-%d", i] ;
-			i++ ;
-		}
-	}		
 
 	// Note that we only capture our invocation for possible error recovery
-	// and add it to errorRetryInvocations if holdForMore is NO.  This is
-	// important because, only if holdForMore is NO will we remove the
+	// and add it to errorRetryInvocations if keepWithNext is NO.  This is
+	// important because, only if keepWithNext is NO will we remove the
 	// errorRetryInvocation in -doDone.  Otherwise, errorRetryInvocation
 	// will hang around in our errorRetryDic, which is kind of a memory
 	// leak in itself, but more importantly may cause a retain cycle
 	// involving objects that the invoker of this method has set into info.
-	if (!holdForMore) {
+	if (!keepWithNext) {
 		// Capture our invocation, for possible error recovery in case we fail
 		// and need to be repeated
-		NSMutableDictionary* originalInfo = [NSMutableDictionary dictionaryWithDictionary:info] ;
+		NSMutableDictionary* originalInfo = [NSMutableDictionary dictionary] ; //WithDictionary:info] ;
+		for (NSString* key in [info allKeys]) {
+			if ([key isEqualToString:@"Export Info Leak Detector"]) {
+				continue ;
+			}
+			if ([key isEqualToString:constKeyIxporter]) {
+				continue ;
+			}
+			if ([key isEqualToString:constKeyBkmslf]) {
+				continue ;
+			}
+			
+			[originalInfo setObject:[info objectForKey:key]
+												forKey:key] ;
+		}
 		NSInvocation* errorRetryInvocation = [NSInvocation invocationWithTarget:self
 																	   selector:_cmd
 																retainArguments:YES
@@ -405,12 +344,11 @@ static SSYOperationQueue* maenQueue = nil ;
 											  &doneThread,
 											  &doneTarget,
 											  &doneSelector,
-											  &holdForMore] ;
-		[self setErrorRetryInvocation:errorRetryInvocation
-							 forGroup:uniquifiedGroup] ;	
+											  &keepWithNext] ;
+		[self appendErrorRetryInvocation:errorRetryInvocation] ;
 	}
 	
-	[info setObject:uniquifiedGroup
+	[info setObject:group
 			 forKey:constKeySSYOperationGroup] ;
 	
 	// Create an array of operations from the array of selector names
@@ -418,9 +356,11 @@ static SSYOperationQueue* maenQueue = nil ;
 	for (NSString* selectorName in selectorNames) {
 		SEL selector = NSSelectorFromString(selectorName) ;
 		SSYOperation* op = [[SSYOperation alloc] initWithInfo:info
+													   target:nil
 													 selector:selector
 														owner:owner
-											   operationQueue:self] ;
+											   operationQueue:self
+												  skipIfError:YES] ;
 		// Note that operation is double-retained.  We'll release it in the next loop.
 		[operations addObject:op] ;
 	}
@@ -452,7 +392,7 @@ static SSYOperationQueue* maenQueue = nil ;
 	// and add it to the queue.
 	NSMutableDictionary* doneInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:
 									 info, constKeySSYOperationQueueInfo,
-									 [NSNumber numberWithBool:holdForMore], constKeySSYOperationQueueHoldForMore,
+									 [NSNumber numberWithBool:keepWithNext], constKeySSYOperationQueueKeepWithNext,
 									 nil] ;
 	if (doneTarget && doneSelector) {
 		if (!doneThread) {
@@ -467,10 +407,12 @@ static SSYOperationQueue* maenQueue = nil ;
 	}	
 	
 	// Add -[self doDone:] as the final invocation in this group
-	op = [[SSYInvocationOperation alloc] initWithTarget:self
-											   selector:@selector(doDone:)
-												 object:doneInfo
-												  owner:owner] ;
+	op = [[SSYOperation alloc] initWithInfo:doneInfo
+									 target:self
+								   selector:@selector(doDone:)
+									  owner:nil
+							 operationQueue:self
+								skipIfError:NO] ;
 	// The following test is to avoid crashing in case we are invoked with no selectorNames
 	if (priorOp) {
 		[op addDependency:priorOp] ;

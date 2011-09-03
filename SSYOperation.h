@@ -5,7 +5,7 @@
 
 /*!
  @brief    A subclass of NSOperation which has methods to register and
- access the error of its operation queue, and abort operations if an
+ access the error of its operation queue, and skip operations if an
  error occurs during execution of a prior operation.
  
  @details  Class also includes four methods which may be used in atypical
@@ -13,7 +13,8 @@
  while a "worker" thread completes work.
  
  Normally, when an operation sets its own error using -setError, which
- sets the error in the operation queue, further SSYOperations become
+ sets the error in the operation queue, any further SSYOperations
+ which were created with skipIfError passed as YES become
  no-ops.  However, if the info dictionary of an operation contains
  an object for key SSYOperationGroup, and the userInfo dictionary of
  the error also contains an object for key SSYOperationGroup, and if the
@@ -25,9 +26,11 @@
 @interface SSYOperation : NSOperation <SSYOwnee> {
 	NSMutableDictionary* m_info ;
 	SEL m_selector ;
+	id m_target ;
 	id m_owner ; // weak
 	SSYOperationQueue* m_operationQueue ;  // weak
 	NSInvocation* m_cancellor ;
+	BOOL m_skipIfError ;
 }
 
 /*!
@@ -51,14 +54,25 @@
  @details  Designated initializer for SSYOperation
  @param    info  Dictionary of information which the operation can
  access to do its work
- @param    selector  
- @param    operationQueue  
+ @param    target  An optional target which will be sent the given selector,
+ with no argument, when the receiver is executed.  If nil, the effective target will
+ be the receiver itself, and it will be sent the given selector with one
+ argument, the receiver's -info.
+ @param    selector  A selector which will be invoked when the receiver is executed.
+ If the given target is not nil, this selector must take one argument, in which will
+ be passed the receiver's -info.  If the given target is nil, this selector must
+ must take zero arguments.  In this case, you will typically implement the selector
+ in a category of the receiver, whereby you can access the receiver's -info.
+ @param    operationQueue
+ @param    skipIfError
  @result   A new, initilialied SSYOperation
 */
 - (id)initWithInfo:(NSMutableDictionary*)info
+			target:(id)target
 		  selector:(SEL)selector
 			 owner:(id)owner
-	operationQueue:(SSYOperationQueue*)operationQueue ;
+	operationQueue:(SSYOperationQueue*)operationQueue
+	   skipIfError:(BOOL)abortIfError ;
 
 - (NSError*)error ;
 

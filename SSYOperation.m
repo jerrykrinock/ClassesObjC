@@ -4,7 +4,7 @@
 
 #if DEBUG
 // Do not ship with this because method names will be logged so crackers can see.
-#if 1
+#if 0
 #warning Logging SSYOperationLinker Operations (a cracking risk)
 #define LOGGING_SSYOPERATIONLINKER_OPERATIONS 1
 #import "BkmxGlobals.h"
@@ -20,15 +20,21 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 
 @interface SSYOperation ()
 
+@property (retain) id target ;
+@property (assign) BOOL skipIfError ;
+
 @end
+
 
 
 @implementation SSYOperation
 
 @synthesize info = m_info ;
+@synthesize target = m_target ;
 @synthesize selector = m_selector ;
 @synthesize operationQueue = m_operationQueue ;
 @synthesize cancellor = m_cancellor ;
+@synthesize skipIfError = m_skipIfError ;
 
 - (id)owner {
 	return m_owner ;
@@ -45,20 +51,25 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 - (void)dealloc {
     [m_info release] ;
 	[m_cancellor release] ;
+	[m_target release] ;
 	
     [super dealloc] ;
 }
 
 - (id)initWithInfo:(NSMutableDictionary*)info
+			target:(id)target
 		  selector:(SEL)selector
 			 owner:(id)owner
-	operationQueue:(SSYOperationQueue*)operationQueue {
+	operationQueue:(SSYOperationQueue*)operationQueue
+	   skipIfError:(BOOL)skipIfError {
 	self = [super init] ;
     if (self) {
 		[self setInfo:info] ;
 		[self setSelector:selector] ;
+		[self setTarget:target] ;
 		[self setOwner:owner] ;
 		[self setOperationQueue:operationQueue] ;
+		[self setSkipIfError:skipIfError] ;
 	}
 	
 	return self ;
@@ -142,15 +153,23 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 		  [(Client*)[(Ixporter*)[[self info] objectForKey:constKeyIxporter] client] displayName],
 		  [[self info] objectForKey:constKeySSYOperationGroup],
 		  [[self error] code],
-		  [[[SSYOperationQueue maenQueue] operations] count], // nQ = number in queue
+		  [[[self operationQueue] operations] count], // nQ = number in queue
 		  NSStringFromSelector([self selector])) ;
 #endif
 	
 	if (![[self operationQueue] shouldSkipOperationsInGroup:[[self info] objectForKey:constKeySSYOperationGroup]]) {
-		if (![self error]) {
+		if (![self error] || ![self skipIfError]) {
 			@try {
-				// Note: selector is usually defined in a category
-				[self performSelector:[self selector]] ;
+				id target = [self target] ;
+				if (target) {
+					[target performSelector:[self selector]
+								 withObject:[self info]] ;
+				}
+				else {
+					// In this case, selector is usually defined in a category
+					target = self ;
+					[target performSelector:[self selector]] ;
+				}
 			}
 			@catch (NSException* exception) {
 				NSString* msg = @"An exception was raised." ;
