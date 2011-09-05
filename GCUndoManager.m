@@ -912,7 +912,7 @@
 {
 	// pops the top redo group and invokes all of its tasks
 	
-	if([self numberOfRedoActions] > 0 && [[self peekUndo] hasTask])
+	if(([self numberOfRedoActions] > 0) && [[self peekRedo] hasTask])
 	{
 		NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
 		[notificationCenter postNotificationName:NSUndoManagerWillRedoChangeNotification object:self];
