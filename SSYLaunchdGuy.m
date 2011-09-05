@@ -472,33 +472,120 @@ end:;
 	return ok ;
 }
 
-+ (BOOL)agentLoad:(BOOL)load
-			label:(NSString*)label
-		  error_p:(NSError**)error_p {
++ (BOOL)tryAgentLoad:(BOOL)load
+			   label:(NSString*)label
+			 error_p:(NSError**)error_p {
+	/*DB?Line*/ NSLog(@"15140 %s %@", __PRETTY_FUNCTION__, load ? @"load" : @"unload") ;
 	if (!label) {
+/*DB?Line*/ NSLog(@"15209: ") ;
 		return YES ;
 	}
 	
+	// For performance reasons, we check for the file first since
+	// that should be much faster than "launchctl list".
+	
+	// This section was added in BookMacster 1.7.2/1.6.8
+	// launchctl will log a message to stderr if we tell it to 
+	// load a job for which there is no plist file
 	NSString* filename = [label stringByAppendingPathExtension:@"plist"] ;
 	NSString* directory = [self homeLaunchAgentsPath] ;
 	NSString* plistPath = [directory stringByAppendingPathComponent:filename] ;
+	if (load) {
+		if (![[NSFileManager defaultManager] fileExistsAtPath:plistPath]) {
+/*DB?Line*/ NSLog(@"15866: No-opping") ;
+			return YES ;
+		}
+	}
+	
+	NSArray* arguments ;
+	NSInteger result ;
+	
+	// This section was added in BookMacster 1.7.2/1.6.8
+	// launchctl will log a stupid message to stderr if we tell it to 
+	// unload a job which is not loaded.  I presume it might, or might
+	// someday, do a similar thing if we tell it to load a job which
+	// is already loaded.  So, we first ask launchctl for its list of
+	// loaded jobs, then grep it to see if our job is already loaded…
+	BOOL isLoaded = NO ;	
+	arguments = [NSArray arrayWithObjects:
+				 @"list",
+				 nil] ;
+	
+	NSData* listData = nil ;
+	result = [SSYShellTasker doShellTaskCommand:@"/bin/launchctl"
+									  arguments:arguments
+									inDirectory:nil
+									  stdinData:nil
+								   stdoutData_p:&listData
+								   stderrData_p:NULL
+										timeout:3.0
+										error_p:error_p] ;
+	if ((result != 0) && error_p) {
+/*DB?Line*/ NSLog(@"17061: lanchctl list result=%d  error: %@", result, *error_p) ;
+		return NO ;
+	}
+/*DB?Line*/ NSLog(@"15975: launchctl list returned this: %@", [NSString stringWithDataUTF8:listData]) ;
+	if (listData) {
+		NSSet* reservedChars = [NSSet setWithObjects:
+								@"?", @"+", @"{", @"|", @"(", @")", @"[", @"]", nil] ;
+		NSMutableString* escapedLabel = [label mutableCopy] ;
+		for (NSString* reservedChar in reservedChars) {
+			[escapedLabel replaceOccurrencesOfString:reservedChar
+										  withString:[NSString stringWithFormat:@"\\%@", reservedChar]
+											 options:0
+											   range:NSMakeRange(0, [escapedLabel length])] ;
+		}
+		NSString* pattern = [NSString stringWithFormat:
+							 @"[[:space:]]%@$",
+							 escapedLabel] ;
+		/*DB?Line*/ NSLog(@"16522: pattern: %@", pattern) ;
+		arguments = [NSArray arrayWithObjects:
+					 @"-q",	// Return 0 if pattern is found, 1 if not, 1 if error	 
+					 pattern,
+					 nil] ;
+		NSData* countData = nil ;
+		result = [SSYShellTasker doShellTaskCommand:@"/usr/bin/grep"
+										  arguments:arguments
+										inDirectory:nil
+										  stdinData:listData
+									   stdoutData_p:&countData
+									   stderrData_p:NULL
+											timeout:3.0
+											error_p:error_p] ;
+		/*DB?Line*/ NSLog(@"17062: result=%d  error: %@", result, *error_p) ;
+		
+		isLoaded = (result == 0) ;
+		/*DB?Line*/ NSLog(@"28314: isLoaded = %d", isLoaded) ;
+	}
+	else {
+		NSLog(@"Internal Error 589-9393.  Assuming launchd job %@ is not loaded", label) ;
+	}
+	/*DB?Line*/ NSLog(@"17277: load=%d isLoaded=%d", load, isLoaded) ;
+	if (load == isLoaded) {
+		/*DB?Line*/ NSLog(@"17736: Returning because there is nothing to do") ;
+		return YES ;
+	}
+	
 	NSString* subcmd = load ? @"load" : @"unload" ;
-	NSArray* arguments = [NSArray arrayWithObjects:
-						  subcmd,
-						  @"-wF",
-						  plistPath,
-						  nil] ;
+	/*DB?Line*/ NSLog(@"15173: Will %@ %@", subcmd, label) ;
+	arguments = [NSArray arrayWithObjects:
+				 subcmd,
+				 @"-wF",
+				 plistPath,
+				 nil] ;
 	
 	NSError* error = nil ;
-	NSInteger result = [SSYShellTasker doShellTaskCommand:@"/bin/launchctl"
-												arguments:arguments
-											  inDirectory:nil
-												stdinData:nil
-											 stdoutData_p:NULL
-											 stderrData_p:NULL
-												  timeout:0.0
-												  error_p:&error] ;
-	
+	/*DB?Line*/ NSDate* startTime = [NSDate date] ;
+	result = [SSYShellTasker doShellTaskCommand:@"/bin/launchctl"
+									  arguments:arguments
+									inDirectory:nil
+									  stdinData:nil
+								   stdoutData_p:NULL
+								   stderrData_p:NULL
+										timeout:2.0  // Was 0.0 until BookMacster 1.7.2/1.6.8
+										error_p:&error] ;
+	/*DB?Line*/ NSLog(@"15994: launchctl took %f seconds", -[startTime timeIntervalSinceNow]) ;
+
 	if ((result != 0) && error_p) {
 		*error_p = error ;
 	}

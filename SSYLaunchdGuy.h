@@ -188,11 +188,18 @@ extern NSString* const SSYLaunchdGuyErrorDomain ;
 											   timeout:(NSTimeInterval)timeout ;
 
 /*!
- @brief    Loads or unloads a specified launchd agent.
+ @brief    Tries to load or unload a specified launchd agent, ignoring
+ if the requested status is already existing, or if there is no plist
+ file to load 
 
- @details  This method will probably give unexpected results if you attempt
+ @details  If 'load' is YES and the agent is already loaded, or if
+ 'load' is NO and the agent is not loaded, or if 'load' is YES
+ but the required plist file is not available, that is deemed a 
+ success; this method does nothing and returns YES.
+ 
+ This method will probably give unexpected results if you attempt
  to unload the job which launched the invoking process.  If you want to do
- that, use removeAgentWithLabel:::: instead.
+ that, read and use removeAgentWithLabel:::: instead.
  @param    load  YES to load, NO to unload
  @param    label  A string which is used to specify the path
  to the plist file.  After appending the file extension "plist"
@@ -204,8 +211,8 @@ extern NSString* const SSYLaunchdGuyErrorDomain ;
            will point to an error object encapsulating the error.
  @result   YES if the method completed successfully, otherwise NO
 */
-+ (BOOL)agentLoad:(BOOL)load
-			label:(NSString*)label
-		  error_p:(NSError**)error_p ;
++ (BOOL)tryAgentLoad:(BOOL)load
+			   label:(NSString*)label
+			 error_p:(NSError**)error_p ;
 
 @end
