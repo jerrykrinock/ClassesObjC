@@ -22,8 +22,27 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 	}
 }
 
+
+- (id)initWithItemIdentifier:(NSString*)identifier {
+	self = [super initWithItemIdentifier:identifier] ;
+	if (self) {
+		// Make sure that setValue: does not take its early return the 
+		// first time it is invoked…
+		[self setValue:NSNotFound] ;
+	}
+	
+	return self ;
+}
+
 @synthesize onImage = m_onImage ;
 @synthesize offImage = m_offImage ;
+@synthesize disImage = m_disImage ;
+@synthesize onLabel = m_onLabel ;
+@synthesize offLabel = m_offLabel ;
+@synthesize disLabel = m_disLabel ;
+@synthesize onToolTip = m_onToolTip ;
+@synthesize offToolTip = m_offToolTip ;
+@synthesize disToolTip = m_disToolTip ;
 @synthesize externalTarget = m_externalTarget ;
 @synthesize externalAction = m_externalAction ; 
 
@@ -33,7 +52,7 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 	// to observe the action.
 	[super setTarget:self] ;
 	[super setAction:@selector(doDaClick:)] ;
-
+	
 	// In BookMacster, we use the conventional target/action and not
 	// the binding.  So we could actually dispense with the
 	// externalTarget and externalAction thing.  The reason we use
@@ -56,22 +75,48 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 }
 
 - (void)setValue:(NSInteger)value {
-	if (
-		[self image] // This is not the first setting
-		&&
-		(value == m_value) 
-		) {
+	if (value == m_value) {
 		return ; 
 	}
 	
 	m_value = value ;
 	
-	NSImage* image = (value == NSOnState) ? [self onImage] : [self offImage] ;
-	[self setImage:image] ;
+	NSImage* image = nil ;
+	NSString* label = nil ;
+	NSString* toolTip = nil ;
+	switch (value) {
+		case NSOnState:
+			image = [self onImage] ;
+			label = [self onLabel] ;
+			toolTip = [self onToolTip] ;
+			break ;
+		case NSOffState:
+			image = [self offImage] ;
+			label = [self offLabel] ;
+			toolTip = [self offToolTip] ;
+			break ;
+		case NSMixedState:
+			image = [self disImage] ;
+			label = [self disLabel] ;
+			toolTip = [self disToolTip] ;
+			break ;
+	}
+
+	if (image) {
+		[self setImage:image] ;
+	}
+	
+	if (label) {
+		[self setLabel:label] ;
+	}
+	
+	if (toolTip) {
+		[self setToolTip:toolTip] ;
+	}
 }	
 
 - (IBAction)doDaClick:(id)sender {
-	[self setValue:([self value] == NSOnState) ? NSOffState : NSOnState] ;
+	//[self setValue:([self value] == NSOnState) ? NSOffState : NSOnState] ;
 	[[self externalTarget] performSelector:[self externalAction]
 								withObject:self] ;
 }
@@ -79,6 +124,13 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 - (void)dealloc {
 	[m_onImage release] ;
 	[m_offImage release] ;
+	[m_disImage release] ;
+	[m_onLabel release] ;
+	[m_offLabel release] ;
+	[m_disLabel release] ;
+	[m_onToolTip release] ;
+	[m_offToolTip release] ;
+	[m_disToolTip release] ;
 	
 	[super dealloc] ;
 }

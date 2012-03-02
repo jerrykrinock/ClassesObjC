@@ -1,4 +1,5 @@
 #import "SSYDooDooUndoManager.h"
+#import "SSYMOCManager.h"
 
 NSString* const SSYUndoManagerWillEndUndoGroupNotification = @"SSYUndoManagerWillEndUndoGroupNotification" ;
 NSString* const SSYUndoManagerDocumentWillSaveNotification = @"SSYUndoManagerDocumentWillSaveNotification" ;
@@ -76,7 +77,16 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 	[super beginUndoGrouping] ;
 }
 
-- (void)endUndoGrouping {
+#if 0
+#warning Hokey Code
+- (void)undo {
+	id bkmslf = [SSYMOCManager ownerOfManagedObjectContext:[self managedObjectContext]] ;
+	[bkmslf endEditing:nil] ;
+	[super undo] ;
+}
+#endif
+
+- (void)endUndoGrouping {	
 	[[self managedObjectContext] processPendingChanges] ;
 	[super endUndoGrouping] ;
 	[[NSNotificationCenter defaultCenter] postNotificationName:SSYUndoManagerDidCloseUndoGroupNotification

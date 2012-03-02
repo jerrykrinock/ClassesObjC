@@ -2,10 +2,12 @@
 
 
 /*!
- @brief    Uncomment #define LOG_QUERIES to log all queries,
- any error which occurs and the query output
+ @brief    To log all queries, their results, and any error which occurs,
+ set this #if to 1
 */
-// #define LOG_QUERIES
+#if 0
+#define SSY_SQLITER_LOG_QUERIES 1
+#endif
 
 extern NSString* const SSYSqliterErrorDomain ;
 extern NSString* const SSYSqliterSqliteErrorCode ;

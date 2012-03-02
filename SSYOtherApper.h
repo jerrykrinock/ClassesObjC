@@ -2,8 +2,9 @@
 
 extern NSString* const SSYOtherApperErrorDomain ;
 
-extern NSString* const SSYOtherApperKeyExecutable ;
 extern NSString* const SSYOtherApperKeyPid ;
+extern NSString* const SSYOtherApperKeyUser ;
+extern NSString* const SSYOtherApperKeyExecutable ;
 
 /*!
  @brief    A class of class methods for observing and controlling other applications.
@@ -51,11 +52,13 @@ extern NSString* const SSYOtherApperKeyPid ;
  @details  If no such qualified process exists, or if bundleIdentifier is nil,
  returns 0.&nbsp;   The target app must be a normal GUI app, not a faceless background
  application.&nbsp;   This method invokes NSWorkspace and thus requires Cocoa
- AppKit.&nbsp; To get the pid of non-GUI apps use +pidOfThisUsersProcessNamed:.
+ AppKit.&nbsp; To get the pid of non-GUI apps use +pidOfProcessNamed:user:.
  @param    bundleIdentifier  The bundle identifier that the target app must have
  @result   The unix process identifier (pid), or 0 if no qualifying process exists.
 */
 + (pid_t)pidOfThisUsersAppWithBundleIdentifier:(NSString*)bundleIdentifier ;
+
++ (pid_t)pidOfThisUsersAppWithBundlePath:(NSString*)bundlePath ;
 
 /*!
  @brief    Returns unix process ID (PID) of a running process with given
@@ -98,27 +101,30 @@ extern NSString* const SSYOtherApperKeyPid ;
 + (NSInteger)majorVersionOfBundlePath:(NSString*)bundlePath ;
 
 /*!
- @brief    Gets the unix process ID (pid) of a process with a given process name
- which must have the same user id as this process.
+ @brief    Returns the unix process ID (pid) of any process whose last path
+ component matches a given process name, and whose  which has the same unit
+ user id as the current process, or 0 if no such process is running.
 
- @details  If no such process exists, returns 0.  I think that the name is the
- CFBundleName, but it may be CFExecutableName.  Finds some background processes but
- not all.  For example, finds QuicKeysBackgroundEngine, mdworker, SystemUIServer,
- SizzlingKeys4iTunes, loginwindow, iTunesHelper.  But does not find BookMacster-Quatch.
- Go figure.  Will not return zombie (Z) or (UEs) processes.  Uses Carbon > Process Manager.
- */
-+ (pid_t)pidOfThisUsersProcessNamed:(NSString*)processName ;
-
-/*!
- @brief    Returns an array of unix process ID (pid) of all processes with
- a given executable path, which have the same user id as this process.
+ @details  Starting with BookMacster 1.9, this method is now based on
+ -pidsExecutablesFull:, which is in turn based on /bin/ps, so that it gets
+ all processes, regardless of background, bundle, app, or GUI.
  
- @details  If no such process exists, returns an empty array.
+ Prior to BookMacster 1.9, this method used the Carbon Process Manager and
+ therefore did not find all such running processes.  For example, it would
+ find QuicKeysBackgroundEngine, mdworker, SystemUIServer, SizzlingKeys4iTunes,
+ loginwindow, and iTunesHelper.  But it would not find BookMacster-Quatch.
+ Will not return zombie (Z) or (UEs) processes.  It also did not properly
+ discriminate users.
+ 
+ @param   user  The short name, that is, the Home directory name, of the user
+ whose process we want the pid of.  Pass NSUserName() for the current user.
+ Do not pass nil.
  */
-+ (NSArray*)pidsOfThisUsersProcessPath:(NSString*)processName ;
++ (pid_t)pidOfProcessNamed:(NSString*)processName
+					  user:(NSString*)user ;
 
 /*!
- @brief    Gets the bundle pathof a process with a given process name
+ @brief    Gets the bundle path of a process with a given process name
  which must have the same user id as this process.
  
  @details  If no such process exists, returns 0.  I think that the name is the
@@ -130,18 +136,6 @@ extern NSString* const SSYOtherApperKeyPid ;
 + (NSString*)bundlePathForProcessName:(NSString*)processName ;
 
 /*!
- @brief    Returns an array of NSNumbers representing all unix process ID (pid)
- of a process with a given process name which must have the same user id as this process.
- 
- @details  If no such process exists, returns an empty array.  I think that the name is the
- CFBundleName, but it may be CFExecutableName.  Finds some background processes but
- not all.  For example, finds QuicKeysBackgroundEngine, mdworker, SystemUIServer,
- SizzlingKeys4iTunes, loginwindow, iTunesHelper.  But does not find BookMacster-Quatch.
- Go figure.  Will not return zombie (Z) or (UEs) processes.  Uses Carbon > Process Manager.
- */
-+ (NSArray*)pidsOfThisUsersProcessesNamed:(NSString*)processName ;
-
-/*!
  @brief    Returns an array with one element for each running executable, with each element
  being a dictionary containing entries for pid, user, and command.
  
@@ -149,13 +143,13 @@ extern NSString* const SSYOtherApperKeyPid ;
  The "advantage" of this is that it does not use AppKit, therefore does not invoke
  WindowServer, therefore does not raise an exception if the user is not the console user.
  The disadvantage is that it uses NSTask, and did not work in finding Bookwatchdog
- for user Michael Sherwin <mdsherwin@mac.com>
+ for a certain user.
  @param    fullExecutablePath  YES to return the full path to each executable as the
- value of the "command" key.  NO to return only the executable name.
+ value of the "command" key.  NO to return only the executable name (last path component).
  @result   The array of dictionaries.  Each dictionary contains three keys:
- *  @"pid", whose value is an NSNumber
- *  @"user", whose value is an NSString
- *  processInfoDic, whose value is an NSString
+ *  SSYOtherApperKeyPid, whose value is an NSNumber
+ *  SSYOtherApperKeyUser, whose value is an NSString, the short name of the user
+ *  SSYOtherApperKeyExecutable, whose value is an NSString, either an executable name or a full path
 */
 + (NSArray*)pidsExecutablesFull:(BOOL)fullExecutablePath ;
 
@@ -210,6 +204,19 @@ extern NSString* const SSYOtherApperKeyPid ;
 			   thisUserOnly:(BOOL)thisUserOnly ;
 
 /*!
+ @brief    Returns a string consisting of the command followed by the
+ arguments of a process identified by a given pid
+
+ @details  You must use your knowledge of the expected result in order
+ to parse out individual arguments, because command paths or arguments
+ with spaces in them are neither quoted nor escaped in the returned
+ result.
+ @result   The expected string, or nil if the given pid is not
+ that of a running process
+*/
++ (NSString*)commandAndArgumentsOfPid:(pid_t)pid ;
+
+/*!
  @brief    Returns whether or not this user has an *app* running
  with a given pid.  Will return NO if pid is a basic unix executable.
  May return YES if running for some kinds of helper tools.
@@ -228,23 +235,20 @@ extern NSString* const SSYOtherApperKeyPid ;
  and returns when the app is quit or timeout occurs, whichever comes first.
  
  @details  Will block the thread until the target app quits, or timeout.
- 
- This method works by sending a "tell application Xxx to quit" AppleScript message.
- According to the latest AppleScript Language Guide ▸ Control Statements Reference ▸
- tell Statements, "A tell statement that targets a local application doesn’t cause
- it to launch, if it is not already running".  I tested that in Mac OS X 10.6
- and found it to be true, but I seem to remember that it *did* cause the app to
- launch if it was not running in earlier Mac OS X versions.  So I'm not sure.
- 
+
  @param    bundle path  The bundle path of the application to be 
  quit, or nil to no-op.
-
+ @param    killAfterTimeout  This parameter was added in BookMacster 1.9.8
+ after I found Google Chrome in a state where it wouldn't quit, not even if
+ you activated it and clicked "Quit" in its menu.  Then, I found that this only
+ happened maybe 2/100 times.  Weird.
  @result   YES if the target app was not running, or if it quit within
  the allowed timeout, or if bundleIdentifier was nil.  NO if app was
  still running when timeout expired.
  */
 + (BOOL)quitThisUsersAppWithBundlePath:(NSString*)bundlePath
 							   timeout:(NSTimeInterval)timeout
+					  killAfterTimeout:(BOOL)killAfterTimeout
 							   error_p:(NSError**)error_p ;
 
 /*!
@@ -319,7 +323,7 @@ extern NSString* const SSYOtherApperKeyPid ;
  @details  If an app with the given bundleIdentifier is not
  running, returns nil.
 */
-+ (NSString*)pathIfRunningForThisUserBundleIdentifier:(NSString*)bundleIdentifier ;
++ (NSString*)pathOfThisUsersRunningAppWithBundleIdentifier:(NSString*)bundleIdentifier ;
 
 /*!
  @brief    Activates a specified app

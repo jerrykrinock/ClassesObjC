@@ -24,10 +24,16 @@
 	OSStatus err;
 	ProcessSerialNumber psn ;
 	err = GetProcessForPID(activeAppPid, &psn) ;
+	if (err != noErr) {
+        NSLog(@"Internal Error 915-9384 %ld", (long)err) ;
+    }
 	err = ShowHideProcess(&psn, false) ;
+	if (err != noErr) {
+        NSLog(@"Internal Error 915-9385 %ld", (long)err) ;
+    }
 	//NSLog(@"2000 New ActiveApp: %@", [[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationName"]) ;
 	activeAppPid = [[[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationProcessIdentifier"] intValue] ;
-	return activeAppPid ;
+    return activeAppPid ;
 }
 
 + (void)bringFrontPid:(pid_t)pid {
@@ -37,6 +43,9 @@
 	ProcessSerialNumber psn ;
 	OSStatus err ;
 	err = GetProcessForPID(pid, &psn) ;
+	if (err != noErr) {
+        NSLog(@"Internal Error 915-9386 %ld", (long)err) ;
+    }
 	SetFrontProcess(&psn);
 }
 
@@ -85,16 +94,19 @@
 		[NSApp activateIgnoringOtherApps:YES] ;
 		// [[[[[NSApp mainMenu] itemArray] objectAtIndex:0] submenu] performActionForItemAtIndex:0] ;
 #else
-			ProcessSerialNumber psn = { 0, kCurrentProcess } ;
-			OSStatus err ;
-			err = TransformProcessType(&psn, kProcessTransformToForegroundApplication) ;
-			
-			[NSApp activateIgnoringOtherApps:YES] ;
+		ProcessSerialNumber psn = { 0, kCurrentProcess } ;
+		OSStatus err ;
+		err = TransformProcessType(&psn, kProcessTransformToForegroundApplication) ;
+        if (err != noErr) {
+            NSLog(@"Internal Error 915-9387 %ld", (long)err) ;
+        }
+		
+		[NSApp activateIgnoringOtherApps:YES] ;
 #endif
 	}
 }
 
-+ (IBAction)transformToGui:(id)sender {
++ (void)transformToGui:(id)sender {
 	[self transformToGui] ;
 }
 

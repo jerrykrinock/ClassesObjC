@@ -29,7 +29,7 @@ extern id ssyDebugGlobalObject ;
  of slides because they are useless and noise up the result with
  many lines of useless text.
  */
-NSString* SSYDebugBacktrace() ;
+NSString* SSYDebugBacktrace(void) ;
 
 /*!
  @brief    Returns a string containing the current backtrace, to a
@@ -46,14 +46,14 @@ NSString* SSYDebugBacktrace() ;
  Note that this function never returns the caller of this function, since you
  should already know that or can get it by __PRETTY_FUNCTION__.
 */
-NSString* SSYDebugBacktraceDepth(NSUInteger depth) ;
+NSString* SSYDebugBacktraceDepth(int depth) ;
 
 /*!
  @brief    Returns a string consisting of the symbol name of the
  caller of the function that called it.
 */
-NSString* SSYDebugCaller() ;
+NSString* SSYDebugCaller(void) ;
 
-void SSYDebugLogBacktrace() ;
+void SSYDebugLogBacktrace(void) ;
 
-NSInteger SSYDebugStackDepth() ;
+NSInteger SSYDebugStackDepth(void) ;

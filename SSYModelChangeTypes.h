@@ -28,16 +28,20 @@ enum SSYModelChangeAction_enum {   // Examples:
 	SSYModelChangeActionMerge         =  30,  // was1 2 "Undo/Redo Merge objects myFoo"
 	SSYModelChangeActionInsert        =  40,  // was1 3 "Undo/Redo Insert object myFoo"
 	SSYModelChangeActionCancel        =  45,  // Insertion which was cancelled by a deletion before all changes completed
-	SSYModelChangeActionMosh          =  48,  // was1 did not exist.  Item was both modified and moved, modified and slid, or all three
+	SSYModelChangeActionMosh          =  48,  // was1 did not exist.  Item was both moved and modified
+	SSYModelChangeActionSlosh         =  49,  // was1 did not exist.  Item was both slid and modified (Was part of Mosh until BookMacster 1.9
 	SSYModelChangeActionModify        =  50,  // was1 6 "Undo/Redo Change myBar of object myFoo"
 	SSYModelChangeActionMove          =  60,  // was1 4 "Undo/Redo Move object myFoo"
 	SSYModelChangeActionSlide         =  70,  // was1 5 "Undo/Redo Slide object myFoo"
 	SSYModelChangeActionSort          =  75,  // was2 55  But this one is not used in Sync Logs database
 	SSYModelChangeActionMigrate       =  80,  // was1 7 "Undo/Redo Migrate Foo"
+	// Changes which are not well specified
 	SSYModelChangeActionVague         =  90,  // was1 8 "Undo/Redo Foo"
 	SSYModelChangeActionUndefined     = 100   // was1 9
 	// DO NOT CHANGE THE ORDER OF THESE because they are in users' Diaries databases,
 	// and also used to "rank" changes in Chaker.
+	// If you add more change types, add branches as required in
+	// +objectExistenceIsAffectedByChange: and/or +objectExistenceIsAffectedByChange:
 	
 	/* Note 098534.  The 'was1' values were used before BookMacster version 1.5.7.  The change
 	 was apparently made to fix a bug which caused changes in item attributes,
@@ -58,6 +62,9 @@ typedef enum SSYModelChangeAction_enum SSYModelChangeAction ;
 
 @interface SSYModelChangeTypes : NSObject {
 }
+
++ (BOOL)objectExistenceIsAffectedByChange:(SSYModelChangeAction)action ;
++ (BOOL)objectAttributesAreAffectedByChange:(SSYModelChangeAction)action ;
 
 + (NSString*)symbolForAction:(SSYModelChangeAction)action ;
 

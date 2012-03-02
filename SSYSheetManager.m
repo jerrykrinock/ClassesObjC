@@ -30,7 +30,7 @@ static SSYSheetManager* sharedSheetManager = nil ;
 - (void)windowWillClose:(NSNotification*)note {
 	NSWindow* window = [note object] ;
 	NSInteger windowNumber = [window windowNumber] ;
-	NSNumber* windowNumberObject = [NSNumber numberWithInt:windowNumber] ;
+	NSNumber* windowNumberObject = [NSNumber numberWithInteger:windowNumber] ;
 	[[self queues] removeObjectForKey:windowNumberObject] ;
 	[[NSNotificationCenter defaultCenter] removeObserver:self
 													name:NSWindowWillCloseNotification
@@ -43,7 +43,7 @@ static SSYSheetManager* sharedSheetManager = nil ;
 - (void)windowDidEndSheet:(NSNotification*)note {
 	NSWindow* window = [note object] ;
 	NSInteger windowNumber = [window windowNumber] ;
-	NSNumber* windowNumberObject = [NSNumber numberWithInt:windowNumber] ;
+	NSNumber* windowNumberObject = [NSNumber numberWithInteger:windowNumber] ;
 	NSMutableArray* queue = [[self queues] objectForKey:windowNumberObject] ;
 	if ([queue count] > 0) {
 		NSInvocation* invocation = [queue objectAtIndex:0] ;
@@ -64,7 +64,7 @@ static SSYSheetManager* sharedSheetManager = nil ;
 
 - (NSMutableArray*)queueForWindow:(NSWindow*)window {
 	NSInteger windowNumber = [window windowNumber] ;
-	NSNumber* windowNumberObject = [NSNumber numberWithInt:windowNumber] ;
+	NSNumber* windowNumberObject = [NSNumber numberWithInteger:windowNumber] ;
 	NSMutableArray* queue = [[self queues] objectForKey:windowNumberObject] ;
 	if (!queue) {
 		queue = [NSMutableArray arrayWithCapacity:4] ;

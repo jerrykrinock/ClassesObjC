@@ -3,10 +3,15 @@
 
 /*!
  @brief    A notification queue which coalesces based on a
- time window, for when NSNotificationQueue with NSPostWhenIdle
- is not slow enough and results in too many repeated notifications.
+ time window
 
- @details  Pretty bare-bones right now.  More features such as
+ @details  Use this class instead of NSNotificationQueue when
+ NSNotificationQueue with NSPostWhenIdle is not lazy enough
+ and results in too many redundant notifications for your
+ purpose.  SSYLazyNotificationCenter is *lazier* than any
+ of Cocoa's built-in notifications.
+ 
+ Implementation is pretty bare-bones right now.  More features such as
  a notification object, selectively removing observations, etc.,
  could be added.
 */
@@ -31,8 +36,8 @@
 
  @details  If a notification with the same name as that of
  the given notification has already been scheduled
- but has not yet been fired, the notification given now will
- replace the existing notfication, but it will be fired (sent)
+ but has not yet been fired, the later notification will be fired
+ instead of the older notification, but it will be fired (sent)
  at the time that the existing notification was scheduled to fire.
  
  Other behaviors could be imagined.  I suppose one could

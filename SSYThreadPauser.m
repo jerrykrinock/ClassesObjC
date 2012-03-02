@@ -13,8 +13,8 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
 - (void)beginWorkWithInfo:(NSDictionary*)info {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
 	NSConditionLock* lock = [info objectForKey:SSYThreadPauserKeyLock] ;
-	[lock lock] ;
-	NSInvocation* invocation = [info objectForKey:SSYThreadPauserKeyInvocation] ;
+ 	[lock lock] ;
+ 	NSInvocation* invocation = [info objectForKey:SSYThreadPauserKeyInvocation] ;
 	
 	// Do actual work
 	[invocation invoke] ;
@@ -29,6 +29,24 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
 				  object:(id)object
 				  thread:(NSThread*)workerThread
 				 timeout:(NSTimeInterval)timeout {
+    /*
+     Here's a fun 64-bit quirk that set me back a couple hours.  If you ever
+     write a method which creates a date from an NSTimeInterval parameter, make
+     sure that you can't create an unreasonably large date.  I'd been passing
+     FLT_MAX to indicate "no timeout" to such a method.
+     
+     Works OK in 32-bit.  In 64-bit, -[NSDate compare:] and -[NSDate laterDate:]
+     still work as expected.  But other methods may not.  For example,
+     -[NSConditionLock lockWhenCondition:beforeDate:] seems to think that such
+     a "float max date" has already past and returns NO immediately, regardless
+     of its 'condition'.
+     
+     The solution is the next two lines…
+     */
+    NSTimeInterval maxTimeout = [[NSDate distantFuture] timeIntervalSinceNow] ;
+    timeout = MIN(timeout, maxTimeout) ;
+    NSDate* timeoutDate = [NSDate dateWithTimeIntervalSinceNow:timeout] ;
+    
 	SSYThreadPauser* instance = [[SSYThreadPauser alloc] init] ;
 	
 	NSInvocation* invocation = [NSInvocation invocationWithTarget:worker
@@ -62,7 +80,7 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
 	
 	// Will block here until work is done, or timeout
 	BOOL workFinishedInTime = [lock lockWhenCondition:WORK_IS_DONE
-										   beforeDate:[NSDate dateWithTimeIntervalSinceNow:timeout]] ;
+										   beforeDate:timeoutDate] ;
 	if (workFinishedInTime) {
 		[lock unlock] ;
 	}
@@ -78,35 +96,3 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
 @end
 
 
-#if 0
-
-@interface WorkerDemo : NSObject {}
-
-- (void)doWorkForTimeInterval:(NSNumber*)interval ;
-
-@end
-
-
-@implementation WorkerDemo
-
-#define CANCEL_GRANULARITY 10
-
-- (void)doWorkForTimeInterval:(NSNumber*)interval {
-	NSLog(@"2308: Beginning work") ;
-	
-	NSTimeInterval timeChunk = [interval doubleValue]/CANCEL_GRANULARITY ;
-	NSInteger i ;
-	for (i=0; i<CANCEL_GRANULARITY; i++) {
-		usleep(1e6 * timeChunk) ;
-		if ([[NSThread currentThread] isCancelled]) {
-			NSLog(@"2492 Cancelling work") ;
-			break ;
-		}
-	}
-	
-	NSLog(@"2557: Ending work") ;
-}
-
-@end
-
-#endif

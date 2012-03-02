@@ -275,7 +275,9 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 		if (!(ok)) {
 			errorCode = SSYPersistentDocumentMultiMigratorErrorCodeMigrationFailed ;
 			[errorInfo setValue:sourceModelVersionName
-						 forKey:@"sourceModelVersionName"] ;
+						 forKey:@"Source Model Version Name"] ;
+			[errorInfo setValue:underlyingError
+						 forKey:@"Underlying Error"] ;
 			break ;
 		}
 		

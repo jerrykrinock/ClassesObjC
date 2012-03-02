@@ -13,6 +13,11 @@ NSString* const SSYSynchronousHttpRequestTimeoutErrorKey = @"Request's Timeout (
 NSString* const SSYSynchronousHttpReceivedDataErrorKey = @"Received Data" ;
 NSString* const SSYSynchronousHttpReceivedStringErrorKey = @"Received Data, UTF8 Decoded" ;
 
+#if USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS
+#else
+NSString* const constRunLoopModeSSYSynchronousHttp = @"com.sheepsystems.SSYSynchronousHttpRunLoopMode" ;
+#endif
+
 enum {
 	constEnumSynchronousHttpBlocked,
 	constEnumSynchronousHttpDone
@@ -23,7 +28,9 @@ enum {
 
 @property (copy) NSString* username ;
 @property (copy) NSString* password ;
+#if USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS
 @property (retain) NSConditionLock* lock ;
+#endif
 @property (retain) NSHTTPURLResponse* response ;
 @property (retain) NSMutableData* responseData ;
 @property (retain) NSError* underlyingError ;
@@ -36,7 +43,9 @@ enum {
 
 @synthesize username = m_username ;
 @synthesize password = m_password ;
+#if USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS
 @synthesize lock = m_lock ;
+#endif
 @synthesize response = m_response ;
 @synthesize responseData = m_responseData ;
 @synthesize underlyingError = m_underlyingError ;
@@ -45,7 +54,9 @@ enum {
 - (void)dealloc {
 	[m_username release] ;
 	[m_password release] ;
+#if USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS
 	[m_lock release] ;
+#endif
 	[m_response release] ;
 	[m_responseData release] ;
 	[m_underlyingError release] ;
@@ -163,6 +174,11 @@ enum {
 	return cachedResponse ;
 }
 
+#if USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS
+
+/*!
+ @details  Method which makes the connection in a secondary thread
+*/
 - (void)connectWithRequest:(NSURLRequest*)request {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ; 
 	
@@ -175,25 +191,14 @@ enum {
 	[self setConnectionState:SSYSynchronousHttpStateWaiting] ;
 
 	// Make the connection
-	NSURLConnection* connection ;
-#if 0
-#warning Logging SSYSynchronousHttp request details
-	NSLog(@"Request URL:\n%@", [[request URL] absoluteString]) ;
-	NSLog(@"HTTP Method: %@", [request HTTPMethod]) ;
-	NSLog(@"All HTTP Request Headers:\n%@", [request allHTTPHeaderFields]) ;
-	NSLog(@"Request Body:\n%@", [NSString stringWithDataUTF8:[request HTTPBody]]) ;
-#endif
-	connection = [NSURLConnection connectionWithRequest:request
-											   delegate:self] ;
+	NSURLConnection* connection = [NSURLConnection connectionWithRequest:request
+																delegate:self] ;
 	if (!connection) {
 		[self setConnectionState:SSYSynchronousHttpStateCouldNotCreateConnectionObject] ;
 		goto end ;
 	}
 	
 	NSRunLoop* runLoop = [NSRunLoop currentRunLoop] ;
-	
-	//NSMachPort* port = [NSMachPort* port] ;
-	//[runLoop addPort:port forMode:NSDefaultRunLoopMode] ;
 	
 	while (
 		   ([self connectionState] == SSYSynchronousHttpStateWaiting)
@@ -214,12 +219,12 @@ enum {
 	 Run the current loop using CFRunLoopRun(), then stop it using CFRunLoopStop(). This will guarantee that the loop exits.
 	 */
 	
-	
 	[[self lock] unlockWithCondition:constEnumSynchronousHttpDone] ;
 	
 end:	
 	[pool release] ;
 }	
+#endif
 
 + (BOOL)SSYSynchronousHttpUrl:(NSString*)urlString
 				   httpMethod:(NSString*)httpMethod
@@ -286,6 +291,14 @@ end:
 	// Possibly the above line is not needed since YES is probably default
 	// But the default behavior is not documented.
 	
+#if 0
+#warning Logging SSYSynchronousHttp request details
+	NSLog(@"Request URL:\n%@", [[mutableRequest URL] absoluteString]) ;
+	NSLog(@"HTTP Method: %@", [mutableRequest HTTPMethod]) ;
+	NSLog(@"All HTTP Request Headers:\n%@", [mutableRequest allHTTPHeaderFields]) ;
+	NSLog(@"Request Body:\n%@", [NSString stringWithDataUTF8:[mutableRequest HTTPBody]]) ;
+#endif
+
 	instance = [[SSYSynchronousHttp alloc] init] ;
 	
 	if (!mutableRequest) {
@@ -296,6 +309,8 @@ end:
 	[instance setUsername:username] ;
 	[instance setPassword:password] ;
 	
+#if USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS
+#warning SSYSynchronousHttp is using my old code
 	NSConditionLock* lock = [[NSConditionLock alloc] initWithCondition:constEnumSynchronousHttpBlocked] ;
 	[instance setLock:lock] ;
 	[lock release] ;
@@ -304,12 +319,45 @@ end:
 							 toTarget:instance
 						   withObject:mutableRequest] ;
 	
-	[mutableRequest release] ;
-	
 	// Will block here:
 	[lock lockWhenCondition:constEnumSynchronousHttpDone] ;
 	[lock unlock] ;
-		
+#else
+	// Using Quinn "The Eskimo"'s "Synthetic Synchronous" technique…
+	
+	// Initialize a place for received data
+	[instance setResponseData:[NSMutableData data]] ;
+	
+	// So our run loop will not exit immediately,
+	[instance setConnectionState:SSYSynchronousHttpStateWaiting] ;
+	
+	// Make the connection
+	NSRunLoop* runLoop = [NSRunLoop currentRunLoop] ;
+	
+	NSURLConnection * connection = [[NSURLConnection alloc] initWithRequest:mutableRequest
+																   delegate:instance
+														   startImmediately:NO] ;
+	if (!connection) {
+		[instance setConnectionState:SSYSynchronousHttpStateCouldNotCreateConnectionObject] ;
+		goto end ;
+	}
+	
+	[connection scheduleInRunLoop:runLoop
+						  forMode:constRunLoopModeSSYSynchronousHttp] ;
+	[connection start] ;
+	while (
+		   ([instance connectionState] == SSYSynchronousHttpStateWaiting)
+		   &&
+		   [runLoop runMode:constRunLoopModeSSYSynchronousHttp      
+				 beforeDate:[NSDate distantFuture]]
+		   ) {
+	}
+	
+	[connection release] ;
+#endif
+	
+	[mutableRequest release] ;
+	
 	// Set output variables and exit
 	if (response_p) {
 		*response_p = [[[instance response] retain] autorelease] ;

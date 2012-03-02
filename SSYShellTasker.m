@@ -95,7 +95,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 	
 	@try {
 		[task launch] ;
-		if ([task isRunning]) {
+ 		if ([task isRunning]) {
 			// Note: The following won't execute if no stdinData, since fileStdin will be nil
 			[fileStdin writeData:stdinData] ;  
 			[fileStdin closeFile] ;
@@ -164,7 +164,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 	@finally {
 	}
 	
-	[info setObject:[NSNumber numberWithInt:taskResult]
+	[info setObject:[NSNumber numberWithInteger:taskResult]
 			 forKey:constKeySSYShellTaskerResult] ;				
 
 	if (error) {
@@ -202,7 +202,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 	// Initialize dictionary with values that cannot be nil
 	NSMutableDictionary* info = [NSMutableDictionary dictionaryWithObjectsAndKeys:
 								 command, constKeySSYShellTaskerCommand,
-								 [NSNumber numberWithInt:wants], constKeySSYShellTaskerWants,
+								 [NSNumber numberWithInteger:wants], constKeySSYShellTaskerWants,
 								 [NSNumber numberWithDouble:timeout], constKeySSYShellTaskerTimeout,
 								 nil] ;
 	// Now set in values which can be nil

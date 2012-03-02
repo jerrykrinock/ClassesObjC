@@ -28,10 +28,122 @@ typedef NSUInteger NSPropertyListReadOptions ;
 #endif
 
 NSString* const SSYOtherApperErrorDomain = @"SSYOtherApperErrorDomain" ;
-NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 NSString* const SSYOtherApperKeyPid = @"pid" ;
+NSString* const SSYOtherApperKeyUser = @"user" ;
+NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 
 @implementation SSYOtherApper
+
+
+
++ (pid_t)pidOfThisUsersAppWithBundleIdentifier:(NSString*)bundleIdentifier {
+	pid_t pid = 0 ; // not found
+	
+	if (bundleIdentifier) {
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070		
+        // Running the main run loop is necessary for -runningApplications to
+        // update.  To my amazement, the next line is actually necessary, and
+        // it actually works.
+        [[NSRunLoop mainRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.01]] ;
+        NSArray* runningApps = [[NSWorkspace sharedWorkspace] runningApplications] ;
+		for (NSRunningApplication* runningApp in runningApps) {
+			if ([[runningApp bundleIdentifier] isEqualToString:bundleIdentifier]) {
+				pid = [runningApp processIdentifier] ;
+				break ;
+			}
+		}
+#else
+		NSArray* appDicts = [[NSWorkspace sharedWorkspace] launchedApplications] ;
+		// Note that the above method returns only applications launched by the
+		// current user, not other users.  (Not documented, determined by experiment
+		// in Mac OS 10.5.5).  Also it returns only "applications", defined as
+		// "things which can appear in the Dock that are not documents and are launched by the Finder or Dock"
+		// (See documentation of ProcessSerialNumber).  Therefore, it does not return Bookwatchdog 
+		for (NSDictionary* appDict in [appDicts objectEnumerator]) {
+			if ([[appDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:bundleIdentifier]) {
+				pid = [[appDict objectForKey:@"NSApplicationProcessIdentifier"] intValue] ;
+				break ;
+			}
+		}
+#endif
+	}
+	
+	return pid ;
+}
+
++ (pid_t)pidOfThisUsersAppWithBundlePath:(NSString*)bundlePath {
+	pid_t pid = 0 ; // not found
+
+    if (bundlePath) {
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070		
+        // Running the main run loop is necessary for -runningApplications to
+        // update.  To my amazement, the next line is actually necessary, and
+        // it actually works.
+        [[NSRunLoop mainRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.01]] ;
+        NSArray* runningApplications = [[NSWorkspace sharedWorkspace] runningApplications] ;
+        for (NSRunningApplication* runningApp in runningApplications) {
+            NSURL* url = [runningApp bundleURL] ;
+            NSString* path = [url path] ;
+            if ([path isEqualToString:bundlePath]) {
+                pid = [runningApp processIdentifier] ;
+                break ;
+            }
+        }
+#else
+        for (NSDictionary* appDic in [[NSWorkspace sharedWorkspace] launchedApplications]) {
+            NSString* path = [appDic objectForKey:@"NSApplicationPath"] ;
+            if ([path isEqualToString:bundlePath]) {
+                pid = [[appDic objectForKey:@"NSApplicationProcessIdentifier"] intValue] ;
+                break ;
+            }
+        }
+#endif
+    }    
+
+    return pid ;
+}
+
+
++ (NSString*)pathOfThisUsersRunningAppWithBundleIdentifier:(NSString*)bundleIdentifier {
+	NSString* path = nil ;
+    
+	if (bundleIdentifier) {
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070		
+        // Running the main run loop is necessary for -runningApplications to
+        // update.  To my amazement, the next line is actually necessary, and
+        // it actually works.
+        [[NSRunLoop mainRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.01]] ;
+        NSArray* runningApps = [[NSWorkspace sharedWorkspace] runningApplications] ;
+		for (NSRunningApplication* runningApp in runningApps) {
+			if ([[runningApp bundleIdentifier] isEqualToString:bundleIdentifier]) {
+				path = [[runningApp bundleURL] path] ;
+				break ;
+			}
+		}
+#else
+		NSArray* appDics = [[NSWorkspace sharedWorkspace] launchedApplications] ;
+		// Note that the above method returns only applications launched by the
+		// current user, not other users.  (Not documented, determined by experiment
+		// in Mac OS 10.5.5).  Also it returns only "applications", defined as
+		// "things which can appear in the Dock that are not documents and are launched by the Finder or Dock"
+		// (See documentation of ProcessSerialNumber).  Therefore, it does not return Bookwatchdog 
+		for (NSDictionary* appDic in [appDics objectEnumerator]) {
+			if ([[appDic objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:bundleIdentifier]) {
+				path = [appDic objectForKey:@"NSApplicationPath"] ;
+				break ;
+			}
+		}
+#endif
+	}
+    
+	return path ;
+}
+
+
+
+
+
+
 
 + (BOOL)launchApplicationPath:(NSString*)path
 					 activate:(BOOL)activate
@@ -104,36 +216,14 @@ end:;
 	return fullPath ;
 }
 
-+ (pid_t)pidOfThisUsersAppWithBundleIdentifier:(NSString*)bundleIdentifier {
-	pid_t pid = 0 ; // not found
-	
-	if (bundleIdentifier) {
-		NSArray* appDicts = [[NSWorkspace sharedWorkspace] launchedApplications] ;
-		// Note that the above method returns only applications launched by the
-		// current user, not other users.  (Not documented, determined by experiment
-		// in Mac OS 10.5.5).  Also it returns only "applications", defined as
-		// "things which can appear in the Dock that are not documents and are launched by the Finder or Dock"
-		// (See documentation of ProcessSerialNumber).  Therefore, it does not return Bookwatchdog 
-		for (NSDictionary* appDict in [appDicts objectEnumerator]) {
-			if ([[appDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:bundleIdentifier]) {
-				pid = [[appDict objectForKey:@"NSApplicationProcessIdentifier"] intValue] ;
-				break ;
-			}
-		}
-	}
-	
-	return pid ;
-}
-
 + (NSArray*)pidsExecutablesFull:(BOOL)fullExecutablePath {
-	int i ;
-	
 	// Run unix task "ps" and get results as an array, with each element containing process command and user
-	// The invocation to be constructed is: ps -x[c]awww -o pid -o command -o user
-	// -ww was added in Bookdog 3.11.25.
+	// The invocation to be constructed is: ps -x[c]awww -o pid -o user -o command
+	// -ww is required for long command path strings!!
 	NSData* stdoutData ;
 	NSString* options = fullExecutablePath ? @"-xww" : @"-xcww" ;
-	NSArray* args = [[NSArray alloc] initWithObjects:options, @"-o", @"pid", @"-o", @"comm", nil] ;
+	NSArray* args = [[NSArray alloc] initWithObjects:options, @"-o", @"pid=", @"-o", @"user=", @"-o", @"comm=", nil] ;
+	// In args, the "=" say to omit the column headers
 	[SSYShellTasker doShellTaskCommand:@"/bin/ps"
 							 arguments:args
 						   inDirectory:nil
@@ -147,42 +237,78 @@ end:;
 	if (stdoutData) {
 		NSString* processInfosString = [[NSString alloc] initWithData:stdoutData encoding:[NSString defaultCStringEncoding]] ;
 		NSArray* processInfoStrings = [processInfosString componentsSeparatedByString:@"\n"] ;
-		/* We must now parse processInfosString which looks like this (with fullExecutablePath = NO):
-		 PID      COMMAND
-		 1        launchd
-		 86       WindowServer
-		 238      Archive Assistant Scheduler
-		 13668    BkmxLicensor
-		 19523    Safari
-		 19754    Camino
-		 19755    firefox-bin
-		 20575    ps                               */		
+		[processInfosString release] ;
+		/* We must now parse processInfoStrings which looks like this (with fullExecutablePath = NO):
+		 *     1 root           launchd
+		 *    10 root           kextd
+		 *     …
+		 *    82 jk             loginwindow
+		 *    84 root           KernelEventAgent
+		 *     …
+		 * 30903 jk             CrashReporter
+		 * 32814 b              Google Chrome
+		 *     …
+		 * 48329 jk             Google Chrome Helper
+		 * 48330 jk             Google Chrome Helper EH
+		 *     …
+		 * 50253 root           activitymonitord
+		 * 53399 jk             CocoaMySQL
+		 * 53410 jk             mdworker
+		 * 53642 jk             gdb-i386-apple-darwin
+		 * 53651 jk             BookMacster
+		 *     …
+		 */		
 		
 		processInfoDics = [[NSMutableArray alloc] init] ;
-		// The range of this loop omits the first element, which is the column
-		// headings, and the last element, which is blank due to the trailing \n.
-		for (i=1; i<([processInfoStrings count] -1); i++) {
+		NSScanner* scanner = nil ;
+		for (NSString* processInfoString in processInfoStrings) {
 			NSInteger pid ;
+			NSString* user ;
 			NSString* command ;
-			
-			NSString* processInfoString = [processInfoStrings objectAtIndex:i] ;
-			
-			NSScanner* scanner = [[NSScanner alloc] initWithString:processInfoString] ;
-			// By default, NSScanner skips whitespace.  This will be handy to skip the
-			// leading whitespace before the pid, and the whitespaces separating pid,
-			// user and command.  There may be whitespace which we want in the command,
-			// but we don't scan for the command (see below).
 			BOOL ok ;
+			
+			scanner = [[NSScanner alloc] initWithString:processInfoString] ;
+			[scanner setCharactersToBeSkipped:nil] ;
+
+			// Scan leading whitespace, if any
+			[scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
+								intoString:NULL] ;
+
+			// Scan pid
 			ok = [scanner scanInteger:&pid] ;
-			NSInteger commandBeginsAt = [scanner scanLocation] ;
-			[scanner release] ;
 			if (!ok) {
+                [scanner release] ;
 				continue ;
 			}
+			
+			// Scan whitespace between pid and user
+			ok = [scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
+								intoString:NULL] ;
+			if (!ok) {
+                [scanner release] ;
+				continue ;
+			}
+
+			// Scan user.  Fortunately, short user names in Mac OS X cannot contain whitespace
+			[scanner scanCharactersFromSet:[[NSCharacterSet whitespaceCharacterSet] invertedSet]
+								intoString:&user] ;
+			
+			// Scan whitespace between user and command
+			ok = [scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
+									 intoString:NULL] ;
+			if (!ok) {
+                [scanner release] ;
+				continue ;
+			}
+			
+			// Get command which is the remainder of the string
+			NSInteger commandBeginsAt = [scanner scanLocation] ;
+			[scanner release] ;
+			scanner = nil ;
 			command = [processInfoString substringFromIndex:commandBeginsAt] ;
-			command = [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] ;
 			NSDictionary* processInfoDic = [NSDictionary dictionaryWithObjectsAndKeys:
 											[NSNumber numberWithInteger:pid], SSYOtherApperKeyPid,
+											user, SSYOtherApperKeyUser,
 											command, SSYOtherApperKeyExecutable,
 											nil ] ;
 			[processInfoDics addObject:processInfoDic] ;
@@ -191,31 +317,18 @@ end:;
 	
 	NSArray* result = [processInfoDics copy] ;
 	[processInfoDics release] ;
-	
+
 	return [result autorelease] ;
 }
 
 
-+ (NSArray*)pidsOfThisUsersProcessPath:(NSString*)path {
-	NSArray* infos = [self pidsExecutablesFull:YES] ;
-	NSMutableArray* pids = [[NSMutableArray alloc] init] ;
-	for (NSDictionary* info in infos) {
-		NSString* aPath = [info objectForKey:SSYOtherApperKeyExecutable] ;
-		if ([aPath isEqualToString:path]) {
-			[pids addObject:[info objectForKey:SSYOtherApperKeyPid]] ;
-		}
-	}
-	
-	NSArray* answer = [pids copy] ;
-	[pids release] ;
-	return [answer autorelease] ;
-}
-
 + (struct ProcessSerialNumber)processSerialNumberForAppWithPid:(pid_t)pid {
 	OSStatus oss ;
-	
 	struct ProcessSerialNumber psn = {0, 0};
 	oss = GetProcessForPID (pid, &psn) ;
+	if (oss != noErr) {
+		NSLog(@"Internal Error 502-9373 %d", (int)oss) ;
+	}
 	/* Note: GetProcessForPID() will return procNotFound if the process whose
 	 pid is 'pid' does not have a PSN.  To find if a process has a PSN, in Terminal
 	 command "ps -alxww".  Processes which have a PSN are apps, and *some* helper
@@ -227,7 +340,7 @@ end:;
 + (struct ProcessSerialNumber)processSerialNumberForAppWithBundleIdentifier:(NSString*)bundleIdentifier {
 	OSStatus err = noErr;
 	ProcessSerialNumber psn = { kNoProcess, kNoProcess };
-	while ((err == noErr)) {
+	while (err == noErr) {
 		err = GetNextProcess(&psn);
 		if (err == noErr) {
 			CFDictionaryRef procInfo = ProcessInformationCopyDictionary(
@@ -247,16 +360,14 @@ end:;
 
 + (pid_t)pidOfMyRunningExecutableName:(NSString*)executableName {
 	pid_t pid = 0 ;  // not found
+	NSString* targetUser = NSUserName() ;
 	
 	for (NSDictionary* processInfoDic in [self pidsExecutablesFull:NO]) {
+		NSString* user = [processInfoDic objectForKey:SSYOtherApperKeyUser] ;
 		NSString* command = [processInfoDic objectForKey:SSYOtherApperKeyExecutable] ;
-		if (command) {
-			if ([executableName isEqualToString:command]) {
-				pid = [[processInfoDic objectForKey:SSYOtherApperKeyPid] intValue] ;
-				if (pid > 0) {
-					break ;
-				}
-			}
+		if ([targetUser isEqualToString:user] && [executableName isEqualToString:command]) {
+			pid = [[processInfoDic objectForKey:SSYOtherApperKeyPid] intValue] ;
+			break ;
 		}
 	}
 	
@@ -271,16 +382,22 @@ end:;
 										 [executableName substringToIndex:16]] ;
 
 	NSMutableArray* pids = [[NSMutableArray alloc] init] ;
+	NSString* targetUser = NSUserName() ;
 	for (NSDictionary* processInfoDic in [self pidsExecutablesFull:NO]) {
+		NSString* user = [processInfoDic objectForKey:SSYOtherApperKeyUser] ;
 		NSString* command = [processInfoDic objectForKey:SSYOtherApperKeyExecutable] ;
 		if (command) {
 			if (
+				(
 				[executableName isEqualToString:command]
 				||
 				[zombifiedExecutableName isEqualToString:command]
+				)
+				&& 
+				[targetUser isEqualToString:user]
 				) { 
 				NSNumber* pid = [processInfoDic objectForKey:SSYOtherApperKeyPid] ;
-				if (pid) {
+				if (pid) { // Defensive programming
 					[pids addObject:pid] ;
 				}
 			}
@@ -368,8 +485,11 @@ end:;
 	infoRec.processInfoLength = sizeof(ProcessInfoRec) ;
 	// These two must be initialized or GetProcessInformation() will crash…
 	infoRec.processName = (StringPtr)&processName ; // a StringPtr = unsigned char *
+#if __LP64__
+    infoRec.processAppRef = NULL ;
+#else
 	infoRec.processAppSpec = NULL ;
-	
+#endif	
 	err = GetProcessInformation(&psn, &infoRec);
 	
 	NSString* name = nil ;
@@ -386,50 +506,20 @@ end:;
 	return [name  autorelease] ;
 }
 
-+ (pid_t)pidOfThisUsersProcessNamed:(NSString*)processName {
-	OSStatus err = noErr;
++ (pid_t)pidOfProcessNamed:(NSString*)processName
+					  user:(NSString*)user {
+	NSArray* infos = [self pidsExecutablesFull:NO] ;
 	pid_t pid = 0 ;
-	struct ProcessSerialNumber psn ;
-	
-	psn.lowLongOfPSN  = kNoProcess;
-	psn.highLongOfPSN  = kNoProcess;
-	
-	while (!(GetNextProcess (&psn))) {
-		NSString* aProcessName = [self processNameWithProcessSerialNumber:psn] ;
-		if ([aProcessName isEqualToString:processName] ) {
-			err = GetProcessPID(&psn, &pid);
-			if (!err) {
-				break ;
-			}
+	for (NSDictionary* info in infos) {
+		NSString* aUser = [info objectForKey:SSYOtherApperKeyUser] ;
+		NSString* aPath = [info objectForKey:SSYOtherApperKeyExecutable] ;
+		if ([aUser isEqualToString:user] && [aPath isEqualToString:processName]) {
+			pid = [[info objectForKey:SSYOtherApperKeyPid] intValue] ;
+			break ;
 		}
 	}
-	
+		
 	return pid ;
-}
-
-+ (NSArray*)pidsOfThisUsersProcessesNamed:(NSString*)processName {
-	OSStatus err = noErr;
-	struct ProcessSerialNumber psn ;
-	
-	psn.lowLongOfPSN  = kNoProcess;
-	psn.highLongOfPSN  = kNoProcess;
-	
-	NSMutableArray* pids = [[NSMutableArray alloc] init] ;
-	while (!(GetNextProcess (&psn))) {
-		NSString* aProcessName = [self processNameWithProcessSerialNumber:psn] ;
-		if ([aProcessName isEqualToString:processName] ) {
-			pid_t pid = 0 ;
-			err = GetProcessPID(&psn, &pid);
-			if (!err) {
-				[pids addObject:[NSNumber numberWithInt:pid]] ;
-			}
-		}
-	}
-	
-	NSArray* answer = [pids copy] ;
-	[pids release] ;
-	
-	return [answer autorelease] ;
 }
 
 + (NSString*)processBundlePathWithProcessSerialNumber:(struct ProcessSerialNumber)psn {
@@ -442,7 +532,7 @@ end:;
 	[[processInfo retain] autorelease] ;
 	// Otherwise, it will be released as soon as the app whose bundlePath it is quits.
 	// Before we did that, if Bookdog was running, BookMacster would crash in 
-	// -[SSYOtherApper quitThisUsersAppWithBundlePath:ttimeout:error_p:] after
+	// -[SSYOtherApper quitThisUsersAppWithBundlePath:timeout:killAfterTimeout:error_p:] after
 	// quitting Bookdog, when sending [self isThisUsersAppRunningWithBundlePath:bundlePath].
 	// (This bug was fixed in BookMacster 1.5.7.)
 	CFRelease(processInfo) ;
@@ -527,18 +617,27 @@ end:;
 
 + (BOOL)quitThisUsersAppWithBundlePath:(NSString*)bundlePath
 							   error_p:(NSError**)error_p {
-	NSString* source = [NSString stringWithFormat:
-						@"tell application \"%@\"\n"
-						@"  close windows\n"
-						@"  quit\n"
-						@"end tell\n",
-						bundlePath] ;
-	// The 'close windows' improves the reliability of this script,
-	// thanks to Shane Stanley <sstanley@myriad-com.com.au>
-	// 'AppleScriptObjC Explored' <www.macosxautomation.com/applescript/apps/>
-	// See http://lists.apple.com/archives/applescript-users/2011/Jun/threads.html  June 8
-	return [self runAppleScriptSource:source
-							  error_p:error_p] ;
+	BOOL isRunning = [self pidOfThisUsersAppWithBundlePath:bundlePath] != 0 ;
+		
+	BOOL ok = YES ;
+	if (isRunning) {
+		NSString* source = [NSString stringWithFormat:
+		@"tell application \"%@\"\n"
+		@"  close windows\n"
+		@"  quit\n"
+		@"end tell",
+		bundlePath] ;
+		// The 'close windows' improves the reliability of this script,
+		// thanks to Shane Stanley <sstanley@myriad-com.com.au>
+		// 'AppleScriptObjC Explored' <www.macosxautomation.com/applescript/apps/>
+		// See http://lists.apple.com/archives/applescript-users/2011/Jun/threads.html  June 8
+		// Note that this causes the app to launch if it is not running, hence the
+		// previous NSWorkspace test.
+		ok = [self runAppleScriptSource:source
+								error_p:error_p] ;
+	}
+	
+	return ok ;
 }
 
 #if 0
@@ -546,12 +645,61 @@ end:;
 + (BOOL)quitThisUsersAppWithBundleIdentifier:(NSString*)bundleIdentifier
 									 error_p:(NSError**)error_p {
 	NSString* source = [NSString stringWithFormat:
-						@"tell application id \"%@\" to quit",
+						@"tell application \"System Events\"\n"
+						@"  set runCount to count (every process whose bundle identifier is \"%@\")\n"
+						@"end tell\n"
+						@"if runCount is greater than 0 then\n"
+						@"  tell application id \"%@\"\n"
+						@"    close windows\n"
+						@"    quit\n"
+						@"  end tell\n"
+						@"end if",
 						bundleIdentifier] ;
+	// The 'close windows' improves the reliability of this script,
+	// thanks to Shane Stanley <sstanley@myriad-com.com.au>
+	// 'AppleScriptObjC Explored' <www.macosxautomation.com/applescript/apps/>
+	// See http://lists.apple.com/archives/applescript-users/2011/Jun/threads.html  June 8
+	// But this caused the app to launch even if it was not running!!
+	// So I got the runCount idea from modifying John Gruber's idea…
+	// http://daringfireball.net/2006/10/how_to_tell_if_an_app_is_running
+	// to use the bundle identifier as suggested here:
+	// http://macscripter.net/viewtopic.php?id=24569
 	return [self runAppleScriptSource:source
 							  error_p:error_p] ;
 }
 #endif
+
++ (NSString*)commandAndArgumentsOfPid:(pid_t)pid {
+	NSArray* args = [NSArray arrayWithObjects:
+					 @"-www",      // Allow 4x the normal column width.  Should be enough!!
+					 @"-o",        // Print the following column(s)
+					 @"command=",  // = means to suppress header line
+					 @"-p",        // subject pid follows
+					 [NSString stringWithFormat:@"%d", pid],
+					 nil] ;
+	
+	NSString* commandAndArguments = nil ;
+	NSData* stdoutData ;
+	[SSYShellTasker doShellTaskCommand:@"/bin/ps"
+							 arguments:args
+						   inDirectory:nil
+							 stdinData:nil
+						  stdoutData_p:&stdoutData
+						  stderrData_p:NULL
+							   timeout:5.0
+							   error_p:NULL] ;
+	if (stdoutData) {
+		commandAndArguments = [[NSString alloc] initWithData:stdoutData
+															  encoding:NSUTF8StringEncoding] ;
+		[commandAndArguments autorelease] ;
+	}
+	
+	if ([commandAndArguments length] == 0) {
+		commandAndArguments = nil ;
+	}
+
+	return commandAndArguments ;
+}
 
 + (BOOL)isProcessRunningPid:(pid_t)pid
 			   thisUserOnly:(BOOL)thisUserOnly {
@@ -586,6 +734,7 @@ end:;
 		NSString* pidsString = [[NSString alloc] initWithData:stdoutData
 													 encoding:NSUTF8StringEncoding] ;
 		NSArray* pidStrings = [pidsString componentsSeparatedByString:@"\n"] ;
+		[pidsString release] ;
 		for (NSString* pidString in pidStrings) {
 			// The members of pidStrings which are less than 5 digits long
 			// have leading whitespaces so that the columns are right-justified.
@@ -622,19 +771,7 @@ end:;
 }	
 
 + (BOOL)isThisUsersAppRunningWithBundleIdentifier:(NSString*)bundleIdentifier {
-	NSWorkspace* workspace = [NSWorkspace sharedWorkspace] ;
-	pid_t pid = 0 ;
-
-	// For Mac OS 10.6 (someday), one should use -runningApplications
-	// and +[NSRunningApplication runningApplicationsWithBundleIdentifier:]
-	// However be careful.  Tests I've done show that it might have the 
-	// same bug worked around below.  Or it might not.
-	NSArray* appDicts = [workspace launchedApplications] ;
-	for (NSDictionary* appDict in appDicts) {
-		if ([[appDict objectForKey:@"NSApplicationBundleIdentifier"] isEqual:bundleIdentifier]) {
-			pid = [[appDict objectForKey:@"NSApplicationProcessIdentifier"] longValue] ;
-		}
-	}
+	pid_t pid = [self pidOfThisUsersAppWithBundleIdentifier:bundleIdentifier] ;
 	
 	return [self isProcessRunningPid:pid
 							   logAs:[bundleIdentifier pathExtension]] ;
@@ -645,26 +782,15 @@ end:;
 		return NO ;
 	}
 	
-	NSWorkspace* workspace = [NSWorkspace sharedWorkspace] ;
-	pid_t pid = 0 ;
-	
-	// For Mac OS 10.6 (someday), one should use -runningApplications
-	// and +[NSRunningApplication runningApplicationsWithBundleIdentifier:]
-	// However be careful.  Tests I've done show that it might have the 
-	// same bug worked around below.  Or it might not.
-	NSArray* appDicts = [workspace launchedApplications] ;
-	for (NSDictionary* appDict in appDicts) {
-		if ([[appDict objectForKey:@"NSApplicationPath"] isEqualToString:bundlePath]) {
-			pid = [[appDict objectForKey:@"NSApplicationProcessIdentifier"] longValue] ;
-		}
-	}
-	
+	pid_t pid = [self pidOfThisUsersAppWithBundlePath:bundlePath] ;
+
 	return [self isProcessRunningPid:pid
 							   logAs:[bundlePath lastPathComponent]] ;
 }
 
 + (BOOL)quitThisUsersAppWithBundlePath:(NSString*)bundlePath
 							   timeout:(NSTimeInterval)timeout
+					  killAfterTimeout:(BOOL)killAfterTimeout
 							   error_p:(NSError**)error_p {
 	if (!bundlePath) {
 		return YES ;
@@ -685,12 +811,23 @@ end:;
 		}
 		
 		if ([(NSDate*)[NSDate date] compare:endDate] == NSOrderedDescending) {
+			// Timed out
+			if (killAfterTimeout) {
+				pid_t pid = [self pidOfThisUsersProcessWithBundlePath:bundlePath] ;
+				if (pid != 0) {
+					kill(pid, SIGKILL) ;
+				}
+				
+				return YES ;
+			}
+
 			return NO ;
 		}
 		
 		[NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]] ;
 	}
 
+	
 	return NO ; // Never happens due to infinite loop above; to suppress compiler warning
 }
 
@@ -831,6 +968,7 @@ end:;
 															 encoding:NSASCIIStringEncoding] ;
 			
 			*cpuPercent_p = [cpuUsageString floatValue] ;
+			[cpuUsageString release] ;
 		}
 		else {
 			errorCode = 228401 ;
@@ -864,6 +1002,8 @@ end:;
 		}
 	}
 	
+	[psErrorString release] ;
+	
 	return ok ;
 }
 
@@ -884,20 +1024,6 @@ end:;
 	}
 	
 	return bundlePath ;
-}
-
-+ (NSString*)pathIfRunningForThisUserBundleIdentifier:(NSString*)bundleIdentifier {
-	NSArray* launchedApplications = [[NSWorkspace sharedWorkspace] launchedApplications] ;
-	// An undocumented "feature" of -[NSWorkspace launchedApplications], which I determined
-	// by testing in Mac OS 10.6.6, is that it only returns info for applications whose
-	// user is the current user.
-	for (NSDictionary* appInfo in launchedApplications) {
-		if ([[appInfo objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:bundleIdentifier]) {
-			return [appInfo objectForKey:@"NSApplicationPath"] ;
-		}
-	}
-		
-	return nil ;
 }
 
 + (BOOL)activateAppWithBundlePath:(NSString*)bundlePath

@@ -82,7 +82,9 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 - (NSInvocation*)errorRetryInvocation {
 	NSInvocation* answer ;
 	if (m_errorRetryInvocations) {
-		answer = [NSInvocation invocationWithInvocations:m_errorRetryInvocations] ;
+		NSArray* frozenInvocations = [[NSArray alloc] initWithArray:m_errorRetryInvocations] ;
+		answer = [NSInvocation invocationWithInvocations:frozenInvocations] ;
+		[frozenInvocations release] ;
 	}
 	else {
 		answer = nil ;
@@ -306,47 +308,48 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 		group = [NSString stringWithFormat:@"%f", [[NSDate date] timeIntervalSince1970]] ;
 	}
 
-	// Note that we only capture our invocation for possible error recovery
-	// and add it to errorRetryInvocations if keepWithNext is NO.  This is
-	// important because, only if keepWithNext is NO will we remove the
-	// errorRetryInvocation in -doDone.  Otherwise, errorRetryInvocation
-	// will hang around in our errorRetryDic, which is kind of a memory
-	// leak in itself, but more importantly may cause a retain cycle
-	// involving objects that the invoker of this method has set into info.
-	if (!keepWithNext) {
-		// Capture our invocation, for possible error recovery in case we fail
-		// and need to be repeated
-		NSMutableDictionary* originalInfo = [NSMutableDictionary dictionary] ; //WithDictionary:info] ;
-		for (NSString* key in [info allKeys]) {
-			if ([key isEqualToString:@"Export Info Leak Detector"]) {
-				continue ;
-			}
-			if ([key isEqualToString:constKeyIxporter]) {
-				continue ;
-			}
-			if ([key isEqualToString:constKeyBkmslf]) {
-				continue ;
-			}
-			
-			[originalInfo setObject:[info objectForKey:key]
-												forKey:key] ;
+	// Capture our invocation, for possible error recovery in case we fail
+	// and need to be repeated
+	// Two big changes were made in this section in BookMacster 1.9.5, on 2012 Jan 05.
+	// • This section now executes unconditionally, instead of only when !keepWithNext.
+	//   This was done to fix a problem wherein, if an import failed and was re-executed
+	//   during error recovery, only the final Import-Grande operations (beginning with
+	//   -gulpImport) would be executed, because the initial Import-Grande operations and
+	//   the per-importer operations were never bundled into errorRetryInvocations.
+	//   According to previous comments, the conditional execution was to eliminate a
+	//   retain cycle, but it was not very well explained and even noted in the header
+	//   file that this was not well understood.  I think I understand it now.  See the
+	//   header file comments for this method, for parameter keepWithNext.
+	// • In iterating through -[info allKeys], constKeyBkmslf and constKeyIxporter are no
+	//   longer skipped.  The former was done to eliminate Internal Error 208-9593, and 
+	//   the latter was done because I couldn't think of any reason why it should be
+	//   omitted either.
+	// After making these two changes, I tested the new code for memory leaks and retain
+	// cycles, but all Extore and Bkmslf instances seem to dealloc as expected.
+	NSMutableDictionary* originalInfo = [NSMutableDictionary dictionary] ; //WithDictionary:info] ;
+	for (NSString* key in [info allKeys]) {
+		if ([key isEqualToString:@"Export Info Leak Detector"]) {
+			continue ;
 		}
-		NSInvocation* errorRetryInvocation = [NSInvocation invocationWithTarget:self
-																	   selector:_cmd
-																retainArguments:YES
-															  argumentAddresses:
-											  &group,
-											  &addon,
-											  &selectorNames,
-											  &originalInfo,
-											  &block,
-											  &owner,
-											  &doneThread,
-											  &doneTarget,
-											  &doneSelector,
-											  &keepWithNext] ;
-		[self appendErrorRetryInvocation:errorRetryInvocation] ;
+		
+		[originalInfo setObject:[info objectForKey:key]
+											forKey:key] ;
 	}
+	NSInvocation* errorRetryInvocation = [NSInvocation invocationWithTarget:self
+																   selector:_cmd
+															retainArguments:YES
+														  argumentAddresses:
+										  &group,
+										  &addon,
+										  &selectorNames,
+										  &originalInfo,
+										  &block,
+										  &owner,
+										  &doneThread,
+										  &doneTarget,
+										  &doneSelector,
+										  &keepWithNext] ;
+	[self appendErrorRetryInvocation:errorRetryInvocation] ;
 	
 	[info setObject:group
 			 forKey:constKeySSYOperationGroup] ;

@@ -9,7 +9,7 @@ extern NSString* const constKeyActionValue ;
 
 /*!
  @brief    A control showing a text field, optional progress bar and
- optional cancel button in a horizontal line.
+ optional cancel button, all lined up horizontally.
 
  @details
  
@@ -249,8 +249,6 @@ extern NSString* const constKeyActionValue ;
  completion, without adding any new completion, by sending this
  message with both arguments nil.
  
- Sending -clearAll will clear any completions set with this
- message, regardless of COMPLETION_SHOW_TIME.
  @param    verb  A localized verb, the task that was completed,
  or nil (see Details).
  @param    result  Additional description of what was done,

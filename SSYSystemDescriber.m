@@ -4,9 +4,9 @@
 @implementation SSYSystemDescriber
 
 + (SSYVersionTriplet*)softwareVersionTriplet {
-	signed long	major ;
-	signed long	minor ;
-	signed long	bugFix ;
+	SInt32	major ;
+	SInt32	minor ;
+	SInt32	bugFix ;
 	Gestalt(gestaltSystemVersionMajor, &major) ;
 	Gestalt(gestaltSystemVersionMinor, &minor) ;
 	Gestalt(gestaltSystemVersionBugFix, &bugFix) ;
@@ -21,7 +21,7 @@
 }
 
 + (NSString*)architectureString {
-	signed long arch ;
+	SInt32 arch ;
 	Gestalt(gestaltSysArchitecture, &arch) ;
 	NSString* cpuString ;
 	switch (arch) {

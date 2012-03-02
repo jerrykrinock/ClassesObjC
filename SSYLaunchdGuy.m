@@ -65,73 +65,21 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 	return [answer autorelease] ;
 }
 
-+ (NSDate*)nextStartDateForDailyLaunchdAgentWithPrefix:(NSString*)prefix
-						   deletingAgentsExpiredBeyond:(NSTimeInterval)expireTimeInterval
-											   timeout:(NSTimeInterval)timeout {
++ (BOOL)isScheduledLaunchdAgentWithPrefix:(NSString*)prefix {
 	NSDictionary* dicOfDics = [self installedLaunchdAgentsWithPrefix:prefix] ;
-	NSDate* date = nil ;
 	for (NSString* label in dicOfDics) {
 		NSDictionary* agentDic = [dicOfDics valueForKey:label] ;
 		// Use defensive programming when reading from files!
 		if ([agentDic respondsToSelector:@selector(valueForKey:)]) {
 			NSDictionary* timeValues = [agentDic valueForKey:@"StartCalendarInterval"] ;
-			if ([timeValues count] != 2) {
-				continue ;
+			if (timeValues) {
+				return YES ;
 			}
-			NSNumber* hourNumber = [timeValues objectForKey:@"Hour"] ;
-			if (!hourNumber) {
-				continue ;
-			}
-			NSNumber* minuteNumber = [timeValues objectForKey:@"Minute"] ;
-			if (!minuteNumber) {
-				continue ;
-			}
-
-			NSString* hourDigits = [NSString stringWithFormat:@"%02d", [hourNumber integerValue]] ;
-			NSString* minuteDigits = [NSString stringWithFormat:@"%02d", [minuteNumber integerValue]] ;
-			NSMutableString* fireDateString = [[[NSDate date] description] mutableCopy] ;
-			[fireDateString replaceCharactersInRange:NSMakeRange(11,2)
-									 withString:hourDigits] ;
-			[fireDateString replaceCharactersInRange:NSMakeRange(14,2)
-									 withString:minuteDigits] ;
-			[fireDateString replaceCharactersInRange:NSMakeRange(17,2)
-										  withString:@"00"] ;
-			NSDate* fireDate = [NSDate dateWithString:fireDateString] ;
-			[fireDateString release] ;
-			if ([fireDate timeIntervalSinceNow] <= 0) {
-				// The given hour:minute has already passed for today.
-				// Change it to tomorrow
-				NSTimeInterval timeInterval = [fireDate timeIntervalSinceReferenceDate] ;
-				timeInterval += (60*60*24) ;
-				fireDate = [NSDate dateWithTimeIntervalSinceReferenceDate:timeInterval] ;
-				// For Mac OS X 10.6, replace the above 3 lines with with:
-				// aDate = [aDate dateByAddingTimeInterval:(60*60*24)] ;
-
-			}
-			
-			if ([fireDate timeIntervalSinceNow] > expireTimeInterval) {
-				BOOL ok = [self removeAgentWithLabel:label
-										  afterDelay:0
-										  justReload:NO
-											 timeout:timeout] ;
-				if (!ok) {
-					NSLog(@"Internal Error 634-0191 %@", label) ;
-				}
-				
-				// So that this one is not a candidate to be returned…
-				continue ;
-			}
-
-			date = [date earlierDate:fireDate] ;
-			if (!date) {
-				date = fireDate ;
-			}			
 		}
 	}
 	
-	return date ;
+	return NO ;
 }
-
 
 // launchctl itself has a built-in timeout of 25 seconds (Mac OS 10.6.6).
 // So, anything over 25 seconds will act like 25 seconds.
@@ -180,6 +128,7 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 	}
 
 	return (result == 0) ;
+
 }
 
 + (BOOL)removeAgentsWithPrefix:(NSString*)prefix
@@ -232,7 +181,8 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 + (BOOL)addAgentInfo:(NSDictionary*)dic
 		   directory:(NSString*)dirPath
 			 error_p:(NSError**)error_p {
-	BOOL ok = YES ;
+	NSError* error = nil ;
+    BOOL ok = YES ;
 	
 	// Create data
 	NSString* errorDescription = nil ;
@@ -243,8 +193,8 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 		NSString* msg = [NSString stringWithFormat:
 						 @"Could not load agent because %@",
 						 errorDescription] ;
-		*error_p = SSYMakeError(48376, msg) ;
-		*error_p = [*error_p errorByAddingUserInfoObject:dic
+		error = SSYMakeError(48376, msg) ;
+		error = [error errorByAddingUserInfoObject:dic
 												  forKey:@"Dictionary"] ;
 		ok = NO ;
 		goto end ;
@@ -253,10 +203,10 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 	// Generate file URL
 	NSString* filename = [dic objectForKey:@"Label"] ;
 	if (!filename) {
-		*error_p = SSYMakeError(483276, @"No label") ;
-		*error_p = [*error_p errorByAddingUserInfoObject:dic
+		error = SSYMakeError(483276, @"No label") ;
+		error = [error errorByAddingUserInfoObject:dic
 												  forKey:@"Dic"] ;
-		*error_p = [*error_p errorByAddingBacktrace] ;
+		error = [error errorByAddingBacktrace] ;
 		ok = NO ;
 		goto end ;
 	}
@@ -267,7 +217,7 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 	// Write data to file URL
 	ok = [data writeToURL:url
 				  options:NSAtomicWrite
-					error:error_p] ;
+					error:&error] ;
 	if (!ok) {
 		goto end ;
 	}
@@ -280,7 +230,6 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 	// interpret the remainder of the digits as hexidecimal.  It's C !
 	NSDictionary* attributes = [NSDictionary dictionaryWithObject:octal644
 														   forKey:NSFilePosixPermissions] ;
-	NSError* error = nil ;
 #if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
 	ok =[[NSFileManager defaultManager] changeFileAttributes:attributes
 													  atPath:path] ;
@@ -289,15 +238,28 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 										 ofItemAtPath:path
 												error:&error] ;
 #endif
-if (!ok) {
+	if (!ok) {
 		NSString* msg = [NSString stringWithFormat:
 						 @"Could not set permissions for agent %@",
 						 path] ;
-		*error_p = [SSYMakeError(32457, msg) errorByAddingUnderlyingError:error] ;
+		error = [SSYMakeError(32457, msg) errorByAddingUnderlyingError:error] ;
 		goto end ;
 	}
 	
 	// Determine if this agent should be loaded
+	// The following code assigns shouldLoad in
+	// accordance with this truth table:
+	/*  RunAtLoad    any otherTriggerKey
+	 *	is present       is present       shouldLoad  because
+	 *  ----------   -------------------  ----------  -------
+	 *	   NO                 X                YES    This is a normal job.
+	 *     YES                YES              YES    This is a normal job.
+	 *     YES                NO               NO     Invoker desires that this job will run at
+	 *                                                   the user's next login/startup.   Otherwise, she
+	 *                                                   wouldn't be using launchd and would simply
+	 *                                                   have run the command herself.  This case applies
+	 *                                                   to a BookMacster .standby agent
+	 */
 	BOOL shouldLoad = YES ;
 	if ([[dic objectForKey:@"RunAtLoad"] boolValue] == YES) {
 		shouldLoad = NO ;
@@ -319,23 +281,23 @@ if (!ok) {
 	}
 	
 	if (shouldLoad) {
-		NSError* error = nil ;
 		ok = [self agentLoadPath:path
 						 error_p:&error] ;
 		if (!ok) {
 			NSString* msg = [NSString stringWithFormat:
 							 @"Could not load agent %@",
 							 path] ;
-			if (error_p) {
-				*error_p = SSYMakeError(32452, msg) ;
-				*error_p = [*error_p errorByAddingUnderlyingError:error] ;
-			}
+			error = [SSYMakeError(32452, msg) errorByAddingUnderlyingError:error] ;
 			
 			goto end ;
 		}
 	}
 	
 end:;
+    if (error_p) {
+        *error_p = error ;
+    }
+    
 	return ok ;
 }
 
@@ -352,7 +314,7 @@ end:;
 
 + (BOOL)addAgent:(NSDictionary*)agentDic
 		 error_p:(NSError**)error_p {
-	BOOL ok ;
+	BOOL ok = YES ;
 	NSError* error = nil ;
 	
 	NSString* myAgentDirectory = [self myAgentDirectoryError_p:&error] ;
@@ -373,7 +335,7 @@ end:;
 
 + (BOOL)addAgents:(NSArray*)agents
 		  error_p:(NSError**)error_p {
-	BOOL ok ;
+	BOOL ok = YES ;
 	NSError* error = nil ;
 	
 	NSString* myAgentDirectory = [self myAgentDirectoryError_p:&error] ;
@@ -397,6 +359,89 @@ end:;
 	return ok ;
 }
 
+/*!
+ @brief    
+ 
+ @details   This section was added in BookMacster 1.7.2/1.6.8,
+ and upgraded to a separate method in BookMacster 1.9.9.  Problem:
+ launchctl will log a stupid message to stderr if we tell it to 
+ unload a job which is not loaded.  I presume it might, or might
+ someday, do a similar thing if we tell it to load a job which
+ is already loaded.  Use this method first.  It will ask launchctl
+ for its list of loaded jobs, then grep it to see if our job is already loaded.
+ 
+ If any error occurs, this method logs it to the console and returns YES,
+ that is, assuming worst-case, that the job *is* loaded and therefore
+ should be unloaded.  If you were using this method to see if a job
+ needs to be loaded, you'd want to reverse that behavior!
+ @result    YES if the job is loaded or an error occurs,
+ NO if the job is definitely not loaded
+ */
++ (BOOL)isLoadedLabel:(NSString*)label {
+	NSArray *arguments;
+	NSInteger result;
+	BOOL isLoaded = YES ;	
+	arguments = [NSArray arrayWithObjects:
+				 @"list",
+				 nil] ;
+	
+	NSData* listData = nil ;
+	NSError* error = nil ;
+	result = [SSYShellTasker doShellTaskCommand:@"/bin/launchctl"
+									  arguments:arguments
+									inDirectory:nil
+									  stdinData:nil
+								   stdoutData_p:&listData
+								   stderrData_p:NULL
+										timeout:3.0
+										error_p:&error] ;
+	if ((result != 0) && error) {
+		NSLog(@"SSYLaunchdGuy Error 845-6422 label=%@  %@", label, error) ;
+	}
+	
+	if (listData) {
+		NSSet* reservedChars = [NSSet setWithObjects:
+								@"?", @"+", @"{", @"|", @"(", @")", @"[", @"]", nil] ;
+		NSMutableString* escapedLabel = [label mutableCopy] ;
+		for (NSString* reservedChar in reservedChars) {
+			[escapedLabel replaceOccurrencesOfString:reservedChar
+										  withString:[NSString stringWithFormat:@"\\%@", reservedChar]
+											 options:0
+											   range:NSMakeRange(0, [escapedLabel length])] ;
+		}
+		NSString* pattern = [NSString stringWithFormat:
+							 @"[[:space:]]%@$",
+							 escapedLabel] ;
+        [escapedLabel release] ;
+		arguments = [NSArray arrayWithObjects:
+					 @"-q",	// Return 0 if pattern is found, 1 if not, 1 if error	 
+					 pattern,
+					 nil] ;
+		NSData* countData = nil ;
+		error = nil ;
+		result = [SSYShellTasker doShellTaskCommand:@"/usr/bin/grep"
+										  arguments:arguments
+										inDirectory:nil
+										  stdinData:listData
+									   stdoutData_p:&countData
+									   stderrData_p:NULL
+											timeout:3.0
+											error_p:&error] ;
+		if (error) {
+			NSLog(@"SSYLaunchdGuy Error 845-6423 label=%@  %@", label, error) ;
+		}
+		else {
+			isLoaded = (result == 0) ;
+		}
+	}
+	else {
+		NSLog(@"SSYLaunchdGuy Error 589-9393 label=%@  %@", label, error) ;
+		// Until BookMacster 1.9.9, we'd return NO here.  Now we'll return YES ;
+	}
+	
+	return isLoaded ;
+}
+
 + (BOOL)removeAgentWithLabel:(NSString*)label
 				  afterDelay:(NSInteger)delaySeconds
 				  justReload:(BOOL)justReload
@@ -404,6 +449,7 @@ end:;
 	if (!label) {
 		return YES ;
 	}
+
 	
 	NSString* filename = [label stringByAppendingPathExtension:@"plist"] ;
 	NSString* directory = [self homeLaunchAgentsPath] ;
@@ -413,6 +459,11 @@ end:;
 	if (![[NSFileManager defaultManager] fileExistsAtPath:plistPath]) {
 		return YES ;
 	}
+	
+	// Stupid launchctl will log an error to console if we ask it
+	// to unload a job that is not loaded.  To avoid that,
+	BOOL isLoaded = [self isLoadedLabel:label] ;
+	
 	
 	NSString* cmdPath = [[NSFileManager defaultManager] temporaryFilePath] ;
 	// I presumed we need execute permissions, which we don't get from
@@ -428,21 +479,24 @@ end:;
 	// Generate the command (cmd) as a multi-line string
 	NSMutableString* formatString = [[NSMutableString alloc] init] ;
 	[formatString appendString:
-	 @"#!/bin/sh\n"                                     // shebang
-	 @"PLIST_PATH=\"%@\"\n"                             // define environment variable
-	 @"sleep %d\n"                                      // for optional delaySeconds
-	 @"/bin/launchctl unload -wF $PLIST_PATH\n"] ;      // Unload the agent
+	 @"#!/bin/sh\n"                                       // shebang
+	 @"PLIST_PATH=\"%@\"\n"                               // define environment variable
+	 @"sleep %d\n" ] ;                                    // for optional delaySeconds
+	if (isLoaded) {
+		[formatString appendString:
+		 @"/bin/launchctl unload -wF \"$PLIST_PATH\"\n"] ;    // Unload the agent
+	}
 	if (justReload) {
 		[formatString appendString:
-		 @"sleep 1\n"                                   // Seems like a good idea to wait here for launchd/launchctl to regain its bearings
-		 @"/bin/launchctl load -wF $PLIST_PATH\n"] ;    // reload the agent
+		 @"sleep 1\n"                                     // Seems like a good idea to wait here for launchd/launchctl to regain its bearings
+		 @"/bin/launchctl load -wF \"$PLIST_PATH\"\n"] ;  // reload the agent
 	}
 	else {
 		[formatString appendString:
-		 @"rm $PLIST_PATH\n" ] ;                        // Remove the plist file
+		 @"rm \"$PLIST_PATH\"\n" ] ;                      // Remove the plist file
 	}	
 	[formatString appendString:
-	 @"rm \"%@\"\n"] ;                                  // Remove this script's file
+	 @"rm \"%@\"\n"] ;                                    // Remove this script's file (self-destruct)
 	NSString* cmd = [NSString stringWithFormat:
 					 formatString,
 					 plistPath,
@@ -490,6 +544,7 @@ end:;
 	NSString* plistPath = [directory stringByAppendingPathComponent:filename] ;
 	if (load) {
 		if (![[NSFileManager defaultManager] fileExistsAtPath:plistPath]) {
+			NSLog(@"Warning 147-7580 Cannot load nonexistent %@", plistPath) ;
 			return YES ;
 		}
 	}
@@ -497,65 +552,15 @@ end:;
 	NSArray* arguments ;
 	NSInteger result ;
 	
-	// This section was added in BookMacster 1.7.2/1.6.8
 	// launchctl will log a stupid message to stderr if we tell it to 
-	// unload a job which is not loaded.  I presume it might, or might
-	// someday, do a similar thing if we tell it to load a job which
-	// is already loaded.  So, we first ask launchctl for its list of
-	// loaded jobs, then grep it to see if our job is already loaded…
-	BOOL isLoaded = NO ;	
-	arguments = [NSArray arrayWithObjects:
-				 @"list",
-				 nil] ;
-	
-	NSData* listData = nil ;
-	result = [SSYShellTasker doShellTaskCommand:@"/bin/launchctl"
-									  arguments:arguments
-									inDirectory:nil
-									  stdinData:nil
-								   stdoutData_p:&listData
-								   stderrData_p:NULL
-										timeout:3.0
-										error_p:error_p] ;
-	if ((result != 0) && error_p) {
-		return NO ;
-	}
-	if (listData) {
-		NSSet* reservedChars = [NSSet setWithObjects:
-								@"?", @"+", @"{", @"|", @"(", @")", @"[", @"]", nil] ;
-		NSMutableString* escapedLabel = [label mutableCopy] ;
-		for (NSString* reservedChar in reservedChars) {
-			[escapedLabel replaceOccurrencesOfString:reservedChar
-										  withString:[NSString stringWithFormat:@"\\%@", reservedChar]
-											 options:0
-											   range:NSMakeRange(0, [escapedLabel length])] ;
-		}
-		NSString* pattern = [NSString stringWithFormat:
-							 @"[[:space:]]%@$",
-							 escapedLabel] ;
-		arguments = [NSArray arrayWithObjects:
-					 @"-q",	// Return 0 if pattern is found, 1 if not, 1 if error	 
-					 pattern,
-					 nil] ;
-		NSData* countData = nil ;
-		result = [SSYShellTasker doShellTaskCommand:@"/usr/bin/grep"
-										  arguments:arguments
-										inDirectory:nil
-										  stdinData:listData
-									   stdoutData_p:&countData
-									   stderrData_p:NULL
-											timeout:3.0
-											error_p:error_p] ;
-		
-		isLoaded = (result == 0) ;
-	}
-	else {
-		NSLog(@"Internal Error 589-9393.  Assuming launchd job %@ is not loaded", label) ;
-	}
+	// unload a job which is not loaded.
+	BOOL isLoaded = [self isLoadedLabel:label] ;
+
 	if (load == isLoaded) {
 		return YES ;
 	}
 	
+	// If we haven't returned yet, proceed with the actual work of loading or unloading
 	NSString* subcmd = load ? @"load" : @"unload" ;
 	arguments = [NSArray arrayWithObjects:
 				 subcmd,

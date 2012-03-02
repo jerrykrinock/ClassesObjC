@@ -7,6 +7,7 @@
 + (NSData*)uuidData {
 	CFUUIDRef cfUUID = CFUUIDCreate(kCFAllocatorDefault) ;
 	CFUUIDBytes bytes = CFUUIDGetUUIDBytes(cfUUID) ;
+    CFRelease(cfUUID) ;
 	NSMutableData* data = [NSMutableData dataWithCapacity:16] ;
 	// Why does Apple define this silly 16-member struct?
 	// Why don't they just give me the 16 bytes in a buffer
@@ -41,6 +42,7 @@
  + (NSString*)compactUuid {
 	CFUUIDRef cfUUID = CFUUIDCreate(kCFAllocatorDefault) ;
 	CFUUIDBytes uuidBytes = CFUUIDGetUUIDBytes(cfUUID) ;
+     CFRelease(cfUUID) ;
 	NSData* data = [NSData dataWithBytes:(const void*)&uuidBytes
 								  length:16] ;
 	NSMutableString* s = [NSMutableString stringWithString:[data stringBase64Encoded]] ;

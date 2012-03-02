@@ -224,8 +224,17 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  has been an error.  The doneSelector should take one parameter, to which
  will be passed the receiver's 'info'.  If doneSelector is nil, no such
  message will be sent.
- @param    keepWithNext  This is very difficult to explain.  One of these
- days I should figure it out.
+ @param    keepWithNext  If NO, re-invocation of this group will be
+ deleted from the receiver's errorRetryInvocations after all of this group's
+ operations have executed.  This is normally what you want.  If YES, this
+ deletion will not occur, which means that another another invocation of this
+ method had better occur sometime in the future, with this parameter NO,
+ which cause errorRetryInvocations to ultimately be deleted.  Otherwise,
+ an errorRetryInvocation will hang around in the receiver's errorRetryDic,
+ which is kind of a memory leak in itself, but more importantly may cause a
+ retain cycle involving objects that the invoker of this method has set into
+ the 'info'.  You will want to pass YES in cases where error retry must
+ re-invoke a group of groups in order to get the desired result.
  */
 - (void)queueGroup:(NSString*)group
 			 addon:(BOOL)addon

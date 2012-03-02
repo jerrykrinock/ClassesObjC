@@ -1,5 +1,4 @@
 #import "SSYPrefsWindowController.h"
-#import "NSString+LocalizeSSY.h"
 
 @interface SSYPrefsWindowController ()
 
@@ -43,10 +42,10 @@
 
 -(void)	awakeFromNib {
 	NSString*		key;
-	int				index = 0;
+	NSInteger		index = 0;
 	NSString*		wndTitle = nil;
 	
-	[[self window] setTitle:[NSString localize:@"windowTitlePrefs"]] ;
+	[[self window] setTitle:[self localizeString:@"windowTitlePrefs"]] ;
 
 	// Generate a string containing the window's title so we can display the original window title plus the selected pane:
 	wndTitle = [[ibOutlet_tabView window] title];
@@ -78,7 +77,7 @@
 -(void) mapTabsToToolbar {
     // Create a new toolbar instance, and attach it to our document window 
     NSToolbar		*toolbar =[[ibOutlet_tabView window] toolbar];
-	int				itemCount = 0,
+	NSInteger		itemCount = 0,
 					x = 0;
 	
 	if( toolbar == nil )   // No toolbar yet? Create one!
@@ -98,7 +97,7 @@
 	for( x = 0; x < itemCount; x++ ) {
 		NSTabViewItem*		theItem = [ibOutlet_tabView tabViewItemAtIndex:x];
 		NSString*			theIdentifier = [theItem identifier];
-		NSString*			theLabel = [self localizeLabel:[theItem label]] ;
+		NSString*			theLabel = [self localizeString:[theItem label]] ;
 		
 		[itemsList setObject:theLabel forKey:theIdentifier];
 		
@@ -125,7 +124,7 @@
 	// Set up window title:
 	NSString* label = [[ibOutlet_tabView selectedTabViewItem] label] ;
 	if (label) {
-		[[ibOutlet_tabView window] setTitle: [baseWindowName stringByAppendingString: [NSString localize:label]]];
+		[[ibOutlet_tabView window] setTitle: [baseWindowName stringByAppendingString: [self localizeString:label]]];
 	}
 	
 	NSString* identifier = [[ibOutlet_tabView selectedTabViewItem] identifier] ;
@@ -264,7 +263,7 @@ Subclasses should over-ride this to provide tooltips for each toobar item
 
 -(NSArray*) toolbarDefaultItemIdentifiers: (NSToolbar *) toolbar
 {
-	int					itemCount = [ibOutlet_tabView numberOfTabViewItems],
+	NSInteger			itemCount = [ibOutlet_tabView numberOfTabViewItems],
 						x;
 	//NSTabViewItem*		theItem = [ibOutlet_tabView tabViewItemAtIndex:0];
 	//NSMutableArray*	defaultItems = [NSMutableArray arrayWithObjects: [theItem identifier], NSToolbarSeparatorItemIdentifier, nil];
@@ -296,8 +295,9 @@ Subclasses should over-ride this to provide tooltips for each toobar item
 	return allowedItems;
 }
 
-- (NSString*)localizeLabel:(NSString*)label {
-	return [label capitalizedString] ;
+- (NSString*)localizeString:(NSString*)key {
+	return key ;
 }
+
 
 @end

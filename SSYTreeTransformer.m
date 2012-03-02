@@ -70,11 +70,17 @@
 	if ((childrenIn = [nodeIn performSelector:_childrenInExtractor])) {
 		for (id childIn in childrenIn) {
 			// Get next child out with recursion
-			id nextChildOut ;
-			if ((nextChildOut = [self deepTransformedCopyOf:childIn]))  // may be nil!
-			{
+			id nextChildOut = [self deepTransformedCopyOf:childIn] ;
+			// nextChildOut may be nil, in particular for Safari, because of iCloud, deleted
+			// starks are not deleted before the actual export.  To delete them, we
+			// temporarily set the stark's 'isDeletedThisIxport' flag bit, in
+			// -[ExtoreSafari extoreRootsForExport], which causes
+			// extoreItemForSafari:, or reformatter, and thus this method, to return nil.
+			// I noted once that there are other cause(s) in BookMacster which can make
+			// nextChildOut be nil at this point, but did not document them.
+			if (nextChildOut) {
 				[nextChildOut performSelector:_newParentMover withObject:nodeOut] ;
-				// Since the above will add nextChildOut to nodeOut's Children array, I can now release it. (I hope!!!)
+				// Since the above will add nextChildOut to nodeOut's Children array, I can now release it.
 				[nextChildOut release] ;
 			}
 		}

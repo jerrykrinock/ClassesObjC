@@ -106,6 +106,25 @@ NSString* const constKeyMinute = @"minute" ;
 }
 
 
+- (BOOL)isEqual:(SSYRecurringDate*)otherDate {
+	// It would be nice to add a 'tolerance' parameter to this, so that
+	// you could see whether or not two recurring dates were the same
+	// within "5 minutes" or whatever, but you'd have to consider the 
+	// weekday and hour too in case they were near midnight or week-end.
+	if ([self weekday] != [otherDate weekday]) {
+		return NO ;
+	}
+	if ([self hour] != [otherDate hour]) {
+		return NO ;
+	}
+	if ([self minute] != [otherDate minute]) {
+		return NO ;
+	}
+	
+	return YES ;
+}
+
+
 #pragma mark * NSCoding Protocol Conformance
 
 - (void)encodeWithCoder:(NSCoder *)encoder {

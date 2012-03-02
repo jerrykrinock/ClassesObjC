@@ -2,6 +2,26 @@
 
 @implementation SSYModelChangeTypes
 
++ (BOOL)objectExistenceIsAffectedByChange:(SSYModelChangeAction)action {
+	return (
+			(action == SSYModelChangeActionReplace)
+			|| (action == SSYModelChangeActionRemove)
+			|| (action == SSYModelChangeActionMerge)
+			|| (action == SSYModelChangeActionInsert)
+			|| (action == SSYModelChangeActionCancel)
+			) ;
+}			
+
++ (BOOL)objectAttributesAreAffectedByChange:(SSYModelChangeAction)action {
+	return (
+			(action == SSYModelChangeActionMosh)
+			|| (action == SSYModelChangeActionSlosh)
+			|| (action == SSYModelChangeActionModify)
+			|| (action == SSYModelChangeActionMove)
+			|| (action == SSYModelChangeActionSlide)
+			) ;
+}			
+
 + (NSString*)symbolForAction:(SSYModelChangeAction)action {
 	switch (action) {
 		case SSYModelChangeActionInsert:
@@ -15,6 +35,9 @@
 			break;
 		case SSYModelChangeActionMosh:
 			return @"\xe2\x9c\xa3" ; // Four Balloon-spoked asterisk
+			break;
+		case SSYModelChangeActionSlosh:
+			return @"\xe2\x9c\x9b" ; // Open Centre Cross
 			break;
 		case SSYModelChangeActionSlide:
 			return @"\xe2\x86\x95" ; // Up-and-down arrow

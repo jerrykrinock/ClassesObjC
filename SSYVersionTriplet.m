@@ -57,7 +57,7 @@
 		int minor = 0 ;
 		int bugFix = 0 ;
 		
-		int nParts = [parts count] ;
+		NSInteger nParts = [parts count] ;
 		NSArray* majorWords = [[parts objectAtIndex:0] componentsSeparatedByString:@" "] ;
 		major = [[majorWords lastObject] intValue] ;
 		
@@ -178,11 +178,11 @@
 }
 
 - (BOOL)isEarlierThan:(SSYVersionTriplet*)otherTriplet {
-	return ([self compare:otherTriplet] > SSYAscending) ;
+	return ([self compare:otherTriplet] > SSYEqual) ;
 }
 	
 - (BOOL)isLaterThan:(SSYVersionTriplet*)otherTriplet {
-	return ([self compare:otherTriplet] < SSYDescending) ;
+	return ([self compare:otherTriplet] < SSYEqual) ;
 }
 
 - (BOOL)isEqual:(id)otherTriplet {
@@ -190,7 +190,7 @@
 }
 
 // Documentation says to override -hash if you override -isEqual:
-- (unsigned int)hash {
+- (NSUInteger)hash {
 	return [[self string] hash] ;
 }
 

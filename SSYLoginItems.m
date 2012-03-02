@@ -137,7 +137,7 @@ end:
 			// documentation from Apple.)
 			if (error_p) {
 				NSError* error = [NSError errorWithMacErrorCode:status] ;
-				NSString* msg = @"LSSharedFileListItemResolve failed" ;
+				NSString* desc = @"Mac OS X could not resolve your Login Items." ;
 				NSString* path = [url path] ;
 				if (!path) {
 					path = [url absoluteString] ;
@@ -146,35 +146,23 @@ end:
 					path = [url description] ;
 				}
 				
+				NSString* reason = [NSString stringWithFormat:
+									@"Login Item Number %d is broken.",
+									i] ;
 				NSMutableDictionary* userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-												 msg, NSLocalizedDescriptionKey,  // won't be nil
+												 desc, NSLocalizedDescriptionKey,  // won't be nil
+												 reason, NSLocalizedFailureReasonErrorKey, // won't be nil
 												 error, NSUnderlyingErrorKey,     // won't be nil
-												 [NSNumber numberWithInt:i], @"Broken Item Index",  // won't be nil
+												 [NSNumber numberWithInt:i], @"Broken Item Index", // won't be nil
+												 [NSNumber numberWithInteger:status], @"Underlying Error Status Code",  // won't be nil
 												 path , @"Path Looking For",   // might be nil
 												 nil] ;
 
-				msg = [NSString stringWithFormat:
-					   @"While we were analyzing your Login Items for proper settings, "
-					   @"the Mac OS told us that it could not find item %d.  "
-					   @"It returned an error status code %d.",
-					   i,
-					   status] ;
-				[userInfo setObject:msg
-							 forKey:NSLocalizedFailureReasonErrorKey] ;
-
 				if ((status == fnfErr) || (status == nsvErr)) {				
-					msg = [NSString stringWithFormat:
-						   @"In the %C menu, click 'System Preferences', then the 'Users & Groups' or 'Accounts' button.  "
-						   @"Select your account from the list, and then the 'Login Items' tab.  "
-						   @"Starting with number 1 at the top of the list, count down until you reach item %d.  "
-						   @"If its 'Kind' is 'Unknown', this item has probably disappeared.  "
-						   @"Otherwise, hover your mouse over it until its path appears in a tooltip.  "
-						   @"Then activate Finder and navigate to that path.\n\n"
-						   @"In either case, if the app indicated by that Login Item is indeed no longer available, you should delete that Login Item.  "
-						   @"To delete a Login Item, select it and click the [-] button.",
-						   0xf8ff, // The Apple character
-						   i] ;
-					[userInfo setObject:msg
+					NSString* suggestion = [NSString stringWithFormat:
+											@"Visit your System Preferences and delete or reinstall Login Item Number %d.",
+											i] ;
+					[userInfo setObject:suggestion
 								 forKey:NSLocalizedRecoverySuggestionErrorKey] ;
 				}
 				

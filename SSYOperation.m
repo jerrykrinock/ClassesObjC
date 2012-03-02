@@ -13,8 +13,10 @@
 #endif	
 #endif
 
-#define SSY_OPERATION_BLOCKED 0
-#define SSY_OPERATION_CLEARED 1
+// We don't use 0 because that is the default condition of NSConditionLock if
+// no condition has been set.
+#define SSY_OPERATION_BLOCKED 1
+#define SSY_OPERATION_CLEARED 2
 
 NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 
@@ -113,7 +115,24 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 }
 
 - (void)prepareLock {
-	NSAssert(([[self info] objectForKey:constKeySSYOperationLock] == nil), @"Lock is already in use") ;
+	NSConditionLock* oldLock = [[self info] objectForKey:constKeySSYOperationLock] ;
+	// Normally, oldLock should be nil at this point, if prior usage of this lock is done.
+	// For a while, I did this:
+	//    NSAssert3((oldLock == nil), @"Lock %p is already in info %p for %@", oldLock, [self info], self) ;
+	// but that got me into some trouble.
+	// So now I just log a warning if there's an old lock which has not been cleared.
+	if (oldLock != nil) {
+		if ([oldLock condition] != SSY_OPERATION_CLEARED) {
+			NSLog(@"Warning 209-8483 %@ with condition %d in info %p for %@ is being replaced.",
+				  oldLock, [oldLock condition], [self info], self) ;
+		}
+	}
+	// I considered doing this:
+	// [oldLock unlockWithCondition:SSY_OPERATION_CLEARED] ;
+	// But am worried that it might raise an exception trying to unlock a lock on a
+	// thread that did not lock it.  Maybe I'm just imagining that I ever saw that
+	// exception, or getting it mixed up with something else.  Can't find it in
+	// documentation at the moment.
 	NSConditionLock* lock = [[NSConditionLock alloc] initWithCondition:SSY_OPERATION_BLOCKED] ;
 	[[self info] setObject:lock
 					forKey:constKeySSYOperationLock] ;
@@ -128,10 +147,14 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 	NSConditionLock* lock = [[self info] objectForKey:constKeySSYOperationLock] ;
 	BOOL workFinishedInTime = [lock lockWhenCondition:SSY_OPERATION_CLEARED
 										   beforeDate:[NSDate distantFuture]] ;
+	
+	// Will block here until lock condition is 
+	
 	if (workFinishedInTime) {
 		[lock unlock] ;
 	}
 	
+	// We are done with this lock, so …
 	[[self info] removeObjectForKey:constKeySSYOperationLock] ;
 }
 
@@ -139,8 +162,9 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 	// If we send -unlockWithCondition to a condition lock which has already
 	// been unlocked, Cocoa raises an exception.  To avoid that, we check
 	// that -unlockLock has not already been sent for this locking cycle.
-	if ([[[self info] objectForKey:constKeySSYOperationLock] condition] == SSY_OPERATION_BLOCKED) {
-		[[[self info] objectForKey:constKeySSYOperationLock] unlockWithCondition:SSY_OPERATION_CLEARED] ;
+	NSConditionLock* lock = [[self info] objectForKey:constKeySSYOperationLock] ;
+	if ([lock condition] == SSY_OPERATION_BLOCKED) {
+		[lock unlockWithCondition:SSY_OPERATION_CLEARED] ;
 	}
 }
 

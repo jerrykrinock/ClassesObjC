@@ -102,6 +102,8 @@ extern NSString* const constKeyNewValue ;
 
 + (NSString*)entityNameForClass:(Class)class ;
 
++ (NSEntityDescription*)entityDescription ;
+
 /*!
  @brief    Should be overridden by subclasses
 
@@ -124,10 +126,21 @@ extern NSString* const constKeyNewValue ;
 - (id)owner ;
 
 /*!
+ @brief    Returns whether or not a retained managed object is
+ available to receive messages
+
+ @details  Credit for the idea of checking the objectID goes to
+ David Riggle <riggle@mac.com>.  See cocoa-dev@lists.apple.com for
+ 20111021, subject line: Re: Core Data: Determine if managed object is deleted
+*/
+- (BOOL)isAvailable ;
+
+
+/*!
  @brief    Returns the absolute string of the URI representation of the object's objectID,
  or nil if the objectID is a temporary ID.
 */
-- (NSString*)stringID ;
+- (NSString*)permanentUri ;
 
 /*!
  @brief    Replaces the objects in the to-many relationship for a given
@@ -183,6 +196,18 @@ extern NSString* const constKeyNewValue ;
 					 forKey:(NSString*)key ;
 
 - (void)breakRetainCycles ;
+
+- (NSUInteger)countOfNonNilValues ;
+
+/*!
+ @brief    A hash representing all relevant current property values of
+ the receiver
+
+ @details  The default implementation considers all attribute values to
+ be relevant, and excludes all relationships.  Subclasses may override
+ to exclude some attributes, or include some relationships, as desired. 
+ */
+- (unsigned long)valuesHash ;
 
 /*!
  @brief    Useful for debugging

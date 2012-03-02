@@ -41,8 +41,27 @@
 
 #pragma mark -
 
+@interface GCUndoManager ()
+
+@property (copy) NSException* exception ;
+
+@end
+
 
 @implementation GCUndoManager
+
+@synthesize exception = mException;
+@synthesize swallowExceptions = mSwallowExceptions;
+
+- (NSException*)        lastException 
+{
+	return [self exception];
+}
+
+- (void)                clearException
+{
+	[self setException:nil];
+}
 
 - (void)				beginUndoGrouping
 {
@@ -133,6 +152,7 @@
 			@catch( NSException* excp )
 			{
 				NSLog(@"an exception occurred while closing an undo group - ignored: %@", excp );
+				[self setException:excp] ;
 			}
 			@finally
 			{
@@ -178,9 +198,8 @@
 			GCUndoGroup* topGroup = [self peekUndo] ;
 			NSDictionary* userInfo = nil ;
 			if ([topGroup actionIsDiscardable]) {
-				// If the deployment target is 10.7 or later, the NSUndoManagerGroupIsDiscardableKey global is available,
-				// otherwise we just rely on it's string value, which is unlikely to change.
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+				// To explain this #if, see note following end of this method.
+#if ((MAC_OS_X_VERSION_MAX_ALLOWED >= 1070) && (MAC_OS_X_VERSION_MIN_REQUIRED >= 1070))
 				userInfo = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:NSUndoManagerGroupIsDiscardableKey] ;
 #else
 				userInfo = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:@"NSUndoManagerGroupIsDiscardableKey"] ;
@@ -188,9 +207,8 @@
 			}
 
 			NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
-			// If the deployment target is 10.7 or later, the NSUndoManagerDidCloseUndoGroupNotification global is available,
-			// otherwise we just rely on it's string value, which is unlikely to change.
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070
+			// To explain this #if, see note following end of this method.
+#if ((MAC_OS_X_VERSION_MAX_ALLOWED >= 1070) && (MAC_OS_X_VERSION_MIN_REQUIRED >= 1070))
 			[notificationCenter postNotificationName:NSUndoManagerDidCloseUndoGroupNotification object:self userInfo:userInfo];
 #else
 			[notificationCenter postNotificationName:@"NSUndoManagerDidCloseUndoGroupNotification" object:self userInfo:userInfo];
@@ -198,6 +216,13 @@
 		}
 	}
 }
+// explanation of #if in -endUndoGrouping
+// we have a string constant symbol which is defined in the 10.7 SDK and used by the 10.7 runtime.  this creates two problems.
+// problem 1.  when *compiling* in a system prior to 10.7, it won't even compile with this symbol.
+// problem 2.  when *running* in a system prior to 10.7, when accessing the undefined symbol, the app will crash.
+// to solve problem 1, we require that (MAC_OS_X_VERSION_MAX_ALLOWED >= 1070).
+// to solve problem 2, we require that (MAC_OS_X_VERSION_MIN_REQUIRED >= 1070).
+// hence the && in the #if.
 
 
 
@@ -384,20 +409,6 @@
 		[[self peekRedo] setActionName:actionName];
 	else
 		[[self peekUndo] setActionName:actionName];
-}
-
-
-
-- (void)				setActionName:(NSString*) name priority:(NSInteger) priority
-{
-	GCUndoGroup* namedGroup;
-	
-	if([self isUndoing])
-		namedGroup = [self peekRedo];
-	else
-		namedGroup = [self peekUndo];
-	
-	[namedGroup setActionName:name priority:priority];
 }
 
 
@@ -882,8 +893,10 @@
 		@catch( NSException* excp )
 		{
 			NSLog(@"an exception occurred while performing Undo - undo manager will be cleaned up: %@", excp );
+			[self setException:excp] ;
 			
-			@throw;
+			if (![self swallowExceptions]) 
+				@throw;
 		}
 		@finally
 		{
@@ -931,8 +944,10 @@
 		@catch( NSException* excp )
 		{
 			NSLog(@"an exception occurred while performing Redo - undo manager will be cleaned up: %@", excp );
+			[self setException:excp] ;
 			
-			@throw;
+			if (![self swallowExceptions]) 
+				@throw;
 		}
 		@finally
 		{
@@ -1111,6 +1126,7 @@
 	[mRedoStack release];
 	[mRunLoopModes release];
 	[mProxy release];
+	[mException release];
 	[super dealloc];
 }
 
@@ -1309,30 +1325,11 @@
 
 
 
-- (void)				setActionName:(NSString*) name priority:(int)priority
-{
-	if (priority <= mActionNamePriority) {
-		[name retain];
-		[mActionName release];
-		mActionName = name;
-		
-		mActionNamePriority = priority ;
-	}
-}
-
-
-
 - (NSString*)			actionName
 {
 	return mActionName;
 }
 
-
-
-- (NSInteger)			actionNamePriority
-{
-	return mActionNamePriority;
-}
 
 
 - (void)               setActionIsDiscardable:(BOOL)discardable
@@ -1373,7 +1370,6 @@
 	if( self )
 	{
 		mTasks = [[NSMutableArray alloc] init];
-		mActionNamePriority = NSIntegerMax ;
 	}
 	
 	return self;

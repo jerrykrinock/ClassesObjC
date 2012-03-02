@@ -14,14 +14,13 @@
  
  Normally, when an operation sets its own error using -setError, which
  sets the error in the operation queue, any further SSYOperations
- which were created with skipIfError passed as YES become
- no-ops.  However, if the info dictionary of an operation contains
- an object for key SSYOperationGroup, and the userInfo dictionary of
- the error also contains an object for key SSYOperationGroup, and if the
- values of these keys are unequal as judged by +[NSOperationQueue 
- operationGroupsDifferInfo:info:otherInfo:], then that operation does
- *not* become a no-op.  You may use this feature to selectively abort
- some future operations but not abort others.
+ which were created with skipIfError passed as YES and are *in the same
+ operation group* become no-ops.
+ 
+ Operations X and Y are *in the same operation group* if their info 
+ dictionaries both contain values for the key SSYOperationGroup, and
+ if these two values are equal as judged by +[SSYOperationQueue 
+ operationGroupsDifferInfo:otherInfo:],
  */
 @interface SSYOperation : NSOperation <SSYOwnee> {
 	NSMutableDictionary* m_info ;
@@ -108,7 +107,9 @@
  
  SSYOperationLinker provides only one such condition lock.
  If a condition lock has previously been created by this method
- and not yet removed by -blockForLock, an exception will be raised. 
+ and not yet removed by -blockForLock, and if it has not yet been
+ unlocked by -unlockLock, the old lock will be replaced and
+ a warning will be logged. 
  */
 - (void)prepareLock ;
 

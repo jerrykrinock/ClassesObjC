@@ -36,6 +36,35 @@
 
 #ifdef TEST_CODE_FOR_SSY_THREAD_PAUSER
 
+@interface WorkerDemo : NSObject {}
+
+- (void)doWorkForTimeInterval:(NSNumber*)interval ;
+
+@end
+
+
+@implementation WorkerDemo
+
+#define CANCEL_GRANULARITY 10
+
+- (void)doWorkForTimeInterval:(NSNumber*)interval {
+	NSLog(@"2308: Beginning work") ;
+	
+	NSTimeInterval timeChunk = [interval doubleValue]/CANCEL_GRANULARITY ;
+	NSInteger i ;
+	for (i=0; i<CANCEL_GRANULARITY; i++) {
+		usleep(1e6 * timeChunk) ;
+		if ([[NSThread currentThread] isCancelled]) {
+			NSLog(@"2492 Cancelling work") ;
+			break ;
+		}
+	}
+	
+	NSLog(@"2557: Ending work") ;
+}
+
+@end
+
 int main (int argc, const char * argv[]) {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
 	

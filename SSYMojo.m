@@ -5,6 +5,10 @@
 #import "NSObject+MoreDescriptions.h"
 #import "NSManagedObject+Debug.h"
 
+// For debugging
+#import "SSYMOCManager.h"
+
+
 @implementation SSYMojo
 
 @synthesize managedObjectContext = m_managedObjectContext ;
@@ -73,7 +77,7 @@
 		
 		
 		fetches = [managedObjectContext executeFetchRequest:fetchRequest
-									 error:&error] ;
+													  error:&error] ;
 		if (error) {
 			NSLog(@"Internal Error 487-2762: %@", [error longDescription]) ;
 			if (error_p) {
@@ -173,6 +177,7 @@
 
 - (NSManagedObject*)newObject {
 	NSManagedObjectContext* moc = [self managedObjectContext] ;
+
 	NSManagedObject* object = [NSEntityDescription insertNewObjectForEntityForName:[self entityName]
 															inManagedObjectContext:moc] ;	
 	return object ;

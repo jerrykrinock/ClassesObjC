@@ -280,8 +280,8 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 	BOOL isVisible ;
 	NSInteger nDone ;
 	NSInteger m_alertReturn ;
-	float m_rightColumnMinimumWidth ;
-	float m_rightColumnMaximumWidth ;
+	CGFloat m_rightColumnMinimumWidth ;
+	CGFloat m_rightColumnMaximumWidth ;
 	BOOL allowsShrinking ;
 	BOOL m_dontAddOkButton ;
 	NSInteger titleMaxChars ;
@@ -293,7 +293,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 	NSModalSession modalSession ;
 	NSPoint windowTopCenter ;
 	BOOL progressBarShouldAnimate ;
-	BOOL doNotDisplayNextPop ;
+	BOOL m_shouldStickAround ;
 	NSTimeInterval nextProgressUpdate ;
 	
 	NSMutableArray* otherSubviews ;
@@ -356,7 +356,11 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  @brief    Indicates which button was last clicked
  
  @details  Use this to get the button-clicked result in cases where you
- did not use one of the +runModalDialog... or +alertError... methods
+ did not use one of the +runModalDialog... or +alertError... methods.
+ Ordinarily, you will not set this property because it will be set
+ internally when the user clicks a button.  However, if you are
+ dismissing the alert programatically, you may need to set this in order
+ to specify which didEndSelector runs.
  @result   Same as Apple's alert returns:
  <ul>
  <li>If button 1 (left) was clicked, NSAlertDefaultReturn.</li>
@@ -364,7 +368,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  <li>If button 3 (middle) was clicked, NSAlertOtherReturn.</li>
  </ul>
  */
-@property (assign, readonly) NSInteger alertReturn ;
+@property (assign) NSInteger alertReturn ;
 
 /*!
  @brief    Returns YES if the receiver is currently in the midst of
@@ -389,13 +393,13 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  this subview, also subject to a minimum value of 250 points and a
  maximum value of 500 points.
  */
-@property (assign) float rightColumnMinimumWidth ; 
+@property (assign) CGFloat rightColumnMinimumWidth ; 
 
 /*!
  @brief    Sets the maximum width of the right column
  of the receiver.
  */
-@property (assign) float rightColumnMaximumWidth ; 
+@property (assign) CGFloat rightColumnMaximumWidth ; 
 
 /*!
  @brief    Sets both rightColumnMinimumWidth and 
@@ -492,6 +496,16 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  controls in otherSubviews.
  */
 @property (retain, readonly) NSMutableArray* otherSubviews ;
+
+/*!
+ @brief    If YES, indicates that the receiver should not -goAway
+ when a button is clicked
+
+ @details  The default value is NO.
+ This property  was added in BookMacster 1.9.3.
+*/
+@property (assign) BOOL shouldStickAround ;
+
 
 #pragma mark * Class Methods returning Constants
 
@@ -688,7 +702,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  as localized "OK".
  @result   Indicates button clicked by user: NSAlertDefaultReturn, NSAlertAlternateReturn or NSAlertOtherReturn 
  */
-+ (int)runModalDialogTitle:(NSString*)title
++ (NSInteger)runModalDialogTitle:(NSString*)title
 				   message:(NSString*)msg
 				   buttons:(NSString*)button1Title, ... ;
 
@@ -704,7 +718,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  empty array, dialog will have 1 button titled as localized "OK".
  @result   Indicates button clicked by user: NSAlertDefaultReturn, NSAlertAlternateReturn or NSAlertOtherReturn 
  */
-+ (int)runModalDialogTitle:(NSString*)title
++ (NSInteger)runModalDialogTitle:(NSString*)title
 				   message:(NSString*)msg
 			  buttonsArray:(NSArray*)buttonsArray ;
 
@@ -764,7 +778,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  @param    iconStyle  Pass one of the constants SSYAlertIconNoIcon,
  SSYAlertIconCritical, or SSYAlertIconInformational
 */
-- (void)setIconStyle:(int)iconStyle ;
+- (void)setIconStyle:(NSInteger)iconStyle ;
 
 /*!
  @brief    Turns off the default behavior of the receiver to add an
@@ -864,7 +878,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  @details  The index must exist or an exception will be raised.
  @param    index  The index of the "other subview" to be removed.
 */
-- (void)removeOtherSubviewAtIndex:(int)index ;
+- (void)removeOtherSubviewAtIndex:(NSInteger)index ;
 
 /*!
  @brief    Removes all of the <i>other subviews</i> from the receiver.

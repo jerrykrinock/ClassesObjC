@@ -9,6 +9,6 @@
 
 + (void)transformToGui ;
 
-+ (IBAction)transformToGui:(id)sender ;
++ (void)transformToGui:(id)sender ;
 
 @end

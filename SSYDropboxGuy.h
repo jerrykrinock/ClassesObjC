@@ -21,30 +21,6 @@ extern NSString* const SSYDropboxGuyErrorDomain ;
 + (void)getDropbox ;
 
 /*!
- @brief    Gets the path to the current user's Dropbox directory
-
- @details  Determined by reading the user's Dropbox database file.
- @param    error_p  Pointer to an NSError* or NULL.  Upon return,
- if value is not NULL and if an error occurred while
- reading the user's Dropbox database, the pointer will be set to
- an NSError describing said error.  Otherwise, if value is not NULL,
- pointer will be set to nil.
- @result   If the user has a Dropbox database which can be read without
- error, returns the user's Dropbox path.  Otherwise, returns nil.
-*/
-+ (NSString*)dropboxPathError_p:(NSError**)error_p ;
-
-/*!
- @brief    Returns whether or not the user has a Dropbox available.
-
- @param    error_p  Pointer which will, upon return, if an error
- occurred and said pointer is not NULL, point to an NSError
- describing said error.
- @result   If an error occurs, the result is not defined.
-*/
-+ (BOOL)userHasDropboxError_p:(NSError**)error_p ;
-
-/*!
  @brief    Returns whether or not a given path is in the Dropbox
  archive, indicating that it was replaced by Dropbox.
 */
@@ -88,15 +64,44 @@ extern NSString* const SSYDropboxGuyErrorDomain ;
 						   isIdle:(BOOL*)isIdle_p
 						  error_p:(NSError**)error_p ;
 
++ (NSString*)defaultDropboxPath ;
+
++ (BOOL)dropboxIsAvailable ;
+
+#if 0
+/*
+ The following methods no longer work if user has Dropbox 1.2 or later, because
+ Dropbox has encrypted their configuration database.  Sorry!
+ */
+/*!
+ @brief    Gets the path to the current user's Dropbox directory
+  @details  Determined by reading the user's Dropbox database file.
+ @param    error_p  Pointer to an NSError* or NULL.  Upon return,
+ if value is not NULL and if an error occurred while
+ reading the user's Dropbox database, the pointer will be set to
+ an NSError describing said error.  Otherwise, if value is not NULL,
+ pointer will be set to nil.
+ @result   If the user has a Dropbox database which can be read without
+ error, returns the user's Dropbox path.  Otherwise, returns nil.
+ */
++ (NSString*)dropboxPathError_p:(NSError**)error_p ;
+/*!
+ @brief    Returns whether or not the user has a Dropbox available.
+ @param    error_p  Pointer which will, upon return, if an error
+ occurred and said pointer is not NULL, point to an NSError
+ describing said error.
+ @result   If an error occurs, the result is not defined.
+ */
++ (BOOL)userHasDropboxError_p:(NSError**)error_p ;
 /*!
  @brief    Returns whether or not a given path is in the user's
  Dropbox folder
- 
  @param    path  The path in question.  May be nil.
  @result   Whether or not the given path is in the user's Dropbox
  folder.  If no Dropbox folder, or if path is nil, returns NO.
 */
 + (BOOL)pathIsInDropbox:(NSString*)path ;
+#endif
 
 @end
 

@@ -17,6 +17,7 @@
 				   angle:270.0] ;
 	
 	[self unlockFocus] ;
+	[gradient release] ;
 }
 
 @end

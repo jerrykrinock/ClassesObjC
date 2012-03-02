@@ -14,6 +14,8 @@ extern NSString* const SSYLaunchdGuyErrorDomain ;
 @interface SSYLaunchdGuy : NSObject {
 }
 
++ (NSString*)homeLaunchAgentsPath ;
+
 /*!
  @brief    Returns a set of all labels (that is, filenames without the 
  .plist filename extension) in this user's Launch Agents
@@ -100,7 +102,18 @@ extern NSString* const SSYLaunchdGuyErrorDomain ;
  @brief    Unloads and removes the plist file, or else unloads and then
  reloads, an existing launchd agent, in a separate process.
 
- @details  The reason for the separate process is so that, if used
+ @details  If no plist file exists for the given label, this method does
+ nothing.  It will not try to unload the agent, because launchctl will fail
+ with error saying no such file.  It is possible to load an agent and then
+ delete its file.  The agent will remain loaded until the user logs out,
+ but I don't know how to unload such an orphan agent.
+ 
+ If the plist file exists for the given label but the agent is not loaded,
+ the file will be removed and launchctl will log an error message such as the
+ following to stderr:
+ "launchctl: Error unloading: com.sheepsystems.BookMacster.4299B333-C47D-4473-B329-41F43E22E886.000.000.doSoon.84110"
+ 
+ The reason for the separate process is so that, if used
  carefully, this method can unload the agent which launched the process
  that called it.
  
@@ -168,24 +181,22 @@ extern NSString* const SSYLaunchdGuyErrorDomain ;
 					 timeout:(NSTimeInterval)timeout ;
 
 /*!
- @brief    Returns the earliest start date from among all of the launchd
- agents in the user's LaunchAgents which have a valid daily StartCalendarInterval,
- and as a bonus, removes any such launch agent whose time interval to next
- launch exceeds a given expiration interval.
-
- @details  "a valid daily StartCalendarInterval" means that the agent has
- a value for key "StartCalendarInterval" which is a dictionary containing exactly
- two keys, "hour" and "minute", both of whose values respond to -integerValue.
- @param    expireTimeInterval  Time interval which, when added to the current
- date, defines the expiration date; any of the user's launchd agents with a
- valid daily StartCalendarInterval whose next fire date is later than this
- expiration date will be unloaded and their files deleted.
- @param    timeout  See explanation of 'timeout' parameter in
- +removeAgentWithLabel::::
+ @brief    Returns whether or not the user's LaunchAgents includes any
+ whose label has a give prefix, and whose triggers include a
+ StartCalendarInterval
+ 
+ @details  Todo: Verify whether or not the next date
+ indicated by the StartCalendarInterval was not already past, and/or
+ to return the next fire date.  To do that, one could use a Python
+ package written by Matsumoto Taichi (taichino@gmail.com), 'croniter'…
+ http://pypi.python.org/pypi/croniter, or this PHP project by
+ Michael Dowling… https://github.com/mtdowling/cron-expression
+ which was apparently spawned by this article…
+ http://stackoverflow.com/questions/321494/calculate-when-a-cron-job-will-be-executed-then-next-time
+ 
+ This method is not used at this time.
 */
-+ (NSDate*)nextStartDateForDailyLaunchdAgentWithPrefix:(NSString*)prefix
-						   deletingAgentsExpiredBeyond:(NSTimeInterval)expireTimeInterval
-											   timeout:(NSTimeInterval)timeout ;
++ (BOOL)isScheduledLaunchdAgentWithPrefix:(NSString*)prefix ;
 
 /*!
  @brief    Tries to load or unload a specified launchd agent, ignoring

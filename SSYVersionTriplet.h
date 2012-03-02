@@ -6,9 +6,7 @@ enum SSYVersionTripletComparisonResult  {
 	SSYDescendingMajor = -4,
 	SSYDescendingMinor = -3,
 	SSYDescendingBugFix = -2,
-	SSYDescending = -1,  // unspecified if bugFix, minor or major
 	SSYEqual = 0,
-	SSYAscending = 1,  // unspecified if bugFix, minor or major
 	SSYAscendingBugFix = 2,
 	SSYAscendingMinor = 3,
 	SSYAscendingMajor = 4,
@@ -59,7 +57,7 @@ typedef struct SSYVersionStruct_struct SSYVersionStruct ;
  by - string.
  @details  This method is not reliable, particularly if more than one instance
  of the app is installed on the system, because it relies on Launch Services
- to get the path for the given bundle identifier.    If you've got the bundle,
+ to get the path for the given bundle identifier.  If you've got the bundle,
  use +rawVersionStringFromBundle: instead.
  @param    bundleIdentifier The bundle identifier of the target bundle
  @result   The value of either CFBundleShortVersionString or CFBundleVersion, or nil

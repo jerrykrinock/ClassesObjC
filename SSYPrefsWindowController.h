@@ -21,14 +21,18 @@
 
 /*!
  @brief    Subclasses should override this method to provide a localized
- label for the given label.
+ string for the given key.
 
- @details  The default implementation simply capitalizes the given label.
- @param    label  The unlocalized label for the tab view item, typically
- assigned in a nib file.
+ @details  Do not return nil.  If the given key cannot be localized, 
+ return the key itself.
+ 
+ The strings which will be passed to this method are:
+ • The 'label' of any tab in the nib file, for which this method
+ should return the localized title of the tab.
+ • The string @"windowTitlePrefs", for which this method should return
+ the title of the Preferences window
 */
--(NSString*)localizeLabel:(NSString*)label ;
-
+-(NSString*)localizeString:(NSString*)key ;
 
 /*!
  @brief    Subclasses should over-ride this to provide tooltips for

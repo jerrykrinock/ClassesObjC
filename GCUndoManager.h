@@ -60,6 +60,8 @@ GCUndoTaskCoalescingKind;
 	BOOL				mRetainsTargets;		// YES if invocation targets are retained
 	BOOL				mIsRemovingTargets;		// YES during stack clean-up to prevent re-entrancy
 	BOOL				mIsInCheckpoint;		// YES during the notification processing for a checkpoint
+	BOOL                mSwallowExceptions;     // YES to not @throw if an exception occurs
+	NSException*        mException;             // Last exception thrown during undo or redo
 }
 
 // NSUndoManager compatible API
@@ -100,21 +102,25 @@ GCUndoTaskCoalescingKind;
 
 // undo menu management
 
-//  sets the action name of the receiver's current undo group unconditionally, without changing the current action name priority,
-//  and with no deference to it.
-//  In any project, it is recommended to use either setActionName: or setActionName:priority exclusively; i.e. don't mix them.
+// sets the action name of the receiver's current undo group
+// setting the action name should be done as a high-level "finishing off"
+// work within the controller layer of the MVC layering.  usually, the
+// action name is set at the end of an action method (I believe it's no
+// coincidence that the UM uses the term 'action name' to suggest a
+// connection with an 'action method').  example:
+// - (IBAction)		someAction:(id) sender
+// {
+//      [dataModel doThis];	 // undoable
+//      [dataModel doThat];	 // undoable
+//      [[self undoManager] setActionName:[sender title]];
+// }
+// Even if -doThis and -doThat set action names, these are ignored
+// because the last action name set is the one that "sticks".  also, in this
+// example I use the sender's title as the action name, which works great for
+// menu and button actions, and means that the action is automatically
+// localised along with the UI.  for actions triggered by other elements, a
+// fixed localisable string does the job.
 - (void)				setActionName:(NSString*) actionName;
-
-// sets the action name of the undo group currently atop the undo stack or redo stack, but only if the priority is equal or
-//  higher (lower value) than any previously-set action name priority for the relevant undo group.
-//  if not undoing, sets the action name of the undo group currently atop the undo stack.  If undoing, sets the action name of
-// the undo group currently atop the redo stack.  If the priority value is less than (higher value) than the previously-set
-//  action name priority, this method is a no-op.
-//  parameter 'name' is the localized action name to be set.
-//  parameter 'priority' is the strength by which this setting may override previous settings of the action name.  A lower number
-//  is a stronger, higher priority.
-- (void)				setActionName:(NSString*) name priority:(NSInteger) priority;
-
 - (NSString*)			undoActionName;
 - (NSString*)			redoActionName;
 - (NSString*)			undoMenuItemTitle;
@@ -204,6 +210,17 @@ GCUndoTaskCoalescingKind;
 
 - (void)				explodeTopUndoAction;
 
+// exception handling
+
+// if an exception is swallowed, that means that we do not @throw it
+// exceptions which occur during closing an undo group are always swallowed
+// this property controls whether or not exceptions during undo or redo are swallowed
+// it is NO by default
+@property (assign) BOOL swallowExceptions ;
+
+- (NSException*)        lastException;
+- (void)	            clearException;
+
 @end
 
 #pragma mark -
@@ -235,7 +252,6 @@ GCUndoTaskCoalescingKind;
 {
 @private
 	NSString*			mActionName;
-	NSInteger           mActionNamePriority;
 	NSMutableArray*		mTasks;
 	BOOL                mActionIsDiscardable;
 }
@@ -248,21 +264,8 @@ GCUndoTaskCoalescingKind;
 - (BOOL)				hasTask;
 
 - (void)				removeTasksWithTarget:(id) aTarget undoManager:(GCUndoManager*) um;
-
-//  sets the action name of the receiver unconditionally, without changing the current action name priority, and with no
-// deference to it.
-// in any project, it is recommended to use either setActionName: or setActionName:priority exclusively; i.e. don't mix them.
 - (void)				setActionName:(NSString*) name;
-
-// sets the action name of the receiver unconditionally, but only if the priority is equal or
-//  higher (lower value) than any previously-set action name priority in the receiver.
-//  parameter 'name' is he localized action name to be set.
-//  parameter 'priority' is the strength by which this setting may override previous settings of the action name.  A lower number
-//  is a stronger, higher priority.
-- (void)				setActionName:(NSString*) name priority:(NSInteger) priority;
-
 - (NSString*)			actionName;
-- (NSInteger)           actionNamePriority;
 
 //  set the latest undo action to discardable if it may be safely discarded when a document can not be saved for any reason. 
 //  an example might be an undo action that changes the viewable area of a document.   To find out if an undo group contains only

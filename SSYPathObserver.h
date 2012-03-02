@@ -132,6 +132,10 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  
  This class uses the kqueue notification system.
  
+ One more thing I found out the hard way: You cannot use a kqueue,
+ and therefore cannot use this class, to observe a file which does
+ not exist yet.  -addPath::::: will return error 812002.
+ 
  * Interface
  
  An instance of this class is typically configured to watch one or
@@ -169,11 +173,11 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  
 * Todo
  
- 64-bit.  Seems there are 64-bit kqueue functions.
+ 64-bit.  Seems there are 64-bit kqueue functions.  Do I need them?
  */
 
 @interface SSYPathObserver : NSObject {
-    NSInteger m_kqueueFileDescriptor ;
+    uint32_t m_kqueueFileDescriptor ;
     CFSocketRef	 runLoopSocket ;
 	NSMutableSet* m_pathWatches ;
 	BOOL m_isWatching ;
@@ -208,7 +212,7 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  NO only if the given non-nil path could not be added.
  */
 - (BOOL)addPath:(NSString*)path
-	 watchFlags:(NSInteger)watchFlags
+	 watchFlags:(uint32_t)watchFlags
    notifyThread:(NSThread*)notifeeThread
 	   userInfo:(id)userInfo
 		error_p:(NSError**)error_p ;

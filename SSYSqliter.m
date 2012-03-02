@@ -905,7 +905,7 @@ end:
 	// If >1 column, will return array of dictionaries of object values
 	NSArray* output = nil ;
 	NSError* error = nil ;
-#ifdef LOG_QUERIES
+#if SSY_SQLITER_LOG_QUERIES
 	NSLog(@"%s: %@", __PRETTY_FUNCTION__, query) ;
 #endif
 	if (query != nil) {
@@ -951,7 +951,7 @@ end:
 							 sqliteDescription:sqlite3_errmsg(db)
 										 query:query
 									prettyFunction:__PRETTY_FUNCTION__] ;
-#ifdef LOG_QUERIES
+#if SSY_SQLITER_LOG_QUERIES
 			NSLog(@"  --> query error: %@", error) ;
 #endif
 		}
@@ -962,8 +962,8 @@ end:
 		*error_p = [error errorByAddingBacktrace] ;
 	}
 
-#ifdef LOG_QUERIES
-	NSLog(@"  --> query output: %@", output) ;
+#if SSY_SQLITER_LOG_QUERIES
+	NSLog(@"  --> query result: %@", output) ;
 #endif
 	return output ;
 }

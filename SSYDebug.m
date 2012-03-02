@@ -4,15 +4,15 @@
 
 id ssyDebugGlobalObject = nil ;
 
-NSString* SSYDebugBacktrace() {
+NSString* SSYDebugBacktrace(void) {
 	NSMutableString* nsString = [[NSMutableString alloc] initWithFormat:
 								 @"Thread:  isMainThread=%d  name=%@\n",
 								 [[NSThread currentThread] isMainThread],
 								 [[NSThread currentThread] name]] ;
 
 	[nsString appendString:@"   Slide(0x) Library\n"] ;
-	unsigned long i;
-	unsigned long count = _dyld_image_count();
+	unsigned int i;
+	unsigned int count = _dyld_image_count();
 
 	for (i = 0; i < count; i++) {
 		unsigned long slide = _dyld_get_image_vmaddr_slide(i); 
@@ -32,7 +32,7 @@ NSString* SSYDebugBacktrace() {
 	// An infinite loop will "blow its stack" at 512 calls, so
 	// we allow a little more than that.
 	void* callstack[514] ;
-	NSInteger frames = backtrace(callstack, 514) ;
+	int frames = backtrace(callstack, 514) ;
 	char** strs = backtrace_symbols(callstack, frames) ;
 	NSInteger iFrame ;
 	for (iFrame = 1; iFrame < frames; ++iFrame) {
@@ -49,11 +49,11 @@ NSString* SSYDebugBacktrace() {
 	return [answer autorelease] ;
 }
 	
-void SSYDebugLogBacktrace () {
+void SSYDebugLogBacktrace (void) {
 	NSLog(@"\n%@", SSYDebugBacktrace()) ;
 }
 
-NSInteger SSYDebugStackDepth() {
+NSInteger SSYDebugStackDepth(void) {
 	// An infinite loop will "blow its stack" at 512 calls, so
 	// we allow a little more than that.
 	void* callstack[514] ;
@@ -61,7 +61,7 @@ NSInteger SSYDebugStackDepth() {
 	return frames ;
 }
 
-NSString* SSYDebugBacktraceDepth(NSUInteger depth) {
+NSString* SSYDebugBacktraceDepth(int depth) {
 	if (depth < 1) {
 		return nil ;
 	}
@@ -71,7 +71,7 @@ NSString* SSYDebugBacktraceDepth(NSUInteger depth) {
 	NSMutableString* nsString = [[NSMutableString alloc] init] ;
 	
 	void* callstack[depth] ;
-	NSInteger frames = backtrace(callstack, depth) ;
+	int frames = backtrace(callstack, depth) ;
 	char** strs = backtrace_symbols(callstack, frames) ;
 	NSInteger iFrame ;
 	for (iFrame = 2; iFrame < frames; ++iFrame) {
@@ -88,9 +88,9 @@ NSString* SSYDebugBacktraceDepth(NSUInteger depth) {
 	return [answer autorelease] ;
 }
 
-NSString* SSYDebugCaller() {
+NSString* SSYDebugCaller(void) {
 	void* callstack[3] ;
-	NSInteger frames = backtrace(callstack, 3) ;
+	int frames = backtrace(callstack, 3) ;
 	char** strs = backtrace_symbols(callstack, frames) ;
 	NSString* caller = [NSString stringWithCString:strs[2]
 										  encoding:NSUTF8StringEncoding] ;

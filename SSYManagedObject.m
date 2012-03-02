@@ -123,6 +123,20 @@ NSString* const constKeyObserverContext = @"context" ;
 	return [NSStringFromClass(class) stringByAppendingString:@"_entity"] ;
 }
 
++ (NSEntityDescription*)entityDescription {
+	NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainBundle]] ;
+	NSManagedObjectModel* mom = [NSManagedObjectModel mergedModelFromBundles:bundles] ;
+	NSPersistentStoreCoordinator* psc = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:mom] ;
+	NSManagedObjectContext* moc = [[NSManagedObjectContext alloc] init] ;
+	[moc setPersistentStoreCoordinator:psc] ;
+	[psc release] ;
+	NSEntityDescription* entityDescription = [NSEntityDescription entityForName:[self entityNameForClass:self]
+														 inManagedObjectContext:moc] ;
+	[moc release] ;
+	
+	return entityDescription ;
+}
+
 
 - (NSString*)uniqueAttributeKey {
 	return nil ;
@@ -174,18 +188,47 @@ end:;
 	return [SSYMOCManager ownerOfManagedObjectContext:[self managedObjectContext]] ;
 }
 
-// From NSManagedObject documentation: "You are discouraged from overriding
-// description ... if this method fires a fault during a debugging
-// operation, the results may be unpredictable.
-
-- (NSString*)stringID {
+- (BOOL)isAvailable {
+	if ([self isDeleted]) {
+		return NO ;	
+	}
+	
+	NSManagedObjectContext* context = [self managedObjectContext] ;
+	if (context == nil) {
+		return NO ;
+	}
+	
+	/* The next two tests are probably unnecessary.  I wrote to David Riggle:
+	 Why do you check for the object ID?  Have you ever seen an object
+	 which passed the first two tests (not isDeleted, has MOC), but then
+	 didn't have an objectID?  How could that happen?
+	 David Riggle replied:
+	 I don't know if all those tests are necessary. I did show the method to a
+	 Core Data engineer at WWDC one year and he thought it looked OK.
+	 */
+	
 	NSManagedObjectID* objectID = [self objectID] ;
-	NSString* string = [[objectID URIRepresentation] absoluteString] ;
-	NSString* suffix = [objectID isTemporaryID] ? @"temp" : @"perm" ;
-	return [NSString stringWithFormat:
-			@"%@[%@]",
-			string,
-			suffix] ;
+	if (objectID == nil) {
+		NSLog(@"Warning 623-5825 Thanx D. Riggle!") ;
+		return NO ;
+	}
+
+	NSManagedObject* object = [context objectRegisteredForID:objectID] ;
+	if (!object) {
+		NSLog(@"Warning 623-5852 Thanx D. Riggle!") ;
+		return NO ;
+	}
+
+	return YES ;
+}
+
+- (NSString*)permanentUri {
+	NSManagedObjectID* objectID = [self objectID] ;
+	if ([objectID isTemporaryID]) {
+		return nil ;
+	}
+
+	return [[objectID URIRepresentation] absoluteString] ;
 }
 
 - (void)setIndexedSetWithArray:(NSArray*)array
@@ -308,6 +351,32 @@ end:;
 - (void)breakRetainCycles {
 	[[self managedObjectContext] refreshObject:self
 								  mergeChanges:NO] ;
+}
+
+- (unsigned long)valuesHash {
+	NSArray* attributeKeys = [[[self entity] attributesByName] allKeys] ;
+	unsigned long valuesHash = 0 ;
+	for (NSString* key in attributeKeys) {
+#ifdef __LP64__
+		unsigned long aHash = [[self valueForKey:key] hash] & 0x00000000ffffffff ;
+#else
+		unsigned long aHash = [[self valueForKey:key] hash] ;
+#endif		
+		valuesHash ^= aHash ;
+	}
+	
+	return valuesHash ;
+}
+
+- (NSUInteger)countOfNonNilValues {
+	NSUInteger count = 0 ;
+	for (NSString* key in [self attributeKeys]) {
+		if ([self valueForKey:key] != nil) {
+			count++ ;
+		}
+	}
+	
+	return count ;
 }
 
 #if 0

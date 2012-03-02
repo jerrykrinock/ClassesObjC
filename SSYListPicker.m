@@ -88,11 +88,16 @@ NSString* constKeyDidCancelInvocation = @"didCancelInvocation" ;
 	[alert setWindowTitle:windowTitle] ;
 	[alert setButton1Title:button1Title] ;
 	[alert setButton2Title:button2Title] ;
-	[alert setButton3Title:[NSString localize:@"clear"]] ;
+	[alert setButton3Title:[NSString localizeFormat:
+							@"clearX",
+							[NSString localize:@"selection"]]] ;
 	[alert setRightColumnMinimumWidth:MIN(width, 700)] ;
 	[alert setIconStyle:SSYAlertIconInformational] ;
 	[alert setClickTarget:self] ;
 	[alert setClickSelector:@selector(handleClickInAlert:)] ;
+	[alert setShouldStickAround:YES] ;
+	//  I think this was added in BookMacster 1.7.3 or, more likely, 1.8.  I forgot why, except that it was definitely needed…
+	[NSApp activateIgnoringOtherApps:YES] ;
 	NSMutableDictionary* didEndInfo = [NSMutableDictionary dictionary] ;
 	[didEndInfo setValue:didEndTarget
 				  forKey:constKeyDidEndTarget] ;

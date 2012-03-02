@@ -291,16 +291,18 @@ static SSYMOCManager* sharedMOCManager = nil ;
 									domain:SSYPersistentDocumentMultiMigratorErrorDomain]) {
 			   NSString* originalPath = [url path] ;
 			   NSString* tildefiedPath = [originalPath tildefiedPath] ;
-			   NSError* moveError = nil ;
 			   BOOL movedOk = [[NSFileManager defaultManager] moveItemAtPath:originalPath
 																	  toPath:tildefiedPath
-																	   error:&moveError] ;
+																	   error:NULL] ;
 			   if (!movedOk) {
-				   // The following error may be expected, because depending on how
-				   // bad the subject file is, sometimes Core Data may have already
-				   // subject file Foo.sql to Foo.unreadable.sql.  In this case,
-				   // the error will be NSCocoaErrorDomain Code=4 "The file “Logs.sql” doesn’t exist."
-				   NSLog(@"Warning 245-0492.  Error moving %@ to %@ : %@ userInfo: %@ ", originalPath, tildefiedPath, moveError, [moveError userInfo]) ;
+				   // This may happen in two situations that I know of…
+				   // 1.  If the subject file is really bad, sometimes Core Data may have already
+				   //     moved subject file Foo.sql to Foo.unreadable.sql.  In this case,
+				   //     the error will be NSCocoaErrorDomain Code=4 "The file “Logs.sql” doesn’t exist."
+				   // 2.  If the subject file did not exist to begin with.
+				   // In either case, moveITemAtPath::: will return an error with
+				   // Domain=NSCocoaErrorDomain Code=4, containing an underlying error with
+				   // Error Domain=NSPOSIXErrorDomain Code=2.  We ignore it, don't even ask for it.
 			   }
 		   }
 	   }
