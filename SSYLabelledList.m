@@ -29,7 +29,7 @@
 @implementation NSTableView (Layout)
 
 - (void)sizeHeightToFitAllowShrinking:(BOOL)allowShrinking {
-	float height = [self numberOfRows] * [self rowHeight] + ([self numberOfRows]-1)*[self intercellSpacing].height ;
+	CGFloat height = [self numberOfRows] * [self rowHeight] + ([self numberOfRows]-1)*[self intercellSpacing].height ;
 	[self setHeight:height] ;
 	
 	// Super implementation makes sure that we're not too high for the screen.
@@ -126,7 +126,7 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 			choices:(NSArray*)choices_
 		   toolTips:(NSArray*)toolTips
 	  lineBreakMode:(NSLineBreakMode)lineBreakMode
-	 maxTableHeight:(float)maxTableHeight_ {
+	 maxTableHeight:(CGFloat)maxTableHeight_ {
 	self = [super initWithFrame:NSZeroRect] ;
 	if (self != nil) {				
 		[self setChoices:choices_] ;
@@ -219,7 +219,7 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 						  choices:(NSArray*)choices_
 						 toolTips:(NSArray*)toolTips
 					lineBreakMode:(NSLineBreakMode)lineBreakMode
-					maxTableHeight:(float)maxTableHeight {
+					maxTableHeight:(CGFloat)maxTableHeight {
 	SSYLabelledList* instance = [[SSYLabelledList alloc] initWithLabel:label
 															   choices:choices_
 															  toolTips:toolTips
@@ -246,13 +246,13 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 
 - (id)tableView:(NSTableView *)aTableView
 objectValueForTableColumn:(NSTableColumn *)aTableColumn
-			row:(int)rowIndex {
+			row:(NSInteger)rowIndex {
 	NSAttributedString* s = [[NSAttributedString alloc] initWithString:[[self choices] objectAtIndex:rowIndex]
 															attributes:[self cellTextAttributes]];
 	return [s autorelease] ;
 }
 
-- (int)numberOfRowsInTableView:(NSTableView *)aTableView {
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
 	return [[self choices] count] ;
 }
 

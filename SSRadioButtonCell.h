@@ -8,7 +8,7 @@
 	NSMutableArray* _widths ;
 	
     NSRect _currentFrameInControlView ;
-	int _numberOfButtons ;
+	NSInteger _numberOfButtons ;
 }
 
 - (void)setSelectedImage:(NSImage*)newImage ;
@@ -18,12 +18,12 @@
 
 - (NSNumber *) calculateSelectionForPoint: (NSPoint) point inView: (NSView *) controlView;
 
-- (void)setNumberOfButtons:(int)x ;
-- (int)numberOfButtons ;
+- (void)setNumberOfButtons:(NSInteger)x ;
+- (NSInteger)numberOfButtons ;
 - (NSMutableArray*)widths ;
-- (int)numberOfButtons ;
+- (NSInteger)numberOfButtons ;
 - (void)triggerKVO ;
 
-- (void)setWidth:(float)width forSegment:(int)segment ;
+- (void)setWidth:(CGFloat)width forSegment:(NSInteger)segment ;
 
 @end

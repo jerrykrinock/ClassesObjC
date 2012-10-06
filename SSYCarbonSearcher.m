@@ -46,7 +46,7 @@ struct SearchInfo {
 	FSCatalogBulkParam searchPB ;  // Needed so we can back out of it using offsetof()
 	FSCatalogBulkParamPtr searchPB_p ; // Needed so we can dealloc it
 	UInt32 maxFindsGrandTotal ;
-	int maxIterations ;
+	NSInteger maxIterations ;
 	BOOL runAsync ;
 	BOOL verbose ;
 	BOOL printResultsEachIteration ;
@@ -84,23 +84,24 @@ NSDictionary* ExtractResults(SearchInfo *searchInfo_p) {
 	
 	if (searchInfo_p->verbose) {
 		const char* pathsDesc = [[paths description] UTF8String] ;
-		printf("Verbose Summary for Iteration %d:\nFound %u paths:\n%s\ncontainerChanged: %d\nerror: %d\n",
-			   (int unsigned)searchInfo_p->iIter,
-			   (int unsigned)searchInfo_p->grandTotalFinds,
+		printf("Verbose Summary for Iteration %lu:\nFound %lu paths:\n%s\ncontainerChanged: %hhd\nerror: %ld\n",
+			   (unsigned long)searchInfo_p->iIter,
+			   (unsigned long)searchInfo_p->grandTotalFinds,
 			   pathsDesc,
 			   searchInfo_p->containerChanged,
-			   searchInfo_p->searchPB.ioResult) ;			
+			   (long)searchInfo_p->searchPB.ioResult) ;			
 	}
 
 	NSDictionary* summary = [NSDictionary dictionaryWithObjectsAndKeys:
 							 paths, SSYCarbonSearcherResultsKeyPaths,
 							 [NSNumber numberWithBool:searchInfo_p->containerChanged], SSYCarbonSearcherResultsKeyContainerChanged,
-							 [NSNumber numberWithInt:searchInfo_p->grandTotalFinds], SSYCarbonSearcherResultsKeyNumberFound,
-							 [NSNumber numberWithInt:searchInfo_p->iIter], SSYCarbonSearcherResultsKeyIterationIndex,
-							 [NSNumber numberWithInt:searchInfo_p->searchPB.ioResult], SSYCarbonSearcherResultsKeyOSErr,
+							 [NSNumber numberWithInteger:searchInfo_p->grandTotalFinds], SSYCarbonSearcherResultsKeyNumberFound,
+							 [NSNumber numberWithInteger:searchInfo_p->iIter], SSYCarbonSearcherResultsKeyIterationIndex,
+							 [NSNumber numberWithInteger:searchInfo_p->searchPB.ioResult], SSYCarbonSearcherResultsKeyOSErr,
 							 [NSNumber numberWithBool:searchInfo_p->done], SSYCarbonSearcherResultsKeyIsDone,
 							 nil] ;
-								 
+	[paths release] ;  // Memory leak fixed in BookMacster 1.11
+	
 	return summary ;
 }
 
@@ -121,11 +122,11 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 	
 	// Print summary statistics of search results
 	if (searchInfo_p->verbose) {
-		printf("Results of iteration %u:\n   %5u = containerChanged\n   %5d = OSErr result (-1417 is OK, means no more items to search)\n   %5u = number of items found\n   List of items found:\n",
-			   (int unsigned)searchInfo_p->iIter,
-			   (bool)searchInfo_p->searchPB.containerChanged,
-			   (int)searchInfo_p->searchPB.ioResult,
-			   (int unsigned)searchInfo_p->searchPB.actualItems) ;
+		printf("Results of iteration %lu:\n       %hhd = containerChanged\n   %5ld = OSErr result (-1417 is OK, means no more items to search)\n   %5lu = number of items found\n   List of items found:\n",
+			   (unsigned long)searchInfo_p->iIter,
+			   searchInfo_p->searchPB.containerChanged,
+			   (long)searchInfo_p->searchPB.ioResult,
+			   (unsigned long)searchInfo_p->searchPB.actualItems) ;
 	}
 	if (searchInfo_p->searchPB.containerChanged) {
 		// Remember this in the SearchInfo struct, since the raw data from
@@ -135,7 +136,7 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 	
 	// Loop through results and add each pathname found into paths (results)
 	FSRef fr ;
-	unsigned int j ;
+	NSUInteger j ;
 	for (j=0; j<searchInfo_p->searchPB.actualItems; j++) {
 		OSErr err1 ;
 		
@@ -154,7 +155,7 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 			}
 		}
 		else {
-			printf("FSRefMakePath returned %i\n", err1) ;
+			printf("FSRefMakePath returned %ld\n", (long)err1) ;
 		}
 		
 	}
@@ -167,20 +168,20 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 		if (searchInfo_p->grandTotalFinds >= searchInfo_p->maxFindsGrandTotal)
 		{
 			if (searchInfo_p->verbose) {
-				printf("Will exit since maxFindsGrandTotal of %u has been reached with %u.\n", (unsigned int)searchInfo_p->maxFindsGrandTotal, (unsigned int)searchInfo_p->grandTotalFinds) ;
+				printf("Will exit since maxFindsGrandTotal of %lu has been reached with %lu.\n", (unsigned long)searchInfo_p->maxFindsGrandTotal, (unsigned long)searchInfo_p->grandTotalFinds) ;
 			}
 			searchInfo_p->done = YES ;
 		}
 		else if ((searchInfo_p->iIter >= (searchInfo_p->maxIterations - 1)) && (searchInfo_p->maxIterations>0))
 		{
 			if (searchInfo_p->verbose) {
-				printf("Will exit since maxIterations of %u has been reached with %u.\n", (unsigned int)searchInfo_p->maxIterations, (unsigned int)searchInfo_p->iIter) ;
+				printf("Will exit since maxIterations of %lu has been reached with %lu.\n", (unsigned long)searchInfo_p->maxIterations, (unsigned long)searchInfo_p->iIter) ;
 			}
 			searchInfo_p->done = YES ;
 		}
 	}
 	else {
-		printf("PBCatalogSearch returned error %d.\n", searchInfo_p->searchPB.ioResult) ;
+		printf("PBCatalogSearch returned error %ld.\n", (long)searchInfo_p->searchPB.ioResult) ;
 		searchInfo_p->done = YES ;
 	}
 	
@@ -195,16 +196,13 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 		[invocation setArgument:&summary atIndex:2] ;
 		[invocation invoke] ;
 		
-		unsigned int returnLength = [[invocation methodSignature] methodReturnLength] ;
+		NSUInteger returnLength = [[invocation methodSignature] methodReturnLength] ;
 		// Assert that the callback is returning something that is at least of the correct size.
-		assert(returnLength == sizeof(int)) ;
+		assert(returnLength == sizeof(NSInteger)) ;
 		void* returnBuffer = (void*)malloc(returnLength) ;
 		[invocation getReturnValue:returnBuffer] ;
-		
-		int* returnValue_p = (int*)returnBuffer ;
-		free(returnBuffer) ;
-		
-		switch(*returnValue_p) {
+				
+		switch(*(NSInteger*)returnBuffer) {
 			case SSYCarbonSearcherAbort:
 				searchInfo_p->done = YES ;
 				if (searchInfo_p->verbose) {
@@ -222,6 +220,7 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 					printf("Per callback return, will continue adding more results.\n") ;
 				}
 		}
+		free(returnBuffer) ;
 		//[(searchInfo_p->asyncCallbackTarget) performSelector:searchInfo_p->asyncCallbackSelector
 		//										  withObject:summary] ;
 	}
@@ -235,7 +234,7 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 		// Iterate again
 		searchInfo_p->iIter++ ;
 		if (searchInfo_p->verbose) {
-			printf("Beginning PBCatalogSearch iteration %u (in callback).  Please wait.\n", (int unsigned)searchInfo_p->iIter) ;	
+			printf("Beginning PBCatalogSearch iteration %lu (in callback).  Please wait.\n", (unsigned long)searchInfo_p->iIter) ;	
 		}
 
 		if (searchInfo_p->runAsync) {
@@ -268,8 +267,8 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 			findDirectories:(BOOL)findDirectories
 				  findFiles:(BOOL)findFiles
 	   maxFindsPerIteration:(UInt32)maxFindsPerIteration
-	 maxSecondsPerIteration:(float)maxSecondsPerIteration
-			  maxIterations:(int)maxIterations
+	 maxSecondsPerIteration:(CGFloat)maxSecondsPerIteration
+			  maxIterations:(NSInteger)maxIterations
 		 maxFindsGrandTotal:(UInt32)maxFindsGrandTotal
 					verbose:(BOOL)verbose
   printResultsEachIteration:(BOOL)printResultsEachIteration
@@ -294,7 +293,7 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 		NSAssert((syncResults_p != NULL), badCall) ;
 	}
 	
-	badCall = [NSString stringWithFormat:@"number of bytes in searchString must be <= %d", MAX_SEARCH_BYTES] ;
+	badCall = [NSString stringWithFormat:@"number of bytes in searchString must be <= %ld", (long)MAX_SEARCH_BYTES] ;
 	NSAssert(strlen(searchCString) <= MAX_SEARCH_BYTES, badCall) ;
 	badCall = @"One of findDirectories or findFiles must be true" ;
 	NSAssert(findDirectories || findFiles, badCall) ;
@@ -303,9 +302,9 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 	FSVolumeRefNum actualVolume = 999 ; // bogus value to be overwritten
 	HFSUniStr255 volumeName ;
 	FSRef containerRef ;
-	int volRefNum = [SSYVolumeServerGuy volumeRefNumberForPath:@"/"] ;
+	NSInteger volRefNum = [SSYVolumeServerGuy volumeRefNumberForPath:@"/"] ;
 	if (verbose) {
-		printf("Will search volRefNum (of root directory) = %i\n", volRefNum) ;
+		printf("Will search volRefNum (of root directory) = %ld\n", (long)volRefNum) ;
 	}
 
 	OSErr err = noErr;
@@ -326,12 +325,12 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 	}
 	
 	if (err != noErr) {
-		printf("FSGetVolumeInfo returned error %d\n", err) ;
+		printf("FSGetVolumeInfo returned error %ld\n", (long)err) ;
 		goto end ;
 	}
 	else {
 		if (verbose) {
-			printf("FSGetVolumeInfo results:\n   %5d = result OSErr\n   %5d = volRefNum\n", err, actualVolume) ;
+			printf("FSGetVolumeInfo results:\n   %5ld = result OSErr\n   %5ld = volRefNum\n", (long)err, (long)actualVolume) ;
 		}
 		err =  FSOpenIterator (
 							   &containerRef,		// in
@@ -341,7 +340,7 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 	}
 
 	if (err != noErr) {
-		printf("FSOpenIterator returned OSErr %d\n", err) ;
+		printf("FSOpenIterator returned OSErr %ld\n", (long)err) ;
 		goto end ;
 	}
 	else {
@@ -452,7 +451,7 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 		}
 		else {		
 			if (verbose) {
-				printf("Beginning PBCatalogSearch iteration %u.  Please wait.\n", (int unsigned)searchInfo_p->iIter) ;	
+				printf("Beginning PBCatalogSearch iteration %lu.  Please wait.\n", (unsigned long)searchInfo_p->iIter) ;	
 			}
 			
 			err = PBCatalogSearchSync( &(searchInfo_p->searchPB) ) ;

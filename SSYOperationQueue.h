@@ -62,7 +62,7 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
 	NSScriptCommand* m_scriptCommand ;
 	id m_scriptResult ;
 	NSMutableArray* m_errorRetryInvocations ;
-	NSString* m_skipOperationsExceptGroup ;
+	NSSet* m_skipOperationsExceptGroups ;
 }
 
 /*!
@@ -129,26 +129,27 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
 
 
 /*!
- @brief    The only group in the queue whose operations will not be
+ @brief    A set of group names (strings) whose operations will not be
  skipped.
 
  @details  If, during the course of operations, you encounter an error
- which requires that the current group be completed but other groups
+ which requires that the some groups be completed but other groups
  be skipped, instead of setting an error, set this parameter to the
- current group.  This will cause other groups to be skipped.
+ the groups that should not be skipped.  This will cause *other* groups
+ to be skipped.
  
  This parameter is automatically reset to nil when the receiver's 
  queue is emptied, so that in the future, no groups will be skipped.
 */
-@property (copy) NSString* skipOperationsExceptGroup ;
+@property (copy) NSSet* skipOperationsExceptGroups ;
 
 
 /*!
  @brief    Message which should be sent in the -main function of 
- SSYOperation to enforce the operation of skipOperationsExceptGroup.
+ SSYOperation to enforce the operation of skipOperationsExceptGroups.
 
- @result   NO if the receiver's skipOperationsExceptGroup is not
- nil and is equal to the given group, or if the given group is nil.
+ @result   NO if the receiver's skipOperationsExceptGroups is not
+ nil and includes the given group, or if the given group is nil.
  YES otherwise.
 */
 - (BOOL)shouldSkipOperationsInGroup:(NSString*)group ;
@@ -197,7 +198,10 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  @param    selectorNames  An array of the names of the method selectors
  to be executed, in the order in which they are to be executed.
  You must implement corresponding methods with each of these names
- in a category (class extension) of SSYOperation.
+ in a category (class extension) of SSYOperation.  This parameter may be
+ nil, or an empty array, which you may want to do if you need only to queue
+ the doneTarget/doneSelector operation (because it will run even if there
+ is an error).
  @param    info  A mutable dictionary which the method selectors may access
  to get arguments and return values.  If an error occurs during execution of
  any of your method selectors, the error registered by your method selector

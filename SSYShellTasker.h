@@ -1,5 +1,6 @@
 extern NSInteger const SSYShellTaskerErrorFailedLaunch  ;
 extern NSInteger const SSYShellTaskerErrorTimedOut  ;
+extern NSString* const constKeySSYShellTaskerTimeout ;
 
 @interface SSYShellTasker : NSObject {
 }
@@ -13,11 +14,15 @@ extern NSInteger const SSYShellTaskerErrorTimedOut  ;
  stdout_p and stderr_p and write code to recover from errors. 
  
  TIMEOUT   Narrated result       result     *stdoutData_p    *stderrData_p    *error_p  
-   0.0     Launch failed     ..FailedLaunch   not set          not set        NSError
+   0.0     Launch failed      …FailedLaunch   not set          not set        NSError
            Launch succeeded      0            not set          not set        not set  
-  >0.0     Launch failed     ..FailedLaunch   not set          not set        NSError
-           Task timed out      ..TimeOut      not set          not set        NSError  
+  >0.0     Launch failed      …FailedLaunch   not set          not set        NSError
+           Task timed out      …TimedOut      not set          not set        NSError  
            Task completed     task result    taskStdout       taskStderr      not set
+
+ where
+     …FailedLaunch denotes SSYShellTaskerErrorFailedLaunch
+     …TimedOut denotes SSYShellTaskerErrorTimedOut
 
  If timeout > 0.0, method runs an NSTask in a new thread which it creates, so that it can run a run
  loop with the timeout.  If timeout = 0.0, NSTask runs in the invoker's thread.  In either case,
@@ -114,7 +119,7 @@ extern NSInteger const SSYShellTaskerErrorTimedOut  ;
  and will not be returned.  See table above for more details.
  @param    timeout  The maximum time you are allowing for this method to block while the process
  completes, or 0.0 to indicate that you want this method to return immediately without
- waiting for the spawned process.
+ waiting for the spawned process.  If you want stdout, this must be > 0.
  @param    error_p  If a non-NULL pointer is supplied, and an error occurs, this will
  point to an NSError describing the task result upon return.  See table above for more details.
  @result   See table above.

@@ -137,10 +137,26 @@ extern NSString* const constKeyNewValue ;
 
 
 /*!
- @brief    Returns the absolute string of the URI representation of the object's objectID,
- or nil if the objectID is a temporary ID.
+ @brief    Returns the absolute string of the URI representation of the
+ object's objectID, optionally graduating the objectID to be permanent
+ first, or nil if a permanent URI was requested but an error occured
+ when obtaining it
+
+ @details  If permanent URI is graduated, this method also updates the file modification
+ date of a given document, as required by Details in the documentation of 
+ -[NSManagedObjectContext obtainPermanentIDsForObjects:error:].  If an
+ error occurs when attempting to graduate the URI, this method logs the
+ error.
+ @param    makePermanent  If YES, and if the receiver's objectID is
+ temporary, will try to graduate it to a permanent ID before returning
+ the absolute string of its URI representation, and return nil if a
+ permanent objectID cannot be obtained.
+ @param    document  Document whose file modification date may need to be
+ updated.  If the receiver is not the context of an NSPersistentDocument,
+ pass nil.
 */
-- (NSString*)permanentUri ;
+- (NSString*)objectUriMakePermanent:(BOOL)makePermanent
+						   document:(NSPersistentDocument*)document ;
 
 /*!
  @brief    Replaces the objects in the to-many relationship for a given
@@ -207,7 +223,7 @@ extern NSString* const constKeyNewValue ;
  be relevant, and excludes all relationships.  Subclasses may override
  to exclude some attributes, or include some relationships, as desired. 
  */
-- (unsigned long)valuesHash ;
+- (uint32_t)valuesHash ;
 
 /*!
  @brief    Useful for debugging

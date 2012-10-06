@@ -176,15 +176,15 @@ To control the default active area, you can modify the 'rect' parameter.
 
 - (id)				tableView:(NSTableView *)tableView
 	objectValueForTableColumn:(NSTableColumn *)tableColumn
-						  row:(int)rowIndex {
+						  row:(NSInteger)rowIndex {
 	NSArray* items = [[self arrayController] arrangedObjects] ;
 	id output = [items objectAtIndex:rowIndex] ;
 
 	return output ;
 }
 
-- (int)numberOfRowsInTableView:(NSTableView *)aTableView {
-	int output = [[[self arrayController] arrangedObjects] count] ;
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
+	NSInteger output = [[[self arrayController] arrangedObjects] count] ;
 	return output ;
 }
 
@@ -192,7 +192,7 @@ To control the default active area, you can modify the 'rect' parameter.
 - (void)tableView:(NSTableView *)tableView
    setObjectValue:(id)object
    forTableColumn:(NSTableColumn *)tableColumn
-			  row:(int)rowIndex {
+			  row:(NSInteger)rowIndex {
 	
 	// Do not allow strings of all whitespace
 	if ([object respondsToSelector:@selector(isAllWhite)]) {

@@ -108,13 +108,14 @@
 		[self keyEquivalentSuffix]] ;
 	
 	NSFont* font = [self font] ;
-	float height = [font boundingRectForFont].size.height ;
+	CGFloat height = [font boundingRectForFont].size.height ;
 	
-	float width ;
+	CGFloat width ;
 	width =  [newTitle widthForHeight:height
 								 font:font] ;
 
 	if (width > [self frame].size.width - widthMargin) {
+        [newTitle release] ;
 		newTitle = [[NSString alloc] initWithFormat:@"%@\n%@",
 			[self titleText],
 			[self keyEquivalentSuffix]] ;
@@ -125,7 +126,7 @@
 	keyEquivalentShowing = YES ;
 }
 
-- (void)setWidthMargin:(float)wm {
+- (void)setWidthMargin:(CGFloat)wm {
 	widthMargin = wm ;
 }
 

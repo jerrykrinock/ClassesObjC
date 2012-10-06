@@ -54,29 +54,23 @@
 
 
 - (SSRSS *) initWithTitle: (NSString *) title andDescription: (NSString *) description {
-	
-	/*
-	 Create an empty feed. Useful for synthetic feeds.
-	 */
-	
-	NSMutableDictionary *header;
-	
-	flRdf = NO;
-	
-	header = [NSMutableDictionary dictionaryWithCapacity: 2];
-	
-	[header setObject: title forKey: titleKey];
-	
-	[header setObject: description forKey: descriptionKey];
-	
-	headerItems = (NSDictionary *) [header copy];
-	
-	newsItems = [[NSMutableArray alloc] initWithCapacity: 0];
-	
-	version = [[NSString alloc] initWithString: @"synthetic"];
-	
+	self = [super init] ;
+    if (self) {
+        /*
+         Create an empty feed. Useful for synthetic feeds.
+         */
+        NSMutableDictionary *header;
+        flRdf = NO;
+        header = [NSMutableDictionary dictionaryWithCapacity: 2];
+        [header setObject: title forKey: titleKey];
+        [header setObject: description forKey: descriptionKey];
+        headerItems = (NSDictionary *) [header copy];
+        newsItems = [[NSMutableArray alloc] initWithCapacity: 0];
+        version = [[NSString alloc] initWithString: @"synthetic"];
+    }
+    
 	return (self);
-} /*initWithTitle*/
+}
 
 
 - (SSRSS *) initWithData:(NSData *) rssData normalize:(BOOL)fl {
@@ -118,10 +112,10 @@
 			[dataString release] ;
 			
 			NSString* filePath = [NSString stringWithFormat:
-								  @"%@/Desktop/GoogleBad.%@.%i.data",
+								  @"%@/Desktop/GoogleBad.%@.%lx.data",
 								  NSHomeDirectory(),
 								  NSUserName(),
-								  [[NSDate date] timeIntervalSinceReferenceDate]] ;
+								  (long)[[NSDate date] timeIntervalSinceReferenceDate]] ;
 			NSString* msg = @"Could not parse data from Google containing some bookmarks.\n\n Some of your Google Bookmarks may be missing.\n\nFile containing bad data was written to your desktop." ;
 			[rssData writeToFile:filePath atomically:NO] ;
 			NSRunCriticalAlertPanel(nil, msg, nil, nil, nil) ;
@@ -181,7 +175,7 @@
 	
 	CFXMLTreeRef channelTree, childTree;
 	CFXMLNodeRef childNode;
-	int childCount, i;
+	NSInteger childCount, i;
 	NSString *childName;
 	NSMutableDictionary *headerItemsMutable;
 	
@@ -229,7 +223,7 @@
 	CFXMLNodeRef childNode, itemNode;
 	NSString *childName;
 	NSString *itemName, *itemValue;
-	int childCount, itemChildCount, i, j;
+	NSInteger childCount, itemChildCount, i, j;
 	NSMutableDictionary *itemDictionaryMutable;
 	NSMutableArray *itemsArrayMutable;
 	
@@ -333,8 +327,8 @@
 
 - (void) flattenimagechildren: (CFXMLTreeRef) tree into: (NSMutableDictionary *) dictionary {
 	
-	int childCount = CFTreeGetChildCount (tree);
-	int i = 0;
+	NSInteger childCount = CFTreeGetChildCount (tree);
+	NSInteger i = 0;
 	CFXMLTreeRef childTree;
 	CFXMLNodeRef childNode;
 	NSString *childName, *childValue, *keyName;
@@ -409,7 +403,7 @@
 
 - (CFXMLTreeRef) getnamedtree: (CFXMLTreeRef) currentTree name: (NSString *) name {
 	
-	int childCount, index;
+	NSInteger childCount, index;
 	CFXMLNodeRef xmlNode;
 	CFXMLTreeRef xmlTreeNode;
 	NSString *itemName;
@@ -573,7 +567,7 @@
 			
 			if ([stringComponents count] > 1) {
 				
-				int len;
+				NSInteger len;
 				
 				tempcstring = [title UTF8String];
 				
@@ -608,7 +602,7 @@
 	
 	CFXMLNodeRef node;
 	CFXMLTreeRef itemTree;
-	int childCount, ix;
+	NSInteger childCount, ix;
 	NSMutableString *valueMutable;
 	NSString *value;
 	NSString *name;
@@ -642,10 +636,10 @@
 					name = @"&";
 				
 				else if ([name isEqualTo: @"rsquo"])
-					name = [NSString stringWithFormat:@"%C", 8217];
+					name = [NSString stringWithFormat:@"%C", (unsigned short)8217];
 				
 				else if ([name isEqualTo: @"lsquo"])
-					name = [NSString stringWithFormat:@"%C", 8216];
+					name = [NSString stringWithFormat:@"%C", (unsigned short)8216];
 				
 				else if ([name isEqualTo: @"apos"])
 					name = @"'";				

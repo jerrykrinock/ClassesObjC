@@ -1,4 +1,3 @@
-
 #import "SSRadioButtonCell.h"
 
 #define DEFAULT_BUTTON_SPACING 1.0
@@ -65,15 +64,15 @@
 }
 
 
-- (void)setWidth:(float)width forSegment:(int)segment {
+- (void)setWidth:(CGFloat)width forSegment:(NSInteger)segment {
 	NSMutableArray* widths = [self widths] ;
-	int widthsCount = [widths count] ;
+	NSInteger widthsCount = [widths count] ;
 	if ((segment >= 0) && (segment < widthsCount)) {
-		float endInset =  ((segment==0) || (segment==(widthsCount-1)))
+		CGFloat endInset =  ((segment==0) || (segment==(widthsCount-1)))
 		? END_INSET : 0.0 ;
 			
 		
-		NSNumber* widthNumber = [NSNumber numberWithFloat:(width - endInset)] ;
+		NSNumber* widthNumber = [NSNumber numberWithDouble:(width - endInset)] ;
 		[widths replaceObjectAtIndex:segment withObject:widthNumber] ;
 	}
 }
@@ -176,7 +175,7 @@
 		[self setWidths:[NSMutableArray arrayWithCapacity:16]] ;
 
 		// Set to a harmless default value:
-		[self setObjectValue:[NSNumber numberWithInt:1]] ;
+		[self setObjectValue:[NSNumber numberWithInteger:1]] ;
 	}
 	return self;
 }
@@ -191,7 +190,7 @@
 }
 
 
-- (id)defaultObjectValueAtIndex:(int)index {
+- (id)defaultObjectValueAtIndex:(NSInteger)index {
 	return [[[SSRadioButtonCell alloc] init] autorelease] ;
 }
 
@@ -200,13 +199,13 @@
 }
 
 
-- (void)setNumberOfButtons:(int)x {
+- (void)setNumberOfButtons:(NSInteger)x {
 	_numberOfButtons = x ;
 	NSMutableArray* widths = [self widths] ;
-	int currentWidthsCount = [widths count] ;
-	float defaultWidth = [[self selectedImage] size].width + DEFAULT_BUTTON_SPACING ;
-	NSNumber* defaultWidthNumber = [NSNumber numberWithFloat:defaultWidth] ;
-	int i ;
+	NSInteger currentWidthsCount = [widths count] ;
+	CGFloat defaultWidth = [[self selectedImage] size].width + DEFAULT_BUTTON_SPACING ;
+	NSNumber* defaultWidthNumber = [NSNumber numberWithDouble:defaultWidth] ;
+	NSInteger i ;
 	
 	// If requested number is less than current, add new default widths
 	for (i=currentWidthsCount; i<x; i++) {
@@ -221,7 +220,7 @@
 	[self setWidths:widths] ;
 }
 
-- (int)numberOfButtons {
+- (NSInteger)numberOfButtons {
 	return _numberOfButtons ;
 }
 
@@ -252,28 +251,28 @@
     if (objectValue) {
 		[controlView lockFocus] ;
 		
-		int selectedIndex = [objectValue intValue] ;
-		int i ;
+		NSInteger selectedIndex = [objectValue integerValue] ;
+		NSInteger i ;
 		
 		NSImage* selectedImage = [self selectedImage] ;
 		NSImage* deselectedImage = [self deselectedImage] ;
 		NSArray* widths = [self widths] ;
-		float x = NSMinX(cellFrame) ; // will increase in loop
-		float verticalInset = (NSHeight(cellFrame) - [selectedImage size].height)/2 + 1.0 ;
+		CGFloat x = NSMinX(cellFrame) ; // will increase in loop
+		CGFloat verticalInset = (NSHeight(cellFrame) - [selectedImage size].height)/2 + 1.0 ;
 			// We add the 1.0 because it looks better to be a little closer to the bottom
 			// than the top.  More verticalOffset <--> radio button is farther DOWN.
 			// Tried 0.55 instead of 1.0 but this made the buttons stretch to elliptical shape
 			// with longer axis vertical.  Looked really weird.
-		float y = NSMinY(cellFrame) + verticalInset ;   // will stay constant
-		float height = [selectedImage size].height ;     // will stay constant
+		CGFloat y = NSMinY(cellFrame) + verticalInset ;   // will stay constant
+		CGFloat height = [selectedImage size].height ;     // will stay constant
 		
 		for (i = 0; i < [self numberOfButtons]; i++) {
-			float width = [[widths objectAtIndex:i] floatValue] ;
+			CGFloat width = [[widths objectAtIndex:i] doubleValue] ;
 			NSRect rect = NSMakeRect(x, y, width, height) ;
 			if (NSIntersectsRect(rect, cellFrame)) {
 				NSRect intersectRect = NSIntersectionRect(rect, cellFrame) ;
 				NSImage* image = (i == selectedIndex) ? selectedImage : deselectedImage ;
-				float centeringOffset = (width - [image size].width) / 2  ;
+				CGFloat centeringOffset = (width - [image size].width) / 2  ;
 				[image setFlipped: [controlView isFlipped]];
 				[image drawInRect:NSOffsetRect(intersectRect, centeringOffset, 0.0)
 						 fromRect:NSMakeRect(0,
@@ -335,23 +334,23 @@
 - (NSNumber*)calculateSelectionForPoint:(NSPoint)point
 								 inView:(NSView*)controlView {
 
-	float zeroX = NSMinX([self drawingRectForBounds:_currentFrameInControlView]) ;
-	float x = point.x - zeroX ;
+	CGFloat zeroX = NSMinX([self drawingRectForBounds:_currentFrameInControlView]) ;
+	CGFloat x = point.x - zeroX ;
 	NSArray* widths = [self widths] ;
-	int numberOfWidths = [widths count] ;
+	NSInteger numberOfWidths = [widths count] ;
 	
-	float end = 0 ;
-	int selectedIndex = 0 ;
-	int i ;
+	CGFloat end = 0 ;
+	NSInteger selectedIndex = 0 ;
+	NSInteger i ;
 	for (i=0; i<numberOfWidths; i++) {
-		end += [[widths objectAtIndex:i] floatValue] ;
+		end += [[widths objectAtIndex:i] doubleValue] ;
 		if (x < end) {
 			selectedIndex = i ;
 			break ;
 		}
 	}
 				
-	NSNumber* selection = [NSNumber numberWithInt:selectedIndex] ;
+	NSNumber* selection = [NSNumber numberWithInteger:selectedIndex] ;
 	
     return selection ;
 }

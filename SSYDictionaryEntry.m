@@ -1,7 +1,7 @@
-#import "SSDictionaryEntry.h"
+#import "SSYDictionaryEntry.h"
 
 
-@implementation SSDictionaryEntry
+@implementation SSYDictionaryEntry
 
 - (id)key {
 	if (_key == nil) {
@@ -60,7 +60,7 @@
 }
 
 - (NSString*)description {
-	return [NSString stringWithFormat:@"SSDictionaryEntry with parent %@ <0x%x> and:\nkey <%@>:%@\nvalue <%@>: %@",
+	return [NSString stringWithFormat:@"SSDictionaryEntry with parent %@ <%p> and:\nkey <%@>:%@\nvalue <%@>: %@",
 			[[self parent] class],
 			[self parent],
 			[[self key] class],
@@ -116,7 +116,7 @@
 			}
 		}
 		
-		SSDictionaryEntry* entry = [[SSDictionaryEntry alloc] initWithParent:dic
+		SSYDictionaryEntry* entry = [[SSYDictionaryEntry alloc] initWithParent:dic
 																		 key:key
 																	   value:value] ;
 		
@@ -129,7 +129,7 @@
 - (id)reverseTransformedValue:(id)array {
 	NSMutableDictionary* dic = [[NSMutableDictionary alloc] initWithCapacity:[array count]] ;
 	NSEnumerator* e = [array objectEnumerator] ;
-	SSDictionaryEntry* entry ;
+	SSYDictionaryEntry* entry ;
 	while ((entry = [e nextObject]) != nil) {
 		id key = [entry valueForKey:@"key"] ;
 

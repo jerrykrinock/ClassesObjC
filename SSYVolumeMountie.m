@@ -244,7 +244,7 @@ end:
 {
 	if ( array == NULL ) return;
 	
-	unsigned int i, count = [array count];
+	NSUInteger i, count = [array count];
 	for (i = 0; i < count; i++) {
 		NSDictionary *thisServer = [array objectAtIndex:i];
 		[self mountServer:thisServer];

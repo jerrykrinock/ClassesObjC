@@ -7,6 +7,7 @@
 #import "NSFileManager+SomeMore.h"
 #import "NSFileManager+TempFile.h"
 #import "SSYPathWaiter.h"
+#import "SSYLaunchdBasics.h"
 
 NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 
@@ -15,58 +16,8 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 
 @implementation SSYLaunchdGuy
 
-+ (NSString*)homeLaunchAgentsPath {
-	return [[NSHomeDirectory() stringByAppendingPathComponent:@"Library"] stringByAppendingPathComponent:@"LaunchAgents"] ;
-}
-
-
-+ (NSSet*)installedLaunchdAgentLabelsWithPrefix:(NSString*)prefix {
-#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
-	NSArray* allAgentNames = [[NSFileManager defaultManager] directoryContentsAtPath:[self homeLaunchAgentsPath]] ;
-#else
-	NSError* error = nil ;
-	NSArray* allAgentNames = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:[self homeLaunchAgentsPath]
-																				 error:&error] ;
-	if ([error isNotFileNotFoundError]) {
-			NSLog(@"Internal Error 257-8032 %@", error) ;
-	}
-#endif
-NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
-	if (prefix) {
-		for (NSString* agentName in allAgentNames) {
-			if ([agentName hasPrefix:prefix]) {
-				[targetAgentNames addObject:[agentName stringByDeletingPathExtension]] ;
-			}
-		}
-	}
-	
-	NSSet* answer = [targetAgentNames copy] ;
-	[targetAgentNames release] ;
-	return [answer autorelease] ;
-}
-
-+ (NSDictionary*)installedLaunchdAgentsWithPrefix:(NSString*)prefix {
-	NSSet* allAgentNames = [self installedLaunchdAgentLabelsWithPrefix:prefix] ;
-	NSString* directory = [self homeLaunchAgentsPath] ;
-	NSMutableDictionary* agents = [[NSMutableDictionary alloc] init] ;
-	for (NSString* agentName in allAgentNames) {
-		NSString* filename = [agentName stringByAppendingPathExtension:@"plist"] ;
-		NSString* path = [directory stringByAppendingPathComponent:filename] ;
-		NSDictionary* agentDic = [NSDictionary dictionaryWithContentsOfFile:path] ;
-		// Use defensive programming when reading from files!
-		if ([agentDic isKindOfClass:[NSDictionary class]]) {
-			[agents setObject:agentDic
-					   forKey:agentName] ;
-		}
-	}
-	
-	NSDictionary* answer = [agents copy] ;
-	[agents release] ;
-	return [answer autorelease] ;
-}
-
 + (BOOL)isScheduledLaunchdAgentWithPrefix:(NSString*)prefix {
-	NSDictionary* dicOfDics = [self installedLaunchdAgentsWithPrefix:prefix] ;
+	NSDictionary* dicOfDics = [SSYLaunchdBasics installedLaunchdAgentsWithPrefix:prefix] ;
 	for (NSString* label in dicOfDics) {
 		NSDictionary* agentDic = [dicOfDics valueForKey:label] ;
 		// Use defensive programming when reading from files!
@@ -81,9 +32,46 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 	return NO ;
 }
 
++ (NSError*)warnUserIfLaunchdHangInTaskResult:(NSInteger)result
+										error:(NSError*)error {
+	if ((result != 0) && ([error code] == SSYShellTaskerErrorTimedOut)) {
+		NSTimeInterval timeout = [[[error userInfo] objectForKey:constKeySSYShellTaskerTimeout] doubleValue] ;
+		NSLog(@"Warning 516-7625 launchctl timed out at %0.1f secs.  Time to restart?", timeout) ;
+		NSString* reason = @"The launchd process of Mac OS X is not responding." ;
+		NSString* suggestion = @"You should restart your Mac at the next opportunity.  "
+		@"This bug has reportedly been fixed by Apple in Mac OS 10.8 (Mountain Lion)." ;
+		error = [error errorByAddingLocalizedFailureReason:reason] ;
+		error = [error errorByAddingLocalizedRecoverySuggestion:suggestion] ;
+		NSString* message = [NSString stringWithFormat:@"%@\n\n%@",
+							 reason,
+							 suggestion] ;
+		
+		NSString* windowTitle = [NSString stringWithFormat:
+								 @"%@ : Problem with Mac OS X",
+								 [[NSProcessInfo processInfo] processName]] ;
+		CFUserNotificationDisplayNotice (
+										 60,  // timeout
+										 kCFUserNotificationStopAlertLevel,
+										 NULL,
+										 NULL,
+										 NULL,
+										 (CFStringRef)windowTitle,
+										 (CFStringRef)message,
+										 NULL) ;
+		// The above function returns immediately. It does not wait
+		// for a user response after displaying the dialog.
+	}
+	
+	return error ;
+}
+
 // launchctl itself has a built-in timeout of 25 seconds (Mac OS 10.6.6).
-// So, anything over 25 seconds will act like 25 seconds.
-#define LAUNCHCTL_TIMEOUT 180.0
+// So, anything over 25 seconds will act like 25 seconds.  However, on
+// 20120428 launchctl got into some weird state in Mac OS X 10.7.3.
+// Whenever I gave it a command to load or unload a job, it would hang
+// indefinitely.  So I reduced this in BookMacster 1.11 from 180.0 to
+// 35.0 seconds.
+#define LAUNCHCTL_TIMEOUT 35.0
 
 + (BOOL)agentLoadPath:(NSString*)plistPath
 			  error_p:(NSError**)error_p {	
@@ -109,6 +97,8 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 											 stderrData_p:&stderrData
 												  timeout:LAUNCHCTL_TIMEOUT
 												  error_p:&error_] ;
+	error_ = [self warnUserIfLaunchdHangInTaskResult:result
+											  error:error_] ;
 	if ((result != 0) && error_p) {
 		NSString* msg = [NSString stringWithFormat:@"%@ failed", command] ;
 		*error_p = SSYMakeError(26530, msg) ;
@@ -137,7 +127,7 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 					 successes:(NSMutableSet*)successes
 					  failures:(NSMutableSet*)failures {
 	BOOL ok = YES ;
-	NSString* myAgentDirectory = [self homeLaunchAgentsPath] ;
+	NSString* myAgentDirectory = [SSYLaunchdBasics homeLaunchAgentsPath] ;
 	
 #if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
 	NSArray* existingFilenames = [[NSFileManager defaultManager] directoryContentsAtPath:myAgentDirectory] ;
@@ -180,6 +170,7 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 
 + (BOOL)addAgentInfo:(NSDictionary*)dic
 		   directory:(NSString*)dirPath
+				load:(BOOL)load
 			 error_p:(NSError**)error_p {
 	NSError* error = nil ;
     BOOL ok = YES ;
@@ -246,41 +237,8 @@ NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 		goto end ;
 	}
 	
-	// Determine if this agent should be loaded
-	// The following code assigns shouldLoad in
-	// accordance with this truth table:
-	/*  RunAtLoad    any otherTriggerKey
-	 *	is present       is present       shouldLoad  because
-	 *  ----------   -------------------  ----------  -------
-	 *	   NO                 X                YES    This is a normal job.
-	 *     YES                YES              YES    This is a normal job.
-	 *     YES                NO               NO     Invoker desires that this job will run at
-	 *                                                   the user's next login/startup.   Otherwise, she
-	 *                                                   wouldn't be using launchd and would simply
-	 *                                                   have run the command herself.  This case applies
-	 *                                                   to a BookMacster .standby agent
-	 */
-	BOOL shouldLoad = YES ;
-	if ([[dic objectForKey:@"RunAtLoad"] boolValue] == YES) {
-		shouldLoad = NO ;
-		NSSet* otherTriggerKeys = [NSSet setWithObjects:
-								   @"OnDemand",
-								   @"KeepAlive",
-								   @"StartOnMount",
-								   @"StartInterval",
-								   @"StartCalendarInterval", 
-								   @"WatchPaths",
-								   @"QueueDirectories",
-								   nil] ;
-		for (NSString* key in dic) {
-			if ([otherTriggerKeys member:key]) {
-				shouldLoad = YES ;
-				break ;
-			}
-		}
-	}
 	
-	if (shouldLoad) {
+	if (load) {
 		ok = [self agentLoadPath:path
 						 error_p:&error] ;
 		if (!ok) {
@@ -302,7 +260,7 @@ end:;
 }
 
 + (NSString*)myAgentDirectoryError_p:(NSError**)error_p {
-	NSString* myAgentDirectory = [self homeLaunchAgentsPath] ;
+	NSString* myAgentDirectory = [SSYLaunchdBasics homeLaunchAgentsPath] ;
 	BOOL ok = [[NSFileManager defaultManager] createDirectoryIfNoneExistsAtPath:myAgentDirectory
 																		error_p:error_p] ;
 	if (!ok) {
@@ -313,6 +271,7 @@ end:;
 }
 
 + (BOOL)addAgent:(NSDictionary*)agentDic
+			load:(BOOL)load
 		 error_p:(NSError**)error_p {
 	BOOL ok = YES ;
 	NSError* error = nil ;
@@ -323,6 +282,7 @@ end:;
 		// Create new file for new agent, write to disk and load 
 		ok = [self addAgentInfo:agentDic
 					  directory:myAgentDirectory
+						   load:load
 						error_p:&error] ;
 	}
 	
@@ -334,6 +294,7 @@ end:;
 }
 
 + (BOOL)addAgents:(NSArray*)agents
+			 load:(BOOL)load
 		  error_p:(NSError**)error_p {
 	BOOL ok = YES ;
 	NSError* error = nil ;
@@ -345,6 +306,7 @@ end:;
 		for (NSDictionary* dic in agents) {
 			ok = [self addAgentInfo:dic
 						  directory:myAgentDirectory
+							   load:load
 							error_p:&error] ;
 			if (!ok) {
 				break ;
@@ -357,6 +319,64 @@ end:;
 	}
 	
 	return ok ;
+}
+
++ (NSString*)bashEscapementOfLabel:(NSString*)label {
+	NSSet* reservedChars = [NSSet setWithObjects:
+							@"?", @"+", @"{", @"|", @"(", @")", @"[", @"]", nil] ;
+	NSMutableString* mutantLabel = [label mutableCopy] ;
+	for (NSString* reservedChar in reservedChars) {
+		[mutantLabel replaceOccurrencesOfString:reservedChar
+									 withString:[NSString stringWithFormat:@"\\%@", reservedChar]
+										options:0
+										  range:NSMakeRange(0, [mutantLabel length])] ;
+	}
+	NSString* escapedLabel = [[mutantLabel copy] autorelease] ;
+	[mutantLabel release] ;
+	return escapedLabel ;
+}
+
++ (pid_t)pidIfRunningLabel:(NSString*)label {
+	NSInteger result ;
+	pid_t pid = 0 ;	
+	
+	NSData* stdoutData = nil ;
+	NSError* error = nil ;
+	NSString* command = [NSString stringWithFormat:
+						 @"/bin/launchctl list | /usr/bin/grep %@",
+						 [self bashEscapementOfLabel:label]] ;
+	NSArray* arguments = [NSArray arrayWithObjects:
+						  @"-c",
+						  command,
+						  nil] ;
+	result = [SSYShellTasker doShellTaskCommand:@"/bin/sh"
+									  arguments:arguments
+									inDirectory:nil
+									  stdinData:nil
+								   stdoutData_p:&stdoutData
+								   stderrData_p:NULL
+										timeout:3.0
+										error_p:&error] ;
+	error = [self warnUserIfLaunchdHangInTaskResult:result
+											  error:error] ;
+	if ((result != 0) && error) {
+		NSLog(@"SSYLaunchdGuy Error 879-1417 label=%@  %@", label, error) ;
+	}
+	
+	if (stdoutData) {
+		NSString* response = [[NSString alloc] initWithData:stdoutData
+												   encoding:NSUTF8StringEncoding] ;
+		// Next line is defensive programming
+		NSString* trimmedResponse = [response stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] ;
+        [response release] ;
+		NSArray* words = [trimmedResponse componentsSeparatedByString:@" "] ;
+		if ([words count] > 0) {
+			NSString* pidString = [words objectAtIndex:0] ;
+			pid = [pidString integerValue] ;
+		}
+	}
+	
+	return pid ;
 }
 
 /*!
@@ -380,7 +400,17 @@ end:;
 + (BOOL)isLoadedLabel:(NSString*)label {
 	NSArray *arguments;
 	NSInteger result;
-	BOOL isLoaded = YES ;	
+	BOOL isLoaded = YES ;
+	
+	/*
+	 I do this with two separate tasks: First, launchctl, then pipe
+	 pipe to grep.  Note that the pipe requires the bash shell.
+	 Another, probably easier way to do this is to concatenate
+	 both launchctl and grep commands into a string, and execute
+	 one task, targeting /bin/sh.  For an example of that, see
+	 +pidIfRunningLabel.
+	 */
+	
 	arguments = [NSArray arrayWithObjects:
 				 @"list",
 				 nil] ;
@@ -395,24 +425,18 @@ end:;
 								   stderrData_p:NULL
 										timeout:3.0
 										error_p:&error] ;
+	error = [self warnUserIfLaunchdHangInTaskResult:result
+											  error:error] ;
 	if ((result != 0) && error) {
 		NSLog(@"SSYLaunchdGuy Error 845-6422 label=%@  %@", label, error) ;
 	}
 	
 	if (listData) {
-		NSSet* reservedChars = [NSSet setWithObjects:
-								@"?", @"+", @"{", @"|", @"(", @")", @"[", @"]", nil] ;
-		NSMutableString* escapedLabel = [label mutableCopy] ;
-		for (NSString* reservedChar in reservedChars) {
-			[escapedLabel replaceOccurrencesOfString:reservedChar
-										  withString:[NSString stringWithFormat:@"\\%@", reservedChar]
-											 options:0
-											   range:NSMakeRange(0, [escapedLabel length])] ;
-		}
+		NSString *escapedLabel = [self bashEscapementOfLabel:label] ;
+
 		NSString* pattern = [NSString stringWithFormat:
 							 @"[[:space:]]%@$",
 							 escapedLabel] ;
-        [escapedLabel release] ;
 		arguments = [NSArray arrayWithObjects:
 					 @"-q",	// Return 0 if pattern is found, 1 if not, 1 if error	 
 					 pattern,
@@ -427,6 +451,13 @@ end:;
 									   stderrData_p:NULL
 											timeout:3.0
 											error_p:&error] ;
+#if 0
+#warning Faking Brent Robinson error #2
+		result = SSYShellTaskerErrorTimedOut ;
+		error = SSYMakeError(987654, @"Fake Error #2") ;
+#endif
+		error = [self warnUserIfLaunchdHangInTaskResult:result
+												  error:error] ;
 		if (error) {
 			NSLog(@"SSYLaunchdGuy Error 845-6423 label=%@  %@", label, error) ;
 		}
@@ -452,7 +483,7 @@ end:;
 
 	
 	NSString* filename = [label stringByAppendingPathExtension:@"plist"] ;
-	NSString* directory = [self homeLaunchAgentsPath] ;
+	NSString* directory = [SSYLaunchdBasics homeLaunchAgentsPath] ;
 	NSString* plistPath = [directory stringByAppendingPathComponent:filename] ;
 	
 	// Added in BookMacster 1.5.7:
@@ -471,7 +502,8 @@ end:;
 	NSNumber* octal755 = [NSNumber numberWithUnsignedLong:0755] ;
 	// Note that, in 0755, the 0 is a prefix which says to interpret the
 	// remainder of the digits as octal, just as 0x is a prefix which says to
-	// interpret the remainder of the digits as hexidecimal.  It's C !
+	// interpret the remainder of the digits as hexidecimal.  It's in the C
+	// language standard!
 	NSDictionary* attributes = [NSDictionary dictionaryWithObjectsAndKeys:
 								octal755, NSFilePosixPermissions,
 								nil] ;
@@ -518,12 +550,97 @@ end:;
 	
 	if (timeout > 0.0) {
 		SSYPathWaiter* waiter = [[SSYPathWaiter alloc] init] ;
-		ok = [waiter blockUntilDeletedPath:cmdPath
-								   timeout:timeout] ;
+		ok = [waiter blockUntilWatchFlags:SSYPathObserverChangeFlagsDelete
+									 path:cmdPath
+								  timeout:timeout] ;
 		[waiter release] ;
 	}
 	
 	return ok ;
+}
+
++ (BOOL)removeAgentsWithGlob:(NSString*)glob
+					 error_p:(NSError**)error_p {
+	NSArray* arguments ;
+	NSData* stderrData = nil ;
+	NSError* error = nil ;
+	NSInteger result ;
+	
+	// A little trick is used in this method.  NSTask bypasses the shell, which
+	// provides globbing.  So we need to wrap both of our commands in a
+	// /bin/sh/ -c command in order to support globbing.
+
+	// Unload
+	NSString* command = [NSString stringWithFormat:
+						 @"/bin/launchctl unload %@",
+						 glob] ;
+	arguments = [NSArray arrayWithObjects:
+				 @"-c",
+				 command,
+				 nil] ;
+	result = [SSYShellTasker doShellTaskCommand:@"/bin/sh"
+									  arguments:arguments
+									inDirectory:[SSYLaunchdBasics homeLaunchAgentsPath]
+									  stdinData:nil
+								   stdoutData_p:NULL
+								   stderrData_p:&stderrData
+										timeout:3.0
+										error_p:&error] ;
+	// We allowed 3.0 seconds because it is important to unload jobs before removing their
+	// plist files.  Otherwise you can't unload it due to "no such file or directory".
+
+	// If there were no loaded jobs matching the given glob, then at this
+	// point we will have result=0, error=nil, and
+	// stderr=launchctl: Couldn't stat("/path/to/*whatever*.plist"): No such file or directory
+
+	error = [self warnUserIfLaunchdHangInTaskResult:result
+											  error:error] ;
+
+	// Uninstall (Remove .plist file)
+	if (result == 0) {
+		NSString* command = [NSString stringWithFormat:
+							 @"/bin/rm -f %@",
+							 glob] ;
+		arguments = [NSArray arrayWithObjects:
+					 @"-c",
+					 command,
+					 nil] ;
+		stderrData = nil ;
+		error = nil ;
+		
+		result = [SSYShellTasker doShellTaskCommand:@"/bin/sh"
+										  arguments:arguments
+										inDirectory:[SSYLaunchdBasics homeLaunchAgentsPath]
+										  stdinData:nil
+									   stdoutData_p:NULL
+									   stderrData_p:&stderrData
+											timeout:0.0
+											error_p:&error] ;
+		// If there are no such files to remove, rm will return 0 because we used '-f'.
+		if (result != 0) {
+			// This is a real error
+			if (error_p) {
+				*error_p = SSYMakeError(773484, @"Failed to remove launchd jobs") ;
+			}
+		}
+	}
+	else {
+		// ok=NO means that there may have been jobs to unload, but they were not unloaded.
+		// In that case, we don't want to uninstall them because then we could never
+		// unload them other than by logging out and back in.
+		if (error_p) {
+			*error_p = SSYMakeError(7378934, @"Failed to unload launchd jobs") ;
+		}
+	}
+		
+	if ((result != 0) && error_p) {
+		*error_p = [*error_p errorByAddingUserInfoObject:error
+												  forKey:@"NSTask Error"] ;
+		*error_p = [*error_p errorByAddingUserInfoObject:[NSString stringWithDataUTF8:stderrData]
+												  forKey:@"Command Stderr"] ;
+	}
+	
+	return (result == 0) ;
 }
 
 + (BOOL)tryAgentLoad:(BOOL)load
@@ -540,7 +657,7 @@ end:;
 	// launchctl will log a message to stderr if we tell it to 
 	// load a job for which there is no plist file
 	NSString* filename = [label stringByAppendingPathExtension:@"plist"] ;
-	NSString* directory = [self homeLaunchAgentsPath] ;
+	NSString* directory = [SSYLaunchdBasics homeLaunchAgentsPath] ;
 	NSString* plistPath = [directory stringByAppendingPathComponent:filename] ;
 	if (load) {
 		if (![[NSFileManager defaultManager] fileExistsAtPath:plistPath]) {
@@ -577,6 +694,9 @@ end:;
 								   stderrData_p:NULL
 										timeout:2.0  // Was 0.0 until BookMacster 1.7.2/1.6.8
 										error_p:&error] ;
+
+	error = [self warnUserIfLaunchdHangInTaskResult:result
+											  error:error] ;
 
 	if ((result != 0) && error_p) {
 		*error_p = error ;

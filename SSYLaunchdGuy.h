@@ -14,63 +14,36 @@ extern NSString* const SSYLaunchdGuyErrorDomain ;
 @interface SSYLaunchdGuy : NSObject {
 }
 
-+ (NSString*)homeLaunchAgentsPath ;
-
-/*!
- @brief    Returns a set of all labels (that is, filenames without the 
- .plist filename extension) in this user's Launch Agents
- directory that have a given prefix, possibly an empty set.
- 
- @param    The target prefix.  May be nil; if so, method returns empty set.
- Assumes that the plist files are named using the convention stated in
- man launchd.plist(5) "for launchd property list files to be named <Label>.plist",
- because this method extracts the label from the filename.
-*/
-+ (NSSet*)installedLaunchdAgentLabelsWithPrefix:(NSString*)prefix ;
-
-/*!
- @brief    Returns a dictionary of dictionaries, with each dictionary representing
- the data in one of this user's Launch Agents, named with a given prefix, and 
- each key is one of the members returned by -installedLaunchdAgentLabelsWithPrefix:.
- 
- @param    The target prefix.  May be nil; if so, method returns empty dictionary.
- */
-+ (NSDictionary*)installedLaunchdAgentsWithPrefix:(NSString*)prefix ;
-
 /*!
  @brief    Installs a launchd agent and, usually, loads it
  
- @details  If an agent contains a "RunAtLoad" key and does
- not contain any of the keys "OnDemand", "KeepAlive",
- "StartOnMount", "StartInterval", "StartCalendarInterval", 
- "WatchPaths", "QueueDirectories", then the agent is *not*
- loaded.  The thinking is that if "RunAtLoad" is the only 
- trigger key, your desire is that the job will run at
- the user's next login/startup.   Otherwise, you wouldn't
- be using launchd; you'd just run the command yourself!
  @param    agentDic  A dictionary contains the launchd
  attributes and values the desired launchd agent.
+ @param    load  YES to load the new agent after adding, NO to 
+ just add the plist file
  @param    error_p  If not NULL and if an error occurs, upon return,
  will point to an error object encapsulating the error.
  @result   YES if the method completed successfully, otherwise NO
  */
 + (BOOL)addAgent:(NSDictionary*)agentDic
+			load:(BOOL)load
 		 error_p:(NSError**)error_p ;
 
 /*!
  @brief    Installs an array of launchd agents and,
  usually, loads them.
 
- @details  Same details as given for addAgent:error_p: apply to this
- method.
  @param    agents  An array of dictionaries.  Each
  dictionary contains the launchd attributes and values
  for one launchd agent.
+ @param    load  YES to load the new agent after adding, NO to 
+ just add the plist file
  @param    error_p  If not NULL and if an error occurs, upon return,
  will point to an error object encapsulating the error.
  @result   YES if the method completed successfully, otherwise NO
 */
 + (BOOL)addAgents:(NSArray*)agents
+			 load:(BOOL)load
 		  error_p:(NSError**)error_p ;
 
 /*!
@@ -124,7 +97,7 @@ extern NSString* const SSYLaunchdGuyErrorDomain ;
  * Either removes the specified agent's plist file or sleeps for 1 second and then reloads it
  * Removes the temporary file
  
- If a timeout is given, this method
+ If a nonzero timeout is given, this method
  then launches another process to wait until the plist file has
  been actually deleted from the filesystem before returning or timing out.
  Otherwise, it returns YES immediately.
@@ -181,8 +154,26 @@ extern NSString* const SSYLaunchdGuyErrorDomain ;
 					 timeout:(NSTimeInterval)timeout ;
 
 /*!
+ @brief    Rudely unloads and uninstalls all agents conforming to
+ a given filesystem glob
+ 
+ @details  Any running tasks spawned by an unloaded agent will be
+ killed.
+ @param    glob  
+ @param    error_p  If not NULL and if an error occurs, upon return,
+           will point to an error object encapsulating the error.
+           "No such jobs loaded" or "No such jobs installed" is not
+           an error in this context.
+ @result   YES if the method completed successfully, otherwise NO
+*/
++ (BOOL)removeAgentsWithGlob:(NSString*)glob
+					 error_p:(NSError**)error_p ;
+
++ (pid_t)pidIfRunningLabel:(NSString*)label ;
+
+/*!
  @brief    Returns whether or not the user's LaunchAgents includes any
- whose label has a give prefix, and whose triggers include a
+ agents whose label has a given prefix, and whose triggers include a
  StartCalendarInterval
  
  @details  Todo: Verify whether or not the next date

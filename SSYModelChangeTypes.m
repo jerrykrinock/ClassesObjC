@@ -23,39 +23,83 @@
 }			
 
 + (NSString*)symbolForAction:(SSYModelChangeAction)action {
+    NSString* symbol = nil ;
 	switch (action) {
 		case SSYModelChangeActionInsert:
-			return @"+" ;  // I tried a circled + sign, \xe2\x8a\x95, but it was tiny and illegible at 11 pt.
+			symbol = @"+" ;  // I tried a circled + sign, \xe2\x8a\x95, but it was tiny and illegible at 11 pt.
 			break;
 		case SSYModelChangeActionModify:
-			return @"\xce\x94" ; // Greek letter Delta
+			symbol = @"\u0394" ; // Greek letter Delta
 			break;
 		case SSYModelChangeActionSort:
-			return @"\xe2\x97\x83" ; // Right triangle
+			symbol = @"\u25B2" ; // Black up-pointing triangle
 			break;
 		case SSYModelChangeActionMosh:
-			return @"\xe2\x9c\xa3" ; // Four Balloon-spoked asterisk
+			symbol = @"\u2723" ; // Four Balloon-spoked asterisk
 			break;
 		case SSYModelChangeActionSlosh:
-			return @"\xe2\x9c\x9b" ; // Open Centre Cross
+			symbol = @"\u271B" ; // Open Centre Cross
 			break;
 		case SSYModelChangeActionSlide:
-			return @"\xe2\x86\x95" ; // Up-and-down arrow
+			symbol = @"\u2195" ; // Up-and-down arrow
 			break;
 		case SSYModelChangeActionMerge:
-			return @"\xe2\x8a\x95" ;  // Circled Plus Sign
+			symbol = @"\u2295" ;  // Circled Plus Sign
 			break;
 		case SSYModelChangeActionMove:
-			return @"\xe2\x86\x96" ;  // Arrow pointing up and left
+			symbol = @"\u2196" ;  // Arrow pointing up and left
 			break;
 		case SSYModelChangeActionReplace:
-			return @"\xe2\x87\xb5" ;  // Two arrows, pointing up and down 
+			symbol = @"\u21C5" ;  // Upwards arrow leftward of downwards arrow (two arrows) 
 			break;
 		case SSYModelChangeActionRemove:
-			return @"-" ;  // Circled - sign
+			symbol = @"-" ;  // Circled - sign
 			break;
 		case SSYModelChangeActionUndefined:
-			return @"" ;  
+			symbol = @"" ;  
+			break;
+		default:
+            symbol = @"???" ;
+			break;
+	}
+
+	return symbol ;
+}
+
++ (NSString*)asciiNameForAction:(SSYModelChangeAction)action {
+	switch (action) {
+		case SSYModelChangeActionInsert:
+			return @"INSERT" ;
+			break;
+		case SSYModelChangeActionModify:
+			return @"MODIFY" ;
+			break;
+		case SSYModelChangeActionSort:
+			return @"SORT" ;
+			break;
+		case SSYModelChangeActionMosh:
+			return @"MOSH" ;
+			break;
+		case SSYModelChangeActionSlosh:
+			return @"SLOSH" ;
+			break;
+		case SSYModelChangeActionSlide:
+			return @"SLIDE" ;
+			break;
+		case SSYModelChangeActionMerge:
+			return @"MERGE" ;
+			break;
+		case SSYModelChangeActionMove:
+			return @"MOVE" ;
+			break;
+		case SSYModelChangeActionReplace:
+			return @"REPLACE" ;
+			break;
+		case SSYModelChangeActionRemove:
+			return @"REMOVE" ;
+			break;
+		case SSYModelChangeActionUndefined:
+			return @"UNDEFINED" ;  
 			break;
 		default:
 			break;

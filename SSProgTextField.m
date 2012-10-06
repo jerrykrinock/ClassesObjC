@@ -32,7 +32,7 @@
 
 @implementation SSProgTextField
 
-- (float)textSize {
+- (CGFloat)textSize {
 	return floor(0.8 * _wholeFrame.size.height) ;
 }
 
@@ -88,7 +88,7 @@
 
 - (SSRolloverButton*)cancelButton {
 	if (!_cancelButton) {
-		float length = _wholeFrame.size.height ;
+		CGFloat length = _wholeFrame.size.height ;
 		_cancelButton = [[SSRolloverButton alloc] initWithFrame:NSMakeRect(_wholeFrame.size.width - length, 0, length, length)] ;
 		[_cancelButton setImage:[NSImage imageNamed:@"stop14"]] ;
 		[_cancelButton setBordered:NO] ;
@@ -137,8 +137,8 @@
 	[self setNeedsDisplayInRect:displayRect] ;
 }
 	
-- (void)setBarWidth:(float)barWidth
-		  textWidth:(float)textWidth {
+- (void)setBarWidth:(CGFloat)barWidth
+		  textWidth:(CGFloat)textWidth {
 	NSRect textFrame = NSMakeRect(0.0, 0.0, textWidth, _wholeFrame.size.height) ;
 	NSTextField* textField = [self textField] ;
 	[textField setFrame:textFrame] ;
@@ -152,8 +152,8 @@
 	[self setNeedsDisplay:YES] ;
 }
 
-- (float)textBarWidth {
-	float textBarWidth = _wholeFrame.size.width ;
+- (CGFloat)textBarWidth {
+	CGFloat textBarWidth = _wholeFrame.size.width ;
 	if (_cancelButton) {
 		textBarWidth -= [[self cancelButton] frame].size.width ;
 	}
@@ -161,8 +161,8 @@
 	return textBarWidth ;
 }
 	
-- (void)setProgressBarWidth:(float)barWidth {
-	float textWidth = [self textBarWidth] - barWidth ;
+- (void)setProgressBarWidth:(CGFloat)barWidth {
+	CGFloat textWidth = [self textBarWidth] - barWidth ;
 	[self setBarWidth:barWidth
 			textWidth:textWidth] ;
 }
@@ -172,15 +172,15 @@
 	
 	// Make textToDisplay by appending ellipsis to verbToDisplay
 	NSString* text = [textField stringValue] ;
-	float requiredWidth = [text widthForHeight:FLT_MAX
+	CGFloat requiredWidth = [text widthForHeight:CGFLOAT_MAX
 										  font:[textField font]] ;
 	// Instead of using [textField frame].size.height as the last argument, we use FLT_MAX because if
 	// NSLayoutManager thinks that one or more of the characters in the string is too tall to fit in the
 	// given height (this happens frequently in Japanese), the width will be returned as 0.00.
 	// This fix is in Bookdog 4.2.12.
-	float textWidth = MIN(requiredWidth, [self textBarWidth]) ;
+	CGFloat textWidth = MIN(requiredWidth, [self textBarWidth]) ;
 	
-	float barWidth = [self textBarWidth] - textWidth ;
+	CGFloat barWidth = [self textBarWidth] - textWidth ;
 	
 	[self setBarWidth:barWidth
 			textWidth:textWidth] ;
@@ -256,7 +256,7 @@
 		NSDictionary* attributes = [NSDictionary dictionaryWithObjectsAndKeys:
 			font, NSFontAttributeName,
 			[NSColor blueColor], NSForegroundColorAttributeName,
-			[NSNumber numberWithInt:NSUnderlineStyleSingle], NSUnderlineStyleAttributeName,
+			[NSNumber numberWithInteger:NSUnderlineStyleSingle], NSUnderlineStyleAttributeName,
 			nil] ;				
 		NSAttributedString* title = [[NSAttributedString alloc] initWithString:hyperText
 																	attributes:attributes] ;
@@ -274,10 +274,10 @@
 	}
 	NSTextField* textField = [self textField] ;
 	[textField setStringValue:text] ;
-	float requiredTextWidth = [text widthForHeight:FLT_MAX
+	CGFloat requiredTextWidth = [text widthForHeight:CGFLOAT_MAX
 											  font:[textField font]] ;
-	float availableTextWidth = [self textBarWidth] - [_hyperButton width] ;
-	float textWidth = MIN(requiredTextWidth, availableTextWidth) ;
+	CGFloat availableTextWidth = [self textBarWidth] - [_hyperButton width] ;
+	CGFloat textWidth = MIN(requiredTextWidth, availableTextWidth) ;
 	[textField setWidth:textWidth] ;
 
 	[_hyperButton setLeftEdge:[textField rightEdge]] ;

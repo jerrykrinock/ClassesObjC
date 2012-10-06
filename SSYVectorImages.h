@@ -7,7 +7,9 @@ enum SSYVectorImageStyles_enum
 	SSYVectorImageStyleMinus, 
 	SSYVectorImageStyleTriangle, 
 	SSYVectorImageStyleArrow,
-	SSYVectorImageStyleInfo
+	SSYVectorImageStyleInfo,
+	SSYVectorImageStyleStar,
+	SSYVectorImageStyleRemoveX,
 } ;
 typedef enum SSYVectorImageStyles_enum SSYVectorImageStyle ;
 
@@ -17,6 +19,7 @@ typedef enum SSYVectorImageStyles_enum SSYVectorImageStyle ;
 
 + (NSImage*)imageStyle:(SSYVectorImageStyle)style
 			  diameter:(CGFloat)diameter
+				 color:(NSColor*)color
 		 rotateDegrees:(CGFloat)rotateDegrees ;
 
 @end

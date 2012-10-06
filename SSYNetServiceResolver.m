@@ -1,5 +1,5 @@
 #import "SSYNetServiceResolver.h"
-#import "NSArray+SimpleMutations.h"
+#import "NSArray+SSYMutations.h"
 #import "NSDictionary+SimpleMutations.h"
 #include <CoreServices/CoreServices.h>
 
@@ -52,7 +52,7 @@ NSString* const SSYNetServiceResolverDidStopNotification = @"SSYNetServiceResolv
 - (void)netService:(NSNetService*)service_
 	 didNotResolve:(NSDictionary *)errorInfo {
 	NSError* error_ = [NSError errorWithDomain:NSNetServicesErrorDomain
-										  code:[[errorInfo objectForKey:NSNetServicesErrorCode] intValue]
+										  code:[[errorInfo objectForKey:NSNetServicesErrorCode] integerValue]
 									  userInfo:[NSDictionary dictionaryWithObject:service_
 																		   forKey:@"service"]] ;
 	[self setError:error_] ;

@@ -38,7 +38,9 @@ NSLog(@"1068 %s", __PRETTY_FUNCTION__) ;
 
 - (void)dealloc {
 	if (self != [self realSelf]) {
+#if LOG_UNREAL_SSY_POP_UP_TABLE_HEADER_CELLS
 		NSLog(@"Internal Error 340-9281 in %s", __PRETTY_FUNCTION__) ;
+#endif
 		return ;
 	}
 
@@ -49,11 +51,11 @@ NSLog(@"1068 %s", __PRETTY_FUNCTION__) ;
 - (void)drawWithFrame:(NSRect)cellFrame
 			   inView:(NSView*)controlView {
 	if (self != [self realSelf]) {
+#if LOG_UNREAL_SSY_POP_UP_TABLE_HEADER_CELLS
 		NSLog(@"Internal Error 300-9481 in %s", __PRETTY_FUNCTION__) ;
-		NSLog(@"      self: %p %@ %p %p", self, NSStringFromSize([self cellSize]), [self itemArray], [self controlView]) ;
-		NSLog(@"               %p", [self controlView]) ;
-		NSLog(@"  realSelf: %p %@ %p %p", realSelf, NSStringFromSize([realSelf cellSize]), [realSelf itemArray], [realSelf controlView]) ;
-		NSLog(@"               %p", [realSelf controlView]) ;
+		NSLog(@"      self: %p %@ %p %p %@", self, NSStringFromSize([self cellSize]), [self itemArray], [self controlView], [[self selectedItem] title]) ;
+		NSLog(@"  realSelf: %p %@ %p %p %@", realSelf, NSStringFromSize([realSelf cellSize]), [realSelf itemArray], [realSelf controlView], [[self selectedItem] title]) ;
+#endif
 		return ;
 	}
 	

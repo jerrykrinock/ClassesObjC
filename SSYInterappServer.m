@@ -35,11 +35,10 @@ NSString* const SSYInterappServerErrorDomain = @"SSYInterappServerErrorDomain" ;
 
 @interface SSYInterappServer () 
 
-@property (assign, nonatomic) NSObject <SSYInterappServerDelegate> * delegate ;
-
 @end
 
-CFDataRef SSYInterappServerCallBack(
+
+CFDataRef SSYInterappServerCallBackCreateData(
 									CFMessagePortRef port,
 									SInt32 msgid,
 									CFDataRef data,
@@ -88,6 +87,7 @@ CFDataRef SSYInterappServerCallBack(
 - (CFMessagePortRef)port {
 	return m_port ;
 }
+
 
 - (void)dealloc {	
 	
@@ -141,7 +141,7 @@ CFDataRef SSYInterappServerCallBack(
 			m_port = CFMessagePortCreateLocal(
 											  NULL, 
 											  (CFStringRef)portName,
-											  SSYInterappServerCallBack,
+											  SSYInterappServerCallBackCreateData,
 											  &context,
 											  NULL) ;
 			if (m_port) {
@@ -237,7 +237,11 @@ CFDataRef SSYInterappServerCallBack(
 	return server ;
 }
 
-- (void)unlease {
+- (void)unleaseForDelegate:(NSObject <SSYInterappServerDelegate> *)delegate {
+	if ([self delegate] == delegate) {
+		[self setDelegate:nil] ;
+	}
+	
 	// Decrease the retain count of server in the static counted set
 	[static_serversInUse removeObject:self] ;
 }

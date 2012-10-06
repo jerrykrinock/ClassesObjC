@@ -46,7 +46,7 @@ enum SSWhichCrontab {
 //
 //typedef int unsigned SSCronMask ;
 
-NSString* SSLocalizedDayOfWeekFromCronNumber(int n) ;
+NSString* SSLocalizedDayOfWeekFromCronNumber(NSInteger n) ;
 NSArray* SSLocalizedDaysOfWeekFromCronNumbers(NSArray* numbers) ;
 
 @interface SSCronJob : NSObject

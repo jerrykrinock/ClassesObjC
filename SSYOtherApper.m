@@ -40,10 +40,10 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	pid_t pid = 0 ; // not found
 	
 	if (bundleIdentifier) {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070		
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060		
         // Running the main run loop is necessary for -runningApplications to
-        // update.  To my amazement, the next line is actually necessary, and
-        // it actually works.
+        // update.  The next line is actually necessary in tools which may be lacking
+        // a running run loop, and it actually works.
         [[NSRunLoop mainRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.01]] ;
         NSArray* runningApps = [[NSWorkspace sharedWorkspace] runningApplications] ;
 		for (NSRunningApplication* runningApp in runningApps) {
@@ -61,7 +61,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 		// (See documentation of ProcessSerialNumber).  Therefore, it does not return Bookwatchdog 
 		for (NSDictionary* appDict in [appDicts objectEnumerator]) {
 			if ([[appDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:bundleIdentifier]) {
-				pid = [[appDict objectForKey:@"NSApplicationProcessIdentifier"] intValue] ;
+				pid = [[appDict objectForKey:@"NSApplicationProcessIdentifier"] integerValue] ;
 				break ;
 			}
 		}
@@ -75,10 +75,10 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	pid_t pid = 0 ; // not found
 
     if (bundlePath) {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070		
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060		
         // Running the main run loop is necessary for -runningApplications to
-        // update.  To my amazement, the next line is actually necessary, and
-        // it actually works.
+        // update.  The next line is actually necessary in tools which may be lacking
+        // a running run loop, and it actually works.
         [[NSRunLoop mainRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.01]] ;
         NSArray* runningApplications = [[NSWorkspace sharedWorkspace] runningApplications] ;
         for (NSRunningApplication* runningApp in runningApplications) {
@@ -93,7 +93,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
         for (NSDictionary* appDic in [[NSWorkspace sharedWorkspace] launchedApplications]) {
             NSString* path = [appDic objectForKey:@"NSApplicationPath"] ;
             if ([path isEqualToString:bundlePath]) {
-                pid = [[appDic objectForKey:@"NSApplicationProcessIdentifier"] intValue] ;
+                pid = [[appDic objectForKey:@"NSApplicationProcessIdentifier"] integerValue] ;
                 break ;
             }
         }
@@ -327,7 +327,7 @@ end:;
 	struct ProcessSerialNumber psn = {0, 0};
 	oss = GetProcessForPID (pid, &psn) ;
 	if (oss != noErr) {
-		NSLog(@"Internal Error 502-9373 %d", (int)oss) ;
+		NSLog(@"Internal Error 502-9373 %ld", (long)oss) ;
 	}
 	/* Note: GetProcessForPID() will return procNotFound if the process whose
 	 pid is 'pid' does not have a PSN.  To find if a process has a PSN, in Terminal
@@ -366,7 +366,7 @@ end:;
 		NSString* user = [processInfoDic objectForKey:SSYOtherApperKeyUser] ;
 		NSString* command = [processInfoDic objectForKey:SSYOtherApperKeyExecutable] ;
 		if ([targetUser isEqualToString:user] && [executableName isEqualToString:command]) {
-			pid = [[processInfoDic objectForKey:SSYOtherApperKeyPid] intValue] ;
+			pid = (pid_t)[[processInfoDic objectForKey:SSYOtherApperKeyPid] integerValue] ;
 			break ;
 		}
 	}
@@ -514,7 +514,7 @@ end:;
 		NSString* aUser = [info objectForKey:SSYOtherApperKeyUser] ;
 		NSString* aPath = [info objectForKey:SSYOtherApperKeyExecutable] ;
 		if ([aUser isEqualToString:user] && [aPath isEqualToString:processName]) {
-			pid = [[info objectForKey:SSYOtherApperKeyPid] intValue] ;
+			pid = (pid_t)[[info objectForKey:SSYOtherApperKeyPid] integerValue] ;
 			break ;
 		}
 	}
@@ -532,7 +532,7 @@ end:;
 	[[processInfo retain] autorelease] ;
 	// Otherwise, it will be released as soon as the app whose bundlePath it is quits.
 	// Before we did that, if Bookdog was running, BookMacster would crash in 
-	// -[SSYOtherApper quitThisUsersAppWithBundlePath:timeout:killAfterTimeout:error_p:] after
+	// -[SSYOtherApper quitThisUsersAppWithBundlePath:timeout:killAfterTimeout:wasRunning_p:error_p:] after
 	// quitting Bookdog, when sending [self isThisUsersAppRunningWithBundlePath:bundlePath].
 	// (This bug was fixed in BookMacster 1.5.7.)
 	CFRelease(processInfo) ;
@@ -616,9 +616,20 @@ end:;
 }
 
 + (BOOL)quitThisUsersAppWithBundlePath:(NSString*)bundlePath
+						  wasRunning_p:(BOOL*)wasRunning_p
 							   error_p:(NSError**)error_p {
+	// Because AppleScript 'tell application' will *launch* an app if it is not
+	// running, we do one last test first.  Of course, this still leaves a little
+	// window, a race condition, in which the app might quit and we relaunch it
+	// a millisecond later, but at least this will reduce the probability of
+	// that happening, and a quick launch/quit is not the end of the world.
+	// I don't know how to do any better.
 	BOOL isRunning = [self pidOfThisUsersAppWithBundlePath:bundlePath] != 0 ;
-		
+	
+	if (wasRunning_p) {
+		*wasRunning_p = isRunning ;
+	}
+	
 	BOOL ok = YES ;
 	if (isRunning) {
 		NSString* source = [NSString stringWithFormat:
@@ -631,8 +642,6 @@ end:;
 		// thanks to Shane Stanley <sstanley@myriad-com.com.au>
 		// 'AppleScriptObjC Explored' <www.macosxautomation.com/applescript/apps/>
 		// See http://lists.apple.com/archives/applescript-users/2011/Jun/threads.html  June 8
-		// Note that this causes the app to launch if it is not running, hence the
-		// previous NSWorkspace test.
 		ok = [self runAppleScriptSource:source
 								error_p:error_p] ;
 	}
@@ -675,7 +684,7 @@ end:;
 					 @"-o",        // Print the following column(s)
 					 @"command=",  // = means to suppress header line
 					 @"-p",        // subject pid follows
-					 [NSString stringWithFormat:@"%d", pid],
+					 [NSString stringWithFormat:@"%ld", (long)pid],
 					 nil] ;
 	
 	NSString* commandAndArguments = nil ;
@@ -741,7 +750,7 @@ end:;
 			// Of course, that might change.
 			// I hope that using the -[NSString intValue] will give a fairly
 			// robust and future-proof reading…
-			if ([pidString intValue] == pid) {
+			if ((pid_t)[pidString integerValue] == pid) {
 				answer = YES ;
 				break ;
 			}
@@ -763,7 +772,7 @@ end:;
 							  thisUserOnly:YES] ;
 		
 		if (!answer) {
-			NSLog(@"NSWorkspace says %@ running.  But I can't find its pid %d.  Ignoring stupid NSWorkspace.", logAs, pid) ;
+			NSLog(@"NSWorkspace says %@ running.  But I can't find its pid %ld.  Ignoring stupid NSWorkspace.", logAs, (long)pid) ;
 		}
 	}
 	
@@ -791,13 +800,18 @@ end:;
 + (BOOL)quitThisUsersAppWithBundlePath:(NSString*)bundlePath
 							   timeout:(NSTimeInterval)timeout
 					  killAfterTimeout:(BOOL)killAfterTimeout
+						  wasRunning_p:(BOOL*)wasRunning_p
 							   error_p:(NSError**)error_p {
 	if (!bundlePath) {
+		if (wasRunning_p) {
+			*wasRunning_p = NO ;
+		}
 		return YES ;
 	}
 	
 	NSDate* endDate = [NSDate dateWithTimeIntervalSinceNow:timeout] ;
 	BOOL ok = [self quitThisUsersAppWithBundlePath:bundlePath
+									  wasRunning_p:wasRunning_p
 										   error_p:error_p] ;
 	
 	if (!ok) {
@@ -806,6 +820,10 @@ end:;
 	}
 	
 	while (YES) {
+		// No app is likely to quit in less than 1 second, so we sleep *first*
+		[NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:1.0]] ;
+		
+		// and *then* check if it's running
 		if (![self isThisUsersAppRunningWithBundlePath:bundlePath]) {
 			return YES ;
 		}
@@ -824,7 +842,11 @@ end:;
 			return NO ;
 		}
 		
-		[NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]] ;
+		// Sometimes Firefox doesn't "get" it.  Send the AppleScript 'quit' again,
+		// ignoring any error
+		[self quitThisUsersAppWithBundlePath:bundlePath
+								wasRunning_p:NULL  // We want the original wasRunning state, not now's
+									 error_p:NULL] ;
 	}
 
 	
@@ -877,7 +899,7 @@ end:;
 		}
 	}
 	
-	return NO ; // Never happens due to infinite loop above; to suppress compiler warning
+	return YES ;
 }
 
 + (NSString*)applicationPathForUrl:(NSURL*)url {
@@ -936,7 +958,7 @@ end:;
 
 + (BOOL)processPid:(pid_t)pid
 		   timeout:(NSTimeInterval)timeout
-	  cpuPercent_p:(float*)cpuPercent_p
+	  cpuPercent_p:(CGFloat*)cpuPercent_p
 		   error_p:(NSError**)error_p {
 	NSInteger errorCode = 0 ;
 	NSInteger psReturnValue = 0 ;
@@ -967,7 +989,7 @@ end:;
 			NSString* cpuUsageString = [[NSString alloc] initWithData:stdoutData
 															 encoding:NSASCIIStringEncoding] ;
 			
-			*cpuPercent_p = [cpuUsageString floatValue] ;
+			*cpuPercent_p = [cpuUsageString doubleValue] ;
 			[cpuUsageString release] ;
 		}
 		else {
@@ -1041,6 +1063,61 @@ end:;
 	
 	return ok ;
 }
+
++ (NSInteger)secondsRunningPid:(pid_t)pid {
+	NSArray* arguments = [NSArray arrayWithObjects:
+						  @"-p",
+						  [NSString stringWithFormat:@"%ld", (long)pid],
+						  @"-o",
+						  @"etime=",
+						  nil] ;
+	
+	NSData* stdoutData = nil ;
+	NSInteger seconds = -1 ;
+	NSInteger returnValue = [SSYShellTasker doShellTaskCommand:@"/bin/ps"
+											   arguments:arguments
+											 inDirectory:nil
+											   stdinData:nil
+											stdoutData_p:&stdoutData
+											stderrData_p:NULL
+												 timeout:3.0
+												 error_p:NULL] ;
+	if (returnValue == 0) {
+		NSString* string = [[NSString alloc] initWithData:stdoutData
+												 encoding:NSUTF8StringEncoding] ;
+		/*  Some examples of 'string'
+		 If process is not running,              <empty-string>
+		 If process has been running > 1 day        dd-HH:MM:SS
+		 If process has been running >1  <10 hours     0H:MM:SS
+		 If process has been running >10 <24 hours     HH:MM:SS
+		 If process has been running >10 <60 mins         MM:SS
+		 If process has been running >1  <10 mins         0M:SS
+		 So, here's how we parse it… */
+		
+		NSUInteger length = [string length] ;
+		if (length >= 2) {
+			NSString* substring = [string substringWithRange:NSMakeRange(length-3, 2)] ;
+			seconds = [substring integerValue] ;
+			if (length >= 5) {
+				substring = [string substringWithRange:NSMakeRange(length-6, 2)] ;
+				seconds += 60 * [substring integerValue] ;
+			}
+			if (length >= 8) {
+				substring = [string substringWithRange:NSMakeRange(length-9, 2)] ;
+				seconds += 60*60 * [substring integerValue] ;
+			}
+			if (length >=10) {
+				substring = [string substringToIndex:2] ;
+				seconds += 60*60*24 * [substring integerValue] ;
+			}
+		}
+		
+        [string release] ;
+	}
+	
+	return seconds ;
+}
+
 
 @end
 

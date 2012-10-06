@@ -19,12 +19,10 @@ static SSMoveableToolTip	*sharedToolTip = nil;
 
 @implementation SSMoveableToolTip
 
-- (id) init
-{
-    id        retVal = [super init];
+- (id) init {
+    self = [super init] ;
     
-    if (retVal != nil) {
-        
+    if (self != nil) {
         // These size are not really import, just the relation between the two...
         NSRect        contentRect       = { { 100, 100 }, { 100, 20 } };
         NSRect        textFieldFrame    = { { 0, 0 }, { 100, 20 } };
@@ -58,7 +56,7 @@ static SSMoveableToolTip	*sharedToolTip = nil;
         _textAttributes = [[[_textField attributedStringValue] attributesAtIndex:0 effectiveRange:nil] retain];
     }
     
-    return retVal;
+    return self ;
 }
 
 - (void) dealloc {

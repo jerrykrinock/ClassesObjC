@@ -20,9 +20,9 @@ enum SSYVersionTripletComparisonResult  {
  @field      bugFix The least significant "point digit"
  */
 struct SSYVersionStruct_struct {
-	int major ;
-	int minor ;
-	int bugFix ;
+	NSInteger major ;
+	NSInteger minor ;
+	NSInteger bugFix ;
 } ;
 
 /*!
@@ -96,19 +96,19 @@ typedef struct SSYVersionStruct_struct SSYVersionStruct ;
     @brief    Gets the major value of the receiver {major,minor,bugFix}
     @result   the value
 */
-- (int)major ;
+- (NSInteger)major ;
 
 /*!
  @brief    Gets the minor value of the receiver {major,minor,bugFix}
  @result   the value
  */
-- (int)minor ;
+- (NSInteger)minor ;
 
 /*!
  @brief    Gets the bugFix value of the receiver {major,minor,bugFix}
  @result   the value
  */
-- (int)bugFix ;
+- (NSInteger)bugFix ;
 
 /*!
  @brief    Returns an autoreleased version triplet with value {major,minor,bugFix}
@@ -118,9 +118,9 @@ typedef struct SSYVersionStruct_struct SSYVersionStruct ;
 /*!
  @brief    Returns an autoreleased version triplet with value {major,minor,bugFix}
  */
-+ (SSYVersionTriplet*)versionTripletWithMajor:(int)major
-										minor:(int)minor
-									   bugFix:(int)bugFix ;
++ (SSYVersionTriplet*)versionTripletWithMajor:(NSInteger)major
+										minor:(NSInteger)minor
+									   bugFix:(NSInteger)bugFix ;
 
 /*!
  @brief    Returns an autoreleased version triplet with value {0,0,0}

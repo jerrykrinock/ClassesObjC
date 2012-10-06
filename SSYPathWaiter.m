@@ -14,6 +14,7 @@ NSString* const constKeySSYPathWaiterObserver = @"obsr" ;
 NSString* const constKeySSYPathWaiterNotifee = @"ntfe" ;
 NSString* const constKeySSYPathWaiterBlocker = @"blkr" ;
 NSString* const constKeySSYPathWaiterPath = @"path" ;
+NSString* const constKeySSYPathWaiterWatchFlags = @"flgs" ;
 NSString* const constKeySSYPathWaiterTimeout = @"tmot" ;
 
 @interface SSYPathWaiterNotifee : NSObject {
@@ -60,6 +61,7 @@ NSString* const constKeySSYPathWaiterTimeout = @"tmot" ;
 	
 	NSTimeInterval timeout = [[info objectForKey:constKeySSYPathWaiterTimeout] doubleValue] ;
 	NSString* path = [info objectForKey:constKeySSYPathWaiterPath] ;
+	uint32_t watchFlags = (uint32_t)[[info objectForKey:constKeySSYPathWaiterWatchFlags] unsignedIntegerValue] ;
 	SSYBlocker* blocker = [info objectForKey:constKeySSYPathWaiterBlocker] ;
 
 	SSYPathObserver* observer = [[SSYPathObserver alloc] init] ;
@@ -69,7 +71,7 @@ NSString* const constKeySSYPathWaiterTimeout = @"tmot" ;
 	
 	NSError* error = nil ;
 	BOOL ok = [observer addPath:path
-					 watchFlags:SSYPathObserverChangeFlagsDelete
+					 watchFlags:watchFlags
 				   notifyThread:[NSThread currentThread]
 					   userInfo:self
 						error_p:&error] ;
@@ -113,8 +115,9 @@ NSString* const constKeySSYPathWaiterTimeout = @"tmot" ;
 
 
 
-- (BOOL)blockUntilDeletedPath:(NSString*)path
-					  timeout:(NSTimeInterval)timeout {
+- (BOOL)blockUntilWatchFlags:(uint32_t)watchFlags
+						path:(NSString*)path
+					 timeout:(NSTimeInterval)timeout {
 	BOOL ok = YES ;
 	// There may be a possibility of a race condition here.  I'm not sure if this fixes it
 	if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
@@ -123,6 +126,7 @@ NSString* const constKeySSYPathWaiterTimeout = @"tmot" ;
 		NSDictionary* info = [NSDictionary dictionaryWithObjectsAndKeys:
 							  blocker, constKeySSYPathWaiterBlocker,
 							  path, constKeySSYPathWaiterPath,
+							  [NSNumber numberWithUnsignedLong:watchFlags], constKeySSYPathWaiterWatchFlags,
 							  [NSNumber numberWithDouble:timeout], constKeySSYPathWaiterTimeout,
 							  nil] ;
 		

@@ -35,9 +35,9 @@ static SSYMOCManager* sharedMOCManager = nil ;
 	NSMutableString* desc = [NSMutableString string] ;
 	for (id object in self) {
 		[desc appendFormat:
-		 @"%@ [%d],",
+		 @"%@ [%ld],",
 		 [object shortDescription],
-		 [self countForObject:object]] ;
+		 (long)[self countForObject:object]] ;
 	}
 
 	// Delete the trailing comma
@@ -134,6 +134,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 			// that the destination not already exist, so we must "remove" it first.
 			NSFileManager* fm = [NSFileManager defaultManager] ;
 
+            NSError* error = nil ;
 #if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
 			[fm removeFileAtPath:newPath
 						 handler:nil] ;
@@ -145,13 +146,15 @@ static SSYMOCManager* sharedMOCManager = nil ;
 						   error:NULL] ;
 			BOOL ok = [fm moveItemAtPath:oldPath
 								  toPath:newPath
-								   error:NULL] ;
+								   error:&error] ;
 #endif
+            if (!ok) {
+                NSLog(@"Error in %s: %@", __PRETTY_FUNCTION__, error) ;
+            }
+
 			// Since the old corrupted file is gone, +[SSYMOCManager addPersistentStoreWithType:::::]
 			// will create a new file the next time it is invoked.  Problem should be solved.
 			break ;
-		default:
-			ok = NO ;
 	}
 }
 
@@ -160,7 +163,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 	if (!identifier) {
 		identifier = @"Shared" ;
 	}
-	filename = [identifier stringByAppendingPathExtension:@"sql"] ;
+	filename = [identifier stringByAppendingPathExtension:SSYManagedObjectContextPathExtensionForSqliteStores] ;
 	NSString* path = [[NSString applicationSupportFolderForThisApp] stringByAppendingPathComponent:filename] ;
     NSURL* url = [NSURL fileURLWithPath:path] ;
 	return url ;
@@ -203,29 +206,24 @@ static SSYMOCManager* sharedMOCManager = nil ;
 		NSError* error = nil ;
 		if (ok && ((fileExists && !isDirectory) || !fileExists)) {
 			// Create parent directory
-#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
-			ok = [fm createDirectoryAtPath:parentPath
-								attributes:nil] ;
-#else
 			ok = [fm createDirectoryAtPath:parentPath
 			   withIntermediateDirectories:YES
 								attributes:nil
 									 error:&error] ;
-#endif
-}
+		}
 	   
-	   if (!ok) {
-		   NSString* msg = [NSString stringWithFormat:
-							@"Could not create directory at path %@",
-							parentPath] ;
-		   NSLog(@"%@", msg) ;
-		   if (error_p) { 
-			   *error_p = [SSYMakeError(95745, msg) errorByAddingUnderlyingError:error];
-		   }
-	   }
-	   
-	   if (ok) {	
-		   NSDictionary* options ;
+		if (!ok) {
+			NSString* msg = [NSString stringWithFormat:
+							 @"Could not create directory at path %@",
+							 parentPath] ;
+			NSLog(@"%@", msg) ;
+			if (error_p) { 
+				*error_p = [SSYMakeError(95745, msg) errorByAddingUnderlyingError:error];
+			}
+		}
+		
+		if (ok) {	
+			NSDictionary* options ;
 		   if (momdName) {
 			   // Using Multi-Hop Migration
 			   ok = [SSYPersistentDocumentMultiMigrator migrateIfNeededStoreAtUrl:url
@@ -248,7 +246,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 			   persistentStore = [newPSC addPersistentStoreWithType:NSSQLiteStoreType
 													  configuration:nil
 																URL:url
-															options:nil
+															options:options
 															  error:error_p] ;
 #if 0
 #warning Simulating a bad store to test error handling
@@ -398,9 +396,9 @@ static SSYMOCManager* sharedMOCManager = nil ;
 		// We need an arbitrary but unique key
 		NSInteger highestUsed = 0 ;
 		for (NSNumber* number in mocDics) {
-			highestUsed = MAX(highestUsed, [number intValue]) ;
+			highestUsed = MAX(highestUsed, [number integerValue]) ;
 		}
-		key = [NSNumber numberWithInt:(highestUsed+1)] ;
+		key = [NSNumber numberWithInteger:(highestUsed+1)] ;
 	}
 	
 	NSDictionary* mocDic = [NSDictionary dictionaryWithObjectsAndKeys:

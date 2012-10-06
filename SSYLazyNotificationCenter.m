@@ -92,7 +92,7 @@ NSString* const constSSYLazyNotificationSelectorName = @"selName" ;
 	if (existingTimer) {
 		// Modify the new timer to have the same fire date as the existing timer.
 		delay = [[existingTimer fireDate] timeIntervalSinceNow] ;
-		delay = MAX(delay, FLT_MIN) ;
+		delay = MAX(delay, CGFLOAT_MIN) ;
 		[existingTimer invalidate] ;
 	}
 	NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:delay

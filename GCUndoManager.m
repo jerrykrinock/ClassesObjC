@@ -817,7 +817,7 @@
 	// if necessary and groups by Event is YES. This is invoked by -forwardInvocation: and -registerUndoWithTarget:selector:object:
 	// returns YES if the task was added, NO if it was not (coalesced away).
 	
-	THROW_IF_FALSE( aTask != nil, @"invalid task was nil in -submitUndoTask:"); 
+	THROW_IF_FALSE( aTask != nil, @"invalid task was nil in -submitUndoTask:");
 	
 	// if coalescing, reject invocation that matches an already registered target and selector within the current group.
 	// Coalescing is never done while redoing or undoing. Because this matches any already-registered action, not just the
@@ -1085,7 +1085,7 @@
 			else
 				selString = @"<subgroup>";
 			
-			[newTaskGroup setActionName:[NSString stringWithFormat:@"%@ (%lu: %@)", [topGroup actionName], ++suffix, selString ]];
+			[newTaskGroup setActionName:[NSString stringWithFormat:@"%@ (%lu: %@)", [topGroup actionName], (long)++suffix, selString ]];
 			[self pushGroupOntoUndoStack:newTaskGroup];
 			[newTaskGroup release];
 		}
@@ -1155,7 +1155,7 @@
 
 - (NSString*)			description
 {
-	return [NSString stringWithFormat:@"%@ g-level = %ld, state = %d, u-stack: %@, r-stack: %@", [super description], [self groupingLevel], [self undoManagerState], [self undoStack], [self redoStack]];
+	return [NSString stringWithFormat:@"%@ g-level = %ld, state = %ld, u-stack: %@, r-stack: %@", [super description], (long)[self groupingLevel], (long)[self undoManagerState], [self undoStack], [self redoStack]];
 }
 
 
@@ -1203,7 +1203,7 @@
 
 - (GCUndoTask*)			taskAtIndex:(NSUInteger) indx
 {
-	THROW_IF_FALSE2( indx < [[self tasks] count], @"invalid task index (%lu) in group %@", indx, self );
+	THROW_IF_FALSE2( indx < [[self tasks] count], @"invalid task index (%lu) in group %@", (long)indx, self );
 	
 	return [[self tasks] objectAtIndex:indx];
 }
@@ -1389,7 +1389,7 @@
 
 - (NSString*)			description
 {
-	return [NSString stringWithFormat:@"%@ '%@' %lu tasks: %@", [super description], [self actionName], [mTasks count], mTasks];
+	return [NSString stringWithFormat:@"%@ '%@' %lu tasks: %@", [super description], [self actionName], (long)[mTasks count], mTasks];
 }
 
 @end

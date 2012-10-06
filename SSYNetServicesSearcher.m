@@ -1,5 +1,5 @@
 #import "SSYNetServicesSearcher.h"
-#import "NSArray+SimpleMutations.h"
+#import "NSArray+SSYMutations.h"
 #import "NSDictionary+SimpleMutations.h"
 
 NSString* const SSYNetServicesSearcherDidFindDomainNotification = @"SSYNetServicesSearcherDFD" ;
@@ -145,7 +145,7 @@ NSString* const SSYNetServicesSearcherDidFailNotification = @"SSYNetServicesSear
 - (void)netServiceBrowser:(NSNetServiceBrowser*)netServiceBrowser
 			 didNotSearch:(NSDictionary*)errorInfo {
 	NSError* error_ = [NSError errorWithDomain:NSNetServicesErrorDomain
-										  code:[[errorInfo objectForKey:NSNetServicesErrorCode] intValue]
+										  code:[[errorInfo objectForKey:NSNetServicesErrorCode] integerValue]
 									  userInfo:[NSDictionary dictionaryWithObject:[self domains]
 																		   forKey:@"Domains found so far"]] ;
 	[self setError:error_] ;

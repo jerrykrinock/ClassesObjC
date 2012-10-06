@@ -1,5 +1,3 @@
-
-
 struct SSYModelChangeCounts_struct {
 	NSInteger added ;
 	NSInteger updated ;
@@ -67,6 +65,9 @@ typedef enum SSYModelChangeAction_enum SSYModelChangeAction ;
 + (BOOL)objectAttributesAreAffectedByChange:(SSYModelChangeAction)action ;
 
 + (NSString*)symbolForAction:(SSYModelChangeAction)action ;
+
+// Debugging
++ (NSString*)asciiNameForAction:(SSYModelChangeAction)action ;
 
 @end
 

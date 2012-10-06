@@ -111,7 +111,7 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 		[self isUndoRegistrationEnabled]
 		) {
 		[self performSelector:@selector(autoEndUndoGroupingSequenceNumber:)
-				   withObject:[NSNumber numberWithInt:scheduledGroupSequenceNumber++]
+				   withObject:[NSNumber numberWithInteger:scheduledGroupSequenceNumber++]
 				   afterDelay:0.01] ;
 		// It is important that we set our state variable before
 		// beginning the undo grouping, because sometimes -beginUndoGrouping
@@ -119,7 +119,7 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 		// to be received; i.e. this method can be re-entered before it ends.
 		nLivingAutoEndingGroups++ ;
 		
-		[self beginUndoGrouping] ;
+        [self beginUndoGrouping] ;
 	}
 }
 
@@ -140,7 +140,7 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 
 	if (nLivingAutoEndingGroups > 0) {
 		[NSObject cancelPreviousPerformRequestsWithTarget:self] ;
-		[self autoEndUndoGroupingSequenceNumber:[NSNumber numberWithInt:-1]] ;
+		[self autoEndUndoGroupingSequenceNumber:[NSNumber numberWithInteger:-1]] ;
 		result++ ;
 	}
 	

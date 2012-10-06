@@ -2,6 +2,7 @@
 #import "SSYTokenFieldCell.h"
 #import "NSArray+CountedSet.h"
 #import "NSSet+CountedSet.h"
+#import "NSObject+SSYBindingsHelp.h"
 
 /*
  @interface RedXView : NSView {
@@ -41,31 +42,44 @@
 	return self ;
 }
 
-- (void)setObjectValue:(NSObject <NSFastEnumeration> *)tokens {
-	if ([tokens respondsToSelector:@selector(objectAtIndex:)]) {
-		// tokens is a NSArray
-		tokens = [(NSArray*)tokens countedSet] ;
+/* 
+ Bug: The following code does not work, because it never executes
+ when invoked by bindings.  I think maybe it might work if it was moved in to 
+ SSYTokenFieldCell, whose -setObjectValue: method does execute.
+ */
+- (void)setObjectValue:(id)value {
+	if ([value respondsToSelector:@selector(objectAtIndex:)]) {
+		// value is a NSArray
+		value = [(NSArray*)value countedSet] ;
 	}
-	else if ([tokens respondsToSelector:@selector(countForObject:)]) {
-		tokens = [(NSSet*)tokens countedSet] ;
-	}
-	
-	// tokens is now a NSCountedSet
-	NSArray* sortedStrings = [[(NSCountedSet*)tokens allObjects] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)] ;
-	NSMutableArray* stringsWithCounts = [[NSMutableArray alloc] initWithCapacity:[(NSSet*)tokens count]] ;
-	for (NSString* string in sortedStrings) {
-		NSString* stringWithCount = [NSString stringWithFormat:
-						@"%@ [%d]",
-						string,
-						[(NSCountedSet*)tokens countForObject:string]] ;
-		[stringsWithCounts addObject:stringWithCount] ;
+	else if ([value respondsToSelector:@selector(countForObject:)]) {
+		value = [(NSSet*)value countedSet] ;
 	}
 	
-	NSArray* stringsToDisplay = [[stringsWithCounts copy] autorelease] ;
-	[stringsWithCounts release] ;
+	// value is now either a NSCountedSet or a _NSStateMarker
+	if ([value respondsToSelector:@selector(allObjects)]) {
+		NSArray* sortedStrings = [[(NSCountedSet*)value allObjects] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)] ;
+		NSMutableArray* stringsWithCounts = [[NSMutableArray alloc] initWithCapacity:[(NSSet*)value count]] ;
+		for (NSString* string in sortedStrings) {
+			NSString* stringWithCount = [NSString stringWithFormat:
+										 @"%@ [%ld]",
+										 string,
+										 (long)[(NSCountedSet*)value countForObject:string]] ;
+			[stringsWithCounts addObject:stringWithCount] ;
+		}
+		
+		// super wants value to be an NSArray
+		value = [[stringsWithCounts copy] autorelease] ;
+		[stringsWithCounts release] ;
+	}
+	else {
+		// value is an _NSStateMarker
+	}
 	
-	// super wants objectValue to be an NSArray
-	[super setObjectValue:stringsToDisplay] ;
+	[super setObjectValue:value] ;
+	m_objectValueIsOk = YES ;
+	[self sizeHeightToFit] ;
+	m_objectValueIsOk = NO ;
 }
 
 - (void)sizeToOneLine {
@@ -80,6 +94,11 @@
 							  height)] ;
 }
 
+/* 
+ Bug: The following code does not work, because it never executes, because -setObjectValue:
+ never executes in this method when invoked by bindings.  I think maybe it might work if it was moved in to 
+ SSYTokenFieldCell, whose -setObjectValue: method does execute.
+ */
 - (void)sizeHeightToFit {
 	NSArray* allTokens = [self objectValue] ;
 	NSInteger allTokensCount = [allTokens count] ;
@@ -90,12 +109,14 @@
 	NSInteger nTokensPlaced = 0 ;
 	CGFloat height = 0.0 ;
 	CGFloat totalHeightWithOneRow = 0.0 ;
-	CGFloat tokenHeight ;
+	CGFloat tokenHeight = 0.0 ;
 	CGFloat interrowSpace = 2.0 ; // Determined empirically
 	while (nTokensPlaced < allTokensCount) {
 		NSRange tokenRange = NSMakeRange(startingToken, nTokensInThisRow + 1) ;
 		NSArray* currentRowTokens = [allTokens subarrayWithRange:tokenRange] ;
-		[self setObjectValue:currentRowTokens] ;
+		if (!m_objectValueIsOk) {
+			[self setObjectValue:currentRowTokens] ;
+		}
 		[self sizeToFit] ;
 		if (totalHeightWithOneRow == 0.0) {
 			totalHeightWithOneRow = [self frame].size.height ;
@@ -131,7 +152,9 @@
 							  )] ;
 	
 	// Restore all tokens
-	[self setObjectValue:allTokens] ;
+	if (!m_objectValueIsOk) {
+		[self setObjectValue:allTokens] ;
+	}
 }
 
 - (void)setTokenizingCharacter:(unichar)tchar {
@@ -150,20 +173,5 @@
 	return [[self cell] tokenizingCharacter] ;
 }
 
-- (void)setNoTokensPlaceholder:(NSString*)placeholder {
-	[[self cell] setNoTokensPlaceholder:placeholder] ;
-}
-
-- (void)setMultipleValuesPlaceholder:(NSString*)placeholder {
-	[[self cell] setMultipleValuesPlaceholder:placeholder] ;
-}
-
-- (void)setNotApplicablePlaceholder:(NSString*)placeholder {
-	[[self cell] setNotApplicablePlaceholder:placeholder] ;
-}
-
-- (void)setNoSelectionPlaceholder:(NSString*)placeholder {
-	[[self cell] setNoSelectionPlaceholder:placeholder] ;
-}
 
 @end

@@ -9,6 +9,7 @@
 #import "SSYPieProgressView.h"
 //#import "SSDrawingUtilities.h"
 #import <math.h>
+#include <tgmath.h>
 
 CGFloat const kStartingAngle = M_PI_2 ;
 // Use M_PI_2 = π/2, etc.
@@ -32,7 +33,7 @@ NSTimeInterval const kAnimationPeriod = .025 ;
 @synthesize pieBackgroundColor = _pieBackgroundColor;
 
 - (void)setProgress:(CGFloat)newProgress {
-	_progress = fmaxf(0.0f, fminf(1.0f, newProgress));
+	_progress = fmaxf(0.0f, fmin(1.0f, newProgress));
 	[self setNeedsDisplay];
 }
 

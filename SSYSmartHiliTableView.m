@@ -70,7 +70,7 @@ http://stoneship.org/journal/2005/using-a-nsoutlineview-as-a-source-list/
 
 - (void)highlightSelectionInClipRect:(NSRect)clipRect {
 
-	int selectedRow = [self selectedRow];
+	NSInteger selectedRow = [self selectedRow];
 	if(selectedRow != -1) { 
 		// A row is selected 
 

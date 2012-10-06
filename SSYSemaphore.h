@@ -15,7 +15,17 @@
  it may have crashed and give the semaphore to the other process.
  Other processes will be prevented from acquiring the semaphore.
  SSYSemaphore features a time limit (timeLimit) to mitigate this
- danger. 
+ danger.
+ 
+ SSYSemaphore is implemented by writing a .SSYSemaphore file to
+ the application's Application Support folder.  Thinking about this,
+ here on 20120302, I wonder why I didn't write (and synchronize)
+ a key into BookMacster's User Defaults instead.  It doesn't
+ really matter, though.  Actually, it may be fewer lines of code
+ this way because writing a file is only one line of code but
+ writing and synchronizing user defaults is two lines of code.
+ Also, a file is more visible for debugging than a user default.
+ Most of the code in this implementation is for checking timeouts.
  */
 @interface SSYSemaphore : NSObject {
 }
@@ -41,13 +51,13 @@
  @param    timeout  The time interval after which lockError_p
  will give up and return NO if it cannot acquire its receiver's
  system semaphore.
- @param    timeLimit  The amount of time after acquiring a
- semaphore, after which subsequent attempts to acquire the
- semaphore will rudely overwrite the semaphore.  This is
- intended to be a fail-safe mechanism in case an acquiring
- process terminates unexpectedly without either clearing the
- semaphore or passing the key on to another process which should
- clear the semaphore.
+ @param    timeLimit  The period of time which the previous
+ semaphore acquisition is allowed to retain the semaphore,
+ after which this method will succeed and rudely overwrite
+ the semaphore.  This is intended to be a fail-safe mechanism
+ in case an acquiring process terminates unexpectedly without
+ either clearing the semaphore or passing the key on to another
+ process which should clear the semaphore.
  @param    error_p  Upon return, if an error occurs, points to a
  relevant NSError*.  If a timeout occurred, the error
  code will be ETIME.  Pass NULL if you don't want the error.
@@ -59,7 +69,7 @@
 + (BOOL)acquireWithKey:(NSString*)acquireKey
 				setKey:(NSString*)newKey
 		initialBackoff:(NSTimeInterval)initialBackoff
-		 backoffFactor:(float)backoffFactor
+		 backoffFactor:(CGFloat)backoffFactor
 			maxBackoff:(NSTimeInterval)maxBackoff
 			   timeout:(NSTimeInterval)timeout
 			 timeLimit:(NSTimeInterval)timeLimit 
@@ -80,9 +90,19 @@
 /*!
  @brief    Returns the key with which the currently-active
  semaphore was created, or nil if the semaphore is currently
- available
-*/
-+ (NSString*)currentKey ;
+ available, and, optionally, clears the semaphore if its
+ age exceeds a given time limit
+ @param    timeLimit  The period of time which the previous
+ semaphore acquisition is allowed to retain the semaphore,
+ after which this method will invoke +clearError_p: to clear
+ the semaphore and return nil.  This is intended to be a
+ fail-safe mechanism.  Use it if you want to clear an expired
+ semaphore.
+
+ If a timeLimit of 0.0 is passed, the age of the semaphore is
+ ignored and it will not be cleared.
+ */
++ (NSString*)currentKeyEnforcingTimeLimit:(NSTimeInterval)timeLimit ;
 
 /*!
  @brief    Returns the path in the filesystem to a file whose

@@ -13,7 +13,7 @@ static SSYMachaphore* sharedMachaphore = nil ;
 
 - (void)setName:(NSString*)name_
  initialBackoff:(NSTimeInterval)initialBackoff_
-  backoffFactor:(float)backoffFactor_
+  backoffFactor:(CGFloat)backoffFactor_
 	 maxBackoff:(NSTimeInterval)maxBackoff_
 		timeout:(NSTimeInterval)timeout_ {
 	[self setName:name_] ;

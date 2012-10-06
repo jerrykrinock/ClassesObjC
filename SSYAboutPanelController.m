@@ -99,7 +99,7 @@
 		NSAttributedString* newline = [[[NSAttributedString alloc] initWithString: @"\n"] autorelease];
 		
 		//	Append that one newline to the real text enough to fill the window
-		int i ;
+		NSInteger i ;
 		for (i = 0; i < 13; i++)
 		{
 			[theText appendAttributedString:newline];
@@ -118,7 +118,7 @@
 - (void) loadTextToScroll
 {
     NSMutableAttributedString	*textToScroll;
-    int							i;
+    NSInteger							i;
 
     //	Get whatever text we want to display
     textToScroll = [[self textToScroll] mutableCopy];
@@ -154,7 +154,7 @@
 }
 
 //	Scroll to hide the top 'newAmount' pixels of the text
-- (void) setScrollAmount: (float) newAmount
+- (void) setScrollAmount: (CGFloat) newAmount
 {
     //	Scroll so that (0, amount) is at the upper left corner of the scroll view
     //	(in other words, so that the top 'newAmount' scan lines of the text
@@ -202,7 +202,7 @@
 //	Scroll one frame of animation
 - (void) scrollOneUnit
 {
-    float	currentScrollAmount;
+    CGFloat	currentScrollAmount;
 
     //	How far have we scrolled so far?
     currentScrollAmount = [textScrollView documentVisibleRect].origin.y;
@@ -291,8 +291,13 @@
 	
 	// Button titles
 	[buttonClose setTitle:[NSString localize:@"close"]] ;
-	[buttonInfo setTitle:[NSString stringWithFormat:@"%@%C", [NSString localize:@"more"], 0x2026]] ; // 0x2026 = ellipsis
-	[buttonHelp setTitle:[NSString stringWithFormat:@"%@%C", [NSString localize:@"help"], 0x2026]] ; // 0x2026 = ellipsis
+	[buttonInfo setTitle:[NSString stringWithFormat:
+                          @"%@%C",
+                          [NSString localize:@"more"],
+                          (unsigned short)0x2026]] ; // 0x2026 = ellipsis
+	[buttonHelp setTitle:[NSString stringWithFormat:@"%@%C",
+                          [NSString localize:@"help"],
+                          (unsigned short)0x2026]] ; // 0x2026 = ellipsis
 	
     //	Make things look nice
     [panelToDisplay center];

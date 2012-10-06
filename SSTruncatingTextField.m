@@ -13,7 +13,7 @@
 	return self ;
 }
 
-- (void)setTruncationStyle:(int)truncationStyle {
+- (void)setTruncationStyle:(NSInteger)truncationStyle {
 	[[self cell] setTruncationStyle:truncationStyle] ;
 }
 

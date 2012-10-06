@@ -27,7 +27,7 @@ NSString* const constKeyPopUpButton = @"PopUpButton" ;
 	// a dummy target and action to be enabled.
 }
 
-- (int)selectedIndex {
+- (NSInteger)selectedIndex {
 	return [[self popUpButton] selectedTag] ;
 }
 
@@ -45,7 +45,7 @@ NSString* const constKeyPopUpButton = @"PopUpButton" ;
 	self = [super initWithFrame:NSZeroRect] ;
 	if (self != nil) {
 		
-		float y ;
+		CGFloat y ;
 		
 		NSPopUpButton* button ;
 		button = [[NSPopUpButton alloc] initWithFrame:NSZeroRect

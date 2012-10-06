@@ -37,8 +37,8 @@ NSString* const constDropboxBundleIdentifier = @"com.getdropbox.dropbox" ;
 	return [path hasPrefix:[NSHomeDirectory() stringByAppendingPathComponent:@".dropbox/cache/"]] ;
 }
 
-#define LOG_STATS_DUING_WAIT_FOR_IDLE_DROPBOX 0
-#if LOG_STATS_DUING_WAIT_FOR_IDLE_DROPBOX
+#define LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX 0
+#if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
 #warning Will log stats during -[SSYDropboxGuy waitForIdleDropboxTimeout:::]
 #endif
 
@@ -67,14 +67,14 @@ NSString* const constDropboxBundleIdentifier = @"com.getdropbox.dropbox" ;
 		NSTimeInterval const innerLoopPeriod = 10.0 ;
 		NSDate* innerEndDate = [NSDate dateWithTimeIntervalSinceNow:innerLoopPeriod] ;
 		NSInteger n = 0 ;
-		float total = 0.0 ;
-		float cpuPercent ;
+		CGFloat total = 0.0 ;
+		CGFloat cpuPercent ;
 		do {
 			ok = [SSYOtherApper processPid:dropboxPid
 								   timeout:innerLoopPeriod  // better be much less than this, to get lots of samples
 							  cpuPercent_p:&cpuPercent
 								   error_p:error_p] ;
-#if LOG_STATS_DUING_WAIT_FOR_IDLE_DROPBOX
+#if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
 				printf("%0.1f ", *cpuPercent) ;
 #endif
 			if (ok) {
@@ -87,7 +87,7 @@ NSString* const constDropboxBundleIdentifier = @"com.getdropbox.dropbox" ;
 												   code:651106
 											   userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
 														 errorDescription, NSLocalizedDescriptionKey,
-														 [NSNumber numberWithInt:dropboxPid], "PID",
+														 [NSNumber numberWithInteger:dropboxPid], @"PID",
 														 *error_p, NSUnderlyingErrorKey,
 														 nil]] ;
 				}				
@@ -98,8 +98,8 @@ NSString* const constDropboxBundleIdentifier = @"com.getdropbox.dropbox" ;
 		} while ([(NSDate*)[NSDate date] compare:innerEndDate] == NSOrderedAscending) ;
 		
 		if (ok) {
-			float avgCpuUsage = total/n ;
-#if LOG_STATS_DUING_WAIT_FOR_IDLE_DROPBOX
+			CGFloat avgCpuUsage = total/n ;
+#if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
 			printf("\nDropbox avgCpuUsage = %0.3f\n", avgCpuUsage) ;
 #endif
 			if (avgCpuUsage < THRESHOLD_AVERAGE_CPU_PERCENT) {
@@ -110,11 +110,11 @@ NSString* const constDropboxBundleIdentifier = @"com.getdropbox.dropbox" ;
 										   timeout:innerLoopPeriod  // better be much less than this, to get lots of samples
 									  cpuPercent_p:&cpuPercent
 										   error_p:error_p] ;
-#if LOG_STATS_DUING_WAIT_FOR_IDLE_DROPBOX
+#if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
 					printf("%0.1f ", *cpuPercent) ;
 #endif
 					if (cpuPercent > 0.25) {
-#if LOG_STATS_DUING_WAIT_FOR_IDLE_DROPBOX
+#if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
 						printf(" Failed 3x retest") ;
 #endif
 					}
@@ -125,7 +125,7 @@ NSString* const constDropboxBundleIdentifier = @"com.getdropbox.dropbox" ;
 														   code:651107
 													   userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
 																 errorDescription, NSLocalizedDescriptionKey,
-																 [NSNumber numberWithInt:dropboxPid], "PID",
+																 [NSNumber numberWithInteger:dropboxPid], @"PID",
 																 *error_p, NSUnderlyingErrorKey,
 																 nil]] ;
 						}				
@@ -135,8 +135,8 @@ NSString* const constDropboxBundleIdentifier = @"com.getdropbox.dropbox" ;
 					sleep(1.0) ;
 				}
 				
-#if LOG_STATS_DUING_WAIT_FOR_IDLE_DROPBOX
-				printf("\n Got i=%d\n", i) ;
+#if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
+				printf("\n Got i=%ld\n", (long)i) ;
 #endif
 				if (i==3) {
 					if (isIdle_p) {
@@ -152,7 +152,7 @@ NSString* const constDropboxBundleIdentifier = @"com.getdropbox.dropbox" ;
 	} while ([(NSDate*)[NSDate date] compare:outerEndDate] == NSOrderedAscending) ;
 
 #if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
-	printf("RESULT:  ok=%d  isIdle=%d  err=%s\n\n", ok, *isIdle_p, [[*error_p longDescription] UTF8String]) ;
+	printf("RESULT:  ok=%hhd  isIdle=%ld  err=%s\n\n", ok, (long)(*isIdle_p), [[*error_p longDescription] UTF8String]) ;
 #endif	
 	return ok ;
 }

@@ -6,9 +6,13 @@
 /*!
  @brief    A subclass of NSOperation which has methods to register and
  access the error of its operation queue, and skip operations if an
- error occurs during execution of a prior operation.
+ error occurs during execution of a prior operation or if it has been
+ cancelled
  
- @details  Class also includes four methods which may be used in atypical
+ @details  The receiver will be a no-op if it has been cancelled when
+ its -main function is invoked (when it is dequeued).
+ 
+ This class also includes four methods which may be used in atypical
  situations where it is necessary to  block a "manager" thread
  while a "worker" thread completes work.
  
@@ -79,8 +83,6 @@
  @brief    Sets the error of the receiver's operation queue.
 */
 - (void)setError:(NSError*)error ;
-
-- (void)skipQueuedOperationsInOtherGroups ;
 
 /*!
  @brief    Appends the suffix _unsafe to the name of a given selector

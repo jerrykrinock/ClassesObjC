@@ -420,7 +420,7 @@ end:;
 	return ok ;
 }
 
-- (void)processOAuthVerifier:(NSString*)verifier {
+- (BOOL)processOAuthVerifier:(NSString*)verifier {
 	[self setOAuthVerifier:verifier] ;
 	NSError* error = nil ;
 	
@@ -433,6 +433,8 @@ end:;
 	[[self gotAccessInvocation] invoke] ;
 	
 	[self setGotAccessInvocation:nil] ;
+    
+    return ok ;
 }
 
 /*!
@@ -603,7 +605,7 @@ end:;
 		// Whether we have an error already or not, we're going to add more userInfo
 		NSMutableDictionary* userInfo = [[NSMutableDictionary alloc] initWithObjectsAndKeys:
 										 url, @"Full URL",
-										 [NSNumber numberWithInt:state], @"State",
+										 [NSNumber numberWithInteger:state], @"State",
 										 nil] ;
 		NSInteger code ;
 		if (error) {

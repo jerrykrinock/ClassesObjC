@@ -1,7 +1,7 @@
 #import <Cocoa/Cocoa.h>
 
 
-@interface SSDictionaryEntry : NSObject {
+@interface SSYDictionaryEntry : NSObject {
 	NSMutableDictionary* _parent ;
 	id _key ;
 	id _value ;

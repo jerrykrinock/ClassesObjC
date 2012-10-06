@@ -2,7 +2,7 @@
 
 @implementation SSMatrixButtons
 
-SSANm(int, tagOffset, setTagOffset)
+SSANm(NSInteger, tagOffset, setTagOffset)
 
 // Over-rides of NSMatrix methods
 // The objectValue is an NSArray of NSNumbers of buttons which are pushed
@@ -13,7 +13,7 @@ SSANm(int, tagOffset, setTagOffset)
 	NSCell* cell ;
 	while ((cell = [e nextObject])) {
 		if ([[cell objectValue] boolValue]) {
-			NSNumber* value = [NSNumber numberWithInt:([cell tag] + _tagOffset)] ;
+			NSNumber* value = [NSNumber numberWithInteger:([cell tag] + _tagOffset)] ;
 			[pushedButtonIndexes addObject:value] ;
 		}
 	}
@@ -27,7 +27,7 @@ SSANm(int, tagOffset, setTagOffset)
 	NSEnumerator* e = [[self cells] objectEnumerator] ;
 	NSCell* cell ;
 	while ((cell = [e nextObject])) {
-		NSNumber* cellKey = [NSNumber numberWithInt:([cell tag] + _tagOffset)] ;
+		NSNumber* cellKey = [NSNumber numberWithInteger:([cell tag] + _tagOffset)] ;
 		BOOL active = ([pushedButtonIndexes indexOfObject:cellKey] != NSNotFound) ;
 		NSNumber* value = [NSNumber numberWithBool:active] ;
 		[cell setObjectValue:value] ;

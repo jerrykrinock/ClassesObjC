@@ -1,4 +1,7 @@
 extern NSString* const constSSYLoginItemsErrorDomain ;
+extern NSInteger const SSYLoginItemsCouldNotProbeItemErrorCode ;
+extern NSInteger const SSYLoginItemsCouldNotRemoveItemHiLevelErrorCode ;
+extern NSInteger const SSYLoginItemsCouldNotSynchronizeItemErrorCode ;
 extern NSInteger const SSYLoginItemsCouldNotResolveExistingItemErrorCode ;
 extern NSInteger const SSYLoginItemsCouldNotResolveGivenItemErrorCode ;
 extern NSInteger const SSYLoginItemsCouldNotCreateFileListErrorCode ;
@@ -87,7 +90,8 @@ typedef enum SSYSharedFileListResult_enum SSYSharedFileListResult ;
  @brief    Adds file URL url as a Login Item at the end of the list for the current user
 
  @details  Also, sets its 'hidden' parameter according to [hidden boolValue]
- @param    url  The file url of the item to be added.
+ @param    url  The file url of the item to be added.  No-op with no error if
+ a this is nil or not a file URL.
  @param    hidden  The "Hidden" attribute of the new login item will be set to reflect this input.
  @param    error_p  On output, if input is not NULL, if error occurred, will point to an
  NSError* expressing the error which occurred.
@@ -99,7 +103,8 @@ typedef enum SSYSharedFileListResult_enum SSYSharedFileListResult ;
 
 /*!
  @brief    Removes file URL url as a Login Item for the current user
- @param    url  The file url of the item to be removed.
+ @param    url  The file url of the item to be removed.  No-op with no error if
+ a this is nil or not a file URL.
  @param    error_p  On output, if input is not NULL, if error occurred, will point to an
  NSError* expressing the error which occurred.
  @result   YES if operation was successful with no error, NO otherwise.
@@ -116,7 +121,8 @@ typedef enum SSYSharedFileListResult_enum SSYSharedFileListResult ;
  If path is a Login Item for the current user and shouldBeLoginItem is NO,
  removes path from current user's Login items.
  If neither of the above, does nothing.
- @param    The  absolute path to the item which will be added or removed from Login Items.
+ @param    path  absolute path to the item which will be added or removed from Login Items.
+   No-op with no error if nil.
  @param    shouldBeLoginItem  Whether the item should be a Login Item or not.
  @param    setHidden  If a new login item is set, whether or not it is set as Hidden.
  @param    error_p  On output, if input is not NULL, if error occurred, will point to an
@@ -140,7 +146,7 @@ typedef enum SSYSharedFileListResult_enum SSYSharedFileListResult ;
  pass path as the latest version of the app to be launched.
  @param    name  Filename (last component of path name) used to qualify Login Items
  for removal.  The .extension part of this argument, if any, is ignored.
- @param    path  Login Items in this path will not be removed.
+ @param    path  Login Items in this path will not be removed.  No-op with no error if nil.
  @param    error_p  On output, if input is not NULL, if error occurred, will point to an
  NSError* expressing the error which occurred.
  @result   If operation fails for some reason, returns SSYSharedFileListResultFailed

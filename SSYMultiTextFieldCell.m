@@ -63,7 +63,6 @@
 	if (image != nil) {
         [image setScalesWhenResized:YES] ;
 
-
 		CGFloat imageDimension = (1-MARGIN_FACTOR) * cellFrame.size.height ;
         NSSize	imageSize ;
 		imageSize.height = imageDimension ;
@@ -72,21 +71,25 @@
 
         NSRect	imageFrame ;
         NSDivideRect(cellFrame, &imageFrame, &cellFrame, imageSize.width, NSMinXEdge) ;
-		
+
 		if ([self drawsBackground]) {
 			[[self backgroundColor] set];
 			NSRectFill(imageFrame);
 		}
 		
 		if ([controlView isFlipped]) {
-			imageFrame.origin.y += (cellFrame.size.height + imageDimension) / 2 ;
+			//imageFrame.origin.y += (cellFrame.size.height + imageDimension) / 2 ;
 		}
 		else {
-			imageFrame.origin.y += (cellFrame.size.height - imageDimension) / 2 ;
+			//imageFrame.origin.y += (cellFrame.size.height - imageDimension) / 2 ;
 		}
 		
-		[image compositeToPoint:imageFrame.origin
-					   operation:NSCompositePlusDarker];
+		[image drawInRect:imageFrame
+                  fromRect:NSZeroRect
+                 operation:NSCompositePlusDarker
+                  fraction:1.0
+            respectFlipped:YES
+                     hints:nil] ;
 		// I use plusDarker so I don't need an alpha channel - use white background and it "just works"
     }
 	

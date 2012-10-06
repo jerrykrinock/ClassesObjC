@@ -145,12 +145,12 @@ end:
 #warning Debugging SSYDocFileObserver
 	NSLog(@"Received notification of filesystem change:\n"
 		  "   Path:           %@\n"
-		  "   FileDescriptor: %d\n"
-		  "   Change Flags:   0x%x\n"
+		  "   FileDescriptor: %ld\n"
+		  "   Change Flags:   0x%lx\n"
 		  "   UserInfo:       %@\n",
 		  [[note userInfo] objectForKey:SSYPathObserverPathKey],
-		  [[[note userInfo] objectForKey:SSYPathObserverFileDescriptorKey] integerValue],
-		  [[[note userInfo] objectForKey:SSYPathObserverChangeFlagsKey] integerValue],
+		  (long)[[[note userInfo] objectForKey:SSYPathObserverFileDescriptorKey] integerValue],
+		  (long)[[[note userInfo] objectForKey:SSYPathObserverChangeFlagsKey] integerValue],
 		  [[note userInfo] objectForKey:SSYPathObserverUserInfoKey]) ;
 #endif
 	
@@ -178,7 +178,7 @@ end:
 		notificationName = SSYDocFileMovedNotification ;
 		NSNumber* fileDescriptor = [userInfoFromPathObserver objectForKey:SSYPathObserverFileDescriptorKey] ;
 		NSError* error = nil ;
-		NSString* newPath = [NSFileManager pathForFileDescriptor:[fileDescriptor intValue]
+		NSString* newPath = [NSFileManager pathForFileDescriptor:[fileDescriptor integerValue]
 															 pid:0 // this process
 														 error_p:&error] ;
 		if (newPath) {

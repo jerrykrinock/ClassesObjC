@@ -17,9 +17,9 @@ NSString* const constKeyMinute = @"minute" ;
 	NSMutableArray* choices = [[NSMutableArray alloc] init] ;
 	
 	for (i=0; i<7; i++) {
-		[choices addObject:[NSNumber numberWithInt:i]] ;
+		[choices addObject:[NSNumber numberWithInteger:i]] ;
 	}
-	[choices addObject:[NSNumber numberWithInt:SSRecurringDateWildcard]] ;
+	[choices addObject:[NSNumber numberWithInteger:SSRecurringDateWildcard]] ;
 	
 	NSArray* answer = [NSArray arrayWithArray:choices] ;
 	[choices release] ;

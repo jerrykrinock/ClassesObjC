@@ -15,7 +15,7 @@
 	NSString* _titleText ;
 	NSString* _keyEquivalentSuffix ;
 	BOOL keyEquivalentShowing ;
-	float widthMargin ;
+	CGFloat widthMargin ;
 	BOOL keyEquivalentWithOrWithoutAltKey ;
 }
 
@@ -25,7 +25,7 @@
 - (void)setColor:(NSColor*)color ;
 - (void)setTitleText:(NSString*)titleText ;
 - (void)setKeyEquivalentSuffix:(NSString*)suffix ;
-- (void)setWidthMargin:(float)wm ;
+- (void)setWidthMargin:(CGFloat)wm ;
 - (void)showKeyEquivalent ;
 - (void)hideKeyEquivalent ;
 

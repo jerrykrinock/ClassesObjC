@@ -19,11 +19,11 @@
 } \
 
 // for integer (I)
-#define SSBIDAI(NAME,SETNAME,KEY) - (void)SETNAME:(int)in { \
+#define SSBIDAI(NAME,SETNAME,KEY) - (void)SETNAME:(NSInteger)in { \
 	[self setInteger:in forKey:KEY] ; \
 } \
 \
-- (int)NAME { \
+- (NSInteger)NAME { \
 	return [self integerForKey:KEY] ; \
 } \
 
@@ -55,8 +55,8 @@
 - (id)objectForKey:(NSString*)attributeKey ;
 - (void)setBool:(BOOL)yn forKey:(NSString*)attributeKey ;
 - (BOOL)boolForKey:(NSString*)attributeKey ;
-- (void)setInteger:(int)n forKey:(NSString*)attributeKey ;
-- (int)integerForKey:(NSString*)attributeKey ;
+- (void)setInteger:(NSInteger)n forKey:(NSString*)attributeKey ;
+- (NSInteger)integerForKey:(NSString*)attributeKey ;
 
 - (void)removeObjectForKey:(NSString*)attributeKey ;
 - (void)removeAllAttributes ;

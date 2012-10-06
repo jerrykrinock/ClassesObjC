@@ -45,7 +45,7 @@
 						  choices:(NSArray*)choices
 						 toolTips:(NSArray*)toolTips
 					lineBreakMode:(NSLineBreakMode)lineBreakMode
-				   maxTableHeight:(float)maxTableHeight ;
+				   maxTableHeight:(CGFloat)maxTableHeight ;
 
 /*!
  @brief    Sets the set of indexes to be initially selected (suggested)

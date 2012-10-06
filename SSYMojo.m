@@ -61,7 +61,7 @@
 				compoundPredicate = [NSCompoundPredicate orPredicateWithSubpredicates:subpredicates] ;
 				break ;
 			default:
-				NSLog(@"Internal Error 842-0828.  NSCompoundPredicateType %d not supported", type) ;
+				NSLog(@"Internal Error 842-0828.  NSCompoundPredicateType %ld not supported", (long)type) ;
 		}
 	}
 	NSError* error = nil ;
@@ -147,8 +147,14 @@
 	NSError* error = nil ;
 	
 	NSFetchRequest* fetchRequest ;
-	fetchRequest = [[NSFetchRequest alloc] init];
+	fetchRequest = [[NSFetchRequest alloc] init] ;
 	NSManagedObjectContext* managedObjectContext = [self managedObjectContext] ;
+	// The following was an interesting experiment.  In BookMacster 1.11, it caused
+	// a "serious Core Data error" and also an error what looked like trying to bind
+	// the Sync Log popup menu to a deallocated object in -[SSYArrayController selectFirstArrangedObject],
+	// when it invoked -[NSArrayController removeSelectionIndexes:[self selectionIndexes]] ;
+	// [managedObjectContext processPendingChanges] ;  // Do not do this
+	
 	[fetchRequest setEntity:[NSEntityDescription entityForName:[self entityName]  
 										inManagedObjectContext:managedObjectContext]];
 	// Since we didn't set a predicate in fetchRequest, we get all objects
@@ -175,7 +181,7 @@
 	return allObjects ;
 }
 
-- (NSManagedObject*)newObject {
+- (NSManagedObject*)freshObject {
 	NSManagedObjectContext* moc = [self managedObjectContext] ;
 
 	NSManagedObject* object = [NSEntityDescription insertNewObjectForEntityForName:[self entityName]
@@ -215,7 +221,25 @@ end:
 }
 
 - (BOOL)save:(NSError**)error_p {
-	BOOL ok = [[self managedObjectContext] save:error_p] ;
+    NSError* error = nil ;
+	BOOL ok = [[self managedObjectContext] save:&error] ;
+    // The following was added in BookMacster 1.11.10 because Cocoa error
+    // 134030 error is sometimes received from users and, and I think it's
+    // probably coming from here, but I want to prove it.  With this change,
+    // 134030 will now be the underlying error.
+    if (!ok) {
+        error = [SSYMakeError(149034, @"Error saving local settings") errorByAddingUnderlyingError:error] ;
+        NSPersistentStore* store = [[self managedObjectContext] store1] ;
+        error = [error errorByAddingUserInfoObject:[store description]
+                                            forKey:@"Store"] ;
+        error = [error errorByAddingUserInfoObject:[[store URL] path]
+                                            forKey:@"Path"] ;
+    }
+    
+    if (error_p) {
+        *error_p = error ;
+    }
+    
 	return ok ;
 }
 

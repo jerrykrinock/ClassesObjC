@@ -54,6 +54,7 @@ NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
 	}
 	else {
 		NSLog(@"Internal Error 214-4190") ;
+        length = 0 ;
 	}
 
 	NSData* data = [NSData dataWithBytes:cString
@@ -62,7 +63,7 @@ NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
 }
 
 - (NSData*)finalizeDigest {
-	int unsigned length ;
+	unsigned int length ;
 	unsigned char value[EVP_MAX_MD_SIZE] ;
 
 	EVP_DigestFinal(&m_context, value, &length) ;

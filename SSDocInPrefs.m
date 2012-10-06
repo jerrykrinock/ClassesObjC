@@ -84,14 +84,14 @@ SSAOm(NSDictionary*,defaultDefaults,setDefaultDefaults)
 	return output;
 }
 
-- (void)setInteger:(int)n forKey:(NSString*)attributeKey
+- (void)setInteger:(NSInteger)n forKey:(NSString*)attributeKey
 {
-	[self setObject:[NSNumber numberWithInt:n] forKey:attributeKey] ;
+	[self setObject:[NSNumber numberWithInteger:n] forKey:attributeKey] ;
 }
 
-- (int)integerForKey:(NSString*)attributeKey 
+- (NSInteger)integerForKey:(NSString*)attributeKey 
 {
-	return ([[self objectForKey:attributeKey] intValue]) ;
+	return ([[self objectForKey:attributeKey] integerValue]) ;
 }
 
 - (void)removeObjectForKey:(NSString*)attributeKey

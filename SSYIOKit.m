@@ -126,7 +126,12 @@ CFDataRef CreateMACAddress(io_iterator_t intfIterator)
     
     // IOIteratorNext retains the returned object, so release it when we're done with it.
     while ((intfService = IOIteratorNext(intfIterator))) {
-        // IONetworkControllers can't be found directly by the IOServiceGetMatchingServices call, 
+        // Memory leak fixed by Jerry Krinock in BookMacster 1.11.10:
+        if (MACAddressAsCFData != NULL) {
+            CFRelease(MACAddressAsCFData) ;
+        }
+        
+        // IONetworkControllers can't be found directly by the IOServiceGetMatchingServices call,
         // since they are hardware nubs and do not participate in driver matching. In other words,
         // registerService() is never called on them. So we've found the IONetworkInterface and will 
         // get its parent controller by asking for it specifically.
@@ -175,7 +180,7 @@ CFDataRef CreateMACAddress(io_iterator_t intfIterator)
     CFDataRef MACAddressData = NULL ;
 	
     if (KERN_SUCCESS != kernResult) {
-		NSLog(@"+[SSYIOKit primaryMACAddressData]: FindEthernetInterfaces returned error, 0x%08x", kernResult) ;
+		NSLog(@"+[SSYIOKit primaryMACAddressData]: FindEthernetInterfaces returned error, 0x%08lx", (long)kernResult) ;
     }
     else {
 		MACAddressData = CreateMACAddress(intfIterator);
@@ -185,6 +190,10 @@ CFDataRef CreateMACAddress(io_iterator_t intfIterator)
 	
 	if (MACAddressData == nil) {
 		// May be a Hackintosh.  Use email instead.
+		// Starting with Mac OS X 10.8, -[ABAddressBook me] will produce an ugly warning
+		// asking if it's OK for your app to access Contacts, and will block until
+		// user dismisses the dialog.  But I figure that if someone
+		// is using a Hackintosh, they should expect stuff like that.
 		ABPerson* me = [[ABAddressBook sharedAddressBook] me] ;		
 		ABMultiValue *emails = [me valueForProperty:kABEmailProperty]; 
 		NSString* email = [emails valueAtIndex:[emails indexForIdentifier:[emails primaryIdentifier]]];

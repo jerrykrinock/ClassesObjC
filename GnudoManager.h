@@ -76,8 +76,8 @@ extern NSString* const NSUndoManagerWillUndoChangeNotification;
     BOOL		_isUndoing;
     BOOL		_groupsByEvent;
     BOOL		_runLoopGroupingPending;
-    unsigned		_disableCount;
-    unsigned		_levelsOfUndo;
+    NSUInteger		_disableCount;
+    NSUInteger		_levelsOfUndo;
 }
 
 - (void) beginUndoGrouping;//
@@ -87,12 +87,12 @@ extern NSString* const NSUndoManagerWillUndoChangeNotification;
 - (void) enableUndoRegistration;//
 - (void) endUndoGrouping;//
 - (void) forwardInvocation: (NSInvocation*)anInvocation;
-- (int) groupingLevel;//
+- (NSInteger) groupingLevel;//
 - (BOOL) groupsByEvent;//
 - (BOOL) isRedoing;//
 - (BOOL) isUndoing;//
 - (BOOL) isUndoRegistrationEnabled;//
-- (unsigned int) levelsOfUndo;//
+- (NSUInteger) levelsOfUndo;//
 - (id) prepareWithInvocationTarget: (id)target;//
 - (void) redo;//
 - (NSString*) redoActionName;//
@@ -106,7 +106,7 @@ extern NSString* const NSUndoManagerWillUndoChangeNotification;
 - (NSArray*) runLoopModes;//
 - (void) setActionName: (NSString*)name;//
 - (void) setGroupsByEvent: (BOOL)flag;//
-- (void) setLevelsOfUndo: (unsigned)num;//
+- (void) setLevelsOfUndo: (NSUInteger)num;//
 - (void) setRunLoopModes: (NSArray*)newModes;//
 - (void) undo;//
 - (NSString*) undoActionName;//

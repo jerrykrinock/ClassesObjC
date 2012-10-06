@@ -3,6 +3,9 @@
 
 
 NSString* const constSSYLoginItemsErrorDomain = @"SSYLoginItemsErrorDomain" ;
+NSInteger const SSYLoginItemsCouldNotProbeItemErrorCode = 144760 ;
+NSInteger const SSYLoginItemsCouldNotRemoveItemHiLevelErrorCode = 144761 ;
+NSInteger const SSYLoginItemsCouldNotSynchronizeItemErrorCode = 144762 ;
 NSInteger const SSYLoginItemsCouldNotResolveExistingItemErrorCode = 144770 ;
 NSInteger const SSYLoginItemsCouldNotResolveGivenItemErrorCode = 144771 ;
 NSInteger const SSYLoginItemsCouldNotCreateFileListErrorCode = 144772 ;
@@ -59,13 +62,11 @@ static void CFSafeRelease(CFTypeRef item) {
 */
 + (BOOL)copySnapshotOfLoginItems:(CFArrayRef*)snapshot_p 
 						   error:(NSError**)error_p {
-	if (error_p != NULL) {
-		*error_p = nil ;
-	}
+    NSError* error = nil ;
 	
 	LSSharedFileListRef list ;
 	BOOL ok = [self createLoginItemsList:&list
-								   error:error_p] ;
+								   error:&error] ;
 	if (!ok) {
 		// error_p has already been assigned
 		goto end ;
@@ -94,10 +95,9 @@ end:
 					 ref:(LSSharedFileListItemRef*)ref_p
 			  snapshot_p:(CFArrayRef*)snapshot_p
 				   error:(NSError**)error_p {
-	if (error_p != NULL) {
-		*error_p = nil ;
-	}
-	BOOL ok ;
+	BOOL ok = YES ;
+    NSError* error = nil ;
+    
 	
 	LSSharedFileListItemRef targetItem = NULL ;
 	if (url == nil) {
@@ -106,9 +106,8 @@ end:
 	
 	// First, get a snapshot of all login items
 	ok = [self copySnapshotOfLoginItems:snapshot_p
-								  error:error_p] ;
+								  error:&error] ;
 	if (!ok) {
-		// error_p has already been assigned
 		goto end ;
 	}
 	
@@ -135,8 +134,8 @@ end:
 			// references a path has been deleted (not trashed, deleted).  (It may execute
 			// in other situations also.  We don't know, due to lack of LSSharedFileList
 			// documentation from Apple.)
-			if (error_p) {
-				NSError* error = [NSError errorWithMacErrorCode:status] ;
+			if (error) {
+				NSError* underlyingError = [NSError errorWithMacErrorCode:status] ;
 				NSString* desc = @"Mac OS X could not resolve your Login Items." ;
 				NSString* path = [url path] ;
 				if (!path) {
@@ -147,21 +146,21 @@ end:
 				}
 				
 				NSString* reason = [NSString stringWithFormat:
-									@"Login Item Number %d is broken.",
-									i] ;
+									@"Login Item Number %ld is broken.",
+									(long)i] ;
 				NSMutableDictionary* userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:
 												 desc, NSLocalizedDescriptionKey,  // won't be nil
 												 reason, NSLocalizedFailureReasonErrorKey, // won't be nil
-												 error, NSUnderlyingErrorKey,     // won't be nil
-												 [NSNumber numberWithInt:i], @"Broken Item Index", // won't be nil
+												 underlyingError, NSUnderlyingErrorKey,     // won't be nil
+												 [NSNumber numberWithInteger:i], @"Broken Item Index", // won't be nil
 												 [NSNumber numberWithInteger:status], @"Underlying Error Status Code",  // won't be nil
 												 path , @"Path Looking For",   // might be nil
 												 nil] ;
 
 				if ((status == fnfErr) || (status == nsvErr)) {				
 					NSString* suggestion = [NSString stringWithFormat:
-											@"Visit your System Preferences and delete or reinstall Login Item Number %d.",
-											i] ;
+											@"Visit your System Preferences and delete or reinstall Login Item Number %ld.",
+											(long)i] ;
 					[userInfo setObject:suggestion
 								 forKey:NSLocalizedRecoverySuggestionErrorKey] ;
 				}
@@ -169,7 +168,6 @@ end:
 				error = [NSError errorWithDomain:constSSYLoginItemsErrorDomain
 											code:SSYLoginItemsCouldNotResolveExistingItemErrorCode
 										userInfo:userInfo] ;
-				*error_p = error ;
 			}
 			ok = NO ;
 			break ;
@@ -178,7 +176,10 @@ end:
 	}
 	
 end:
-	if (ref_p != NULL) {
+	if (error && error_p) {
+        *error_p = error ;
+    }
+    if (ref_p != NULL) {
 		*ref_p = (LSSharedFileListItemRef)targetItem ;
 	}
 	
@@ -189,22 +190,22 @@ end:
 	loginItem:(NSNumber**)loginItem_p
 	   hidden:(NSNumber**)hidden_p
 		error:(NSError**)error_p {
-	if (error_p != NULL) {
-		*error_p = nil ;
-	}
+    BOOL ok = YES ;
+	NSError* error = nil ;
+    
+	LSSharedFileListItemRef targetItem = NULL ;
+	CFArrayRef snapshot = NULL ;
+	
 	if (url == nil) {
 		goto end ;
 	}
 	
-	LSSharedFileListItemRef targetItem = NULL ;
-	CFArrayRef snapshot = NULL ;
-	
-	BOOL ok = [self loginItemWithURL:url
-								 ref:&targetItem
-						  snapshot_p:&snapshot
-							   error:error_p] ;
+	ok = [self loginItemWithURL:url
+                            ref:&targetItem
+                     snapshot_p:&snapshot
+                          error:&error] ;
 	if (!ok) {
-		// error_p has already been assigned
+		// error has already been assigned
 		goto end ;
 	}
 	
@@ -225,21 +226,17 @@ end:
 	}
 	
 end:
-	if (*error_p) {
-		int code = [*error_p code] ;
-		NSString* domain = [*error_p domain] ;
-		NSMutableDictionary* userInfo = [[*error_p userInfo] mutableCopy] ;
-		[userInfo setObject:NSStringFromSelector(_cmd)
-					 forKey:@"Method Name"] ;
-		NSString* urlString = [url absoluteString] ;
-		if (urlString) {
-			[userInfo setObject:urlString
-						 forKey:@"Url"] ;
-		}
-		*error_p = [NSError errorWithDomain:domain
-									   code:code
+	if (error_p && !ok) {
+		NSMutableDictionary* userInfo = [NSMutableDictionary dictionary] ;
+        [userInfo setObject:@"Error probing your Mac OS X Login Items"
+                     forKey:NSLocalizedDescriptionKey] ;
+		[userInfo setValue:[url absoluteString]
+                        forKey:@"Url"] ;
+        [userInfo setValue:error
+                    forKey:NSUnderlyingErrorKey] ;
+		*error_p = [NSError errorWithDomain:constSSYLoginItemsErrorDomain
+									   code:SSYLoginItemsCouldNotProbeItemErrorCode
 								   userInfo:userInfo] ;
-		[userInfo release] ;	
 	}
 	CFSafeRelease(snapshot) ;
 	return ok ;
@@ -248,17 +245,14 @@ end:
 + (BOOL)addLoginURL:(NSURL*)url
 			 hidden:(NSNumber*)hidden
 			  error:(NSError**)error_p {
-	if (error_p != NULL) {
-		*error_p = nil ;
-	}
+    NSError* error = nil ;
 	NSDictionary* propsToSet = [NSDictionary dictionaryWithObject:hidden
 														   forKey:(id)kLSSharedFileListItemHidden] ;
 	LSSharedFileListRef loginItems ;
 	BOOL ok = [self createLoginItemsList:&loginItems
-								   error:error_p] ;
+								   error:&error] ;
 	
 	if (!ok) {
-		// error_p has already been assigned
 		goto end ;
 	}
 	
@@ -273,13 +267,11 @@ end:
 										 NULL) ;
 	
 	if (item == NULL) {
-		if (error_p != NULL) {
-			*error_p = [NSError errorWithDomain:constSSYLoginItemsErrorDomain
-										   code:SSYLoginItemsCouldNotInsertItemErrorCode
-									   userInfo:[NSDictionary dictionaryWithObject:@"LSSharedFileListInsertItemURL returned error"
-																			forKey:NSLocalizedDescriptionKey]] ;
-		}
-	}
+        error = [NSError errorWithDomain:constSSYLoginItemsErrorDomain
+                                    code:SSYLoginItemsCouldNotInsertItemErrorCode
+                                userInfo:[NSDictionary dictionaryWithObject:@"LSSharedFileListInsertItemURL returned NULL"
+                                                                     forKey:NSLocalizedDescriptionKey]] ;
+    }
 	else {
 		// Documentation for LSSharedFileListInsertItemURL says I should release
 		// (Maybe because CF does not feature autorelease?)
@@ -288,22 +280,22 @@ end:
 
 end:
 	CFSafeRelease(loginItems) ;
+    if (error_p) {
+        *error_p = error ;
+    }
 	
 	return ok ;
 }
 
 + (BOOL)removeLoginItemRef:(LSSharedFileListItemRef)item
 					 error:(NSError**)error_p {
-	if (error_p != NULL) {
-		*error_p = nil ;
-	}
 	BOOL ok ;
+    NSError* error = nil ;
 	
 	LSSharedFileListRef loginItems ;
 	ok = [self createLoginItemsList:&loginItems
-							  error:error_p] ;
+							  error:&error] ;
 	if (!ok) {
-		// error_p has already been assigned
 		goto end ;
 	}
 	
@@ -328,50 +320,44 @@ end:
 end:
 	CFSafeRelease(loginItems) ;
 	
+    if (error_p) {
+        *error_p = error ;
+    }
+    
 	return (ok) ;
 }
 
 + (BOOL)removeLoginURL:(NSURL*)url
 				 error:(NSError**)error_p {
-	if (error_p != NULL) {
-		*error_p = nil ;
-	}
-	
+    NSError* error = nil ;
 	LSSharedFileListItemRef item = NULL ;
 	CFArrayRef snapshot = NULL ;
 	BOOL ok = [self loginItemWithURL:url
 								ref:&item
 						  snapshot_p:&snapshot
-							  error:error_p] ;
+							  error:&error] ;
 
 	if (ok && (item != NULL)) {
 		[self removeLoginItemRef:item
-						   error:error_p] ;
-	}
-	else {
-		// error_p has already been assigned
-		// We are already at the end goto end ;
+						   error:&error] ;
 	}
 	
 	CFSafeRelease(snapshot) ;
 	
-	if (*error_p) {
-		int code = [*error_p code] ;
-		NSString* domain = [*error_p domain] ;
-		NSMutableDictionary* userInfo = [[*error_p userInfo] mutableCopy] ;
-		[userInfo setObject:NSStringFromSelector(_cmd)
-					 forKey:@"Method Name"] ;
-		NSString* urlString = [url absoluteString] ;
-		if (urlString) {
-			[userInfo setObject:urlString
-						 forKey:@"Url"] ;
-		}
-		*error_p = [NSError errorWithDomain:domain
-									   code:code
+	if (error_p && !ok) {
+		NSMutableDictionary* userInfo = [NSMutableDictionary dictionary] ;
+        [userInfo setObject:@"Error removing a Mac OS X Login Item"
+                     forKey:NSLocalizedDescriptionKey] ;
+		[userInfo setValue:[url absoluteString]
+                    forKey:@"Url"] ;
+        [userInfo setValue:error
+                    forKey:NSUnderlyingErrorKey] ;
+		*error_p = [NSError errorWithDomain:constSSYLoginItemsErrorDomain
+									   code:SSYLoginItemsCouldNotRemoveItemHiLevelErrorCode
 								   userInfo:userInfo] ;
-		[userInfo release] ;	
 	}
-	return ok ;	
+
+	return ok ;
 }
 
 /*
@@ -382,21 +368,20 @@ end:
 					notInPath:(NSString*)dontDeletePath
 						 refs:(NSArray**)refs_p
 						error:(NSError**)error_p {
-	if (error_p != NULL) {
-		*error_p = nil ;
-	}
-	
-	CFArrayRef snapshot ;
-	BOOL ok = [self copySnapshotOfLoginItems:&snapshot
-									   error:error_p] ;
+    BOOL ok = YES ;
+    NSError* error = nil ;
+	NSMutableArray* mutableRefs = nil ;
+	CFArrayRef snapshot = NULL ;
+    
+	ok = [self copySnapshotOfLoginItems:&snapshot
+                                  error:&error] ;
 	if (!ok) {
-		// error_p has already been assigned
 		goto end ;
 	}
 		
 	OSStatus status = noErr ;
 	name = [name stringByDeletingPathExtension] ;
-	NSMutableArray* mutableRefs = [NSMutableArray array] ;
+	mutableRefs = [NSMutableArray array] ;
 	for (id item in (NSArray*)snapshot) {
 		NSURL* aURL ;
 		BOOL breakAfterCleanup = NO ;
@@ -428,11 +413,11 @@ end:
 	}
 	
 	if (status != noErr) {
-		if (error_p != NULL) {
-			*error_p = [NSError errorWithDomain:constSSYLoginItemsErrorDomain
-										   code:SSYLoginItemsCouldNotResolveGivenItemErrorCode
-									   userInfo:[NSDictionary dictionaryWithObject:@"LSSharedFileListItemResolve returned error"
-																			forKey:NSLocalizedDescriptionKey]] ;
+		if (!error) {
+			error = [NSError errorWithDomain:constSSYLoginItemsErrorDomain
+                                        code:SSYLoginItemsCouldNotResolveGivenItemErrorCode
+                                    userInfo:[NSDictionary dictionaryWithObject:@"LSSharedFileListItemResolve returned error"
+                                                                         forKey:NSLocalizedDescriptionKey]] ;
 		}
 		ok = NO ;
 		goto end ;
@@ -441,7 +426,10 @@ end:
 end:
 	CFSafeRelease(snapshot) ;
 	
-	if (refs_p != NULL) {
+	if (error_p) {
+		*error_p = error ;
+	}
+	if (refs_p) {
 		*refs_p = [NSArray arrayWithArray:mutableRefs] ;
 	}
 	
@@ -453,10 +441,10 @@ end:
 								  shouldBeLoginItem:(BOOL)shouldBeLoginItem
 										  setHidden:(BOOL)setHidden 
 											  error:(NSError**)error_p {
-	if (error_p != NULL) {
-		*error_p = nil ;
-	}
+    BOOL ok = YES ;
+    NSError* error = nil ;
 	SSYSharedFileListResult result ;
+	CFArrayRef snapshot = NULL ;
 	result = SSYSharedFileListResultNoAction ;
 
 	LSSharedFileListItemRef existingItemRef = NULL ;
@@ -472,13 +460,11 @@ end:
 	
 	NSURL* url = [NSURL fileURLWithPath:path] ;
 	
-	CFArrayRef snapshot ;
-	BOOL ok = [self loginItemWithURL:url
-								 ref:&existingItemRef
-						  snapshot_p:&snapshot
-							   error:error_p] ;
+	ok = [self loginItemWithURL:url
+                            ref:&existingItemRef
+                     snapshot_p:&snapshot
+                          error:&error] ;
 	if (!ok) {
-		// error_p has already been assigned
 		goto end ;
 	}
 	
@@ -488,7 +474,7 @@ end:
 			// path needs to be added to login items
 			ok = [self addLoginURL:url
 							hidden:[NSNumber numberWithBool:setHidden]
-							 error:error_p] ;
+							 error:&error] ;
 			if (ok) {
 				result = SSYSharedFileListResultAdded ;
 			}
@@ -503,7 +489,7 @@ end:
 		if (existingItemRef != NULL) {
 			// existingItemRef needs to be removed
 			ok = [self removeLoginItemRef:existingItemRef
-									error:error_p] ;
+									error:&error] ;
 			if (ok) {
 				result = SSYSharedFileListResultRemoved ;
 			}
@@ -516,20 +502,17 @@ end:
 	}
 
 end:
-	if (*error_p) {
-		int code = [*error_p code] ;
-		NSString* domain = [*error_p domain] ;
-		NSMutableDictionary* userInfo = [[*error_p userInfo] mutableCopy] ;
-		[userInfo setObject:NSStringFromSelector(_cmd)
-					 forKey:@"Method Name"] ;
-		if (path) {
-			[userInfo setObject:path
-						 forKey:@"Path"] ;
-		}
-		*error_p = [NSError errorWithDomain:domain
-									   code:code
+	if (error_p && !ok) {
+		NSMutableDictionary* userInfo = [NSMutableDictionary dictionary] ;
+        [userInfo setObject:@"Error synchronizing a Mac OS X Login Item"
+                     forKey:NSLocalizedDescriptionKey] ;
+		[userInfo setValue:[url absoluteString]
+                    forKey:@"Url"] ;
+        [userInfo setValue:error
+                    forKey:NSUnderlyingErrorKey] ;
+		*error_p = [NSError errorWithDomain:constSSYLoginItemsErrorDomain
+									   code:SSYLoginItemsCouldNotSynchronizeItemErrorCode
 								   userInfo:userInfo] ;
-		[userInfo release] ;	
 	}
 	
 	CFSafeRelease(snapshot) ;
@@ -540,16 +523,14 @@ end:
 + (SSYSharedFileListResult)removeAllLoginItemsWithName:(NSString*)name
 										   thatAreNotInPath:(NSString*)path
 													  error:(NSError**)error_p {
-	if (error_p != NULL) {
-		*error_p = nil ;
-	}
-	SSYSharedFileListResult result ;
+    NSError* error = nil ;
+	SSYSharedFileListResult result = SSYSharedFileListResultNoAction ;
 	
 	NSArray* loginItemRefsToRemove ;
 	BOOL ok = [self loginItemsWithAppName:name
 								notInPath:path
 									 refs:&loginItemRefsToRemove
-									error:error_p] ;
+									error:&error] ;
 	if (ok) {
 		if ([loginItemRefsToRemove count] == 0) {
 			result = SSYSharedFileListResultNoAction ;
@@ -557,7 +538,7 @@ end:
 		else {
 			for (id item in loginItemRefsToRemove) {
 				ok = [self removeLoginItemRef:(LSSharedFileListItemRef)item
-										error:error_p] ;
+										error:&error] ;
 				if (ok) {
 					result = SSYSharedFileListResultRemoved ;
 				}
@@ -575,6 +556,10 @@ end:
 	}
 	
 end:
+    if (error && error_p) {
+        *error_p = error ;
+    }
+    
 	return result ;
 }
 

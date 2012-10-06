@@ -31,7 +31,7 @@
 	NSColor *selectedRowColor;
 	NSColor *secondarySelectedRowColor;
 	BOOL am_initializing;
-	float rowHeight;
+	CGFloat rowHeight;
 	BOOL am_isFirstResponder;
 }
 
@@ -41,8 +41,8 @@
 - (NSArray *)backgroundColors;
 - (void)setBackgroundColors:(NSArray *)value;
 
-- (float)rowHeight;
-- (void)setRowHeight:(float)value;
+- (CGFloat)rowHeight;
+- (void)setRowHeight:(CGFloat)value;
 
 - (NSArray *)content;
 - (void)setContent:(NSArray *)value

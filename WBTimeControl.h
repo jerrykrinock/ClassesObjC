@@ -37,7 +37,7 @@
     NSCell *				colonCells[WBTIMECONTROL_CELL_COUNT-1];
     NSRect 					colonRects[WBTIMECONTROL_CELL_COUNT-1];
     
-    int 					selected;
+    NSInteger 					selected;
     
     IBOutlet id 			delegate;
     
@@ -52,17 +52,17 @@
 
 - (void) setDelegate:(id) aDelegate;
 
-- (void) editCell:(int) aSelected;
+- (void) editCell:(NSInteger) aSelected;
 - (void )editOff;
 
-- (int) selected;
-- (void) setSelected:(int)aSelected;
+- (NSInteger) selected;
+- (void) setSelected:(NSInteger)aSelected;
 
-- (void) setHour:(int)aHour;
-- (int) hour;
+- (void) setHour:(NSInteger)aHour;
+- (NSInteger) hour;
 
-- (void) setMinute:(int)aMinute;
-- (int) minute;
+- (void) setMinute:(NSInteger)aMinute;
+- (NSInteger) minute;
 
 // seconds not used //- (void) setSecond:(int)aSecond;
 // seconds not used //- (int) second;

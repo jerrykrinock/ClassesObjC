@@ -4,7 +4,7 @@
 #import "SSYRunLoopTickler.h"
 
 NSInteger const SSYShellTaskerErrorFailedLaunch = 90551 ;
-NSInteger const SSYShellTaskerErrorTimedOut= 90552  ;
+NSInteger const SSYShellTaskerErrorTimedOut = 90552  ;
 
 NSString* const constKeySSYShellTaskerCommand = @"command" ;
 NSString* const constKeySSYShellTaskerArguments = @"arguments" ;
@@ -44,8 +44,8 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 	NSArray* arguments = [info objectForKey:constKeySSYShellTaskerArguments] ;
 	NSString* inDirectory = [info objectForKey:constKeySSYShellTaskerInDirectory] ;
 	NSData* stdinData =  [info objectForKey:constKeySSYShellTaskerStdinData] ;
-	NSTimeInterval timeout = [[info objectForKey:constKeySSYShellTaskerTimeout] floatValue] ;
-	NSInteger wants = [[info objectForKey:constKeySSYShellTaskerWants] intValue] ;
+	NSTimeInterval timeout = [[info objectForKey:constKeySSYShellTaskerTimeout] doubleValue] ;
+	NSInteger wants = [[info objectForKey:constKeySSYShellTaskerWants] integerValue] ;
 	
 	NSError* error = nil ;
 	
@@ -58,12 +58,30 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
     NSFileHandle* fileStdout = nil ;
     NSFileHandle* fileStderr = nil ;
 	
-    task = [[NSTask alloc] init] ;
+   task = [[NSTask alloc] init] ;
 	
     [task setLaunchPath:command] ;
+    
+    // The following section was added in BookMacster 1.11.10 to stop annoying
+    // warnings in Xcode console when running in Xcode:
+    // dyld: DYLD_ environment variables being ignored because main executable (/bin/ps) is setuid or setgid
+    // This was suggested by Ken Thomases here…
+    // http://lists.apple.com/archives/xcode-users/2012/Sep/msg00022.html
+    if ([command hasSuffix:@"/ps"]) {
+        NSDictionary* environment = [[NSProcessInfo processInfo] environment] ;
+        NSMutableDictionary* taskEnvironment = [[NSMutableDictionary alloc] init] ;
+        for (NSString* key in environment) {
+            if (![key hasPrefix:@"DYLD_"]) {
+                [taskEnvironment setObject:[environment valueForKey:key]
+                                    forKey:key] ;
+            }
+        }
+        [task setEnvironment:taskEnvironment] ;
+        [taskEnvironment release] ;
+    }
 	
     if (inDirectory) {
-        [task setCurrentDirectoryPath: inDirectory] ;
+        [task setCurrentDirectoryPath:inDirectory] ;
 	}
 	
     if (arguments != nil) {
@@ -137,7 +155,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 											code:SSYShellTaskerErrorTimedOut
 										userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
 												  @"SSYShellTasker: Task timed out (and was killed)", NSLocalizedDescriptionKey,
-												  [NSNumber numberWithDouble:timeout], @"exceeded seconds",
+												  [info objectForKey:constKeySSYShellTaskerTimeout], constKeySSYShellTaskerTimeout,
 												  command, @"command",
 												  nil]] ;
 				if (arguments) {
@@ -230,7 +248,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 								 selector:@selector(doWithInfo:)	
 								   object:info
 								   thread:nil // Run in a new thread
-								  timeout:FLT_MAX] ;
+								  timeout:CGFLOAT_MAX] ;
 		// In the above, we set timeout:FLT_MAX because timeout is in info,
 		// and we'll get a more descriptive NSError if doWithInfo: times out
 		// than from SSYThreadPauser if we would let SSYThreadPauser time out.
@@ -246,7 +264,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 		}		
 	}
 		
-	result = [[info objectForKey:constKeySSYShellTaskerResult] intValue] ;
+	result = [[info objectForKey:constKeySSYShellTaskerResult] integerValue] ;
 
 	[tasker release] ;
 		

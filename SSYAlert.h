@@ -529,7 +529,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  
  @details  May be used to create other subviews with same "look".
  */
-+ (float)titleTextHeight ;
++ (CGFloat)titleTextHeight ;
 
 /*!
  @brief    Returns the height of the receiver's small text view,
@@ -537,7 +537,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  
  @details  May be used to create other subviews with same "look".
  */
-+ (float)smallTextHeight ;
++ (CGFloat)smallTextHeight ;
 
 /*!
  @brief    Returns the localized string "Contact Support | Email"
@@ -672,7 +672,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  corresponding to the button clicked by the user.
  @param    didEndSelector  The selector which will be sent to the modal
  delegate if it is not nil.  Must match the signature with signature of
- sheetDidEnd:(NSWindow *)returnCode:(int)contextInfo:(void*).&nbsp; Also,
+ sheetDidEnd:(NSWindow *)returnCode:(NSInteger)contextInfo:(void*).&nbsp; Also,
  to make the sheet go away, the didEndSelector must send -orderOut: to the
  'sheet' argument it receives.
  @param    contextInfo  Pointer to data which will be returned as the
@@ -772,6 +772,12 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 */
 - (void)setSmallText:(NSString*)text ;
 
+/*!
+ @brief    Returns the receiver's Small Text, which may be nil
+
+ @details  This is useful for troubleshooting.
+*/
+- (NSString*)smallText ;
 
 /*!
  @brief    Sets the icon which will appear in the receiver
@@ -869,7 +875,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  of the receiver's right column.
 */
 - (void)addOtherSubview:(NSView*)subview
-				atIndex:(int)index ;
+				atIndex:(NSInteger)index ;
 
 /*!
  @brief    Removes the "other subview" with a given index
@@ -1001,7 +1007,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  corresponding to the button clicked by the user.
  @param    didEndSelector  The selector which will be sent to the modal
  delegate if it is not nil.  Must match the signature with signature of
- didEndSheet:(NSWindow *)returnCode:(int)contextInfo:(void*).
+ didEndSheet:(NSWindow *)returnCode:(NSInteger)contextInfo:(void*).
  @param    contextInfo  Pointer to data which will be returned as the
  third element of the didEndSelector.
 */
@@ -1048,8 +1054,14 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 
 
 /*!
- @brief    Ends any modal session that might be running and closes
- the receiver's window
+ @brief    Ends any modal session that might be running, sets the
+ receiver's window's frame size to NSZeroRect and closes it.
+ 
+ @details  The reason for setting the frame size to NSZeroRect is
+ because this signals to SSYSheetManager, in case the receiver's
+ window is still in an SSYSheetManagerQueue and has not been displayed
+ yet, to skip it when it is dequeued.  In other words,
+ this method also "cancels" any future display by SSYSheetManager.
 */
 - (void)goAway ;
 

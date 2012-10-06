@@ -124,10 +124,10 @@ OSStatus SSYShortcutActuate(
 		if(status != noErr) {
 			return [NSString stringWithFormat:
 					@"Error %ld %s : %s for key code '%ld'.",
-					status,
+					(long)status,
 					GetMacOSStatusErrorString(status),
 					GetMacOSStatusCommentString(status),
-					keyCode] ;
+					(long)keyCode] ;
 		}
 		else if(actualStringLength > 0) {
 			// Replace certain characters with user friendly names, e.g. Space, Enter, Tab etc.
@@ -144,7 +144,7 @@ OSStatus SSYShortcutActuate(
 			return [NSString stringWithCharacters:unicodeString length:(NSInteger)actualStringLength] ;
 		}
 		else {
-			NSLog(@"<Unknown keyCode=%d>", keyCode) ;
+			NSLog(@"<Unknown keyCode=%ld>", (long)keyCode) ;
 		}
 	}
 	else {
@@ -247,7 +247,7 @@ OSStatus SSYShortcutActuate(
 		status = UnregisterEventHotKey(hotKeyRef) ;
 		if (status != noErr) {
 			NSLog(@"Internal Error 624-8537  Error %ld removing hot key for hotKeyRef %p with info %@%@",
-				  status,
+				  (long)status,
 				  hotKeyRef,
 				  info,
 				  constErrorsHeader) ;
@@ -264,7 +264,7 @@ OSStatus SSYShortcutActuate(
 			}
 			else {
 				NSLog(@"Internal Error 624-8538  Error %ld removing handler for handlerRef %p with info %@.%@",
-					  status,
+					  (long)status,
 					  handlerRef,
 					  info,
 					  constErrorsHeader) ;
@@ -283,31 +283,77 @@ OSStatus SSYShortcutActuate(
 	}
 }
 
-- (NSDictionary*)registerShortcutWithInfo:(NSDictionary*)info
-							 selectorName:(NSString*)selectorName {
-	NSNumber* number ;
+/*!
+ @details  This method is for defensive programming, and also to guard against
+ corrupt prefs causing trouble.  For example, in developing BookMacster 1.12,
+ somehow I got modifierFlags=0x0 and keyCode=0x4071c00000000000 as the entries
+ in popUpAnywhereMenu in SSYShortcutActuatorKeyBindings in my preferences.
+ Because RegisterEventHotKey() sees these two parameters as Uint32, the key
+ code got aliased to 0x0, and the combination keyCode=0x0, modifierFlags=0x0
+ got registered whenever a web broser was activated.  The virtual key code of
+ 0x0 is the 'a' key, and modifierFlags=0x0 means no modifier keys.  The result
+ was that, I as user typed a lower-case 'a' while a web browser was active and
+ BookMacster was running, BookMacster's Anywhere Menu popped up.  Eeeek!
+ I don't know if this occurred as due to me killing the program during
+ debugging, or maybe I did something wrong in transitioning this code to
+ 64 bit.
+ */
+- (BOOL)isValidInfo:(NSDictionary*)info {
+    NSNumber* number ;
 	
 	number = [info objectForKey:constKeyKeyCode] ;
 	NSInteger keyCode ;
 	if ([number respondsToSelector:@selector(integerValue)]) {
 		keyCode = [number integerValue] ;
 		if (keyCode < 0) {
-			return nil ;
+            // keyCode will be -1 if the SRShortcutRecorder field in
+            // preferences is cleared, and we'll be here.
+			return NO ;
 		}
+        if (keyCode > 0x7f) {
+            // This is a Carbon "virtual key code"
+            // In /System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/Headers/Events.h,
+            // one sees that such a code is in fact a UInt32, and the
+            // highest valid value id 0x7e.  We'll allow 0x7f.
+            return NO ;
+        }
 	}
 	else {
-		return nil ;
+		return NO ;
 	}
-	
+    
 	number = [info objectForKey:constKeyModifierFlags] ;
 	NSUInteger modifiers ;
 	if ([number respondsToSelector:@selector(unsignedIntegerValue)]) {
 		modifiers = [number unsignedIntegerValue] ;
+        // We require that modifiers require at least one of the modifier
+        // keys: command, control, option.  An argument could be made that
+        // the option key by itself is not good enough, but we led that
+        // one slide.
+        if (!(modifiers & NSCommandKeyMask)) {
+            if (!(modifiers & NSControlKeyMask)) {
+                if (!(modifiers & NSAlternateKeyMask)) {
+                    return NO ;
+                }
+            }
+        }
 	}
 	else {
-		return nil ;
+		return NO ;
 	}
-	modifiers = SRCocoaToCarbonFlags(modifiers) ;
+    
+    return YES ;
+}
+
+- (NSDictionary*)registerShortcutWithInfo:(NSDictionary*)info
+							 selectorName:(NSString*)selectorName {
+    if (![self isValidInfo:info]) {
+        return nil ;
+    }
+	
+	int32_t keyCode = [[info objectForKey:constKeyKeyCode] longValue] ;
+	uint32_t modifiers = [[info objectForKey:constKeyModifierFlags] unsignedLongValue] ;
+    modifiers = SRCocoaToCarbonFlags(modifiers) ;
 	
 	EventHotKeyID hotKeyID ;
 	EventTypeSpec eventType ;
@@ -362,11 +408,11 @@ OSStatus SSYShortcutActuate(
 									 0,
 									 &hotKeyRef) ;
 		if (status != noErr) {
-			NSLog(@"Internal Error 624-9877.  Error %ld RegisterEventHotKey %d 0x%x %ld %p %p.%@",
-				  status,
-				  keyCode,
-				  modifiers,
-				  hotKeyID.id,
+			NSLog(@"Internal Error 624-9877.  Error %ld RegisterEventHotKey %ld 0x%lx %ld %p %p.%@",
+				  (long)status,
+				  (long)keyCode,
+				  (long)modifiers,
+				  (long)(hotKeyID.id),
 				  thisAppEventTarget,
 				  hotKeyRef,
 				  constErrorsHeader) ;
@@ -374,17 +420,17 @@ OSStatus SSYShortcutActuate(
 		
 	}
 	else {
-		NSLog(@"Internal Error 624-9878.  Error %ld InstallEventHandler %d 0x%x %ld %p %p.%@",
-			  status,
-			  keyCode,
-			  modifiers,
-			  hotKeyID.id,
+		NSLog(@"Internal Error 624-9878.  Error %ld InstallEventHandler %ld 0x%lx %ld %p %p.%@",
+			  (long)status,
+			  (long)keyCode,
+			  (long)modifiers,
+			  (long)hotKeyID.id,
 			  thisAppEventTarget,
 			  handlerRef,
 			  constErrorsHeader) ;
 	}
 	
-	NSDictionary* newInfo = [NSDictionary dictionaryWithObjectsAndKeys:
+    NSDictionary* newInfo = [NSDictionary dictionaryWithObjectsAndKeys:
 							 [NSValue valueWithPointer:hotKeyRef], constKeyHotKeyReference,
 							 [NSValue valueWithPointer:handlerRef], constKeyHandlerReference,
 							 [NSNumber numberWithUnsignedLong:m_shortcutSerialNumber], constKeyHotKeySerialNumber,
@@ -407,9 +453,11 @@ OSStatus SSYShortcutActuate(
 					NSDictionary* infoLaInstall = [self registerShortcutWithInfo:infoLaUserDefaults
 																	selectorName:selectorName] ;
 					
-					// Add to Registered Shortcut Infos dictionary
-					[self addRegisteredShortcutInfo:infoLaInstall
-									forSelectorName:selectorName] ;
+					if (infoLaInstall) {
+                        // Add to Registered Shortcut Infos dictionary
+                        [self addRegisteredShortcutInfo:infoLaInstall
+                                        forSelectorName:selectorName] ;
+                    }
 				}
 			}
 		}
@@ -517,19 +565,19 @@ OSStatus SSYShortcutActuate(
 	// It is important that we do #1 before #2, because #2 will uninstall our handler
 	// only if it sees that there are no more Registered shortcuts.
 
-	// #3.  Unregister in Mac OS X
+	// #2.  Unregister in Mac OS X
 	[self unregisterShortcutForSelectorName:selectorName] ;
 
-	// #4.  Remove from User Defaults
+	// #3.  Remove from User Defaults
 	[[NSUserDefaults standardUserDefaults] removeKey:selectorName
 								 fromDictionaryAtKey:SSYShortcutActuatorKeyBindings] ;
 	
-	if (keyCode >=0) {
+    NSDictionary* infoLaUserDefaults = [NSDictionary dictionaryWithObjectsAndKeys:
+                                        [NSNumber numberWithLong:keyCode], constKeyKeyCode,
+                                        [NSNumber numberWithUnsignedLong:modifierFlags], constKeyModifierFlags,
+                                        nil] ;
+	if ([self isValidInfo:infoLaUserDefaults]) {
 		//  Add to User Defaults
-		NSDictionary* infoLaUserDefaults = [NSDictionary dictionaryWithObjectsAndKeys:
-											[NSNumber numberWithUnsignedLong:keyCode], constKeyKeyCode,
-											[NSNumber numberWithUnsignedLong:modifierFlags], constKeyModifierFlags,
-											nil] ;
 		NSString* keyPath = [NSString stringWithFormat:
 							 @"%@.%@",
 							 SSYShortcutActuatorKeyBindings,

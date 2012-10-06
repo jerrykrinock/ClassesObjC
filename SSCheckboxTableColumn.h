@@ -1,4 +1,3 @@
-
 @interface SSCheckboxTableColumn : NSTableColumn
 {
 }

@@ -1,4 +1,3 @@
-
 - (void)setArray:(NSArray*)array sender:(id)sender ;
 
 @end

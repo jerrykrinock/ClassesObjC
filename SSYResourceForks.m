@@ -6,7 +6,7 @@
 + (NSArray*)weblocFilenamesAndUrlsInPaths:(NSArray*)paths {
 	OSErr err ;
 	FSRef fsRef ;
-	short int fileRef ;
+	NSInteger fileRef ;
 	NSMutableArray* filenamesAndURLs = [NSMutableArray array] ;
 	
 	for (NSString* path in paths) {
@@ -36,6 +36,9 @@
 				HUnlock(aResHandle);
 				ReleaseResource(aResHandle );
 			}
+            
+            // Added in BookMacster 1.11.10
+            CloseResFile(fileRef) ;
 			
 			// theData is the 'TEXT' resource data
 			NSString*url = [[NSString alloc] initWithData:theData encoding:kCFStringEncodingMacRoman] ;
@@ -51,7 +54,7 @@
 			[url release] ;
 		}
 		else
-			NSLog(@"Reading resource fork failed with OSErr %i", err) ;
+			NSLog(@"Reading resource fork failed with OSErr %ld", (long)err) ;
 	}
 	
 	if ([filenamesAndURLs count])

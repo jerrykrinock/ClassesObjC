@@ -162,7 +162,7 @@ extern NSString* const constKeyOAuthTokenSecret ;
  @param    verifier  The code (oauth_verifier) copied by the user
  from the service's web page.
 */
-- (void)processOAuthVerifier:(NSString*)verifier ;
+- (BOOL)processOAuthVerifier:(NSString*)verifier ;
 
 /*!
  @brief    Notification handler which should be invoked when the 

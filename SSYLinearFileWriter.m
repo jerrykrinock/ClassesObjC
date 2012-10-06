@@ -28,7 +28,7 @@ static SSYLinearFileWriter* sharedFileWriter = nil ;
         }
     }
 	
-	// No autorelease.  This sticks around until closed.
+	// No autorelease.  This sticks around forever.
     return sharedFileWriter ;
 }
 
@@ -40,12 +40,6 @@ static SSYLinearFileWriter* sharedFileWriter = nil ;
 	
 	NSFileHandle* fileHandle = [NSFileHandle fileHandleForWritingAtPath:path] ;
 	[self setFileHandle:fileHandle] ;
-}
-
-- (void)dealloc {
-	[m_fileHandle release] ;
-	
-	[super dealloc] ;
 }
 
 - (void)writeLine:(NSString*)line {
@@ -73,11 +67,7 @@ static SSYLinearFileWriter* sharedFileWriter = nil ;
 }
 
 + (void)close {
-	// This will dealloc the sharedFileWriter, which will
-	// dealloc its file handle, which will close the
-	// file handle's file
-	[[SSYLinearFileWriter sharedFileWriter] release] ;
-	sharedFileWriter = nil ;
+	[[SSYLinearFileWriter sharedFileWriter] setFileHandle:nil] ;
 }
 
 @end

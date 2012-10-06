@@ -118,7 +118,7 @@ NSString* SSYArrayControllerRowsType = @"SSYArrayControllerRowsType" ;
 
 - (NSDragOperation)tableView:(NSTableView*)tv
 				validateDrop:(id <NSDraggingInfo>)info
-				 proposedRow:(int)targetRow
+				 proposedRow:(NSInteger)targetRow
 	   proposedDropOperation:(NSTableViewDropOperation)op {
     
     NSDragOperation dragOp = NSDragOperationNone ;
@@ -129,7 +129,7 @@ NSString* SSYArrayControllerRowsType = @"SSYArrayControllerRowsType" ;
 		BOOL willMove = NO ;
 		for (id object in objects) {
 			if ([object conformsToProtocol:@protocol(SSYIndexee)]) {
-				NSInteger currentIndex = [[(NSObject <SSYIndexee> *)object index] intValue] ;
+				NSInteger currentIndex = [[(NSObject <SSYIndexee> *)object index] integerValue] ;
 				NSInteger offset = (currentIndex < targetRow) ? -1 : 0 ;
 				
 				if (currentIndex != targetRow + offset) {
@@ -163,7 +163,7 @@ NSString* SSYArrayControllerRowsType = @"SSYArrayControllerRowsType" ;
 	
 	for (id object in objects) {
 		if ([object conformsToProtocol:@protocol(SSYIndexee)]) {
-			NSInteger currentIndex = [[(NSObject <SSYIndexee> *)object index] intValue] ;
+			NSInteger currentIndex = [[(NSObject <SSYIndexee> *)object index] integerValue] ;
 			NSInteger offset = (currentIndex < targetRow) ? -1 : 0 ;
 			
 			if (!parentObject) {
@@ -232,11 +232,12 @@ NSString* SSYArrayControllerRowsType = @"SSYArrayControllerRowsType" ;
 	// not insert the object
 	id newObject = [self newObject] ;	
 	if ([newObject conformsToProtocol:@protocol(SSYIndexee)]) {
-		[(NSObject <SSYIndexee> *)newObject setIndex:[NSNumber numberWithInt:targetIndex]] ;
+		[(NSObject <SSYIndexee> *)newObject setIndex:[NSNumber numberWithInteger:targetIndex]] ;
 	}
 	// And then insert it manually
-	[self insertObject:newObject
- atArrangedObjectIndex:targetIndex] ;
+	[self     insertObject:newObject
+     atArrangedObjectIndex:targetIndex] ;
+    [newObject release] ;
 	/* The data model will get a KVO of that insertion
 	 and increment higher-indexed siblings' indexes.  If 
 	 this array controller is bound as the detail in a
@@ -378,7 +379,7 @@ NSString* SSYArrayControllerRowsType = @"SSYArrayControllerRowsType" ;
 - (void)_setMultipleValue:(id)mv
 forKeyPath:(NSString*)keyPath
 atIndex:(NSUInteger)index {
-	NSLog(@"8403 %s mv: %p = %@ keyPath: %@ index: %d", __PRETTY_FUNCTION__, mv, [mv shortDescription], keyPath, index) ;
+	NSLog(@"8403 %s mv: %p = %@ keyPath: %@ index: %ld", __PRETTY_FUNCTION__, mv, [mv shortDescription], keyPath, (long)index) ;
 	[super _setMultipleValue:mv
 				  forKeyPath:keyPath
 					 atIndex:index] ;

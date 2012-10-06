@@ -7,42 +7,12 @@
 	[self exposeBinding:@"tokenizingCharacter"] ;
 }
 
-@synthesize noSelectionPlaceholder ;
-@synthesize noTokensPlaceholder ;
-@synthesize multipleValuesPlaceholder ;
-@synthesize notApplicablePlaceholder ;
+- (void)setObjectValue:(id)value {	
+	if ([value isKindOfClass:[NSSet class]]) {
+		// Convert to an NSArray, as required by super
+		value = [value allObjects] ;
+	}
 
-- (NSArray*)objectValue {
-	NSArray* value = [super objectValue] ;
-	return value ;
-}
-
-- (void)setObjectValue:(id)value {
-	if (value == NSNoSelectionMarker) {
-		[self setPlaceholderString:[self noSelectionPlaceholder]] ;
-		value = nil ;
-	}		
-	else if (value == NSMultipleValuesMarker) {
-		[self setPlaceholderString:[self multipleValuesPlaceholder]] ;
-		value = nil ;
-	}
-	else if (value == NSNotApplicableMarker) {
-		[self setPlaceholderString:[self notApplicablePlaceholder]] ;
-		value = nil ;
-	}
-	else if ([value isKindOfClass:[NSArray class]]) {
-		if ([value count] == 0) {
-			[self setPlaceholderString:[self noTokensPlaceholder]] ;
-			value = nil ;
-		}
-	}
-	else {
-		// When the user edits the cell, this method gets a 'value'
-		// parameter which is an object of class  NSConcreteTextStorage.
-		// I have no idea what that is doing, but if we just let it flow
-		// through here to super without touching it, things work.
-	}
-	
 	[super setObjectValue:value] ;
 }
 
@@ -116,14 +86,5 @@
 	
 }
 
-
-- (void)dealloc {
-	[noSelectionPlaceholder release] ;
-	[noTokensPlaceholder release] ;
-	[multipleValuesPlaceholder release] ;
-	[notApplicablePlaceholder release] ;
-	
-	[super dealloc] ;
-}
 
 @end

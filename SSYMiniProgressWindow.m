@@ -37,6 +37,7 @@
 		[progressIndicator setIndeterminate:YES] ;
 		[progressIndicator startAnimation:self] ;
 		[[self contentView] addSubview:progressIndicator] ;
+        [progressIndicator release] ;
 		
 		rect.origin.y = 10.0 ;
 		rect.size.height = 14.0 ;
@@ -50,6 +51,7 @@
 		[textField setStringValue:[verb ellipsize]] ;
 		[textField setAlignment:NSCenterTextAlignment] ;
 		[[self contentView] addSubview:textField] ;
+        [textField release] ;
 		
 		[self display] ;
 		[self orderFrontRegardless] ;

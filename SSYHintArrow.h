@@ -64,10 +64,10 @@ extern NSString* const SSYHintArrowDidCloseNotification ;
 */
 @interface SSYHintArrow : NSWindow {
     NSColor* m_borderColor ;
-    float m_borderWidth ;
-    float m_viewMargin ;
-    float m_arrowHeight ;
-    float m_cornerRadius ;
+    CGFloat m_borderWidth ;
+    CGFloat m_viewMargin ;
+    CGFloat m_arrowHeight ;
+    CGFloat m_cornerRadius ;
     NSSize m_size ;
 	
     @private
@@ -75,7 +75,7 @@ extern NSString* const SSYHintArrowDidCloseNotification ;
     __weak NSView* m_view ;
     __weak NSWindow* m_window ;
     NSPoint m_point ;
-    float m_distance ;
+    CGFloat m_distance ;
     NSRect m_viewFrame ;
     BOOL m_isResizingLockout ;
 }

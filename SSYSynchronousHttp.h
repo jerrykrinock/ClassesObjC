@@ -128,14 +128,14 @@ int main(int argc, const char *argv[]) {
 										  receiveData_p:&receiveData 
 												error_p:&error] ;
 	
-	NSLog(@"Received %d bytes", [receiveData length]) ;
+	NSLog(@"Received %ld bytes", (long)[receiveData length]) ;
 	if (ok) {
 		NSLog(@"Request succeeded") ;
 	}
 	else {
 		NSLog(@"Error: %@", [error longDescription]) ;
 		NSLog(@"%@", [error localizedDescription]) ;
-		NSLog(@"Error Code: %d", [error code]) ;
+		NSLog(@"Error Code: %ld", (long)[error code]) ;
 	}
 	
 	if ([receiveData length] > 0) {

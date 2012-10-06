@@ -46,10 +46,10 @@
 
 - (NSString*)longDescription {
 	NSMutableString* d = [NSMutableString stringWithFormat:
-						  @"%@: %p with %d invocations:",
+						  @"%@: %p with %ld invocations:",
 						  [self className],
 						  self,
-						  [[self actions] count]] ;
+						  (long)[[self actions] count]] ;
 	for (NSInvocation* action in [self actions]) {
 		[d appendFormat:
 		 @"\n   %@",
@@ -94,7 +94,7 @@
 {
 	if (actions != nil)
     {
-		unsigned	i = [actions count];
+		NSUInteger	i = [actions count];
 		
 		while (i-- > 0)
 		{
@@ -107,7 +107,7 @@
 {
 	if (actions != nil)
     {
-		unsigned	i = [actions count];
+		NSUInteger	i = [actions count];
 		
 		while (i-- > 0)
 		{
@@ -359,7 +359,7 @@
 	else if ([g actions] != nil)
     {
 		NSArray	*a = [g actions];
-		unsigned	i;
+		NSUInteger	i;
 		
 		for (i = 0; i < [a count]; i++)
 		{
@@ -464,10 +464,10 @@
  * groupings which can be nested, not the number of of groups on either
  * the undo or redo stack.
  */
-- (int) groupingLevel
+- (NSInteger) groupingLevel
 {
 	GnudoGroup	*g = (GnudoGroup*)m_group;
-	int			level = 0;
+	NSInteger			level = 0;
 	
 	while (g != nil)
     {
@@ -482,7 +482,7 @@
 {
 	GnudoGroup	*g = (GnudoGroup*)m_group;
 	NSMutableString* lineage = [NSMutableString string] ;
-	[lineage appendFormat:@"\nCurrently, %d Undo Groups Nested:\n", [self groupingLevel]] ;
+	[lineage appendFormat:@"\nCurrently, %ld Undo Groups Nested:\n", (long)[self groupingLevel]] ;
 	
 	while (g != nil)
     {
@@ -556,7 +556,7 @@
  * The default value is 0 meaning the number is only limited by
  * memory availability.
  */
-- (unsigned int) levelsOfUndo
+- (NSUInteger) levelsOfUndo
 {
 	return _levelsOfUndo;
 }
@@ -783,7 +783,7 @@
  */
 - (void) removeAllActionsWithTarget: (id)target
 {
-	unsigned 	i;
+	NSUInteger 	i;
 	
 	i = [_redoStack count];
 	while (i-- > 0)
@@ -854,7 +854,7 @@
  * When set to 0 the stack size is limited by the range of a unsigned int,
  * available memory.
  */
-- (void) setLevelsOfUndo: (unsigned)num
+- (void) setLevelsOfUndo: (NSUInteger)num
 {
 	_levelsOfUndo = num;
 	if (num > 0)

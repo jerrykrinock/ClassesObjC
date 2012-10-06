@@ -23,7 +23,7 @@ static NSInteger static_nextSerialNumber = 0 ;
 		[self setSerialNumber:++static_nextSerialNumber] ;
 		[self setIdentifier:identifier] ;
 	}
-	NSLog(@"Initted Foo %d %@ %p", [self serialNumber], [self identifier], self) ;
+	NSLog(@"Initted Foo %ld %@ %p", (long)[self serialNumber], [self identifier], self) ;
 
 	return self ;
 }
@@ -33,7 +33,7 @@ static NSInteger static_nextSerialNumber = 0 ;
 }
 
 - (void)dealloc {
-	NSLog(@"Dealloc: Foo %d %@ %p", [self serialNumber], [self identifier], self) ;
+	NSLog(@"Dealloc: Foo %ld %@ %p", (long)[self serialNumber], [self identifier], self) ;
 	[m_identifier release] ;
 	
 	[super dealloc] ;

@@ -16,7 +16,7 @@
 	sem_t* descriptor ;
 	BOOL gotSemaphore ;
 	NSTimeInterval initialBackoff ;
-	float backoffFactor ;
+	CGFloat backoffFactor ;
 	NSTimeInterval maxBackoff ;
 	NSTimeInterval timeout ;
 }
@@ -25,7 +25,7 @@
 @property sem_t* descriptor ;
 @property BOOL gotSemaphore ;
 @property NSTimeInterval initialBackoff ;
-@property float backoffFactor ;
+@property CGFloat backoffFactor ;
 @property NSTimeInterval maxBackoff ;
 @property NSTimeInterval timeout ;
 
@@ -56,7 +56,7 @@
  */
 - (void)setName:(NSString*)name_
  initialBackoff:(NSTimeInterval)initialBackoff_
-  backoffFactor:(float)backoffFactor_
+  backoffFactor:(CGFloat)backoffFactor_
 	 maxBackoff:(NSTimeInterval)maxBackoff_
 		timeout:(NSTimeInterval)timeout_ ;
 

@@ -36,12 +36,12 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 
 @synthesize scriptCommand = m_scriptCommand ;
 @synthesize scriptResult = m_scriptResult ;
-@synthesize skipOperationsExceptGroup = m_skipOperationsExceptGroup ;
+@synthesize skipOperationsExceptGroups = m_skipOperationsExceptGroups ;
 
 - (BOOL)shouldSkipOperationsInGroup:(NSString*)group {
-	NSString* skipOperationsExceptGroup = [self skipOperationsExceptGroup] ;
+	NSSet* skipOperationsExceptGroups = [self skipOperationsExceptGroups] ;
 
-	if (!skipOperationsExceptGroup) {
+	if (!skipOperationsExceptGroups) {
 		return NO ;
 	}
 	
@@ -49,7 +49,11 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 		return NO ;
 	}
 	
-	return ![group isEqualToString:skipOperationsExceptGroup] ;
+	if ([skipOperationsExceptGroups member:group] != nil) {
+		return NO ;
+	}
+	
+	return YES ;
 }
 
 - (NSError*)error {
@@ -130,7 +134,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	[m_scriptCommand release] ;
 	[m_scriptResult release] ;
 	[m_errorRetryInvocations release] ;
-	[m_skipOperationsExceptGroup release] ;
+	[m_skipOperationsExceptGroups release] ;
 	
 	[super dealloc] ;
 }
@@ -239,7 +243,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 								   withObject:owner
 								waitUntilDone:NO] ; // as in NO deadlocks :)
 			
-			[self setSkipOperationsExceptGroup:nil] ;
+			[self setSkipOperationsExceptGroups:nil] ;
 		}
 		else if ([[change objectForKey:NSKeyValueChangeOldKey] count] == 0) {
 			// Since the count of operations cannot be negative,
@@ -307,7 +311,6 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	if (!group) {
 		group = [NSString stringWithFormat:@"%f", [[NSDate date] timeIntervalSince1970]] ;
 	}
-
 	// Capture our invocation, for possible error recovery in case we fail
 	// and need to be repeated
 	// Two big changes were made in this section in BookMacster 1.9.5, on 2012 Jan 05.
@@ -366,26 +369,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 												  skipIfError:YES] ;
 		// Note that operation is double-retained.  We'll release it in the next loop.
 		[operations addObject:op] ;
-	}
-	
-	NSOperation* priorOp = nil ;
-	NSOperation* op ;
-	for (op in operations) {
-		if (priorOp) {
-			// This is a subsequent operation
-			// Make dependent on the prior operation
-			// and add to queue
-			[op addDependency:priorOp] ;
-			[self addOperation:op] ;
-		}
-		else {
-			// This is the first operation we are adding
-			// Make dependent on pre-existing operations
-			// and add to queue
-			[self addAtEndOperation:op] ;
-		}
-		priorOp = op ;
-		// Release the operation because it was alloc-initted
+		[self addAtEndOperation:op] ;
 		[op release] ;
 	}
 	
@@ -407,29 +391,29 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 					 forKey:constKeySSYOperationQueueDoneTarget] ;
 		[doneInfo setObject:NSStringFromSelector(doneSelector)
 					 forKey:constKeySSYOperationQueueDoneSelectorName] ;
+		// Added in BookMacster 1.11, for no purpose other than 
+		// filling out -[SSYOperation description] …
+		[doneInfo setObject:group
+					 forKey:constKeySSYOperationGroup] ;
 	}	
 	
 	// Add -[self doDone:] as the final invocation in this group
-	op = [[SSYOperation alloc] initWithInfo:doneInfo
-									 target:self
-								   selector:@selector(doDone:)
-									  owner:nil
-							 operationQueue:self
-								skipIfError:NO] ;
-	// The following test is to avoid crashing in case we are invoked with no selectorNames
-	if (priorOp) {
-		[op addDependency:priorOp] ;
-	}
-	
-	[self addOperation:op] ;
+	SSYOperation* op = [[SSYOperation alloc] initWithInfo:doneInfo
+                                                   target:self
+                                                 selector:@selector(doDone:)
+                                                    owner:nil
+                                           operationQueue:self
+                                              skipIfError:NO] ;
+	[self addAtEndOperation:op] ;
 	[op release] ;
 	
 #if 0
 #warning Logging as each group is added to SSYOperationQueue
-	NSLog(@"Added group %@ of %d operations.  Total operations count now %d",
+	NSLog(@"Added group %@ of %ld ops, doneSel=%@.  Queue count now %ld",
 		  group,
-		  [selectorNames count] + ((doneTarget && doneSelector) ? 1 : 0),
-		  [[self operations] count]) ;
+		  (long)([selectorNames count] + ((doneTarget && doneSelector) ? 1 : 0)),
+		  NSStringFromSelector(doneSelector),
+		  (long)[[self operations] count]) ;
 #endif
 	
 	if (block) {

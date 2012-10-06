@@ -58,7 +58,7 @@ static CIPAppleScriptHelper *_sharedHelper = nil;
 //		usleep(10000); //Delay 0.001 seconds to not overrun the display
 //	}
 	
-	int pid = [[NSProcessInfo processInfo] processIdentifier];
+	NSInteger pid = [[NSProcessInfo processInfo] processIdentifier];
 	
 	NSDictionary *theError = [NSDictionary dictionary];
 	NSURL *theURL = [[NSURL alloc] initFileURLWithPath:resourcePath];

@@ -145,14 +145,13 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 	for (sourceModelVersionName in modelVersionNames) {
 		NSString* modelPath = [modelBundle pathForResource:sourceModelVersionName
 													ofType:@"mom"] ;
-		sourceModel = [[NSManagedObjectModel alloc] initWithContentsOfURL:[NSURL fileURLWithPath:modelPath]] ;		
+		sourceModel = [[[NSManagedObjectModel alloc] initWithContentsOfURL:[NSURL fileURLWithPath:modelPath]] autorelease] ;
 		ok = [sourceModel isConfiguration:nil
 			  compatibleWithStoreMetadata:storeMetadata] ;
 		if (ok) {
 			NSLog(@"Found compatible sourceModel: '%@'", sourceModelVersionName) ;
 			break ;
 		}
-		[sourceModel release] ;
 		sourceModel = nil ;
 	}		
 	if (!sourceModel) {
@@ -210,7 +209,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 														ofType:@"mom"] ;
 #if SIMULATE_MODEL_VERSION_NOT_AVAILABLE
 #else
-			destinModel = [[NSManagedObjectModel alloc] initWithContentsOfURL:[NSURL fileURLWithPath:modelPath]] ;		
+			destinModel = [[[NSManagedObjectModel alloc] initWithContentsOfURL:[NSURL fileURLWithPath:modelPath]] autorelease] ;
 			mappingModel = [NSMappingModel mappingModelFromBundles:bundles
 													forSourceModel:sourceModel
 												  destinationModel:destinModel] ;
@@ -229,7 +228,6 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 					  destinModelVersionName) ;
 				break ;
 			}
-			[destinModel release] ;
 			destinModel = nil ;
 		}		
 		if (!mappingModel) {
@@ -242,8 +240,8 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 		
 		
 		// Create a NSMigrationManager with sourceModel, destinModel.
-		NSMigrationManager* migrationManager = [[NSMigrationManager alloc] initWithSourceModel:sourceModel
-																			  destinationModel:destinModel] ;
+		NSMigrationManager* migrationManager = [[[NSMigrationManager alloc] initWithSourceModel:sourceModel
+																			  destinationModel:destinModel] autorelease] ;
 		
 		ok = [fileManager removeIfExistsItemAtPath:destempPath
 										   error_p:&underlyingError] ;

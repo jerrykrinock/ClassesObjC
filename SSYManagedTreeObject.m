@@ -8,7 +8,6 @@
 #import "NSObject+DoNil.h"
 
 NSString* const constKeyChildren = @"children" ;
-NSString* const constKeyIndex = @"index" ;
 NSString* const constKeyParent = @"parent" ;
 /*
  See note on DropboxFalseStart below
@@ -140,19 +139,19 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
     [self didChangeValueForKey:constKeyIndex] ;
 }
 
-- (int)indexValue {
-	return [[self index] intValue] ;
+- (NSInteger)indexValue {
+	return [[self index] integerValue] ;
 }
 
 - (void)setIndexValue:(NSInteger)index {
-	[self setIndex:[NSNumber numberWithInt:index]] ;
+	[self setIndex:[NSNumber numberWithInteger:index]] ;
 }
 
 - (NSArray*)childrenOrdered {
     return [[self children] arraySortedByKeyPath:constKeyIndex] ;
 }
 
-- (SSYManagedTreeObject*)childAtIndex:(int)index {
+- (SSYManagedTreeObject*)childAtIndex:(NSInteger)index {
 	SSYManagedTreeObject* child = nil ;
 	for (SSYManagedTreeObject* aChild in [self children]) {
 		if ([aChild indexValue] == index) {
@@ -164,8 +163,10 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 	return child ;
 }
 
-- (int)numberOfChildren {
-	return [[self children] count] ;
+- (NSInteger)numberOfChildren {
+	NSInteger count = [[self children] count] ;
+
+	return count ;
 }
 
 // This is required to trigger -[Bkmslf objectWillChangeNote:]

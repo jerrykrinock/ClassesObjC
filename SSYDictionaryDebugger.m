@@ -44,7 +44,7 @@
 
 - (id)retain {
 	id x = [super retain] ;
-	NSLog(@"info %p retained to %d by %@", self, [self retainCount], SSYDebugCaller()) ;
+	NSLog(@"info %p retained to %ld by %@", self, (long)[self retainCount], SSYDebugCaller()) ;
 	return x ;
 }
 
@@ -57,7 +57,7 @@
 - (oneway void)release {
 	NSInteger rc = [self retainCount] ;
 	[super release] ;
-	NSLog(@"info %p released fr %d by %@", self, rc, SSYDebugCaller()) ;
+	NSLog(@"info %p released fr %ld by %@", self, (long)rc, SSYDebugCaller()) ;
 }
 
 #endif

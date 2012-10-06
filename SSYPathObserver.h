@@ -83,31 +83,45 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  @brief    File's Vnode was removed.  Note that this is "removed"
  in the unix sense.  Moving a file to the Trash does not
  count here.
+ @details  For debugging only, the value of this constant, compiled
+ with the Mac OS X 10.6 SDK, 32-bit i386, is: 1
  */
 #define SSYPathObserverChangeFlagsDelete     NOTE_DELETE
 /*!
  @brief    Contents of file's data fork changed
+ @details  For debugging only, the value of this constant, compiled
+ with the Mac OS X 10.6 SDK, 32-bit i386, is: 2
  */
 #define SSYPathObserverChangeFlagsData       NOTE_WRITE
 /*!
  @brief    Size of file was increased
+ @details  For debugging only, the value of this constant, compiled
+ with the Mac OS X 10.6 SDK, 32-bit i386, is: 4
  */
 #define SSYPathObserverChangeFlagsBigger     NOTE_EXTEND
 /*!
  @brief    File attributes were changed
+ @details  For debugging only, the value of this constant, compiled
+ with the Mac OS X 10.6 SDK, 32-bit i386, is: 8
  */
 #define SSYPathObserverChangeFlagsAttributes NOTE_ATTRIB
 /*!
  @brief    The Link Count of the file was changed
+ @details  For debugging only, the value of this constant, compiled
+ with the Mac OS X 10.6 SDK, 32-bit i386, is: 16
  */
 #define SSYPathObserverChangeFlagsLinkCount  NOTE_LINK
 /*!
  @brief    The file was renamed, which in Macintosh parlance
  includes *moving* a file, including *moving* to the Trash.
+ @details  For debugging only, the value of this constant, compiled
+ with the Mac OS X 10.6 SDK, 32-bit i386, is: 32
  */
 #define SSYPathObserverChangeFlagsRename     NOTE_RENAME
 /*!
  @brief    Access (permissions) to the file was revoked
+ @details  For debugging only, the value of this constant, compiled
+ with the Mac OS X 10.6 SDK, 32-bit i386, is: 64
  */
 #define SSYPathObserverChangeFlagsAccessGone NOTE_REVOKE
 
@@ -132,9 +146,16 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  
  This class uses the kqueue notification system.
  
- One more thing I found out the hard way: You cannot use a kqueue,
- and therefore cannot use this class, to observe a file which does
- not exist yet.  -addPath::::: will return error 812002.
+ IMPORTANT: You cannot use a kqueue, and therefore cannot use this class,
+ to observe a file which does not exist yet.  If you try, 
+ -addPath::::: will an error.
+ 
+ However, even though the kqueue documentation only discusses watching
+ regular files, I've found that this does work to watch directories.
+ If I pass in a path ending in a slash ("/") and flags 
+ SSYPathObserverChangeFlagsData, I get a notification whenever any
+ file in the directory is added, removed, or modified.  Probably
+ there is more to it than that but more testing should be done.
  
  * Interface
  
@@ -189,8 +210,11 @@ extern NSString* const SSYPathObserverUserInfoKey ;
 
 
 /*!
- @brief    Adds a given path to the receiver's watched paths
+ @brief    Adds a given path, which must currently exist in the filesystem,
+ to the receiver's watched paths
  
+ @details  If the given path does not currently exist in the filesystem, this
+ method will return NO and return error 812002 in error_p.
  @param    path  The path to be watched.  May be nil.
  @param    watchFlags  Bitwise AND of one or more SSYPathObserverChangeFlags
  constants you wish to receive notifications for.  If 0, will
@@ -359,7 +383,7 @@ NSString* const SSYPathObserverDemoIsDoneNotification = @"DaDemoDone" ;
 					  notifyThread:nil
 						  userInfo:@"First round"
 						   error_p:&error] ;
-		NSLog(@"Attempted to set watch for nonexisting path: %@\n(This should have made an error)\nok=%d, error:\n%@", path, ok, [error description]) ;
+		NSLog(@"Attempted to set watch for nonexisting path: %@\n(This should have made an error)\nok=%ld, error:\n%@", path, (long)ok, [error description]) ;
 	}
 	
 	NSLog(@"Creating files...") ;
@@ -380,7 +404,7 @@ NSString* const SSYPathObserverDemoIsDoneNotification = @"DaDemoDone" ;
 						  userInfo:@"Second round"
 						   error_p:&error] ;
 		error = nil ;
-		NSLog(@"   Setting kqueue for existing path: %@\nok=%d, error:\n%@", path, ok, error) ;
+		NSLog(@"   Setting kqueue for existing path: %@\nok=%ld, error:\n%@", path, (long)ok, error) ;
 	}
 	
 	NSLog(@"Modifying files") ;

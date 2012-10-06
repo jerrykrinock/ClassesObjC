@@ -35,7 +35,7 @@
 			cpuString = @"Intel" ;
 			break;
 		default:
-			cpuString = [NSString stringWithFormat:@"Unknown architecture: %d", arch] ;
+			cpuString = [NSString stringWithFormat:@"Unknown architecture: %ld", (long)arch] ;
 			break;
 	}
 	return [NSString stringWithFormat:@"Architecture: %@",
@@ -48,4 +48,21 @@
 			[self architectureString]] ;
 }
 
+#define ITERATIONS_ACHIEVED_BY_2009_MAC_MINI_CORE_2_DUO 9500
+
++ (CGFloat)systemSpeed {
+	NSInteger i = 0 ;
+	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
+	NSTimeInterval endSeconds = [NSDate timeIntervalSinceReferenceDate] + .0049 ;
+	NSMutableString* s = [NSMutableString string] ;
+	while ([NSDate timeIntervalSinceReferenceDate] < endSeconds) {
+		[s appendFormat:@"%ld", (long)i++] ;
+	}
+	[s writeToURL:[NSURL fileURLWithPath:@"/dev/null"]
+	   atomically:NO
+		 encoding:NSUTF8StringEncoding
+			error:NULL] ;
+	[pool release] ;
+	return (CGFloat)i/ITERATIONS_ACHIEVED_BY_2009_MAC_MINI_CORE_2_DUO ;
+}
 @end

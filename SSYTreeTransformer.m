@@ -56,7 +56,7 @@
 	return [x autorelease] ;
 }
 
-- (id)deepTransformedCopyOf:(id)nodeIn {
+- (id)copyDeepTransformOf:(id)nodeIn {
 	id nodeOut ;
 	id contextObject = [self contextObject] ;
 	
@@ -70,7 +70,7 @@
 	if ((childrenIn = [nodeIn performSelector:_childrenInExtractor])) {
 		for (id childIn in childrenIn) {
 			// Get next child out with recursion
-			id nextChildOut = [self deepTransformedCopyOf:childIn] ;
+			id nextChildOut = [self copyDeepTransformOf:childIn] ;
 			// nextChildOut may be nil, in particular for Safari, because of iCloud, deleted
 			// starks are not deleted before the actual export.  To delete them, we
 			// temporarily set the stark's 'isDeletedThisIxport' flag bit, in

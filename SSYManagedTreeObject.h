@@ -3,7 +3,6 @@
 #import "SSYIndexee.h"
 
 extern NSString* const constKeyChildren ;
-extern NSString* const constKeyIndex ;
 extern NSString* const constKeyParent ;
 
 /*!
@@ -19,8 +18,8 @@ extern NSString* const constKeyParent ;
 
 @property (retain) NSSet* children ;
 
-- (int)numberOfChildren ;
-- (SSYManagedTreeObject*)childAtIndex:(int)index ;
+- (NSInteger)numberOfChildren ;
+- (SSYManagedTreeObject*)childAtIndex:(NSInteger)index ;
 - (NSArray*)childrenOrdered ;
 
 @property (retain) SSYManagedTreeObject* parent ;
@@ -37,7 +36,7 @@ extern NSString* const constKeyParent ;
  */
 - (void)setIndexValue:(NSInteger)index ;
 
-- (int)indexValue ;
+- (NSInteger)indexValue ;
 
 
 @end

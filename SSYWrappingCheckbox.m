@@ -74,7 +74,7 @@ CGFloat static const constTextMarginY = 5.0 ;
 	CGFloat textMaxWidth = maxWidth - constCheckboxWidth - constCheckboxToTextMargin - constTextMarginX  ;
 	NSFont* font = [SSYAlert smallTextFont] ;
 	NSSize textSize = [title sizeForWidth:textMaxWidth
-								   height:FLT_MAX
+								   height:CGFLOAT_MAX
 									 font:font] ;
 	NSSize textFieldSize ;
 	textFieldSize.width = textSize.width + constTextMarginX ;
@@ -194,7 +194,7 @@ CGFloat static const constTextMarginY = 5.0 ;
     
 	[coder encodeObject:m_textField forKey:constKeyTextField] ;
     [coder encodeObject:m_checkbox forKey:constKeyCheckbox] ;
-	[coder encodeFloat:m_maxWidth forKey:constKeyMaxWidth] ;
+	[coder encodeDouble:m_maxWidth forKey:constKeyMaxWidth] ;
 }
 
 - (id)initWithCoder:(NSCoder *)coder {
@@ -202,7 +202,7 @@ CGFloat static const constTextMarginY = 5.0 ;
 	
 	m_textField = [[coder decodeObjectForKey:constKeyTextField] retain] ;
 	m_checkbox = [[coder decodeObjectForKey:constKeyCheckbox] retain] ;
-    m_maxWidth = [coder decodeFloatForKey:constKeyMaxWidth] ;
+    m_maxWidth = [coder decodeDoubleForKey:constKeyMaxWidth] ;
 				  
 	// Should be unnecessary since -sizeToFit is always invoked when
 	// setting title or maximum width?

@@ -5,7 +5,7 @@ static SSYSystemSemaphore* sharedSemaphore = nil ;
 @implementation SSYSystemSemaphore
 
 + (void)setError_p:(NSError**)error_p
-		 withErrno:(int)semErrno {
+		 withErrno:(NSInteger)semErrno {
 	if (!error_p) {
 		return ;
 	}
@@ -23,8 +23,8 @@ static SSYSystemSemaphore* sharedSemaphore = nil ;
 			break;
 		case EINVAL:
 			errDesc = [NSString stringWithFormat:
-					   @"The shm_open() operation is not supported; or O_CREAT is specified and value exceeds SEM_VALUE_MAX = %d.",
-					   SEM_VALUE_MAX] ;
+					   @"The shm_open() operation is not supported; or O_CREAT is specified and value exceeds SEM_VALUE_MAX = %ld.",
+					   (long)SEM_VALUE_MAX] ;
 			break;
 		case EMFILE:
 			errDesc = @"The process has already reached its limit for semaphores or file descriptors in use." ;
@@ -77,7 +77,7 @@ static SSYSystemSemaphore* sharedSemaphore = nil ;
 		// Unexpected error
 	}
 	else {
-		int failed = sem_trywait(descriptor_) ;
+		NSInteger failed = sem_trywait(descriptor_) ;
 		if (failed == 0) {
 			// Got semaphore
 			[self setDescriptor:descriptor_] ;
@@ -104,7 +104,7 @@ static SSYSystemSemaphore* sharedSemaphore = nil ;
 
 - (void)setName:(NSString*)name_
  initialBackoff:(NSTimeInterval)initialBackoff_
-  backoffFactor:(float)backoffFactor_
+  backoffFactor:(CGFloat)backoffFactor_
 	 maxBackoff:(NSTimeInterval)maxBackoff_
 		timeout:(NSTimeInterval)timeout_ {
 	[self setName:name_] ;
@@ -189,7 +189,7 @@ static SSYSystemSemaphore* sharedSemaphore = nil ;
 		return NO ;
 	}
 	
-	int failed = NO ;
+	NSInteger failed = NO ;
 	
 	failed = sem_post([self descriptor]);
 	if (failed) {

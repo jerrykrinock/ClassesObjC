@@ -20,7 +20,7 @@ unichar ISO8601DefaultTimeSeparatorCharacter = DEFAULT_TIME_SEPARATOR;
 #define ISO_TIME_WITH_TIMEZONE_FORMAT  ISO_TIME_FORMAT @"Z"
 //printf formats.
 #define ISO_TIMEZONE_UTC_FORMAT @"Z"
-#define ISO_TIMEZONE_OFFSET_FORMAT @"%+02d%02d"
+#define ISO_TIMEZONE_OFFSET_FORMAT @"%+02ld%02ld"
 
 @interface ISO8601DateFormatter(UnparsingPrivate)
 
@@ -55,11 +55,11 @@ unichar ISO8601DefaultTimeSeparatorCharacter = DEFAULT_TIME_SEPARATOR;
 
 @synthesize parsesStrictly;
 
-static unsigned read_segment(const unsigned char *str, const unsigned char **next, unsigned *out_num_digits);
-static unsigned read_segment_4digits(const unsigned char *str, const unsigned char **next, unsigned *out_num_digits);
-static unsigned read_segment_2digits(const unsigned char *str, const unsigned char **next);
+static NSUInteger read_segment(const unsigned char *str, const unsigned char **next, NSUInteger *out_num_digits);
+static NSUInteger read_segment_4digits(const unsigned char *str, const unsigned char **next, NSUInteger *out_num_digits);
+static NSUInteger read_segment_2digits(const unsigned char *str, const unsigned char **next);
 static double read_double(const unsigned char *str, const unsigned char **next);
-static BOOL is_leap_year(unsigned year);
+static BOOL is_leap_year(NSUInteger year);
 
 /*Valid ISO 8601 date formats:
  *
@@ -123,7 +123,7 @@ static BOOL is_leap_year(unsigned year);
 	NSDateComponents *components = [[[NSDateComponents alloc] init] autorelease];
 	NSDateComponents *nowComponents = [calendar components:(NSYearCalendarUnit | NSMonthCalendarUnit | NSDayCalendarUnit) fromDate:now];
 
-	unsigned
+	NSUInteger
 		//Date
 		year,
 		month_or_week,
@@ -134,8 +134,8 @@ static BOOL is_leap_year(unsigned year);
 		minute = 0.0,
 		second = 0.0;
 	//Time zone
-	signed tz_hour = 0;
-	signed tz_minute = 0;
+	NSInteger tz_hour = 0;
+	NSInteger tz_minute = 0;
 
 	enum {
 		monthAndDate,
@@ -161,8 +161,8 @@ static BOOL is_leap_year(unsigned year);
 		isValidDate = NO;
 	} else {
 		//Skip leading whitespace.
-		unsigned i = 0U;
-		for(unsigned len = strlen((const char *)ch); i < len; ++i) {
+		NSUInteger i = 0U;
+		for(NSUInteger len = strlen((const char *)ch); i < len; ++i) {
 			if (!isspace(ch[i]))
 				break;
 		}
@@ -171,8 +171,8 @@ static BOOL is_leap_year(unsigned year);
 		ch += i;
 		start_of_date = ch;
 
-		unsigned segment;
-		unsigned num_leading_hyphens = 0U, num_digits = 0U;
+		NSUInteger segment;
+		NSUInteger num_leading_hyphens = 0U, num_digits = 0U;
 
 		if (*ch == 'T') {
 			//There is no date here, only a time. Set the date to now; then we'll parse the time.
@@ -182,8 +182,6 @@ static BOOL is_leap_year(unsigned year);
 			month_or_week = nowComponents.month;
 			day = nowComponents.day;
 		} else {
-			segment = 0U;
-
 			while(*ch == '-') {
 				++num_leading_hyphens;
 				++ch;
@@ -330,7 +328,7 @@ static BOOL is_leap_year(unsigned year);
 								} else {
 									//Get month and/or date.
 									segment = read_segment_4digits(ch, &ch, &num_digits);
-									NSLog(@"(%@) parsing month; segment is %u and ch is %s", string, segment, ch);
+									NSLog(@"(%@) parsing month; segment is %lu and ch is %s", string, (long)segment, ch);
 									switch(num_digits) {
 										case 4: //YY-MMDD
 											day = segment % 100U;
@@ -387,9 +385,9 @@ static BOOL is_leap_year(unsigned year);
 							break;
 
 						case 1:; //-YY; -YY-MM (implicit century)
-							NSLog(@"(%@) found %u digits and one hyphen, so this is either -YY or -YY-MM; segment (year) is %u", string, num_digits, segment);
-							unsigned current_year = nowComponents.year;
-							unsigned century = (current_year % 100U);
+							NSLog(@"(%@) found %lu digits and one hyphen, so this is either -YY or -YY-MM; segment (year) is %lu", string, (long)num_digits, (long)segment);
+							NSUInteger current_year = nowComponents.year;
+							NSUInteger century = (current_year % 100U);
 							year = segment + (current_year - century);
 							if (num_digits == 1U) //implied decade
 								year += century - (current_year % 10U);
@@ -397,7 +395,7 @@ static BOOL is_leap_year(unsigned year);
 							if (*ch == '-') {
 								++ch;
 								month_or_week = read_segment_2digits(ch, &ch);
-								NSLog(@"(%@) month is %u", string, month_or_week);
+								NSLog(@"(%@) month is %lu", string, (long)month_or_week);
 							}
 
 							day = 1U;
@@ -498,7 +496,7 @@ static BOOL is_leap_year(unsigned year);
 								segment *= 10U;
 								segment += *(ch++) - '0';
 							}
-							tz_hour = (signed)segment;
+							tz_hour = (NSInteger)segment;
 							if (negative) tz_hour = -tz_hour;
 
 							//Optional separator.
@@ -536,12 +534,12 @@ static BOOL is_leap_year(unsigned year);
 				case week:;
 					//Adapted from <http://personal.ecu.edu/mccartyr/ISOwdALG.txt>.
 					//This works by converting the week date into an ordinal date, then letting the next case handle it.
-					unsigned prevYear = year - 1U;
-					unsigned YY = prevYear % 100U;
-					unsigned C = prevYear - YY;
-					unsigned G = YY + YY / 4U;
-					unsigned isLeapYear = (((C / 100U) % 4U) * 5U);
-					unsigned Jan1Weekday = (isLeapYear + G) % 7U;
+					NSUInteger prevYear = year - 1U;
+					NSUInteger YY = prevYear % 100U;
+					NSUInteger C = prevYear - YY;
+					NSUInteger G = YY + YY / 4U;
+					NSUInteger isLeapYear = (((C / 100U) % 4U) * 5U);
+					NSUInteger Jan1Weekday = (isLeapYear + G) % 7U;
 					enum { monday, tuesday, wednesday, thursday/*, friday, saturday, sunday*/ };
 					components.day = ((8U - Jan1Weekday) + (7U * (Jan1Weekday > thursday))) + (day - 1U) + (7U * (month_or_week - 2));
 
@@ -625,7 +623,7 @@ static BOOL is_leap_year(unsigned year);
 		case ISO8601DateFormatOrdinal:
 			return [self stringFromDate:date formatString:ISO_ORDINAL_DATE_FORMAT timeZone:timeZone];
 		default:
-			[NSException raise:NSInternalInconsistencyException format:@"self.format was %d, not calendar (%d), week (%d), or ordinal (%d)", self.format, ISO8601DateFormatCalendar, ISO8601DateFormatWeek, ISO8601DateFormatOrdinal];
+			[NSException raise:NSInternalInconsistencyException format:@"self.format was %ld, not calendar (%ld), week (%ld), or ordinal (%ld)", (long)(self.format), (long)ISO8601DateFormatCalendar, (long)ISO8601DateFormatWeek, (long)ISO8601DateFormatOrdinal];
 			return nil;
 	}
 }
@@ -647,12 +645,12 @@ static BOOL is_leap_year(unsigned year);
 	[formatter release];
 
 	if (includeTime) {
-		int offset = [timeZone secondsFromGMT];
+		NSInteger offset = [timeZone secondsFromGMT];
 		offset /= 60;  //bring down to minutes
 		if (offset == 0)
 			str = [str stringByAppendingString:ISO_TIMEZONE_UTC_FORMAT];
 		else
-			str = [str stringByAppendingFormat:ISO_TIMEZONE_OFFSET_FORMAT, offset / 60, offset % 60];
+			str = [str stringByAppendingFormat:ISO_TIMEZONE_OFFSET_FORMAT, (long)(offset / 60), (long)(offset % 60)];
 	}
 	return str;
 }
@@ -690,34 +688,34 @@ static BOOL is_leap_year(unsigned year);
 		october, november, december
 	};
 
-	int year = components.year;
-	int week = 0;
+	NSInteger year = components.year;
+	NSInteger week = 0;
 	//The old unparser added 6 to [calendarDate dayOfWeek], which was zero-based; components.weekday is one-based, so we now add only 5.
-	int dayOfWeek = (components.weekday + 5) % 7;
-	int dayOfYear = ordinalComponents.day;
+	NSInteger dayOfWeek = (components.weekday + 5) % 7;
+	NSInteger dayOfYear = ordinalComponents.day;
 
-	int prevYear = year - 1;
+	NSInteger prevYear = year - 1;
 
 	BOOL yearIsLeapYear = is_leap_year(year);
 	BOOL prevYearIsLeapYear = is_leap_year(prevYear);
 
-	int YY = prevYear % 100;
-	int C = prevYear - YY;
-	int G = YY + YY / 4;
-	int Jan1Weekday = (((((C / 100) % 4) * 5) + G) % 7);
+	NSInteger YY = prevYear % 100;
+	NSInteger C = prevYear - YY;
+	NSInteger G = YY + YY / 4;
+	NSInteger Jan1Weekday = (((((C / 100) % 4) * 5) + G) % 7);
 
-	int weekday = ((dayOfYear + Jan1Weekday) - 1) % 7;
+	NSInteger weekday = ((dayOfYear + Jan1Weekday) - 1) % 7;
 
 	if((dayOfYear <= (7 - Jan1Weekday)) && (Jan1Weekday > thursday)) {
 		week = 52 + ((Jan1Weekday == friday) || ((Jan1Weekday == saturday) && prevYearIsLeapYear));
 		--year;
 	} else {
-		int lengthOfYear = 365 + yearIsLeapYear;
+		NSInteger lengthOfYear = 365 + yearIsLeapYear;
 		if((lengthOfYear - dayOfYear) < (thursday - weekday)) {
 			++year;
 			week = 1;
 		} else {
-			int J = dayOfYear + (sunday - weekday) + Jan1Weekday;
+			NSInteger J = dayOfYear + (sunday - weekday) + Jan1Weekday;
 			week = J / 7 - (Jan1Weekday > thursday);
 		}
 	}
@@ -735,14 +733,19 @@ static BOOL is_leap_year(unsigned year);
 	} else
 		timeString = @"";
 
-	return [NSString stringWithFormat:@"%u-W%02u-%02u%@", (unsigned)year, (unsigned)week, ((unsigned)dayOfWeek) + 1U, timeString];
+	return [NSString stringWithFormat:
+            @"%lu-W%02lu-%02lu%@",
+            (unsigned long)year,
+            (unsigned long)week,
+            ((unsigned long)dayOfWeek) + 1U,
+            timeString];
 }
 
 @end
 
-static unsigned read_segment(const unsigned char *str, const unsigned char **next, unsigned *out_num_digits) {
-	unsigned num_digits = 0U;
-	unsigned value = 0U;
+static NSUInteger read_segment(const unsigned char *str, const unsigned char **next, NSUInteger *out_num_digits) {
+	NSUInteger num_digits = 0U;
+	NSUInteger value = 0U;
 
 	while(isdigit(*str)) {
 		value *= 10U;
@@ -756,9 +759,9 @@ static unsigned read_segment(const unsigned char *str, const unsigned char **nex
 
 	return value;
 }
-static unsigned read_segment_4digits(const unsigned char *str, const unsigned char **next, unsigned *out_num_digits) {
-	unsigned num_digits = 0U;
-	unsigned value = 0U;
+static NSUInteger read_segment_4digits(const unsigned char *str, const unsigned char **next, NSUInteger *out_num_digits) {
+	NSUInteger num_digits = 0U;
+	NSUInteger value = 0U;
 
 	if (isdigit(*str)) {
 		value += *(str++) - '0';
@@ -788,8 +791,8 @@ static unsigned read_segment_4digits(const unsigned char *str, const unsigned ch
 
 	return value;
 }
-static unsigned read_segment_2digits(const unsigned char *str, const unsigned char **next) {
-	unsigned value = 0U;
+static NSUInteger read_segment_2digits(const unsigned char *str, const unsigned char **next) {
+	NSUInteger value = 0U;
 
 	if (isdigit(*str))
 		value += *str - '0';
@@ -809,7 +812,7 @@ static double read_double(const unsigned char *str, const unsigned char **next) 
 	double value = 0.0;
 
 	if (str) {
-		unsigned int_value = 0;
+		NSUInteger int_value = 0;
 
 		while(isdigit(*str)) {
 			int_value *= 10U;
@@ -835,7 +838,7 @@ static double read_double(const unsigned char *str, const unsigned char **next) 
 	return value;
 }
 
-static BOOL is_leap_year(unsigned year) {
+static BOOL is_leap_year(NSUInteger year) {
 	return \
 	    ((year %   4U) == 0U)
 	&& (((year % 100U) != 0U)

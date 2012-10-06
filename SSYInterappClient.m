@@ -97,8 +97,8 @@ end:
 				break ;
 			default:
 				errorDetail = [NSString stringWithFormat:
-							   @"Unknown Error Code: %d",
-							   result] ; 
+							   @"Unknown Error Code: %ld",
+							   (long)result] ;
 				break ;
 		}
 		

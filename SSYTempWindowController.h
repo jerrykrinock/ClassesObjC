@@ -8,17 +8,6 @@
  @details  An instance of this object is allocated when required, observes
  NSWindowWillCloseNotification, and releases itself when it receives notification
  that its window is closing.
- 
- In the xib file,
- *  File's Owner should be set to your subclass of this class
- *  File's Owner 'window' outlet should be wired to a window
- *  The window should have checked
- **  ON  Release When Closed
- **  OFF Visible At Launch
- * MEMORY should be set to
- **  ON  Deferred
- **  ON  One Shot
- **  Buffered
 */
 @interface SSYTempWindowController : NSWindowController {
 }
@@ -29,7 +18,16 @@
  @details  Subclasses must implement.  Simply return an NSString constant.&nbsp;
  Default implementation logs an internal error and returns nil.&nbsp;
  
- The window in this nib should be set to Release When Closed.
+ In this nib,
+ *  File's Owner should be set to your subclass of this class
+ *  File's Owner 'window' outlet should be wired to a window
+ *  Said window should have checked
+ **  ON  Release When Closed
+ **  OFF Visible At Launch
+ **  In the MEMORY section,
+ ***  ON  Deferred
+ ***  ON  One Shot
+ ***  Buffered
 */
 + (NSString*)nibName ;
 

@@ -81,10 +81,10 @@ int main (int argc, const char * argv[]) {
 									object:[NSNumber numberWithDouble:duration]
 									thread:nil  // SSYThreadPauser will create a thread
 								   timeout:timeout] ;
-	NSLog(@"Job duration=%0.0f  timeout=%0.0f  succeeded=%d",
+	NSLog(@"Job duration=%0.0f  timeout=%0.0f  succeeded=%ld",
 		  duration,
 		  timeout,
-		  ok) ;
+		  (long)ok) ;
 	
 	
 	NSLog(@"Starting Test #2") ;
@@ -95,10 +95,10 @@ int main (int argc, const char * argv[]) {
 									object:[NSNumber numberWithDouble:duration]
 									thread:nil  // SSYThreadPauser will create a thread
 								   timeout:timeout] ;
-	NSLog(@"Job duration=%0.0f  timeout=%0.0f  succeeded=%d",
+	NSLog(@"Job duration=%0.0f  timeout=%0.0f  succeeded=%ld",
 		  duration,
 		  timeout,
-		  ok) ;
+		  (long)ok) ;
 	
 	// Wait to allow the other threads to complete before we exit,
 	// so we don't miss any crashes, errors or warnings.

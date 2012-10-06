@@ -1,6 +1,6 @@
 #import "SSYSuperFileManager.h"
-#import "SSYAuthorizedTaskMaster+SetPermissions.h"
-#import "SSYAuthorizedTaskMaster+StatPaths.h"
+#import "CPHTaskMaster+SetPermissions.h"
+#import "CPHTaskMaster+StatPaths.h"
 #import <sys/stat.h>
 #import "NSError+SSYAdds.h"
 
@@ -26,7 +26,7 @@ static SSYSuperFileManager* defaultManager = nil ;
 	
 	NSNumber* oldPermissions = nil ;
 	NSNumber* newPermissions = [NSNumber numberWithUnsignedShort:permissions] ;
-	BOOL ok = [[SSYAuthorizedTaskMaster sharedTaskmaster] getPermissionNumber_p:&oldPermissions
+	BOOL ok = [[CPHTaskmaster sharedTaskmaster] getPermissionNumber_p:&oldPermissions
 															setPermissionNumber:newPermissions
 																		   path:path
 																		error_p:error_p] ;
@@ -143,7 +143,7 @@ static SSYSuperFileManager* defaultManager = nil ;
 
 - (BOOL)setBulkPermissions:(NSDictionary*)permissions
 				   error_p:(NSError**)error_p {
-	return [[SSYAuthorizedTaskMaster sharedTaskmaster] getPermissions_p:NULL
+	return [[CPHTaskmaster sharedTaskmaster] getPermissions_p:NULL
 														 setPermissions:permissions
 																error_p:error_p] ;
 }
@@ -155,7 +155,7 @@ static SSYSuperFileManager* defaultManager = nil ;
 	
 	NSNumber* oldPermissions = nil ;
 	NSNumber* newPermissions = [NSNumber numberWithUnsignedShort:permissions] ;
-	BOOL ok = [[SSYAuthorizedTaskMaster sharedTaskmaster] getPermissionNumber_p:&oldPermissions
+	BOOL ok = [[CPHTaskmaster sharedTaskmaster] getPermissionNumber_p:&oldPermissions
 															setPermissionNumber:newPermissions
 																		   path:path
 																		error_p:error_p] ;
@@ -247,20 +247,20 @@ static SSYSuperFileManager* defaultManager = nil ;
 	}
 #endif
 BOOL canX = NO ;
-	long unsigned posixPermissions = [[attributes objectForKey:NSFilePosixPermissions] intValue] ;
+	uint32_t posixPermissions = (uint32_t)[[attributes objectForKey:NSFilePosixPermissions] unsignedIntegerValue] ;
 	// See if anyone can execute it
 	if ((posixPermissions & S_IXOTH) != 0) {
 		canX = YES ;
 	}
 	else {
 		// See if given userID can execute it as owner
-		long unsigned ownerID = [[attributes objectForKey:NSFileOwnerAccountID] intValue] ;
+		uint32_t ownerID = (uint32_t)[[attributes objectForKey:NSFileOwnerAccountID] unsignedIntegerValue] ;
 		if ( (ownerID==userID) && ((posixPermissions & S_IXUSR) != 0) ) {
 			canX = YES ;
 		}
 		else {
 			// See if given groupID can execute it as group
-			long unsigned owningGroupID = [[attributes objectForKey:NSFileGroupOwnerAccountID] intValue] ;
+			uint32_t owningGroupID = [[attributes objectForKey:NSFileGroupOwnerAccountID] unsignedIntegerValue] ;
 			if ( (owningGroupID==groupID) && ((posixPermissions & S_IXGRP) != 0) ) {
 				canX = YES ;
 			}
@@ -278,13 +278,13 @@ BOOL canX = NO ;
 	
 	struct stat aStat ;
 	BOOL ok = NO ;
-	int result = stat([path fileSystemRepresentation], &aStat) ;
+	NSInteger result = stat([path fileSystemRepresentation], &aStat) ;
 	if (result == 0) {
 		ok = YES ;
 	}
 	else if (errno == EACCES) {
 		// Permission denied.  Haul out the big gun.
-		ok = [[SSYAuthorizedTaskMaster sharedTaskmaster] statPath:path
+		ok = [[CPHTaskmaster sharedTaskmaster] statPath:path
 															 stat:&aStat
 														  error_p:error_p] ;
 		if (!ok && error_p) {
@@ -293,9 +293,11 @@ BOOL canX = NO ;
 	}
 	else if (error_p) {
 		NSString* msg = [NSString stringWithFormat:
-						 @"stat got errno %d",
-						 errno] ;
-		*error_p = SSYMakeError(513560, msg) ;
+						 @"stat got errno %ld",
+						 (long)errno] ;
+		// The following error was 513560 until BookMacster 1.11 when I discovered
+		// that it duplicated the same number in SSYSuperFileManager.
+		*error_p = SSYMakeError(513504, msg) ;
 	}
 	
 	if (ok) {

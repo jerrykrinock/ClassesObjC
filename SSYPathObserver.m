@@ -25,13 +25,13 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 @interface SSYPathWatch : NSObject {
 	NSString* m_path ;
 	id m_userInfo ;
-	int m_fileDescriptor ;
+	NSInteger m_fileDescriptor ;
 	NSThread* m_notifyThread ;
 }
 
 @property (retain) NSString* path ;
 @property (retain) id userInfo ;
-@property (assign) int fileDescriptor ;
+@property (assign) NSInteger fileDescriptor ;
 @property (assign) NSThread* notifyThread ;
 
 @end
@@ -46,10 +46,10 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 
 - (NSString*)description {
 	return [NSString stringWithFormat:
-			@"<%@ %p> fd=%d, path=%@, userInfo=%@",
+			@"<%@ %p> fd=%ld, path=%@, userInfo=%@",
 			[self className],
 			self,
-			[self fileDescriptor],
+			(long)[self fileDescriptor],
 			[self path],
 			[[self userInfo] shortDescription]] ;
 }
@@ -80,7 +80,7 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 @end
 
 #if KQUEUES_WATCHER_THREAD_NEEDS_KILL_TO_EXIT
-void handleUSR1(int signum) {
+void handleUSR1(NSInteger signum) {
 	// Do not exit() here, or the whole app will exit.
 }
 #endif
@@ -120,7 +120,7 @@ void handleUSR1(int signum) {
 	 oh, well if you don't try to write perfect code, you'll have
 	 lots of bugs. */
 	
-	int fileDescriptor ;
+	NSInteger fileDescriptor ;
 	@synchronized(self) {
 		NSAutoreleasePool* pool1 = [[NSAutoreleasePool alloc] init] ;
 		
@@ -210,7 +210,7 @@ void handleUSR1(int signum) {
 		[self setIsWatching:YES] ;
 		[self setPathWatches:[NSMutableSet set]] ;
 
-		int kqueueFileDescriptor = kqueue() ;
+		NSInteger kqueueFileDescriptor = kqueue() ;
 		if (kqueueFileDescriptor == -1) {
 			NSLog(@"Internal Error 153-9092.  Failed creating kqueue") ;
 			// See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
@@ -335,7 +335,7 @@ void handleUSR1(int signum) {
 			// Close any file descriptors which might still be open
 			for (SSYPathWatch* pathWatch in [self pathWatches]) {
 				// Unregister kqueue of the target pathWatch
-				int fileDescriptor = [pathWatch fileDescriptor] ;
+				NSInteger fileDescriptor = [pathWatch fileDescriptor] ;
 				NSInteger result = close(fileDescriptor) ;
 				if (result != 0) {
 				}
@@ -352,7 +352,7 @@ void handleUSR1(int signum) {
 			}
 #endif
 			
-			int kqfd = [self kqueueFileDescriptor] ;
+			NSInteger kqfd = [self kqueueFileDescriptor] ;
 			
 			// The following causes the watcher thread to exit in Mac OS 10.6,
 			// but not in Mac OS 10.5.
@@ -384,7 +384,7 @@ void handleUSR1(int signum) {
 	BOOL ok = YES ;
 	
 	// Get file descriptor for given path
-	int fileDescriptor = open([path UTF8String], O_RDONLY) ;	
+	NSInteger fileDescriptor = open([path UTF8String], O_RDONLY) ;	
 	if (fileDescriptor == -1) {
 		if (error_p) {
 			NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:

@@ -9,6 +9,7 @@
 #import "AMCollectionView.h"
 #import "AMCollectionViewItem.h"
 #import "AMCollectionViewItemProtocol.h"
+#include <tgmath.h>
 
 
 @interface AMCollectionViewItem (Private)
@@ -115,12 +116,12 @@
 	}
 }
 
-- (float)rowHeight
+- (CGFloat)rowHeight
 {
 	return rowHeight;
 }
 
-- (void)setRowHeight:(float)value
+- (void)setRowHeight:(CGFloat)value
 {
 	if (rowHeight != value) {
 		rowHeight = value;
@@ -173,7 +174,7 @@
 - (NSIndexSet *)selectionIndexes
 {
 	NSMutableIndexSet *result = [[[NSMutableIndexSet alloc] init] autorelease];
-	int index = 0;
+	NSInteger index = 0;
 	NSEnumerator *enumerator = [content objectEnumerator];
 	id object;
 	AMCollectionViewItem *item;
@@ -191,7 +192,7 @@
 {
 	// change selection for items
 	AMCollectionViewItem *item = nil;
-	int index = 0;
+	NSInteger index = 0;
 	NSEnumerator *enumerator = [content objectEnumerator];
 	id object;
 	while (object = [enumerator nextObject]) {
@@ -369,9 +370,9 @@
 		[[bgColors objectAtIndex:0] set];
 		NSRectFill(rect);
 		
-		int colorCount = [bgColors count];
-		int colorIndex;
-		int index = 0;
+		NSInteger colorCount = [bgColors count];
+		NSInteger colorIndex;
+		NSInteger index = 0;
 		id object;
 		AMCollectionViewItem *item;
 		NSRect itemFrame;
@@ -421,7 +422,7 @@
 
 - (void)setFrameSize:(NSSize)newSize
 {
-	BOOL didChangeWidth = (fabsf([self frame].size.width - newSize.width) > 0.1);
+	BOOL didChangeWidth = (fabs([self frame].size.width - newSize.width) > 0.1);
 	[super setFrameSize:newSize];
 	if (am_itemRespondsToSizeForViewWithProposedSize && didChangeWidth) {
 		[self setNeedsLayout:YES];
@@ -455,7 +456,7 @@
 	AMCollectionViewItem *item;
 	id object;
 	id previousObject = nil;
-	int row, selectedRow = NSNotFound;;
+	NSInteger row, selectedRow = NSNotFound;;
 	for (row = 0; row < [objects count]; row++) {
 		object = [objects objectAtIndex:row];
 		item = [self itemForObject:object];
@@ -479,7 +480,7 @@
 	AMCollectionViewItem *item;
 	id object;
 	id previousObject = nil;
-	int row, selectedRow = NSNotFound;;
+	NSInteger row, selectedRow = NSNotFound;;
 	for (row = [objects count]-1; row >= 0 ; row--) {
 		object = [objects objectAtIndex:row];
 		item = [self itemForObject:object];
@@ -658,7 +659,7 @@
 	//	[self removeAllSubviews];
 	NSEnumerator *enumerator = [[self content] objectEnumerator];
 	id object;
-	float y = 0.0;
+	CGFloat y = 0.0;
 	AMCollectionViewItem *item;
 	NSView *view;
 	NSSize viewSize;
@@ -685,7 +686,7 @@
 //	[self removeAllSubviews];
 	NSEnumerator *enumerator = [[self content] objectEnumerator];
 	id object;
-	float y = 0.0;
+	CGFloat y = 0.0;
 	AMCollectionViewItem *item;
 	NSView *view;
 	NSSize viewSize;
@@ -757,7 +758,7 @@
 		}
 	} else {
 		// fixed row height
-		int index = (point.y / [self rowHeight]);
+		NSInteger index = (point.y / [self rowHeight]);
 		if (index < [[self content] count]) {
 			result = [self itemForObject:[[self content] objectAtIndex:index]];
 		} else {

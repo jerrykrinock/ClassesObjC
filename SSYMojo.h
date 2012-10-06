@@ -120,7 +120,7 @@
  receiver's managed object context
  @result   The newly-inserted object
  */
-- (NSManagedObject*)newObject ;
+- (NSManagedObject*)freshObject ;
 
 /*!
  @brief    Returns the object from the receiver's managed object context

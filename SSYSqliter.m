@@ -66,8 +66,8 @@ NSString* const SSYSqliterSqliteErrorCode = @"SqliteErrorCode" ;
 		query = [[NSMutableString alloc] initWithFormat:@"(%@=%@",
 				 column,
 				 [[values objectAtIndex:0] stringEsquotedSQLValue]] ;
-		int i ;
-		int N = [values count] ;
+		NSInteger i ;
+		NSInteger N = [values count] ;
 		for (i=1; i<N; i++) {
 			[query appendFormat:@" OR %@=%@",
 			 column,
@@ -137,7 +137,10 @@ NSString* const SSYSqliterSqliteErrorCode = @"SqliteErrorCode" ;
 		[kvPair release] ;
 	}	
 	
-	return [kvPairs componentsJoinedByString:@","] ;
+    NSString* answer = [kvPairs componentsJoinedByString:@","] ;
+    [kvPairs release] ;
+    
+    return answer ;
 }
 
 @end
@@ -177,8 +180,8 @@ NSString* SSAppDatabaseKeysAndBlobsFromArray(NSArray* a) {
 
 // struct used in the demo methods
 typedef struct {
-	int     a;
-	float   b;
+	NSInteger     a;
+	CGFloat   b;
 	char    c[50];
 } sampleRecord;
 
@@ -211,10 +214,10 @@ static int AddValueStringToArray(void* sneakback, int nColumns, char **colValues
 	return result;
 }
 
-static int AddKeyStringToArray(void* sneakback, int nColumns, char **colValues, char **colKeys) {
+static NSInteger AddKeyStringToArray(void* sneakback, NSInteger nColumns, char **colValues, char **colKeys) {
 	// sneakback must be the address of an initialized NSMutableArray*.
 	
-	int i;
+	NSInteger i;
 	for(i=0; i<nColumns; i++){
 		NSString* attributeKey = [NSString stringWithCString:colKeys[i]
 													encoding:NSUTF8StringEncoding] ;
@@ -226,18 +229,18 @@ static int AddKeyStringToArray(void* sneakback, int nColumns, char **colValues, 
 	return 0;
 }
 
-static int AddValueIntegerToArray(void* sneakback, int nColumns, char **colValues, char **colKeys) {
+static NSInteger AddValueIntegerToArray(void* sneakback, NSInteger nColumns, char **colValues, char **colKeys) {
 	// sneakback must be the address of an initialized NSMutableArray*.
 	
-	int result = 0 ;
+	NSInteger result = 0 ;
 	
 	if (nColumns != 1) {
 		result = nColumns ;
 	}
 	
 	if (result == 0) {
-		NSNumber* value = [NSNumber numberWithInt:[[NSString stringWithCString:colValues[0]
-																	  encoding:NSUTF8StringEncoding] intValue]] ;
+		NSNumber* value = [NSNumber numberWithInteger:[[NSString stringWithCString:colValues[0]
+																	  encoding:NSUTF8StringEncoding] integerValue]] ;
 		
 		NSMutableArray* array = *((NSMutableArray**)sneakback) ;
 		[array addObject:value] ;
@@ -246,17 +249,17 @@ static int AddValueIntegerToArray(void* sneakback, int nColumns, char **colValue
 	return result;
 }
 
-static int CountColumns(void* sneakback, int nColumns, char **colValues, char **colKeys) {
+static NSInteger CountColumns(void* sneakback, NSInteger nColumns, char **colValues, char **colKeys) {
 	// sneakback must be the address of an int.
 	
-	*((int*)(sneakback)) = nColumns ;
+	*((NSInteger*)(sneakback)) = nColumns ;
 	
 	return 0 ;
 }
 
 // The following callback is not used
-static int SSAppSQLiteCallback(void* NotUsed, int nColumns, char **colValues, char **colKeys) {
-	int i;
+static NSInteger SSAppSQLiteCallback(void* NotUsed, NSInteger nColumns, char **colValues, char **colKeys) {
+	NSInteger i;
 	for(i=0; i<nColumns; i++){
 		NSString* attributeKey = [NSString stringWithCString:colKeys[i]
 													encoding:NSUTF8StringEncoding] ;
@@ -390,7 +393,7 @@ static int SSAppSQLiteCallback(void* NotUsed, int nColumns, char **colValues, ch
 
 - (BOOL)initDatabaseError_p:(NSError**)error_p {
 	BOOL ok = YES ;
-	int result = sqlite3_open([[self path] UTF8String], (sqlite3**)&m_db) ;
+	NSInteger result = sqlite3_open([[self path] UTF8String], (sqlite3**)&m_db) ;
 	
 	if (result != SQLITE_OK) {
 		if (error_p) {
@@ -421,13 +424,13 @@ static int SSAppSQLiteCallback(void* NotUsed, int nColumns, char **colValues, ch
 	return m_db ; 
 }
 
-- (void)createTable:(NSString*)table
+- (BOOL)createTable:(NSString*)table
    withKeysAndTypes:(NSArray*)keysAndTypes
 			  error:(NSError**)error_p {
 	NSString* cts = SSAppDatabaseKeysAndTypesFromArray(keysAndTypes) ;
 	char* errMsg = 0 ;
 	void* db = [self db] ;
-	int result ;
+	NSInteger result ;
 
 	NSString* statement = [[NSString alloc] initWithFormat:
 		@"create table %@ (%@)",
@@ -446,18 +449,20 @@ static int SSAppSQLiteCallback(void* NotUsed, int nColumns, char **colValues, ch
 	}
 	[statement release] ;
 	
-	if (error_p != nil) {
+	if (error && error_p) {
 		*error_p = error ;
 	}
+    
+    return (error == nil) ;
 }
 
-- (void)removeTable:(NSString*)table
+- (BOOL)removeTable:(NSString*)table
 			  error:(NSError**)error_p {
 	const char* tableC = [table UTF8String] ;
 	char statement[255] ;
 	char* errMsg = 0 ;
 	void* db = [self db] ;
-	int result ;
+	NSInteger result ;
 	
 	// drop the table
 	sprintf(statement, "drop table if exists %s", tableC) ;
@@ -489,18 +494,20 @@ static int SSAppSQLiteCallback(void* NotUsed, int nColumns, char **colValues, ch
 		sqlite3_free(errMsg) ;
 	}
 end:
-	if (error_p != nil) {
+	if (error && error_p) {
 		*error_p = error ;
 	}
+    
+    return (error == nil) ;
 }
 
-- (void)createTableOfBlobsNamed:(NSString*)table
+- (BOOL)createTableOfBlobsNamed:(NSString*)table
 					   withKeys:(NSArray*)keys
 						  error:(NSError**)error_p {
 	NSString* cts = SSAppDatabaseKeysAndBlobsFromArray(keys) ;
 	char* errMsg = 0 ;
 	void* db = [self db] ;
-	int result ;
+	NSInteger result ;
 	
 	NSString* statement = [[NSString alloc] initWithFormat:
 		@"create table %@ (%@)",
@@ -523,12 +530,14 @@ end:
 	if (error_p != nil) {
 		*error_p = error ;
 	}
+    
+    return (error == nil) ;
 }
 
 - (NSArray*)allTablesError:(NSError**)error_p {
 	void* db = [self db] ;
 	char* errMsg = NULL ;
-	int result ;
+	NSInteger result ;
 	
 	NSError* error = nil ;
 	NSString* statement ;
@@ -559,7 +568,7 @@ end:
     // Will return nil if fails, empty array if no columns
 	void* db = [self db] ;
 	char* errMsg = NULL ;
-	int result ;
+	NSInteger result ;
 	
 	NSString* statement ;
 	statement = [[NSString alloc] initWithFormat:@"pragma table_info(%@)", table] ;
@@ -600,7 +609,7 @@ end:
 		goto end ;
 	}
 	else {
-		int j ;
+		NSInteger j ;
 		NSMutableArray* keys = [NSMutableArray array] ;
 		NSInteger nameColumnIndex = NSNotFound ;
 		for (j=0; j<nColumns; j++) {
@@ -625,7 +634,7 @@ end:
 			goto end ;
 		}
 		
-		int i ;
+		NSInteger i ;
 		columnDics = [[NSMutableDictionary alloc] init] ;
 		for (i=0; i<nRows; i++) {
 			NSMutableDictionary* columnDic = [[NSMutableDictionary alloc] init] ;
@@ -674,13 +683,13 @@ end:
 	return [output autorelease] ;
 }
 
-- (int)numberOfColumnsInTable:(NSString*)table
+- (NSInteger)numberOfColumnsInTable:(NSString*)table
 						error:(NSError**)error_p {
 	return [[self structureOfTable:table
 							 error:error_p] count]  ;
 }
 
-- (int)numberOfRowsInTable:(NSString*)table
+- (NSInteger)numberOfRowsInTable:(NSString*)table
 						error:(NSError**)error_p {
 	NSString* query = [NSString stringWithFormat:@"SELECT count(*) FROM %@",
 					   [table stringEsquotedSQLValue]] ;					   
@@ -692,9 +701,9 @@ end:
 		*error_p = error ;
 	}
 
-	int answer = NSNotFound ;
+	NSInteger answer = NSNotFound ;
 	if ([result count] > 0) {
-		answer = [[result objectAtIndex:0] intValue] ;
+		answer = [[result objectAtIndex:0] integerValue] ;
 	}
 	
 	return answer ;
@@ -727,7 +736,8 @@ end:
 							error:(NSError**)error_p {
 	void* db = [self db] ;
 	char* errMsg = NULL ;
-	int result ;
+	NSInteger result ;
+	NSArray* output = nil ;
 
 	NSError* error = nil ;
 	NSString* primaryKey = [self primaryKeyOfTable:table
@@ -754,7 +764,7 @@ end:
 	}
 	[statement release] ;
 
-	NSArray* output = [primaryKeys copy] ;
+	output = [primaryKeys copy] ;
 	[primaryKeys release] ;
 
 end:
@@ -771,7 +781,7 @@ end:
 	    // because sqlite3_wal_checkpoint(NULL, NULL) will crash
 	}
 	
-	int result ;
+	NSInteger result ;
 	result = sqlite3_wal_checkpoint(
 									m_db,  /* Database handle */
 									NULL   /* Name of attached database (or NULL for main/only database) */
@@ -811,8 +821,8 @@ end:
 	}
 	
 	long long next = initialValue ;
-	if (lastNumber != nil) {
-		next = [lastNumber intValue] + 1 ;
+	if ([lastNumber respondsToSelector:@selector(integerValue)]) {
+		next = [lastNumber integerValue] + 1 ;
 	}
 	
 	return next ;
@@ -823,59 +833,60 @@ end:
 	// If >1 column, will return dictionary of object values
 	id row = nil ;
 	
-	int nColumns = sqlite3_column_count(preparedStatement) ;
+	NSInteger nColumns = sqlite3_column_count(preparedStatement) ;
 	
 	if (nColumns > 1) {
 		row = [[NSMutableDictionary alloc] init] ;
 	}
 		
-	int iColumn  ;
+	NSInteger iColumn  ;
 	for (iColumn= 0; iColumn<nColumns; iColumn++) {
-		int type = sqlite3_column_type(preparedStatement, iColumn) ;
+		NSInteger type = sqlite3_column_type(preparedStatement, iColumn) ;
 		// The sqlite3_column_type() routine returns datatype code for the initial data type of the result column.
 		// The returned value is one of SQLITE_INTEGER, SQLITE_FLOAT, SQLITE_TEXT, SQLITE_BLOB, or SQLITE_NULL
 		
 		// Initialize to null in case object is not found
 		const void* pFirstByte = NULL ;
-		int nBytes = 0 ;
+		NSInteger nBytes = 0 ;
 		id object = nil ;
-		long long int intValue ;
+		int64_t intValue ;
 		const unsigned char* utf8String ;
 		double doubleValue ;
 		switch(type) {
 			case SQLITE_BLOB:
-				nBytes = sqlite3_column_bytes(preparedStatement, iColumn) ;	
+				nBytes = sqlite3_column_bytes(preparedStatement, iColumn) ;
 				// "The return value from sqlite3_column_blob() for a zero-length
 				// blob is an arbitrary pointer, possibly even a NULL pointer."
 				// Therefore, we qualify...
 				if (nBytes > 0) {
 					pFirstByte = sqlite3_column_blob(preparedStatement, iColumn) ;
-					object = [[NSData alloc] initWithBytes:pFirstByte length:nBytes] ;
+					object = [NSData dataWithBytes:pFirstByte
+                                            length:nBytes] ;
 				}
 				break ;
-				case SQLITE_INTEGER:
+            case SQLITE_INTEGER:
 				// The INTEGER type in sqlite3 is 64 bits, so it is always
 				// OK to use sqlite3_column_int64().  If we knew that the
 				// value was < 32 bits, we could use sqlite3_column_int(),
-				// we don't.  As a matter of fact, the addDate and 
+				// we don't.  As a matter of fact, the addDate and
 				// lastModifiedDate in Firefox 3 are microseconds since
 				// year 1970, and this does indeed exceed 32 bits.
 				intValue = sqlite3_column_int64(preparedStatement, iColumn) ;
-				object = [NSNumber numberWithLongLong:intValue] ;				
+				object = [NSNumber numberWithLongLong:intValue] ;
 				break ;
-				case SQLITE_TEXT:
+            case SQLITE_TEXT:
 				// "Strings returned by sqlite3_column_text() and sqlite3_column_text16(),
 				// even zero-length strings, are always zero terminated."
 				// So, we ignore the length and just convert it
 				utf8String = sqlite3_column_text(preparedStatement, iColumn) ;
-				object = [NSString stringWithUTF8String:(char*)utf8String] ;				
+				object = [NSString stringWithUTF8String:(char*)utf8String] ;
 				break ;
-				case SQLITE_FLOAT:
+            case SQLITE_FLOAT:
 				doubleValue = sqlite3_column_double(preparedStatement, iColumn) ;
-				object = [NSNumber numberWithDouble:doubleValue] ;				
+				object = [NSNumber numberWithDouble:doubleValue] ;
 				break ;
-				case SQLITE_NULL:
-				default:
+            case SQLITE_NULL:
+            default:
 				// Just leave object nil, will replace with [NSNull null] soon.
 				;
 		}
@@ -887,9 +898,11 @@ end:
 		NSString* key = [NSString stringWithCString:sqlite3_column_name(preparedStatement, iColumn)
 										   encoding:NSUTF8StringEncoding] ;
 		if (row != nil) {
-			[row setObject:object forKey:key] ;
+			[row setObject:object
+                    forKey:key] ;
 		}
 		else {
+            [row release] ;  // Really it's nil, but this is to satisfy Clang
 			row = [object retain] ;
 		}
 	}
@@ -1010,7 +1023,7 @@ end:
 											 type:type] ;
 	char* errMsg = 0 ;
 	void* db = [self db] ;
-	int result ;
+	NSInteger result ;
 	result = sqlite3_exec(db, [query UTF8String], NULL, NULL, &errMsg);
 	if (result != SQLITE_OK) {  
 		error = [self makeErrorWithAppCode:453028
@@ -1075,7 +1088,7 @@ end:
 	
 	char* errMsg = 0 ;
 	void* db = [self db] ;
-	int result ;
+	NSInteger result ;
 	result = sqlite3_exec(db, [query UTF8String], NULL, NULL, &errMsg);
 	if (result != SQLITE_OK) {  
 		error = [self makeErrorWithAppCode:641507
@@ -1130,9 +1143,7 @@ end:
 								   error:error_p] ;
 	if (rows != nil) {
 		dic = [[NSMutableDictionary alloc] init] ;
-		NSEnumerator* e = [rows objectEnumerator] ;
-		NSDictionary* row ;
-		while ((row = [e nextObject])) {
+		for (NSDictionary* row in rows) {
 			id key = [row objectForKey:keyColumn] ;
 			[dic setObject:[NSMutableDictionary dictionaryWithDictionary:row]
 					forKey:key] ;
@@ -1140,6 +1151,36 @@ end:
 	}
 	
 	return [dic autorelease] ;
+}
+
+- (NSInteger)countChangedRows {
+	void* db = [self db] ;
+	NSInteger count = sqlite3_changes(db) ;
+	return count ;
+}
+
+- (NSDictionary*)dicForAttribute:(NSString*)attribute
+							 key:(NSString*)key
+						   table:(NSString*)table
+						   error:(NSError**)error_p {
+	NSDictionary* answer = nil ;
+	NSMutableDictionary* dic = nil ;
+	NSArray* rows = [self allRowsInTable:table
+								   error:error_p] ;
+	if (rows != nil) {
+		dic = [[NSMutableDictionary alloc] init] ;
+		for (NSDictionary* row in rows) {
+			id aKey = [row objectForKey:key] ;
+			id value = [row objectForKey:attribute] ;
+			[dic setObject:value
+					forKey:aKey] ;
+		}
+		
+		answer = [NSDictionary dictionaryWithDictionary:dic] ;
+		[dic release] ;
+	}
+
+	return answer ;
 }
 
 - (NSArray*)selectColumn:(NSString*)targetColumn
@@ -1192,19 +1233,19 @@ end:
 
 // If I added the itemExists switch to the addNewItem... method below, I could invoke that method from
 // this one, with an attributeDictionary of one object, and eliminate most of this method
-- (void)setObject:(id)object
+- (BOOL)setObject:(id)object
 		   forKey:(NSString*)attributeKey
-		  forItem:(int)identifier
+		  forItem:(NSInteger)identifier
 		  inTable:(NSString*)table
 			error:(NSError**)error_p {
 	void* db = [self db] ;
 	char* errMsg = NULL ;
-	int result ;
+	NSInteger result ;
 	
 	// Find if the target item exists or not.  We will need this BOOL later
 	// because if it does not exist we do INSERT but if it does we do UPDATE.
 	NSString* statement ;
-	statement = [[NSString alloc] initWithFormat:@"SELECT * FROM %@ WHERE identifier=%i", table, identifier] ;
+	statement = [[NSString alloc] initWithFormat:@"SELECT * FROM %@ WHERE identifier=%li", table, (long)identifier] ;
 	BOOL itemExists = NO ;
 	NSError* error = nil ;
 	result = sqlite3_exec(db, [statement UTF8String], CheckExistenceOfSQLiteRow, &itemExists, &errMsg) ;
@@ -1248,13 +1289,13 @@ end:
 		if (itemExists) {
 			// Note that in the WHERE clause, the column name is not enclosed in single quotes, but the value after the equals sign is
 			// Otherwise, it "just doesn't work"
-			statement = [[NSString alloc] initWithFormat:@"UPDATE %@ SET %@=? WHERE identifier = %i", table, attributeKey, identifier] ;
+			statement = [[NSString alloc] initWithFormat:@"UPDATE %@ SET %@=? WHERE identifier = %li", table, attributeKey, (long)identifier] ;
 		}
 		else {
-			statement = [[NSString alloc] initWithFormat:@"INSERT INTO %@ ('identifier','%@') VALUES (%i,?)",
+			statement = [[NSString alloc] initWithFormat:@"INSERT INTO %@ ('identifier','%@') VALUES (%li,?)",
 						 table,
 						 attributeKey,
-						 identifier] ;
+						 (long)identifier] ;
 		}
 		
 		// compile (prepare?) the statement
@@ -1321,23 +1362,25 @@ end:
 	}
 
 end:
-	if (error_p != nil) {
+	if (error && error_p) {
 		*error_p = error ;
 	}
+    
+    return (error == nil) ;
 }
 
 - (id)objectForKey:(NSString*)attributeKey
-		   forItem:(int)identifier
+		   forItem:(NSInteger)identifier
 		   inTable:(NSString*)table
 			 error:(NSError**)error_p {
 	void* db = [self db] ;
 	//char* errMsg = NULL ;
-	int result ;
+	NSInteger result ;
 	
 	// There next line had a bug which took me 4 hours to find.  If you put single quotes around the
 	// placeholder for attributeKey, i.e. SELECT '%@', then the blob you get from sqlite3_column_blob
 	// and sqlite3_column_bytes will be the ASCII characters of attributeKey, instead of the blob value.
-	NSString* statement = [[NSString alloc] initWithFormat:@"SELECT %@ FROM '%@' WHERE identifier = '%i'", attributeKey, table, identifier] ;
+	NSString* statement = [[NSString alloc] initWithFormat:@"SELECT %@ FROM '%@' WHERE identifier = '%li'", attributeKey, table, (long)identifier] ;
 	
 	// Compile the statement into a virtual machine
 	sqlite3_stmt* preparedStatement ;
@@ -1373,7 +1416,7 @@ end:
 			
 			// Initialize to null in case blob is not found
 			const void* pFirstByte = NULL ;
-			int nBytes = 0;
+			NSInteger nBytes = 0;
 			
 			pFirstByte = sqlite3_column_blob(preparedStatement, 0);
 			nBytes = sqlite3_column_bytes(preparedStatement, 0);	
@@ -1388,8 +1431,7 @@ end:
 																   format:&format
 														 errorDescription:&plistError];
 				
-				if(!plist)
-				{
+				if (!plist) {
 					error = SSYMakeError(453026, @"Could not make plist from data") ;
 					error = [error errorByAddingUserInfoObject:statement
 														forKey:@"query"] ;
@@ -1398,6 +1440,8 @@ end:
 					[plistError release] ;
 				}		
 			}
+            
+            [data release] ;
 		}
 	}
 	
@@ -1426,7 +1470,8 @@ end:
 	// THIS METHOD ONLY READS PROPERLY IF ALL DATA ARE BLOBS
 	void* db = [self db] ;
 	//char* errMsg = NULL ;
-	int result ;
+	NSInteger result ;
+	NSMutableArray* rows = [[NSMutableArray alloc] init] ;
 	
 	// There next line had a bug which took me 4 hours to find.  If you put single quotes around the
 	// placeholder for attributeKey, i.e. SELECT '%@', then the blob you get from sqlite3_column_blob
@@ -1438,14 +1483,13 @@ end:
 	NSError* error = nil ;
 	result = sqlite3_prepare(db, [statement UTF8String], -1, &preparedStatement, NULL) ;
 
-	int numberOfColumns = [self numberOfColumnsInTable:table
+	NSInteger numberOfColumns = [self numberOfColumnsInTable:table
 												 error:&error] ;
 	if (error != nil) {
 		goto end ;
 	}
 	
-	NSMutableArray* rows = [[NSMutableArray alloc] init] ;
-	if (result != SQLITE_OK) {  
+	if (result != SQLITE_OK) {
 		error = [self makeErrorWithAppCode:453018
 								sqliteCode:result
 						 sqliteDescription:sqlite3_errmsg(db)
@@ -1468,10 +1512,10 @@ end:
 			
 			// Initialize to null in case blob is not found
 			const void* pFirstByte = NULL ;
-			int nBytes = 0;
+			NSInteger nBytes = 0;
 
 			NSMutableArray* rowColumns = [[NSMutableArray alloc] init] ;
-			int iColumn ;
+			NSInteger iColumn ;
 			for (iColumn=0; iColumn<numberOfColumns; iColumn++) {
 				pFirstByte = sqlite3_column_blob(preparedStatement, iColumn) ;
 				nBytes = sqlite3_column_bytes(preparedStatement, iColumn);	
@@ -1494,7 +1538,9 @@ end:
 				}
 				else {
 					[rowColumns addObject:@"NoData"] ;
-				}		
+				}
+                
+                [data release] ;
 			}
 			
 			[rows addObject:rowColumns] ;
@@ -1521,17 +1567,17 @@ end:
 	return [rows autorelease] ;
 }
 
-- (void)addNewItemWithIdentifier:(int)identifier
+- (BOOL)addNewItemWithIdentifier:(NSInteger)identifier
 					  attributes:(NSDictionary*)attributeDictionary
 						 inTable:(NSString*)table
 						   error:(NSError**)error_p {
 	void* db = [self db] ;
 	char* errMsg = NULL ;
-	int result ;
+	NSInteger result ;
 	
 	NSArray* keysArray = [attributeDictionary allKeys] ;
 	NSArray* valuesArray = [attributeDictionary allValues] ;
-	int nAttributes = [keysArray count] ;
+	NSInteger nAttributes = [keysArray count] ;
 	
 	// Because we need to insert blobs, which requires bind_blob, we cannot use the
 	// simple "exec" and instead use a transaction (begin, prepare, bind, step, finalize, exec)
@@ -1553,8 +1599,8 @@ end:
 	if (result == SQLITE_OK) {
 		// write the SQL statement to INSERT
 		NSMutableString* keysList = [[NSMutableString alloc] initWithString:@"'identifier'"] ;
-		NSMutableString* valuesList = [[NSMutableString alloc] initWithFormat:@"%i", identifier] ;
-		int i ;
+		NSMutableString* valuesList = [[NSMutableString alloc] initWithFormat:@"%li", (long)identifier] ;
+		NSInteger i ;
 		for (i=0; i<nAttributes; i++) {
 			NSString* keyClause = [[NSString alloc] initWithFormat:@",'%@'", [keysArray objectAtIndex:i]] ;
 			[keysList appendString:keyClause] ;
@@ -1587,7 +1633,7 @@ end:
 	{
 		if (result == SQLITE_OK) {
 			// Now, another loop to bind each parameter value to its question mark
-			int i ;
+			NSInteger i ;
 			for (i=0; i<nAttributes; i++) {
 				NSString *errorStr = nil ;
 				NSData* data = [NSPropertyListSerialization dataFromPropertyList:[valuesArray objectAtIndex:i]
@@ -1655,22 +1701,24 @@ end:
 	}
 	
 end:
-	if (error_p != nil) {
+	if (error && error_p) {
 		*error_p = error ;
-	}	
+	}
+    
+    return (error == nil) ;
 }
 
-- (void)removeItem:(int)identifier
+- (BOOL)removeItem:(NSInteger)identifier
 		   inTable:(NSString*)table
 			 error:(NSError**)error_p {
 	char* errMsg = 0 ;
 	void* db = [self db] ;
-	int result ;
+	NSInteger result ;
 	
 	NSString* statement = [[NSString alloc] initWithFormat:
-		@"DELETE FROM %@ WHERE identifier='%i'",
+		@"DELETE FROM %@ WHERE identifier='%li'",
 		table,
-		identifier] ;
+		(long)identifier] ;
 	
 	result = sqlite3_exec(db, [statement UTF8String], NULL, NULL, &errMsg);
 	NSError* error = nil ;
@@ -1685,9 +1733,11 @@ end:
 	
 	[statement release] ;
 
-	if (error_p != nil) {
+	if (error && error_p) {
 		*error_p = error ;
 	}
+    
+    return (error == nil) ;
 }
 
 - (void)demonstrateInsertPreparedTable:(NSString*)table {
@@ -1696,8 +1746,8 @@ end:
 	char statement[255] ;
 	sqlite3_stmt* insert;
 	sampleRecord sample;
-	int samples = 60000;
-	int i;
+	NSInteger samples = 60000;
+	NSInteger i;
 	time_t bgn, end;
 	double t;
 	
@@ -1722,7 +1772,7 @@ end:
 		// generate the next sample values
 		sample.a = i;
 		sample.b = i * 1.1;
-		sprintf(sample.c, "sample %d %f", sample.a, sample.b );
+		sprintf(sample.c, "sample %ld %f", (long)(sample.a), sample.b );
 		
 		// bind parameter values
 		sqlite3_bind_int(insert, 1, sample.a);
@@ -1746,7 +1796,7 @@ end:
 	
 	// report timing
 	t = difftime(end, bgn);
-	NSLog(@"Executed %d inserts prepared in %.0f seconds, %.0f inserts/sec", samples, t, samples / t);
+	NSLog(@"Executed %ld inserts prepared in %.0f seconds, %.0f inserts/sec", (long)samples, t, samples / t);
 }	
 
 - (void)demonstrateInsertCompiledTable:(NSString*)table {
@@ -1755,8 +1805,8 @@ end:
 	char statement[255] ;
 	char insert[200];
 	sampleRecord sample;
-	int samples = 20000;
-	int i;
+	NSInteger samples = 20000;
+	NSInteger i;
 	time_t bgn, end;
 	double t;
 	
@@ -1777,7 +1827,7 @@ end:
 		// generate the next sample values
 		sample.a = i;
 		sample.b = i * 1.1;
-		sprintf(sample.c, "sample %d %f", sample.a, sample.b );
+		sprintf(sample.c, "sample %ld %f", (long)(sample.a), sample.b );
 		
 		// build next insert statement
 		sprintf(statement, "insert into %s values (%%d, %%#f, '%%s')", tableC) ;  // %% is to escape the percents; they are for the next statement.
@@ -1793,11 +1843,12 @@ end:
 	
 	// report timing
 	t = difftime(end, bgn);
-	NSLog(@"Executed %d inserts compiled in %.0f seconds, %.0f inserts/sec", samples, t, samples / t);
+	NSLog(@"Executed %ld inserts compiled in %.0f seconds, %.0f inserts/sec", (long)samples, t, samples / t);
 }	
 
-- (void)logAllTablesError:(NSError**)error_p {
-	NSArray* tables = [self allTablesError:error_p] ;
+- (BOOL)logAllTablesError:(NSError**)error_p {
+	NSError* error = nil ;
+    NSArray* tables = [self allTablesError:&error] ;
 	NSEnumerator* e = [tables objectEnumerator] ;
 	NSString* table ;
 	while ((table = [e nextObject])) {
@@ -1809,6 +1860,12 @@ end:
 		NSLog(@"row data:\n%@", [self allRowsInTable:table
 											   error:error_p]) ;
 	}
+    
+	if (error && error_p) {
+		*error_p = error ;
+	}
+    
+    return (error == nil) ;    
 }
 
 - (NSString*)versionString {
@@ -1837,8 +1894,8 @@ end:
 	return self ;
 }
 
-+ (int)sqlErrorCodeFromErrorCode:(int)errorCode {
-	int answer = 0 ;
++ (NSInteger)sqlErrorCodeFromErrorCode:(NSInteger)errorCode {
+	NSInteger answer = 0 ;
 	if (errorCode > 1000) {
 		answer = errorCode % 1000 ;
 	}

@@ -53,20 +53,20 @@
 	if ((versionString != nil)  && hasADecimalDigit) {		
 		NSArray* parts = [versionString componentsSeparatedByString:@"."] ;
 		
-		int major = 0 ;
-		int minor = 0 ;
-		int bugFix = 0 ;
+		NSInteger major = 0 ;
+		NSInteger minor = 0 ;
+		NSInteger bugFix = 0 ;
 		
 		NSInteger nParts = [parts count] ;
 		NSArray* majorWords = [[parts objectAtIndex:0] componentsSeparatedByString:@" "] ;
-		major = [[majorWords lastObject] intValue] ;
+		major = [[majorWords lastObject] integerValue] ;
 		
 		if (nParts>1)
 		{
-			minor = [[parts objectAtIndex:1] intValue] ;
+			minor = [[parts objectAtIndex:1] integerValue] ;
 			
 			if (nParts>2)
-				bugFix = [[parts objectAtIndex:2] intValue] ;
+				bugFix = [[parts objectAtIndex:2] integerValue] ;
 		}
 		
 		versionTriplet = [SSYVersionTriplet versionTripletWithMajor:major
@@ -82,27 +82,27 @@
 	return [self versionTripletFromString:versionString] ;
 }
 
-- (void)setMajor:(int)value {
+- (void)setMajor:(NSInteger)value {
 	versionStruct_ivar.major = value ;
 }
 
-- (void)setMinor:(int)value {
+- (void)setMinor:(NSInteger)value {
 	versionStruct_ivar.minor = value ;
 }
 
-- (void)setBugFix:(int)value {
+- (void)setBugFix:(NSInteger)value {
 	versionStruct_ivar.bugFix = value ;
 }
 
-- (int)major {
+- (NSInteger)major {
 	return versionStruct_ivar.major ;
 }
 
-- (int)minor {
+- (NSInteger)minor {
 	return versionStruct_ivar.minor ;
 }
 
-- (int)bugFix {
+- (NSInteger)bugFix {
 	return versionStruct_ivar.bugFix ;
 }
 
@@ -121,9 +121,9 @@
 	
 }
 
-+ (SSYVersionTriplet*)versionTripletWithMajor:(int)major
-										minor:(int)minor
-									   bugFix:(int)bugFix {
++ (SSYVersionTriplet*)versionTripletWithMajor:(NSInteger)major
+										minor:(NSInteger)minor
+									   bugFix:(NSInteger)bugFix {
 	SSYVersionStruct versionStruct ;
 	versionStruct.major = major ;
 	versionStruct.minor = minor ;
@@ -195,10 +195,10 @@
 }
 
 - (NSString*)string {
-	return [NSString stringWithFormat:@"%d.%d.%d",
-			[self major],
-			[self minor],
-			[self bugFix]] ;
+	return [NSString stringWithFormat:@"%ld.%ld.%ld",
+			(long)[self major],
+			(long)[self minor],
+			(long)[self bugFix]] ;
 }
 
 - (NSString*)description {

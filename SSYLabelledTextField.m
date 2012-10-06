@@ -75,7 +75,7 @@ validationSelector:(SEL)validationSelector_
 	if (self != nil) {
 		NSTextField* textField ;
 		
-		float y ;
+		CGFloat y ;
 		
 		// Create and add the value field
 		Class fieldClass = secure ? [NSSecureTextField class] : [NSTextField class] ;

@@ -1,5 +1,6 @@
 #import "SSYTempWindowController.h"
 
+static NSMutableSet* static_windowControllers = nil ;
 
 @implementation SSYTempWindowController
 
@@ -12,7 +13,8 @@
 - (void)goAway {
 	[[NSNotificationCenter defaultCenter] removeObserver:self] ;
 	[[self window] setWindowController:nil] ;
-	[self release] ;
+    [[self retain] autorelease] ;
+    [static_windowControllers removeObject:self] ;
 }
 
 
@@ -36,13 +38,21 @@
 		NSWindowController* candidate = [window windowController] ;
 		if ([candidate isMemberOfClass:[self class]]) {
 			instance = (SSYTempWindowController*)candidate ;
+            [instance retain] ;
 		}
 	}
 	
 	if (!instance) {
 		instance = [[self alloc] init] ;
 	}
-	
+    
+    if (!static_windowControllers) {
+        static_windowControllers = [[NSMutableSet alloc] init] ;
+    }
+    [static_windowControllers addObject:instance] ;
+
+    [instance release] ;
+
 	[instance showWindow:self] ;
 	
 	return instance ;

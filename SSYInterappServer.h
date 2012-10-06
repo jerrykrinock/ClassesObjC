@@ -12,7 +12,7 @@ extern NSString* const SSYInterappServerErrorDomain ;
  @details  Dave Keck has suggested an easier way to do this.
  See comment at bottom of this file.
  
- Troubleshooting tip> To see if a port is active in the system,
+ Troubleshooting tip.  To see if a port is active in the system,
     sudo launchctl bstree | grep <fragmentOfYourPortName>
 */
 @interface SSYInterappServer : NSObject {
@@ -29,18 +29,32 @@ extern NSString* const SSYInterappServerErrorDomain ;
 */
 @property (assign, nonatomic) void* contextInfo ;
 
+/*!
+ @brief    An object to which will be sent Objective-C messages whenever
+ an interapp message is received by the receiver from a SSYInterAppClient.
+
+ @details  The receiver does not retain the delegate.
+*/
+@property (assign, nonatomic) NSObject <SSYInterappServerDelegate> * delegate ;
+
 
 /*!
  @brief    Returns a server object which has given port name on the system
 
  @details  This method takes care of the fact that only one port with a
- given name may exist on the system.
+ given name may exist on the system.  It should be sent whenever a delegate
+ needs to use a server, and re-sent whenever there is any possibility that
+ the server may have been leased to a different delegate.  To determine if
+ this has happened, the delegate should do something like this…
+      if ([[self server] delegate] == self) {
+         // Send leaseServerWithPortName:::: again
+         ...
+      }
  @param    portName  An arbitrary name you supply, which must be unique among
  CFMessagePorts on the computer.  Suggest including a reverse DNS identifier.
- @param    delegate  An object to which will be sent Objective-C messages whenever
- an interapp message is received by the receiver from a SSYInterAppClient.
- If an existing server is returned, its delegate will be overwritten with
- this value.  The receiver does not retain the delegate.
+ @param    delegate  See declaration of the 'delegate' property.  If an
+ existing server is returned by this method, its delegate will be overwritten
+ with this value.
  @param    contextInfo  A pointer which may be used to pass information to the
  delegate.  If an existing server is returned, its contextInfo will be
  overwritten with this value.
@@ -59,11 +73,35 @@ extern NSString* const SSYInterappServerErrorDomain ;
 /*!
  @brief    Informs the receiver's class that you are done with this instance.
 
- @details  When the number of leases on a server with a given port name falls
+ @details  Removes a given delegate from any of the receiver's servers.
+ This message should be sent, at least, when the delegate is deallocated,
+ and maybe sooner.
+ Also, when the number of leases on a server with a given port name falls
  to 0, the server and its underlying CFMessage port will be invalidated,
  released, and, eventually, deallocated.
+ 
+ The delegate: parameter was added in BookMacster 1.11 to eliminate crashes
+ which occurred when this happened:
+ 
+ • +leaseServerWithPortName:delegate::: assigns Delegate A to Server 1
+ • +leaseServerWithPortName:delegate::: assigns Delegate B to Server 1
+ • Delegate B is deallocated
+ • Delegate A thinks that it is still assigned to Server 1 and does something which
+      causes client to send IPC messages to Server 1, or maybe something goes haywire
+      in the client and it sends an IPC message for some spurious reason 
+ • Server 1 receives an IPC message, processes it and sends a message to its
+      deallocated delegate, Delegate B, which causes a crash
+ 
+ With this fix, in Delegate B's -dealloc method, when it sends this message, Server 1
+ will now have nil delegate, so that it will not send a message to its deallocated
+ delegate, Delegate B.
+ 
+ However, although it won't crash, it will now be a no-op.  That's better, but still
+ no go.  To complete the fix, delegates must check with their server when there
+ is any possibility that the server may have been leased to a different delegate,
+ as explained in details of -leaseServerWithPortName::::.
 */
-- (void)unlease ;
+- (void)unleaseForDelegate:(NSObject <SSYInterappServerDelegate> *)delegate ;
 	
 @end
 
@@ -92,7 +130,7 @@ extern NSString* const SSYInterappServerErrorDomain ;
 
 + (void)handlePortMessage: (NSPortMessage *)message
 {
-    NSLog(@"Received message (msgid: 0x%X): %@", [message msgid], message);
+    NSLog(@"Received message (msgid: 0x%X): %@", (long)[message msgid], message);
 }
 @end
 

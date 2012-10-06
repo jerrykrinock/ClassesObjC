@@ -4,7 +4,7 @@
 @implementation SSCheckboxTableColumn
 
 // This is a callback from the OS
-- (id)dataCellForRow:(int)iRow
+- (id)dataCellForRow:(NSInteger)iRow
 {
 	NSButtonCell * cell =[[NSButtonCell alloc] init];
 	[cell setControlSize:NSSmallControlSize] ;

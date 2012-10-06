@@ -2,6 +2,6 @@
 
 }
 
-- (void)setTruncationStyle:(int)truncationStyle ;
+- (void)setTruncationStyle:(NSInteger)truncationStyle ;
 
 @end

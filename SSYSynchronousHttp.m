@@ -239,7 +239,8 @@ end:
 					  error_p:(NSError**)error_p {
 	NSInteger connectionState = SSYSynchronousHttpStateInitial ;
 	SSYSynchronousHttp *instance = nil ;
-	
+    NSMutableURLRequest *mutableRequest = nil ;
+
 	// Apply the Johannnes Fahrenkrug workaround: Append a "#".  See:
 	// http://www.springenwerk.com/2008/11/i-am-currently-building-iphone.html
 	// (If that doesn't work, try replacing 'www' with 'blog')
@@ -266,7 +267,7 @@ end:
 											 cachePolicy:NSURLRequestReloadIgnoringCacheData
 										 timeoutInterval:timeout] ;
 	
-	NSMutableURLRequest *mutableRequest = [request mutableCopy] ;
+	mutableRequest = [request mutableCopy] ;
 	if (userAgent) {
 		[mutableRequest setValue:userAgent
 			  forHTTPHeaderField:@"User-Agent"];
@@ -356,8 +357,6 @@ end:
 	[connection release] ;
 #endif
 	
-	[mutableRequest release] ;
-	
 	// Set output variables and exit
 	if (response_p) {
 		*response_p = [[[instance response] retain] autorelease] ;
@@ -382,6 +381,8 @@ end:
 	}
 
 end:;
+	[mutableRequest release] ;
+	
 	BOOL serverError = NO ;
 
 	if (
@@ -427,8 +428,8 @@ end:;
 				}
 				NSString* cuzHttp = [NSHTTPURLResponse localizedStringForStatusCode:[[instance response] statusCode]] ;
 				cuz = [NSString stringWithFormat:
-					   @"We received an HTTP Status Code %d, which is in the range indicating '%@'.",
-					   connectionState,
+					   @"We received an HTTP Status Code %ld, which is in the range indicating '%@'.",
+					   (long)connectionState,
 					   cuzHttp] ;
 				if (connectionState > 519) {
 					cuz = [cuz stringByAppendingString:@"  However, this exact status code is not defined "
@@ -559,7 +560,7 @@ end:;
 				}
 				break ;
 			default:
-				cuz = [NSString stringWithFormat:@"The connection terminated in an unknown state.", connectionState] ;
+				cuz = [NSString stringWithFormat:@"The connection terminated in an unknown state=%ld.", (long)connectionState] ;
 				break ;
 		}
 		NSString* host = [url host] ;
@@ -596,8 +597,8 @@ end:;
 			NSString* stringData = [NSString stringWithDataUTF8:[instance responseData]] ;
 			if (!stringData) {
 				stringData = [NSString stringWithFormat:
-							  @"%d bytes, failed UTF8 decoding",
-							  [[instance responseData] length]] ;
+							  @"%ld bytes, failed UTF8 decoding",
+							  (long)[[instance responseData] length]] ;
 			}
 			*error_p = [*error_p errorByAddingUserInfoObject:stringData
 													  forKey:SSYSynchronousHttpReceivedStringErrorKey] ;

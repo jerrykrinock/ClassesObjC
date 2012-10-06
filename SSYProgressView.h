@@ -64,7 +64,7 @@ extern NSString* const constKeyActionValue ;
 	NSTextField* _textField ;
 	SSYRolloverButton* _hyperButton ;
 	SSYRolloverButton* _cancelButton ;
-	int progBarLimit ;
+	NSInteger progBarLimit ;
 	NSTimeInterval nextProgressUpdate ;
 	NSMutableArray* completions ;
 	NSDate* completionsLastStartedShowing ;
@@ -105,7 +105,7 @@ extern NSString* const constKeyActionValue ;
  while different text is shown.
  @param    width  The desired width in points.
 */
-- (void)setProgressBarWidth:(float)width ;
+- (void)setProgressBarWidth:(CGFloat)width ;
 
 /*!
  @brief    Sets whether or not the receiver has a 'cancel' button,

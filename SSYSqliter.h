@@ -143,7 +143,7 @@ extern NSString* const SSYSqliterSqliteErrorCode ;
 				   whereValue:(id)whereValue ;
 	
 // Manipulating Tables
-- (void)createTableOfBlobsNamed:(NSString*)table
+- (BOOL)createTableOfBlobsNamed:(NSString*)table
 					   withKeys:(NSArray*)keyNames
 						  error:(NSError**)error_p ;
 - (NSArray*)allTablesError:(NSError**)error_p ;
@@ -167,9 +167,9 @@ extern NSString* const SSYSqliterSqliteErrorCode ;
 - (NSDictionary*)structureOfTable:(NSString*)table
 					   error:(NSError**)error_p ;
 
-- (int)numberOfColumnsInTable:(NSString*)table
+- (NSInteger)numberOfColumnsInTable:(NSString*)table
 						error:(NSError**)error_p ;
-- (int)numberOfRowsInTable:(NSString*)table
+- (NSInteger)numberOfRowsInTable:(NSString*)table
 					 error:(NSError**)error_p ;
 
 // Getting primary keys
@@ -226,6 +226,27 @@ extern NSString* const SSYSqliterSqliteErrorCode ;
 								  keyColumn:(NSString*)keyColumn
 									  error:(NSError**)error_p ;
 
+/*!
+ @brief    Returns a dictionary created by extracting two values
+ (a key and a value) from all of the rows of a given table in the
+ receiver's database
+
+ @details  This method was added in BookMacster 1.11.
+ @param    attribute  The name of the table column whose values will
+ become the values of the returned dictionary
+ @param    key  The name of the table column whose values will
+ become the keys of the returned dictionary
+ @param    table  The SQLite table whose rows will be extracted to
+ form the returned dictionary
+ @param    error_p  If not NULL and if an error occurs, upon return,
+           will point to an error object encapsulating the error.
+ @result   
+*/
+- (NSDictionary*)dicForAttribute:(NSString*)attribute
+							 key:(NSString*)key
+						   table:(NSString*)table
+						   error:(NSError**)error_p ;
+
 - (NSArray*)selectColumn:(NSString*)targetColumn
 					from:(NSString*)table
 				   error:(NSError**)error_p ;
@@ -236,7 +257,17 @@ extern NSString* const SSYSqliterSqliteErrorCode ;
 					  is:(id)predicateValue
 				   error:(NSError**)error_p ;
 
- /*!
+/*!
+ @brief    Returns the number of database rows that were changed or inserted
+ or deleted by the most recently completed SQL statement
+
+ @details  Only changes that are directly specified by the INSERT, UPDATE,
+ or DELETE statement are counted. Auxiliary changes caused by triggers or
+ foreign key actions are not counted.
+*/
+- (NSInteger)countChangedRows ;
+
+/*!
  @brief    If the receiver's database is still open, executes a
  sqlite3_wal_checkpoint() upon it.  Otherwise, this method is a no-op.
  
@@ -335,25 +366,27 @@ extern NSString* const SSYSqliterSqliteErrorCode ;
 // Reading and writing attributes of items in a table
 - (void)setObject:(id)object
 		   forKey:(NSString*)attributeKey
-		  forItem:(int)identifier
+		  forItem:(NSInteger)identifier
 		  inTable:(NSString*)table
 			error:(NSError**)error_p ;
 	// The table named by table must exist, or this will show an error alert and fail.
 	// The item need not exist.  item will be inserted if necessary.
 	// It is OK to pass nil as object; this will overwrite NULL into the sqlite database file.
 - (id)objectForKey:(NSString*)attributeKey
-		   forItem:(int)identifier
+		   forItem:(NSInteger)identifier
 		   inTable:(NSString*)table
 			 error:(NSError**)error_p ;
+
+// THIS METHOD ONLY READS PROPERLY IF ALL DATA ARE BLOBS
 - (NSArray*)debugReadAllDataInTable:(NSString*)table
 							  error:(NSError**)error_p ;
 
 // Add/Removing entire items
-- (void)addNewItemWithIdentifier:(int)identifier
+- (void)addNewItemWithIdentifier:(NSInteger)identifier
 					  attributes:(NSDictionary*)attributeDictionary
 						 inTable:(NSString*)table
 						   error:(NSError**)error_p ;
-- (void)removeItem:(int)identifier
+- (void)removeItem:(NSInteger)identifier
 		   inTable:(NSString*)table
 			 error:(NSError**)error_p ;
 
@@ -380,7 +413,7 @@ extern NSString* const SSYSqliterSqliteErrorCode ;
 - (id)initWithPath:(NSString*)path
 		   error_p:(NSError**)error_p ;
 
-+ (int)sqlErrorCodeFromErrorCode:(int)errorCode ;
++ (NSInteger)sqlErrorCodeFromErrorCode:(NSInteger)errorCode ;
 
 
 @end

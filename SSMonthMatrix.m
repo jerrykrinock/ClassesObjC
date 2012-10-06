@@ -58,7 +58,7 @@
 
 - (void)awakeFromNib {
 	[self setToolTip:[NSString localize:@"lastDayOfTheMonth"] forCell:[self cellWithTag:(32 - _tagOffset)]] ;
-	int i ;
+	NSInteger i ;
 	for (i=29; i<=31; i++) {
 		NSButtonCell* cell = [self cellWithTag:(i - _tagOffset)] ;
 		[self setToolTip:[NSString localize:@"warningWillRunOnLastDay"] forCell:cell] ;

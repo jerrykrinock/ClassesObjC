@@ -29,9 +29,9 @@
 #import "SSUtilityCategories.h"
 
 // globals
-extern int gLogging ;
+extern NSInteger gLogging ;
 
-NSString* SSLocalizedDayOfWeekFromCronNumber(int n) {
+NSString* SSLocalizedDayOfWeekFromCronNumber(NSInteger n) {
 NSString* dayName = nil ;
 	switch (n) {
 		case 0:
@@ -66,7 +66,7 @@ NSArray* SSLocalizedDaysOfWeekFromCronNumbers(NSArray* numbers) {
 	NSEnumerator* e = [numbers objectEnumerator] ;
 	NSNumber* number ;
 	while ((number = [e nextObject])) {
-		int dayNumber = [number intValue] ;
+		NSInteger dayNumber = [number integerValue] ;
 		NSString* dayName = SSLocalizedDayOfWeekFromCronNumber(dayNumber) ;
 		[days addObject:dayName] ;
 	}
@@ -81,7 +81,7 @@ NSString* SSReadUserCrontabForCurrentUser() {
     NSData* cronData ;
 	NSData* stdErrData ;
 	
-	int taskResult = SSDoShellTask(@"/usr/bin/crontab", args, nil, nil, &cronData, &stdErrData, YES) ;
+	NSInteger taskResult = SSDoShellTask(@"/usr/bin/crontab", args, nil, nil, &cronData, &stdErrData, YES) ;
     
     NSString* stdErrString = [[NSString alloc] initWithData:stdErrData encoding:[NSString defaultCStringEncoding]] ;	
     // Check for "no crontab for" in stderr, and if so over-ride the taskResult to OK, since it
@@ -156,7 +156,7 @@ SSAOm(NSString*, filename, setFilename)
 				NSRange dash = [clause rangeOfString:@"-"] ; 
 				if (dash.location == NSNotFound) {
 					// This is a single value
-					[array addObject:[NSNumber numberWithInt:[clause intValue]]] ;
+					[array addObject:[NSNumber numberWithInteger:[clause integerValue]]] ;
 				}
 				else {
 					// This is a range, such as "1-5"
@@ -165,11 +165,11 @@ SSAOm(NSString*, filename, setFilename)
 					lowerLimitRange.length = dash.location ;
 					upperLimitRange.location = dash.location + 1 ;
 					upperLimitRange.length = [clause length] - 1 - lowerLimitRange.length ;
-					int lowerLimit = [[clause substringWithRange:lowerLimitRange] intValue] ;
-					int upperLimit = [[clause substringWithRange:upperLimitRange] intValue] ;
-					int i ;
+					NSInteger lowerLimit = [[clause substringWithRange:lowerLimitRange] integerValue] ;
+					NSInteger upperLimit = [[clause substringWithRange:upperLimitRange] integerValue] ;
+					NSInteger i ;
 					for (i=lowerLimit; i<=upperLimit; i++) {
-						[array addObject:[NSNumber numberWithInt:i]] ;
+						[array addObject:[NSNumber numberWithInteger:i]] ;
 					}
 				}
 			}
@@ -220,7 +220,7 @@ SSAOm(NSString*, filename, setFilename)
 
 - (BOOL)setDaysFromCronField:(NSString*)field {
 	NSArray* array = [self arrayFromCrontabField:field] ;
-	NSNumber* o7 = [NSNumber numberWithInt:7] ;
+	NSNumber* o7 = [NSNumber numberWithInteger:7] ;
 	
 	BOOL ok = YES;
 	if (!array) {
@@ -232,7 +232,7 @@ SSAOm(NSString*, filename, setFilename)
 	else if ([array indexOfObject:o7] != NSNotFound) { // If someone used 7 for Sunday
 		NSMutableArray* mutableArray = [array mutableCopy] ;
 		[mutableArray removeObject:o7] ;  // remove the 7
-		[mutableArray insertObject:[NSNumber numberWithInt:0] atIndex:0] ; // add in 0 to replace it
+		[mutableArray insertObject:[NSNumber numberWithInteger:0] atIndex:0] ; // add in 0 to replace it
 		array = [[mutableArray copy] autorelease] ;
 		[mutableArray release] ;
 	}
@@ -368,7 +368,7 @@ SSAOm(NSString*, filename, setFilename)
 	NSData* newCrontabData = [newCrontabString dataUsingEncoding:[NSString defaultCStringEncoding]] ;
 	    
     // Part 5.  Write to file
-	int err ;
+	NSInteger err ;
 	if (which == SSUserCrontab) {
 		NSArray* args = [NSArray arrayWithObjects: @"-", nil] ;
 			// The argument "-" tells crontab to take data from stdin
@@ -376,12 +376,12 @@ SSAOm(NSString*, filename, setFilename)
 		
 		err = SSDoShellTask(@"usr/bin/crontab", args, nil, newCrontabData, nil, &stdErrData, YES) ;
 		if (err) {
-			NSLog(@"Error %i writing user crontab", err) ;
+			NSLog(@"Error %li writing user crontab", (long)err) ;
 		}
 	}
 	else {
 		if (!SSAuthorizedWriteDataToFile(newCrontabData, @"/etc/crontab")) {
-			NSLog(@"Error %i writing system crontab", err) ;
+l			NSLog(@"Error %li writing system crontab", (long)err) ;
 		}
 	}
 }
@@ -425,7 +425,7 @@ SSAOm(NSString*, filename, setFilename)
 				// Reasons why I start from the last field instead of the first:
 				//    There may or may not be comment field at the beginning
 				//    Get command and user quicker, needed to see if cronLine qualifies
-				int i = [cronJobFields count] ;
+				NSInteger i = [cronJobFields count] ;
 
 				// First, we make sure it is a "well-formed" line so we don't crash
 				if ((which == SSUserCrontab) && (i != 6)) {

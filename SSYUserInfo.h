@@ -10,6 +10,12 @@
 /*!
  @brief    Returns first name, last name and primary email
  address of from the "me" entry in Address Book.
+ 
+ @details  Warning!  Starting with Mac OS X 10.8, invoking
+ this method will produce an ugly, scary and vague dialog box
+ asking the user if it is OK for your app to access their
+ Contacts.  This method will block until the dialog is
+ dismissed by the user.
 */
 + (void)fromAddressBookFirstName_p:(NSString**)ptrFirstName
 						lastName_p:(NSString**)ptrLastName

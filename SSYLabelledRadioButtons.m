@@ -3,7 +3,7 @@
 #import "SSYAlert.h"
 #import "NS(Attributed)String+Geometrics.h"
 #import "SSYClickActionTextField.h"
-#import "NSArray+SimpleMutations.h"
+#import "NSArray+SSYMutations.h"
 #import "NSArray+SafeGetters.h"
 
 static NSString* const constKeyWidth = @"Width" ;
@@ -66,7 +66,7 @@ static NSString* const constKeyWidth = @"Width" ;
 	[self setPreselectedIndex:index] ;
 }
 
-- (int)selectedIndex {
+- (NSInteger)selectedIndex {
 	return [[self matrix] selectedRow] ;
 }
 
@@ -118,10 +118,10 @@ CGFloat static const constTextCenteringTweak = -0.0 ;
 	for (SSYClickActionTextField* textField in cellularFields) {
 		NSString* title = [textField stringValue] ;
 		NSSize size = [title sizeForWidth:textWidth
-								   height:FLT_MAX
+								   height:CGFLOAT_MAX
 									 font:font] ;
 		size.height += constHeightMarginPerCell ;
-		[textHeights addObject:[NSNumber numberWithFloat:size.height]] ;
+		[textHeights addObject:[NSNumber numberWithDouble:size.height]] ;
 		tallestCellHeight = MAX(tallestCellHeight, size.height) ;
 		widestCellWidth = MAX(widestCellWidth, size.width) ;
 		i++ ;
@@ -136,7 +136,7 @@ CGFloat static const constTextCenteringTweak = -0.0 ;
 	// We start with the top button and work down.
 	CGFloat y = [matrix frame].size.height ;
 	for (SSYClickActionTextField* cellularField in cellularFields) {
-		CGFloat textHeight = [[textHeights objectAtIndex:i] floatValue] ;
+		CGFloat textHeight = [[textHeights objectAtIndex:i] doubleValue] ;
 		CGFloat halfTextHeight = textHeight / 2.0 ;
 		y -= halfSpacing ;
 		y -= halfTextHeight ;
@@ -223,6 +223,7 @@ CGFloat static const constTextCenteringTweak = -0.0 ;
 												  prototype:cell
 											   numberOfRows:[choices count]
 											numberOfColumns:1] ;
+		[cell release] ; // Memory leak fixed in BookMacster 1.11
 		[matrix setLeftEdge:0.0] ;
 		[matrix setBottom:0.0] ;
 		[matrix setIntercellSpacing:NSMakeSize(0.0, constIntercellHeight)] ;
@@ -249,6 +250,7 @@ CGFloat static const constTextCenteringTweak = -0.0 ;
 											column:0]] ;
 			[textField setAction:@selector(performClick:)] ;
 			[self addSubview:textField] ;
+            [textField release] ;
 			i++ ;
 		}
 
@@ -316,13 +318,13 @@ CGFloat static const constTextCenteringTweak = -0.0 ;
 - (void)encodeWithCoder:(NSCoder *)coder {
     [super encodeWithCoder:coder] ;
     
-	[coder encodeFloat:m_width forKey:constKeyWidth] ;
+	[coder encodeDouble:m_width forKey:constKeyWidth] ;
 }
 
 - (id)initWithCoder:(NSCoder *)coder {
     self = [super initWithCoder:coder] ;
 	
-	m_width = [coder decodeFloatForKey:constKeyWidth] ;
+	m_width = [coder decodeDoubleForKey:constKeyWidth] ;
     
 	return self ;
 }

@@ -20,7 +20,7 @@
 
 + (pid_t)inactivateActiveAppAndReturnNewActiveApp {
 	//NSLog(@"1000 Hiding Current ActiveApp: %@", [[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationName"]) ;
-	pid_t activeAppPid = [[[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationProcessIdentifier"] intValue] ;
+	pid_t activeAppPid = (pid_t)[[[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationProcessIdentifier"] integerValue] ;
 	OSStatus err;
 	ProcessSerialNumber psn ;
 	err = GetProcessForPID(activeAppPid, &psn) ;
@@ -32,7 +32,7 @@
         NSLog(@"Internal Error 915-9385 %ld", (long)err) ;
     }
 	//NSLog(@"2000 New ActiveApp: %@", [[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationName"]) ;
-	activeAppPid = [[[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationProcessIdentifier"] intValue] ;
+	activeAppPid = (pid_t)[[[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationProcessIdentifier"] integerValue] ;
     return activeAppPid ;
 }
 
@@ -100,7 +100,7 @@
         if (err != noErr) {
             NSLog(@"Internal Error 915-9387 %ld", (long)err) ;
         }
-		
+
 		[NSApp activateIgnoringOtherApps:YES] ;
 #endif
 	}

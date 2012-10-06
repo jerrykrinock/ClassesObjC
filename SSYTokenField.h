@@ -1,16 +1,10 @@
 #import <Cocoa/Cocoa.h>
 
 @interface SSYTokenField : NSTokenField {
+	BOOL m_objectValueIsOk ;
 }
 
-- (void)setObjectValue:(NSObject <NSFastEnumeration> *)tokens ;
-
 @property (assign) unichar tokenizingCharacter ;
-
-- (void)setNoTokensPlaceholder:(NSString*)placeholder ;
-- (void)setMultipleValuesPlaceholder:(NSString*)placeholder ;
-- (void)setNotApplicablePlaceholder:(NSString*)placeholder ;
-- (void)setNoSelectionPlaceholder:(NSString*)placeholder ;
 
 /*!
  @brief    Adjusts the size.height of the receiver's

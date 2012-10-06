@@ -20,18 +20,19 @@
 
 @interface SSYDragDestinationTextView : NSTextView {
 	BOOL _isInDrag ;
-	BOOL _tabToNextKeyView ;
+	// BOOL _tabToNextKeyView ; Depracated.  See comments in .m
 }
 
 
 /*!
  @brief    Sets the ivar _tabToNextKeyView
 
- @details  By default, NSTextView accepts hitting the tab key as a text character.
+ @details  Depracated.  See comments in .m.
+ By default, NSTextView accepts hitting the tab key as a text character.
  Setting this to YES tells it to tab to the next key view, like an NSTextField does.
  @param    YES  to tab to the next key view, NO for the default NSTextView behavior.
-*/
 - (void)setTabToNextKeyView:(BOOL)yn ;
+ */
 
 @end
 

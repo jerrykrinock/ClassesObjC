@@ -53,7 +53,7 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 					itemDic = [[NSMutableDictionary alloc] init] ;
 				}
 
-				int i ;
+				NSInteger i ;
 				for(i=0; i<attributeList->count; i++) {
 					SecKeychainAttribute *attribute = &attributeList->attr[i];
 					NSString* value = nil ;
@@ -66,7 +66,7 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 															   false) ;
 					if (attributeList->count > 1) {
 						[itemDic setObject:value
-									forKey:[NSNumber numberWithInt:(attribute->tag)]] ;
+									forKey:[NSNumber numberWithInteger:(attribute->tag)]] ;
 					}
 					else {
 						[results addObject:value] ;
@@ -255,8 +255,8 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 		attribute.tag = kSecServerItemAttr ;
 
 		// strlen(0) causes a crash but we've already checked that this length > 0
-		int lengthUser = strlen(user) ;
-		int lengthDomain = dom ? strlen(dom) : 0 ;
+		NSInteger lengthUser = strlen(user) ;
+		NSInteger lengthDomain = dom ? strlen(dom) : 0 ;
 
 		NSMutableArray* subdomains = [[NSMutableArray alloc] init] ;
 		[subdomains addObject:@""] ;
@@ -276,7 +276,7 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 			attribute.length = strlen(hostC) ;
 			attribute.data = (void*)hostC ;
 			// strlen(0) causes a crash but we've already checked that [host length] > 0
-			int lengthHost = hostC ? strlen(hostC) : 0 ;
+			NSInteger lengthHost = hostC ? strlen(hostC) : 0 ;
 			
 			OSStatus findResult = SecKeychainFindInternetPassword (
 				NULL, // default keychain
@@ -356,10 +356,10 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 		}
 		else {
 			// We qualify these since strlen(0) causes a crash
-			int lengthHost = host ? strlen(host) : 0 ;
-			int lengthUser = user ? strlen(user) : 0 ;
-			int lengthDomain = dom ? strlen(dom) : 0 ;
-			int lengthNewPassword = pass ? strlen(pass) : 0 ;
+			NSInteger lengthHost = host ? strlen(host) : 0 ;
+			NSInteger lengthUser = user ? strlen(user) : 0 ;
+			NSInteger lengthDomain = dom ? strlen(dom) : 0 ;
+			NSInteger lengthNewPassword = pass ? strlen(pass) : 0 ;
 			OSStatus addResult = SecKeychainAddInternetPassword (
 																 NULL, // default keychain
 																 lengthHost, // server name length
@@ -407,12 +407,12 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 		attribute.tag = kSecServerItemAttr ;
 		
 		// strlen(0) causes a crash but here we know it's not 0
-		int accountNameLength = strlen(accountNameC) ;
+		NSInteger accountNameLength = strlen(accountNameC) ;
 		
 		const char* serviceNameC = [serviceName UTF8String] ;
 		attribute.length = strlen(serviceNameC) ;
 		attribute.data = (void*)serviceNameC ;
-		int serviceNameLength = serviceNameC ? strlen(serviceNameC) : 0 ;
+		NSInteger serviceNameLength = serviceNameC ? strlen(serviceNameC) : 0 ;
 		
 		OSStatus findResult = SecKeychainFindGenericPassword (
 															  NULL, // default keychain
@@ -463,9 +463,9 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 		}
 		else {
 			// We qualify these since strlen(0) causes a crash
-			int serviceNameLength = serviceNameC ? strlen(serviceNameC) : 0 ;
-			int accountNameLength = accountNameC ? strlen(accountNameC) : 0 ;
-			int passwordLength = passwordC ? strlen(passwordC) : 0 ;
+			NSInteger serviceNameLength = serviceNameC ? strlen(serviceNameC) : 0 ;
+			NSInteger accountNameLength = accountNameC ? strlen(accountNameC) : 0 ;
+			NSInteger passwordLength = passwordC ? strlen(passwordC) : 0 ;
 			OSStatus addResult = SecKeychainAddGenericPassword (
 																NULL, // default keychain
 																serviceNameLength,
@@ -510,6 +510,7 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 			*error_p = SSYMakeError(status, errorString) ;
 			*error_p = SSYMakeError(10389, @"Could not delete Keychain Item") ;
 			*error_p = [*error_p errorByAddingUnderlyingError:SSYMakeError(status, errorString)] ;
+            [errorString release] ;
 		}
 	}
 	

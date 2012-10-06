@@ -401,7 +401,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @synthesize nextProgressUpdate ;
 
 - (CGFloat)rightColumnMaximumWidth {
-	float rightColumnMaximumWidth ;
+	CGFloat rightColumnMaximumWidth ;
 	@synchronized(self) {
 		rightColumnMaximumWidth = m_rightColumnMaximumWidth ; ;
 	}
@@ -483,11 +483,11 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	return [NSFont systemFontOfSize:12] ;
 }
 
-+ (float)titleTextHeight {
++ (CGFloat)titleTextHeight {
 	return 17 ;
 }
 
-+ (float)smallTextHeight {
++ (CGFloat)smallTextHeight {
 	return 14 ;
 }
 
@@ -663,9 +663,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			NSString* longDescription = [error performSelector:@selector(longDescription)] ;
 
 			NSString* filename = [NSString stringWithFormat:
-								  @"%@-Error-%x.txt",
+								  @"%@-Error-%lx.txt",
 								  [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"],
-								  (int)[NSDate timeIntervalSinceReferenceDate]] ;
+								  (long)[NSDate timeIntervalSinceReferenceDate]] ;
 			NSString* filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Desktop"] stringByAppendingPathComponent:filename] ;
 			NSError* writeError = nil ;
 			NSString* text = [NSString stringWithFormat:
@@ -720,9 +720,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	
 	[SSYMailto emailTo:[SSYAlert supportEmailString]
 			   subject:[NSString stringWithFormat:
-						@"%@ Error %d",
+						@"%@ Error %ld",
 						appName,
-						[error code]]
+						(long)[error code]]
 				  body:body] ;
 }
 
@@ -744,6 +744,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[self setAlertReturn:[sender tag]] ;
 
 	if (!m_shouldStickAround) {
+		// 20120320.  Crashes at next line, or sometimes in unspecified stack, if you click "Test" (Add-On) during an Export to Chrome
 		[self goAway] ;
 	}
 	
@@ -773,27 +774,33 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	NSArray* subviews = [[panel contentView] subviews] ;
 	for (NSView* subview in subviews) {
 		if ([subview isKindOfClass:[NSImageView class]]) {
-			self.iconInformational = (NSImageView*)subview ;
+			[self setIconInformational:(NSImageView*)subview] ;
 		}
 		else if ([subview isKindOfClass:[NSTextField class]]) {
 			NSString* string  = [(NSTextField*)subview stringValue] ;
 			if ([string isEqualToString:@"dummyInfoText"]) {
 			}
 			else {
-				self.wordAlert = string ;
+				[self setWordAlert:string] ;
 			}
 		}
 	}
+	// The following was added in BookMacster 1.11, to fix memory leak.
+	// This is odd, since we used NS*Get*AlertPanel, but per documentation.
+	NSReleaseAlertPanel(panel) ;
 	
 	// Now, go back and get the critical-badged icon
 	panel = NSGetCriticalAlertPanel(@"", @"", @"OK", nil, nil) ;
 	subviews = [[panel contentView] subviews] ;
 	for (NSView* subview in subviews) {
 		if ([subview isKindOfClass:[NSImageView class]]) {
-			self.iconCritical = (NSImageView*)subview ;
+			[self setIconCritical:(NSImageView*)subview] ;
 			break ;
 		}
 	}
+	// The following was added in BookMacster 1.11
+	// This is odd, since we used NS*Get*AlertPanel, but per documentation.
+	NSReleaseAlertPanel(panel) ;
 }
 
 
@@ -869,7 +876,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	self.isVisible = YES ;
 	self.progressBarShouldAnimate = NO ;
 	[self setRightColumnMinimumWidth:0.0] ;
-	[self setRightColumnMaximumWidth:FLT_MAX] ;
+	[self setRightColumnMaximumWidth:CGFLOAT_MAX] ;
 }
 
 - (void)setWindowTitle:(NSString*)title {
@@ -948,6 +955,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		[textView removeFromSuperviewWithoutNeedingDisplay] ;
 		[self setSmallTextView:nil] ;
 	}
+}
+
+- (NSString*)smallText {
+	return [[self smallTextView] string] ;
 }
 
 - (void)setIconStyle:(NSInteger)iconStyle {
@@ -1124,8 +1135,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 }
 
-- (void)addOtherSubview:(NSView*)subview atIndex:(int)index {
-	[[self otherSubviews] insertObject:subview atIndex:index] ;
+- (void)addOtherSubview:(NSView*)subview atIndex:(NSInteger)index {
+	[[self otherSubviews] insertObject:subview
+							   atIndex:index] ;
 	[[[self window] contentView] addSubview:subview] ;
 }
 
@@ -1187,12 +1199,12 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 #pragma mark * Public Methods for Displaying and Running
 
 - (void)errorSheetDidEnd:(NSWindow *)sheet
-			  returnCode:(int)returnCode
+			  returnCode:(NSInteger)returnCode
 			 contextInfo:(void *)contextInfo {
 	// Note: At this point, returnCode is always 0, no matter which 
 	// button the user clicks.  I'm not sure what Apple had in mind,
 	// or what the corect idiom is.  But this fixes it:
-	returnCode = (int)[self alertReturn] ;
+	returnCode = (NSInteger)[self alertReturn] ;
 	// Could also have used [[sheet windowController] alert return]
    
 	[sheet orderOut:self];
@@ -1220,7 +1232,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
  -clickedButton: will *always* run when a button is clicked, a little later
 */
 - (void)sheetDidEnd:(NSWindow *)sheet
-		 returnCode:(int)returnCode
+		 returnCode:(NSInteger)returnCode
 		contextInfo:(void *)contextInfo {
 	[self setAlertReturn:returnCode] ;
     [sheet orderOut:self] ;
@@ -1293,6 +1305,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		
 		[SSYSheetManager enqueueSheet:[self window]
 					   modalForWindow:documentWindow_
+                         retainHelper:nil  // Because this code was written before SSYSheetManager had 'retainHelper:'.  I use -setIsRetainedForSheet here, above, instead.
 						modalDelegate:modalDelegate
 					   didEndSelector:didEndSelector
 						  contextInfo:contextInfo] ;
@@ -1424,7 +1437,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// In the x-axis, the window consists of two columns,
 	// left and right
 	
-	float t ; // temporary variable
+	CGFloat t ; // temporary variable
 	
 	// Reference to left edge to the widest subview which is present.
 	// Then center the remaining subview(s) to the widest.
@@ -1462,7 +1475,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 	[self.button2 setLeftEdge:t] ;
 	
-	float rightSubframeWidth = 0.0 ;
+	CGFloat rightSubframeWidth = 0.0 ;
 	if (self.button1) {
 		rightSubframeWidth += [button1 width] ;
 	}
@@ -1503,7 +1516,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 	
 	t += rightSubframeWidth ;
-	float contentWidth = t + WINDOW_EDGE_SPACING ;
+	CGFloat contentWidth = t + WINDOW_EDGE_SPACING ;
 	[self.button1 setRightEdge:t] ;
 	
 	t = [self.button1 leftEdge] - BUTTON_SPACING ;
@@ -1525,11 +1538,11 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	//	(a) the stuff in the left column
 	//	(b) the stuff in the right column
 	// whichever is greater...
-	int nSubviews ;
+	NSInteger nSubviews ;
 	
 	// Compute required height of left column
 	nSubviews = 0 ;
-	float leftHeight = 0 ;
+	CGFloat leftHeight = 0 ;
 	if (self.icon) {
 		leftHeight += [self.icon height] ;
 		nSubviews++ ;
@@ -1546,7 +1559,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	
 	// Compute required height of right column
 	nSubviews = 0 ;
-	float rightHeight = 0 ;
+	CGFloat rightHeight = 0 ;
 	if (self.titleTextView != nil) {
 		rightHeight += [self.titleTextView height] ;
 		nSubviews++ ;
@@ -1574,7 +1587,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	rightHeight += (nSubviews - 1) * CONTROL_VERTICAL_SPACING ;
 	
 	// Choose left or right
-	float contentHeight = MAX(leftHeight, rightHeight) + 2 * WINDOW_EDGE_SPACING ;
+	CGFloat contentHeight = MAX(leftHeight, rightHeight) + 2 * WINDOW_EDGE_SPACING ;
 	
 	// Set y position of each subview
 	if (self.icon) {
@@ -1748,6 +1761,13 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// In case we are only being retained as the attachedSheet of our documentWindow...
 	[self retain] ;
 	
+	// The following is necessary to use the trick in SSYSheetManager
+	// in case the window is in fact not visible at this time.
+	if (![[self window] isVisible]) {
+		[[self window] setFrame:NSZeroRect
+						display:NO] ;
+	}
+	
 	[self endModalSession] ;
 	
 	if ([self isDoingModalDialog]) {
@@ -1773,7 +1793,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		NSWindow* sheet = [self window] ;
 		
 		// Roll up and close the sheet.
+		
 		[sheet orderOut:self];
+		[sheet retain] ;  // Will release it below
 		[sheet close] ;
 
 		// Note that, since Cocoa does not support piling multiple
@@ -1787,7 +1809,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		// the example he gave is when a document is closing, or
 		// something like that.
 		
-		[sheet retain] ;
 
 		// The following will cause the didEndSelector to execute.
 		if (sheet) {
@@ -1877,7 +1898,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		
 		// Default values
 //		self.rightColumnMinimumWidth = DEFAULT_MIN_TEXT_FIELD_WIDTH ;
-		self.rightColumnMaximumWidth = FLT_MAX ;
+		self.rightColumnMaximumWidth = CGFLOAT_MAX ;
 		self.allowsShrinking = YES ;
 		self.titleMaxChars = 500 ;
 		self.smallTextMaxChars = 1500 ;
@@ -1910,7 +1931,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			title = [NSString stringWithFormat:
 					 @"%@ %@",
 					 [NSString localize:@"errorColon"],
-					 [NSString stringWithFormat:@"%d", [error code]]] ;
+					 [NSString stringWithFormat:@"%ld", (long)[error code]]] ;
 		}
 		[self setTitleText:title] ;			
 	}
@@ -2066,7 +2087,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		return SSYAlertRecoveryThereWasNoError ;
 	}
 	
-	return [[SSYAlert alert] alertError:error] ;
+	SSYAlert* alert = [SSYAlert alert] ;
+	return [alert alertError:error] ;
 }
 
 + (void)alertError:(NSError*)error

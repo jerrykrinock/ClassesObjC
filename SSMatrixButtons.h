@@ -2,10 +2,10 @@
 #define KEY_CELL_VALUE @"CellValue"
 
 @interface SSMatrixButtons : NSMatrix {
-	int _tagOffset ;
+	NSInteger _tagOffset ;
 }
 
-SSANh(int, tagOffset, setTagOffset)
+SSANh(NSInteger, tagOffset, setTagOffset)
 
 
 @end

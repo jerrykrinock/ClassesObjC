@@ -31,7 +31,7 @@
 @interface IFViewMaskPair : NSObject 
 {   
 	NSView *view;
-	unsigned int savedAutoresizingMask;
+	NSUInteger savedAutoresizingMask;
 }
 
 - (id) initWithView: (NSView *)aView;
@@ -61,7 +61,7 @@
 @interface IFVerticallyExpandingTextField (PRIVATE)
 
 - (void) autosizeHeight: (NSTextView *)fieldEditor;
-- (void) autosizeSuperviewOfView: (NSView *)originView withGrowth: (float)growth;
+- (void) autosizeSuperviewOfView: (NSView *)originView withGrowth: (CGFloat)growth;
 
 - (void) alterAutoresizeMasksForViews: (NSArray *)sibViews 
                       surroundingView: (NSView *)originView;
@@ -134,9 +134,9 @@
 
 - (void) autosizeHeight: (NSTextView *)fieldEditor {
 	NSRect newFrame = [self frame];
-	float oldHeight = newFrame.size.height;
-	float newHeight;
-	float fieldGrowth;
+	CGFloat oldHeight = newFrame.size.height;
+	CGFloat newHeight;
+	CGFloat fieldGrowth;
 	
 	if ([self isHidden])
 		newHeight = 0;
@@ -167,14 +167,14 @@
 		[[NSNotificationCenter defaultCenter] postNotificationName: @"IFTextFieldDidExpandNotification"
 															object: self
 														  userInfo: 
-			[NSDictionary dictionaryWithObject: [NSNumber numberWithFloat: fieldGrowth]
+			[NSDictionary dictionaryWithObject: [NSNumber numberWithDouble:fieldGrowth]
 										forKey: @"IFTextFieldNotificationFieldGrowthItem"]];
 	}
 }
 
 
 
-- (void) autosizeSuperviewOfView: (NSView *)originView withGrowth: (float)growth {
+- (void) autosizeSuperviewOfView: (NSView *)originView withGrowth: (CGFloat)growth {
 	
 	// Recursively autosize superviews until we get to a window or scroll view
 	
@@ -241,7 +241,7 @@
 	
 	NSEnumerator *enumerator = [siblingViews objectEnumerator];
 	NSView *sibView;
-	unsigned int mask;
+	NSUInteger mask;
 	
 	while (sibView = [enumerator nextObject]) {
 		if (sibView != originView) {

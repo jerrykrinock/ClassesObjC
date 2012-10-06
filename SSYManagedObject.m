@@ -5,6 +5,8 @@
 #import "SSYDooDooUndoManager.h"
 #import "NSSet+Identicalness.h"
 #import "NSManagedObject+Attributes.h"
+#import "NSDocument+SyncModDate.h"
+#import "NSObject+MoreDescriptions.h"
 
 // Public Notifications
 NSString* const constNoteWillUpdateObject = @"willUpdateObject" ;
@@ -222,10 +224,31 @@ end:;
 	return YES ;
 }
 
-- (NSString*)permanentUri {
+- (NSString*)objectUriMakePermanent:(BOOL)makePermanent
+						   document:(NSPersistentDocument*)document {
 	NSManagedObjectID* objectID = [self objectID] ;
 	if ([objectID isTemporaryID]) {
-		return nil ;
+		if (makePermanent) {
+			NSError* error = nil ;
+			BOOL ok = [[self managedObjectContext] obtainPermanentIDsForObjects:[NSArray arrayWithObject:self]
+																		  error:&error] ;
+			
+			if (document) {
+				[document syncFileModificationDate] ;
+			}
+			objectID = [self objectID] ;
+			if (!ok || [objectID isTemporaryID]) {
+				NSLog(@"Internal Error 309-9200 Could not obtain permanent ID for %@ objectID=%@ ok=%hhd error=%@",
+					  [self shortDescription],
+					  objectID,
+					  ok,
+					  [error longDescription]) ;
+			}
+			
+			if ([objectID isTemporaryID]) {
+				objectID = nil ;
+			}
+		}
 	}
 
 	return [[objectID URIRepresentation] absoluteString] ;
@@ -241,6 +264,17 @@ end:;
 	}
 	
 	[proxySet intersectSet:newSet] ;
+	if ([newSet isIdenticalToSet:proxySet]) {
+		// This was added in BookMacster 1.11, after I found that -[NSMutableSet unionSet:]
+		// will stupidly add members to a set that are already in the set.  In the case
+		// of a managed object this, this invokes _PFInvokeMutationMethodForEachMemberOfSet,
+		// which in turn invokes -[Agent add<Foo>Object:], which if I have overridden that
+		// with a custom setter as in the case of -[Agent addTriggersObject:], will
+		// post notifications etc. indicating that a trigger has been added, which
+		// is not true.  (I also fixed in in -[Agent addTriggersObject:], just for good
+		// measure.)
+		return ;
+	}
 	[proxySet unionSet:newSet] ;
 	// My original code for doing the above was:
 	//  [proxySet removeAllObjects] ;
@@ -265,7 +299,7 @@ end:;
 	// and not duplicated to begin with.
 	NSInteger i = 0 ;
 	for (NSObject <SSYIndexee> * object in array) {
-		[object setIndex:[NSNumber numberWithInt:i]] ;
+		[object setIndex:[NSNumber numberWithInteger:i]] ;
 		i++ ;
 	}
 }
@@ -276,7 +310,7 @@ end:;
 	// undoable.  So we only begin an undo grouping if the owner is a Bkmslf.
 	if ([[self owner] isKindOfClass:[NSPersistentDocument class]]) {
 		// Note that beginAutoEndingUndoGrouping will coalesce for us.
-		[(SSYDooDooUndoManager*)[[self owner] undoManager] beginAutoEndingUndoGrouping] ;
+        [(SSYDooDooUndoManager*)[[self owner] undoManager] beginAutoEndingUndoGrouping] ;
 	}
 
 	NSDictionary* info = [NSDictionary dictionaryWithObjectsAndKeys:
@@ -291,9 +325,9 @@ end:;
 		  [[self valueForKeyPath:key] shortDescription],
 		  [info shortDescription]) ;
 #endif
-	[[NSNotificationCenter defaultCenter] postNotificationName:constNoteWillUpdateObject
-														object:self
-													  userInfo:info] ;
+    [[NSNotificationCenter defaultCenter] postNotificationName:constNoteWillUpdateObject
+                                                        object:self
+                                                      userInfo:info] ;
 	/* In BookMacster version 1.3.19, I tried changing the above line to this…
 	 NSNotification* notification = [NSNotification notificationWithName:constNoteWillUpdateObject
 	 object:self
@@ -345,7 +379,7 @@ end:;
 		}
 	}
 	[fetchRequest release] ;
-	NSLog(@"objects in moc: %d total, %d changed", nObjects, nChanged) ; 
+	NSLog(@"objects in moc: %ld total, %ld changed", (long)nObjects, (long)nChanged) ; 
 }
 
 - (void)breakRetainCycles {
@@ -353,14 +387,14 @@ end:;
 								  mergeChanges:NO] ;
 }
 
-- (unsigned long)valuesHash {
+- (uint32_t)valuesHash {
 	NSArray* attributeKeys = [[[self entity] attributesByName] allKeys] ;
 	unsigned long valuesHash = 0 ;
 	for (NSString* key in attributeKeys) {
 #ifdef __LP64__
-		unsigned long aHash = [[self valueForKey:key] hash] & 0x00000000ffffffff ;
+		uint32_t aHash = [[self valueForKey:key] hash] & 0x00000000ffffffff ;
 #else
-		unsigned long aHash = [[self valueForKey:key] hash] ;
+		uint32_t aHash = [[self valueForKey:key] hash] ;
 #endif		
 		valuesHash ^= aHash ;
 	}

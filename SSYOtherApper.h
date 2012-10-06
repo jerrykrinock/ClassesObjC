@@ -242,6 +242,9 @@ extern NSString* const SSYOtherApperKeyExecutable ;
  after I found Google Chrome in a state where it wouldn't quit, not even if
  you activated it and clicked "Quit" in its menu.  Then, I found that this only
  happened maybe 2/100 times.  Weird.
+ @param    wasRunning_p  If not nil, on return, will point to a value
+ indicating whether or not the target app was indeed running and needed
+ to be quit, or NO if the given bundle path was nil
  @result   YES if the target app was not running, or if it quit within
  the allowed timeout, or if bundleIdentifier was nil.  NO if app was
  still running when timeout expired.
@@ -249,6 +252,7 @@ extern NSString* const SSYOtherApperKeyExecutable ;
 + (BOOL)quitThisUsersAppWithBundlePath:(NSString*)bundlePath
 							   timeout:(NSTimeInterval)timeout
 					  killAfterTimeout:(BOOL)killAfterTimeout
+						  wasRunning_p:(BOOL*)wasRunning_p
 							   error_p:(NSError**)error_p ;
 
 /*!
@@ -310,7 +314,7 @@ extern NSString* const SSYOtherApperKeyExecutable ;
  */
 + (BOOL)processPid:(pid_t)pid
 		   timeout:(NSTimeInterval)timeout
-	  cpuPercent_p:(float*)cpuPercent_p
+	  cpuPercent_p:(CGFloat*)cpuPercent_p
 		   error_p:(NSError**)error_p ;
 
 + (NSString*)bundlePathOfSenderOfEvent:(NSAppleEventDescriptor*)event ;
@@ -334,15 +338,21 @@ extern NSString* const SSYOtherApperKeyExecutable ;
 + (BOOL)activateAppWithBundlePath:(NSString*)bundlePath
 				 bundleIdentifier:(NSString*)bundleIdentifier ;
 
+/*!
+ @brief    Returns the number of seconds since a process with a given pid
+ has launched, or -1 if no process with the given pid is running
+*/
++ (NSInteger)secondsRunningPid:(pid_t)pid ;
+
 @end
 
 #if 0
 // Test code for pidOfMyRunningExecutableName:
 
-NSLog(@"pid=%d", [SSYOtherApper pidOfMyRunningExecutableName:@"Finder"]) ;
-NSLog(@"pid=%d", [SSYOtherApper pidOfMyRunningExecutableName:@"loginwindow"]) ;
-NSLog(@"pid=%d", [SSYOtherApper pidOfMyRunningExecutableName:@"BookMacster-Quatch"]) ;
-NSLog(@"pid=%d", [SSYOtherApper pidOfMyRunningExecutableName:@"Crap"]) ;
+NSLog(@"pid=%ld", (long)[SSYOtherApper pidOfMyRunningExecutableName:@"Finder"]) ;
+NSLog(@"pid=%ld", (long)[SSYOtherApper pidOfMyRunningExecutableName:@"loginwindow"]) ;
+NSLog(@"pid=%ld", (long)[SSYOtherApper pidOfMyRunningExecutableName:@"BookMacster-Quatch"]) ;
+NSLog(@"pid=%ld", (long)[SSYOtherApper pidOfMyRunningExecutableName:@"Crap"]) ;
 exit(0) ;	
 
 #endif

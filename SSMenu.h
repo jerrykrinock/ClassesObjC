@@ -1,6 +1,3 @@
-
-
-
  @interface SSMenu : NSMenu {
 
 	NSMenuItem* owningMenuItem ; // the NSMenuItem which this object is the submenu of

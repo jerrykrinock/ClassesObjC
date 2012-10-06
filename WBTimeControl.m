@@ -52,10 +52,10 @@
 #define WBTIMECONTROL_TOP_OFFSET		3
 #define WBTIMECONTROL_BOTTOM_OFFSET		9
 
-extern int gLogging ;
+extern NSInteger gLogging ;
 
 // seconds not used // int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59,59};
-int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
+NSInteger _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
 
 @implementation WBTimeControl
 
@@ -65,7 +65,7 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
     
     if (self)
     {
-        int i;
+        NSInteger i;
         NSRect tCellFrame;
         
         // No cell selected
@@ -91,8 +91,8 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
         
         // Set the default values
         
-        [(NSTextFieldCell *) cells[WBTIMECONTROL_HOUR_ID] setStringValue:[NSString stringWithFormat:@"%02d",[currentDate hourOfDay]]];
-        [(NSTextFieldCell *) cells[WBTIMECONTROL_MINUTE_ID] setStringValue:[NSString stringWithFormat:@"%02d",[currentDate minuteOfHour]]];
+        [(NSTextFieldCell *) cells[WBTIMECONTROL_HOUR_ID] setStringValue:[NSString stringWithFormat:@"%02ld",(long)[currentDate hourOfDay]]];
+        [(NSTextFieldCell *) cells[WBTIMECONTROL_MINUTE_ID] setStringValue:[NSString stringWithFormat:@"%02ld",(long)[currentDate minuteOfHour]]];
         // seconds not used //[(NSTextFieldCell *) cells[WBTIMECONTROL_SECOND_ID] setStringValue:[NSString stringWithFormat:@"%02d",[currentDate secondOfMinute]]];
         
         // Create the 2 colon cells
@@ -155,8 +155,8 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
     
         [self editOff];
         
-        [cells[WBTIMECONTROL_HOUR_ID] setStringValue:[NSString stringWithFormat:@"%02d",[self hour]]];
-        [cells[WBTIMECONTROL_MINUTE_ID] setStringValue:[NSString stringWithFormat:@"%02d",[self minute]]];
+        [cells[WBTIMECONTROL_HOUR_ID] setStringValue:[NSString stringWithFormat:@"%02ld", (long)[self hour]]];
+        [cells[WBTIMECONTROL_MINUTE_ID] setStringValue:[NSString stringWithFormat:@"%02ld", (long)[self minute]]];
         // We don't do seconds
         //[cells[WBTIMECONTROL_SECOND_ID] setStringValue:[NSString stringWithFormat:@"%02d",[self second]]];
     }
@@ -166,7 +166,7 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
 
 - (void) setEnabled:(BOOL) enabled
 {
-    int i;
+    NSInteger i;
     
     for(i=0;i<WBTIMECONTROL_CELL_COUNT;i++)
     {
@@ -204,10 +204,10 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
     }
 }
 
-- (void)setHour:(int)aHour
+- (void)setHour:(NSInteger)aHour
 {
     SSLog(5, "WBTimeControl setHour:%i", aHour ) ;
-    int tHour=[self hour];
+    NSInteger tHour=[self hour];
     
     if (aHour>=0 && aHour<=_WBTimeControlMax[WBTIMECONTROL_HOUR_ID])
     {
@@ -228,27 +228,27 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
         
         if (isUsingFieldEditor==YES && selected==WBTIMECONTROL_HOUR_ID)
         {
-            [[self currentEditor] setString:[NSString stringWithFormat:@"%02d",aHour]];
+            [[self currentEditor] setString:[NSString stringWithFormat:@"%02ld", (long)aHour]];
                 
             [self editOff];
         }
         else
         {
-            [cells[WBTIMECONTROL_HOUR_ID] setStringValue:[NSString stringWithFormat:@"%02d",aHour]];
+            [cells[WBTIMECONTROL_HOUR_ID] setStringValue:[NSString stringWithFormat:@"%02ld", (long)aHour]];
         }
     }
 }
 
-- (int)hour
+- (NSInteger)hour
 {
     SSLog(5, "WBTimeControl -hour. Returning %i", [currentDate hourOfDay]) ;
     return [currentDate hourOfDay];
 }
 
-- (void)setMinute:(int)aMinute
+- (void)setMinute:(NSInteger)aMinute
 {
     SSLog(5, "WBTimeControl -setMinute:%i", aMinute ) ;
-    int tMinute=[self minute];
+    NSInteger tMinute=[self minute];
         
     if (aMinute>=0 && aMinute<=_WBTimeControlMax[WBTIMECONTROL_MINUTE_ID])
     {
@@ -269,18 +269,18 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
         
         if (isUsingFieldEditor==YES && selected==WBTIMECONTROL_MINUTE_ID)
         {
-            [[self currentEditor] setString:[NSString stringWithFormat:@"%02d",aMinute]];
+            [[self currentEditor] setString:[NSString stringWithFormat:@"%02ld", (long)aMinute]];
                 
             [self editOff];
         }
         else
         {
-            [cells[WBTIMECONTROL_MINUTE_ID] setStringValue:[NSString stringWithFormat:@"%02d",aMinute]];
+            [cells[WBTIMECONTROL_MINUTE_ID] setStringValue:[NSString stringWithFormat:@"%02ld", (long)aMinute]];
         }
     }
 }
 
-- (int)minute
+- (NSInteger)minute
 {
     SSLog(5, "WBTimeControl - minute.  Returned %i", [currentDate minuteOfHour]) ;
     return [currentDate minuteOfHour];
@@ -328,13 +328,13 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
 }
 */
 
-- (int)selected
+- (NSInteger)selected
 {
     SSLog(5, "WBTimeControl -selected.  Returning %i.", selected) ;
     return selected;
 }
 
-- (void)setSelected:(int)aSelected
+- (void)setSelected:(NSInteger)aSelected
 {
     SSLog(5, "WBTimeControl -setSelected:%i.", aSelected) ;
 
@@ -350,12 +350,12 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
             case WBTIMECONTROL_HOUR_ID:
                 SSLog(5, "   Setting stepper hour to %i", [self hour]) ;
 
-                [stepper setIntValue:[self hour]];
+                [stepper setIntegerValue:[self hour]];
                 break;
             case WBTIMECONTROL_MINUTE_ID:
                 SSLog(5, "   Setting stepper minute to %i", [self minute]) ;
 
-                [stepper setIntValue:[self minute]];
+                [stepper setIntegerValue:[self minute]];
                 break;
             // seconds not used // 
             //case WBTIMECONTROL_SECOND_ID:
@@ -381,10 +381,10 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
 
 - (void) drawRect:(NSRect) aFrame
 {
-    int i;
+    NSInteger i;
     NSRect tBounds=[self bounds];
     NSRect tRect;
-    float savedLineWidth;
+    CGFloat savedLineWidth;
     
     [[NSColor whiteColor] set];
 
@@ -455,11 +455,11 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
 {
     if ([self isEnabled]==YES)
     {
-        int i;
+        NSInteger i;
         NSPoint tMouseLoc=[self convertPoint:[theEvent locationInWindow] fromView:nil];
         NSRect tThumbRect;
         NSRect tBounds;
-        float tWidth;
+        CGFloat tWidth;
         
         // Find where the event occurred
         
@@ -532,17 +532,17 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
 - (BOOL)acceptNewValueInSelectedCell:(id) sender
 {
 	NSString *string;
-    int tValue;
+    NSInteger tValue;
 	
     SSLog(5, "WBTimeControl -acceptNewValueInSelectedCell with selected=%i", selected) ;
 
     string = [[[[self currentEditor] string] copy] autorelease];
 
-    tValue=[string intValue];
+    tValue=[string integerValue];
     
     if (tValue<=_WBTimeControlMax[selected])
     {
-        [cells[selected] setStringValue: [NSString stringWithFormat:@"%02d",tValue]];
+        [cells[selected] setStringValue: [NSString stringWithFormat:@"%02ld", (long)tValue]];
                 
         // Set the new date
         
@@ -568,12 +568,12 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
     return NO;
 }
 
-- (void)editCell:(int) aSelected
+- (void)editCell:(NSInteger) aSelected
 {
     SSLog(5, "WBTimeControl -editCell:%i", aSelected) ;
     NSText *tObject;
     NSText* t = [_window fieldEditor: YES forObject: self];
-    int length;
+    NSInteger length;
     id tCell=cells[aSelected];
     
     length = [[tCell stringValue] length];
@@ -637,7 +637,7 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
     if (textMovement)
     {
 		SSLog(5, "WBTimeControl -textDidEndEditing.  Detected textMovement") ;
-        switch ([(NSNumber *)textMovement intValue])
+        switch ([(NSNumber *)textMovement integerValue])
         {
             case NSReturnTextMovement:
                 if ([self sendAction:[self action] to:[self target]] == NO)
@@ -688,7 +688,7 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
 
 - (BOOL)textView:(NSTextView *)textView shouldChangeTextInRange:(NSRange)affectedCharRange replacementString:(NSString *)replacementString
 {
-    int i,tLength;
+    NSInteger i,tLength;
     unichar tUniChar;
     
 	SSLog(5, "WBTimeControl -shouldChangeTextInRange(%i,%i), to \"%@\".", affectedCharRange.location, affectedCharRange.length, replacementString) ;
@@ -713,13 +713,13 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
     if (stepper!=nil)
     {
         NSMutableString * tString;
-        int tValue;
+        NSInteger tValue;
         
         tString=[[[textView string] mutableCopy] autorelease];
         
         [tString replaceCharactersInRange:affectedCharRange withString:replacementString];
         
-        tValue=[tString intValue];
+        tValue=[tString integerValue];
         
         if (tValue>_WBTimeControlMax[selected])
         {
@@ -727,7 +727,7 @@ int _WBTimeControlMax[WBTIMECONTROL_CELL_COUNT]={23,59};
         }
         else
         {
-            [stepper setIntValue:tValue];
+            [stepper setIntegerValue:tValue];
         }
 
     }

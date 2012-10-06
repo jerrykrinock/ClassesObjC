@@ -1,7 +1,7 @@
 #import "SSTableView.h"
 
 @interface NSObject ( ContextualMenuDelegate )
-	- (NSMenu*)menuForTableColumnIndex:(int)iCol rowIndex:(int)iRow ;
+	- (NSMenu*)menuForTableColumnIndex:(NSInteger)iCol rowIndex:(NSInteger)iRow ;
 @end
 
 @implementation SSTableView
@@ -25,8 +25,8 @@
 	NSMenu* output = nil ;
 	
 	NSPoint point = [self convertPoint:[evt locationInWindow] fromView:nil] ;
-    int iCol = [self columnAtPoint:point];
-    int iRow = [self rowAtPoint:point];
+    NSInteger iCol = [self columnAtPoint:point];
+    NSInteger iRow = [self rowAtPoint:point];
 	
     if (		iCol >= 0
 			&&	iRow >= 0

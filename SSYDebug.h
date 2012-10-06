@@ -11,7 +11,7 @@ extern id ssyDebugGlobalObject ;
 #if 0
 #warning Compiling with SSYTRACE macros activated to make NSLogs
 #define MIRSKY 1
-#define SSYTRACE(identifier,object) { NSString* objectDesc = object ? [NSString stringWithFormat:@" %@", [(id)object shortDescription]] : @"" ; NSLog(@"SSYTrace: %06d (%@)%@", identifier, [[[NSString stringWithUTF8String:__FILE__] lastPathComponent] stringByDeletingPathExtension], objectDesc) ; }
+#define SSYTRACE(identifier,object) { NSString* objectDesc = object ? [NSString stringWithFormat:@" %@", [(id)object shortDescription]] : @"" ; NSLog(@"SSYTrace: %06ld (%@)%@", (long)identifier, [[[NSString stringWithUTF8String:__FILE__] lastPathComponent] stringByDeletingPathExtension], objectDesc) ; }
 #else
 #define SSYTRACE(identifier,object) 
 #endif
@@ -46,7 +46,7 @@ NSString* SSYDebugBacktrace(void) ;
  Note that this function never returns the caller of this function, since you
  should already know that or can get it by __PRETTY_FUNCTION__.
 */
-NSString* SSYDebugBacktraceDepth(int depth) ;
+NSString* SSYDebugBacktraceDepth(NSInteger depth) ;
 
 /*!
  @brief    Returns a string consisting of the symbol name of the

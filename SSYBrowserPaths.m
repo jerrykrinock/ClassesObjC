@@ -2,9 +2,8 @@
 #import "NSString+MorePaths.h"
 #import "NSString+Base64.h" 
 #import "NSData+FileAlias.h"
-#import "SSYSuperFileManager.h"
 #import "NSFileManager+TempFile.h"
-#import "SSYAuthorizedTaskmaster+CopyPaths.h"
+#import "CPHTaskMaster+CopyPaths.h"
 #import "NSObject+MoreDescriptions.h"
 
 NSString* const SSYBrowserPathsErrorDomain = @"SSYBrowserPathsErrorDomain" ;
@@ -24,7 +23,9 @@ NSString* ProfilesIniPath(NSString* appSupportRelativePath, NSString* homePath) 
 						  homePath:(NSString*)homePath {
 	NSString* filepathProfilesIni = ProfilesIniPath(appSupportRelativePath, homePath) ;
 	
-	NSString* strungFile = [[[NSString alloc] initWithContentsOfFile:filepathProfilesIni] autorelease] ;
+	NSString* strungFile = [[[NSString alloc] initWithContentsOfFile:filepathProfilesIni
+                                                        usedEncoding:NULL
+                                                               error:NULL] autorelease] ;
 	
 	NSArray* names = nil ;
 	
@@ -65,14 +66,16 @@ NSString* ProfilesIniPath(NSString* appSupportRelativePath, NSString* homePath) 
 	NSError* error = nil ;
 
 	NSString* filepathProfilesIni = ProfilesIniPath(appSupportRelativePath, homePath) ;
-	NSString* strungFile = [[NSString alloc] initWithContentsOfFile:filepathProfilesIni] ;
+	NSString* strungFile = [[NSString alloc] initWithContentsOfFile:filepathProfilesIni
+                                                       usedEncoding:NULL
+                                                              error:NULL] ;
 	if (!strungFile) {
 		// This may happen if desired profile is on an Other Mac Account,
 		// where we don't have read permission.  
 		// Try copying the file to a temporary location using
 		// a privileged-if-necessary Helper tool
 		NSString* tempPath = [[NSFileManager defaultManager] temporaryFilePath] ;
-		ok = [[SSYAuthorizedTaskMaster sharedTaskmaster] copyPath:filepathProfilesIni
+		ok = [[CPHTaskmaster sharedTaskmaster] copyPath:filepathProfilesIni
 														   toPath:tempPath
 														  error_p:&error] ;
 		if (!ok) {
@@ -80,7 +83,9 @@ NSString* ProfilesIniPath(NSString* appSupportRelativePath, NSString* homePath) 
 		}
 		
 		// Now try reading the copied temporary file
-		strungFile = [[NSString alloc] initWithContentsOfFile:tempPath] ;
+		strungFile = [[NSString alloc] initWithContentsOfFile:tempPath
+                                                 usedEncoding:NULL
+                                                        error:NULL] ;
 		
 		// Delete the temporary file
 		BOOL trivialOk = [[NSFileManager defaultManager] removeItemAtPath:tempPath
@@ -97,13 +102,13 @@ NSString* ProfilesIniPath(NSString* appSupportRelativePath, NSString* homePath) 
 		NSScanner* scanner = [[NSScanner alloc] initWithString:strungFile] ;
 		
 		NSString* nameLine = [[NSString alloc] initWithFormat:@"Name=%@\n", profileName] ;
-		int isRelative = 1 ; //  Try and fail safe; since I have always seen it as = 1.
+		NSInteger isRelative = 1 ; //  Try and fail safe; since I have always seen it as = 1.
 		NSString* pathFromDisk = nil;
 		
 		[scanner scanUpToString:nameLine intoString:NULL] ;
 		[scanner scanString:nameLine intoString:NULL] ;
 		[scanner scanString:@"IsRelative=" intoString:NULL] ;
-		[scanner scanInt:&isRelative] ;
+		[scanner scanInteger:&isRelative] ;
 		[scanner scanString:@"Path=" intoString:NULL] ;
 		[scanner scanUpToString:@"\n" intoString:&pathFromDisk] ;
 		

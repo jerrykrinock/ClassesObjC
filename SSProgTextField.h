@@ -8,13 +8,13 @@
 	SSRolloverButton* _hyperButton ;
 	SSRolloverButton* _cancelButton ;
 	NSRect _wholeFrame ;
-	int progBarLimit ;
+	NSInteger progBarLimit ;
 	NSTimeInterval _nextProgressUpdate ;
 }
 
 - (void)setVerb:(NSString*)newVerb
 		 resize:(BOOL)resize ;
-- (void)setProgressBarWidth:(float)width ;
+- (void)setProgressBarWidth:(CGFloat)width ;
 - (void)setHasCancelButtonWithTarget:(id)target
 							  action:(SEL)action ;
 // To show determinate progress

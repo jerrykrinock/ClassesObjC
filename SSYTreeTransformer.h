@@ -55,7 +55,7 @@ the two trees have different formats; that is, different keys and sub-keys.
 /*
 Same as previous method, specialized to the case of no reformatter argument */
 
-- (id)deepTransformedCopyOf:(id)nodeIn ;
+- (id)copyDeepTransformOf:(id)nodeIn ;
 /* returns a copy which the invoking method must release */
 
 @end

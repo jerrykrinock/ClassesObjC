@@ -10,7 +10,7 @@
 #import "NSInvocation+Quick.h"
 #import "NSArray+Stringing.h"
 #import "NSDictionary+KeyPaths.h"
-#import "NSArray+SimpleMutations.h"
+#import "NSArray+SSYMutations.h"
 
 NSString* const constKeyStaticConfigInfo = @"staticConfigInfo" ;
 NSString* const constKeyPlainText = @"plainText" ;
@@ -118,7 +118,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	return activeCompletions ;
 }
 
-- (float)fontSize {
+- (CGFloat)fontSize {
 	CGFloat frameHeight = [self frame].size.height ;
 	CGFloat fontSize ;
 #if 0
@@ -289,7 +289,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	
 	// The hyperWidth and cancelWidth cannot be adjusted.
 	// The remainder, textAndBarWidth, will be split between textField and progBar	
-	CGFloat requiredTextWidth = [[[self textField] stringValue] widthForHeight:FLT_MAX
+	CGFloat requiredTextWidth = [[[self textField] stringValue] widthForHeight:CGFLOAT_MAX
 																		  font:[[self textField] font]] ;
 	CGFloat textExcessWidth = [self textWidth] - requiredTextWidth ;
 	
@@ -406,7 +406,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 						 argumentAddresses:&target, &action] ;
 }
 
-- (void)setProgressBarWidth:(float)barWidth {
+- (void)setProgressBarWidth:(CGFloat)barWidth {
 	NSInvocation* invocation = [NSInvocation invocationWithTarget:[self progBar]
 														 selector:@selector(setWidth:)
 												  retainArguments:YES
@@ -439,7 +439,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	
 	// Make textToDisplay by appending ellipsis to verbToDisplay
 	NSString* text = [textField stringValue] ;
-	float requiredWidth = [text widthForHeight:FLT_MAX
+	CGFloat requiredWidth = [text widthForHeight:CGFLOAT_MAX
 										  font:[textField font]] ;
 	[textField setWidth:requiredWidth] ;
 	[self sizeToFitTextOnly:NO] ;
@@ -603,14 +603,16 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	[[textField cell] setLineBreakMode:NSLineBreakByTruncatingMiddle] ;
 	
 	// Make textToDisplay by appending ellipsis to verbToDisplay
-	NSString* text = [NSString stringWithFormat:@"%@%C", localizedVerb, 0x2026] ;
+	NSString* text = [NSString stringWithFormat:
+                      @"%@%C",
+                      localizedVerb,
+                      (unsigned short)0x2026] ;
 	[textField setStringValue:text] ;
 	
-	NSProgressIndicator* progBar = [self progBar] ;
 	[self setTextWidthForText] ;
 	// For NSProgressIndicator Bug
 	[self rejuvenateProgressBar] ;
-	progBar = [self progBar] ; // The new one, that is
+	NSProgressIndicator* progBar = [self progBar] ; // The new one, that is
 	[progBar setIndeterminate:indeterminate] ;
 	[progBar startAnimation:self] ;
 	[progBar setHidden:NO] ;
@@ -645,7 +647,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	NSTextField* textField = [self textField] ;
 	[[textField cell] setLineBreakMode:NSLineBreakByTruncatingMiddle] ;
 	[textField setStringValue:text] ;
-	CGFloat requiredTextWidth = [text widthForHeight:FLT_MAX
+	CGFloat requiredTextWidth = [text widthForHeight:CGFLOAT_MAX
 												font:[textField font]] ;
 	[textField setWidth:requiredTextWidth] ;
 
@@ -661,12 +663,13 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 		NSDictionary* attributes = [NSDictionary dictionaryWithObjectsAndKeys:
 									font, NSFontAttributeName,
 									[NSColor blueColor], NSForegroundColorAttributeName,
-									[NSNumber numberWithInt:NSUnderlineStyleSingle], NSUnderlineStyleAttributeName,
+									[NSNumber numberWithInteger:NSUnderlineStyleSingle], NSUnderlineStyleAttributeName,
 									nil] ;				
 		NSAttributedString* title = [[NSAttributedString alloc] initWithString:hyperText
 																	attributes:attributes] ;
 		[hyperButton setAttributedTitle:title] ;
 		hyperWidth = [title widthForHeight:100.0] ;
+        [title release] ;
 	}
 	else {
 		hyperWidth = 0.0 ;
@@ -944,7 +947,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 }	
 
 - (void)incrementDoubleValueByObject:(NSNumber*)value {
-	[self incrementDoubleValueBy:[value floatValue]] ;
+	[self incrementDoubleValueBy:[value doubleValue]] ;
 }	
 
 - (SSYProgressView*)initWithFrame:(NSRect)frame {

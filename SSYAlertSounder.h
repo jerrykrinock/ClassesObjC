@@ -1,5 +1,12 @@
 #import <Cocoa/Cocoa.h>
 
+/*
+ Use this if you need to keep a process running long enough for your
+ sound to complete playing.  This is an integer so that it can be
+ used as a parameters to functions that require integers, like sleep().
+ */
+#define SECONDS_NEEDED_FOR_ONE_ALERT_SOUND 1
+
 
 /*!
  @brief    This is a quick hacky wrapper on Audio Services

@@ -1,5 +1,10 @@
 #import <Cocoa/Cocoa.h>
 
+#if DEBUG
+#warning Logging unreal SSYPopUpTableHeaderCell invocations
+#define LOG_UNREAL_SSY_POP_UP_TABLE_HEADER_CELLS 1
+#endif
+
 
 /*!
  @brief    A table header cell that is a popup menu!
@@ -7,7 +12,7 @@
  @details  This class is based on Keith Blount's original work
  http://www.cocoabuilder.com/archive/message/cocoa/2005/4/16/133285
  or http://lists.apple.com/archives/cocoa-dev/2005/Apr/msg01223.html
- but I've made emough improvements to it that I decided it deserves
+ but I've made enough improvements to it that I decided it deserves
  to have my own SSY prefix.
  
  The instance variable realSelf is to work around in case a bug occurs:

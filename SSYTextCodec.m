@@ -24,8 +24,8 @@ stringEncodingStated_p:(NSStringEncoding*)stringEncodingStated_p
 	// Discover and set line endings type (dos, old Mac or unix)
 	NSString* newLinesFound = nil ;
 	if (!error) {	
-		int rLocation = stringASCII ? [stringASCII rangeOfString:@"\r"].location : 0 ;
-		int nLocation = stringASCII ? [stringASCII rangeOfString:@"\n"].location : 0 ;
+		NSInteger rLocation = stringASCII ? [stringASCII rangeOfString:@"\r"].location : 0 ;
+		NSInteger nLocation = stringASCII ? [stringASCII rangeOfString:@"\n"].location : 0 ;
 		
 		// Set to whichever occurs first in the file: \r\n, \r or \n
 		if (nLocation == rLocation + 1) {
@@ -47,12 +47,12 @@ stringEncodingStated_p:(NSStringEncoding*)stringEncodingStated_p
 	NSString *operaBookitUTF8Key = @"encoding=utf8" ;
 	
 	NSDictionary *encodingDict = [NSDictionary dictionaryWithObjectsAndKeys:
-								  [NSNumber numberWithUnsignedInt:NSUTF8StringEncoding], utfdash8Key,
-								  [NSNumber numberWithUnsignedInt:NSMacOSRomanStringEncoding], xmacromanKey,
-								  [NSNumber numberWithUnsignedInt:NSShiftJISStringEncoding], shiftJisKey,
-								  [NSNumber numberWithUnsignedInt:[NSString defaultCStringEncoding]], xmacsystemKey,
-								  [NSNumber numberWithUnsignedInt:NSUTF8StringEncoding], operaUTF8Key,
-								  [NSNumber numberWithUnsignedInt:NSUTF8StringEncoding], operaBookitUTF8Key,
+								  [NSNumber numberWithUnsignedInteger:NSUTF8StringEncoding], utfdash8Key,
+								  [NSNumber numberWithUnsignedInteger:NSMacOSRomanStringEncoding], xmacromanKey,
+								  [NSNumber numberWithUnsignedInteger:NSShiftJISStringEncoding], shiftJisKey,
+								  [NSNumber numberWithUnsignedInteger:[NSString defaultCStringEncoding]], xmacsystemKey,
+								  [NSNumber numberWithUnsignedInteger:NSUTF8StringEncoding], operaUTF8Key,
+								  [NSNumber numberWithUnsignedInteger:NSUTF8StringEncoding], operaBookitUTF8Key,
 								  nil];
 	
 	NSRange range;
@@ -65,8 +65,8 @@ stringEncodingStated_p:(NSStringEncoding*)stringEncodingStated_p
 			range = [stringASCII rangeOfString:key options:NSCaseInsensitiveSearch];
 			if (range.location != NSNotFound)
 			{
-				stringEncodingStated = [[encodingDict objectForKey:key] unsignedIntValue] ; 
-				stringEncodingUsed = [[encodingDict objectForKey:key] unsignedIntValue] ; 
+				stringEncodingStated = [[encodingDict objectForKey:key] unsignedIntegerValue] ; 
+				stringEncodingUsed = [[encodingDict objectForKey:key] unsignedIntegerValue] ; 
 				decodedString = [[NSString alloc] initWithData:fileDataIn encoding:stringEncodingStated] ;
 				break ;
 			}

@@ -8,17 +8,34 @@
 	return [[NSString applicationSupportFolderForThisApp] stringByAppendingPathComponent:@".SSYSemaphore"] ;
 }
 
-+ (NSString*)currentKey  {
-	return [NSString stringWithContentsOfURL:[NSURL fileURLWithPath:[self path]]
-								usedEncoding:NULL
-									   error:NULL] ;
-}
++ (NSString*)currentKeyEnforcingTimeLimit:(NSTimeInterval)timeLimit  {
+	NSString* currentKey = nil ;
+	BOOL overlimit ;
+	if (timeLimit == 0.0) {
+		overlimit = NO ;
+	}
+	else {
+		overlimit = (-[[[NSFileManager defaultManager] modificationDateForPath:[self path]] timeIntervalSinceNow] > timeLimit) ;
+	}
+	
+	if (overlimit) {
+		// Current leasee has timed out
+		[self clearError_p:NULL] ;
+	}
+	else {
+		// Current leasee has not timed out
+		currentKey = [NSString stringWithContentsOfURL:[NSURL fileURLWithPath:[self path]]
+										  usedEncoding:NULL
+												 error:NULL] ;
+	}
 
+	return currentKey ;
+}
 
 + (BOOL)acquireWithKey:(NSString*)acquireKey
 				setKey:(NSString*)newKey
 		initialBackoff:(NSTimeInterval)initialBackoff
-		 backoffFactor:(float)backoffFactor
+		 backoffFactor:(CGFloat)backoffFactor
 			maxBackoff:(NSTimeInterval)maxBackoff
 			   timeout:(NSTimeInterval)timeout
 			 timeLimit:(NSTimeInterval)timeLimit 
@@ -28,15 +45,13 @@
 	NSString* currentKey = nil ;
 	NSString* path = [self path] ;
 	while ([(NSDate*)[NSDate date] compare:deadline] == NSOrderedAscending) {
-		currentKey = [self currentKey] ;
+		currentKey = [self currentKeyEnforcingTimeLimit:timeLimit] ;
 		BOOL requestorIsCurrentOwner = [acquireKey isEqualToString:currentKey] ;
 		if (
 			(!currentKey)
-			// semaphore is not in use
+			// semaphore is not in use or its time limit has expired
 			||
 			(requestorIsCurrentOwner)
-			||
-			(-[[[NSFileManager defaultManager] modificationDateForPath:path] timeIntervalSinceNow] > timeLimit)	// current leasee has exceeded time limit (crashed?)
 			) {
 			// semaphore is available
 			if (!requestorIsCurrentOwner) {

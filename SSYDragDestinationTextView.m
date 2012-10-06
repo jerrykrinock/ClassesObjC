@@ -15,11 +15,18 @@
 						arguments:nil] ;
 }
 
+/*
+ 
+// At one time, I used the following two methods to make the 'tab' and 'shift-tab'
+// keystrokes tab to the next and prior fields instead of being treated as text
+// But then I found a better way: -[NSTextView setFieldEditor:YES].
+// So this code is out.
+
 - (void)setTabToNextKeyView:(BOOL)yn {
 	_tabToNextKeyView = yn ;
 }
 
-/*- (void)keyDown:(NSEvent*)event {
+- (void)keyDown:(NSEvent*)event {
 	NSString *s = [event charactersIgnoringModifiers] ;
 	unichar keyChar = 0 ;
 	if ([s length] == 1) {
@@ -93,7 +100,7 @@
 
 // Forward the drop to the delegate, or else, its window's delegate
 - (BOOL)performDragOperation:(id <NSDraggingInfo>)sender {
-    BOOL answer ;
+    BOOL answer = NO ;
 	if ([self respondsToSelector:@selector(delegate)]) {
 		answer = [(id <SSYDragDestinationTextViewDelegate>)[self delegate] performDragOperation:sender
 										   destination:self] ;
@@ -115,6 +122,11 @@
 		[self drawFocusRing] ;
 	}
 }
+
+- (void)setString:(NSString *)aString {
+	[super setString:aString] ;
+}
+
 
 @end
 
@@ -221,5 +233,3 @@
 	return NO ;
 }
 */
-
-

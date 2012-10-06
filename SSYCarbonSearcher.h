@@ -106,8 +106,8 @@ enum SSYCarbonSearcherContinueStyle {
 			findDirectories:(BOOL)findDirectories
 				  findFiles:(BOOL)findFiles
 	   maxFindsPerIteration:(UInt32)maxFindsPerIteration
-	 maxSecondsPerIteration:(float)maxSecondsPerIteration
-			  maxIterations:(int)maxIterations
+	 maxSecondsPerIteration:(CGFloat)maxSecondsPerIteration
+			  maxIterations:(NSInteger)maxIterations
 		 maxFindsGrandTotal:(UInt32)maxFindsGrandTotal
 					verbose:(BOOL)verbose
   printResultsEachIteration:(BOOL)printResultsEachIteration

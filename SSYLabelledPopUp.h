@@ -35,7 +35,7 @@
  @brief    Returns the index selected in the menu of the receiver's popup
  button.
 */
-- (int)selectedIndex ;
+- (NSInteger)selectedIndex ;
 
 /*!
  @brief    Resizes the height of the receiver to accomodate the its current values,

@@ -53,8 +53,8 @@
 	refer to what I'd call their "parents" and "grandparents" respectively, have
 	always worried me a little. */
 	
-	int lastIndex = [[self itemArray] count] - 1 ;
-	int i ;
+	NSInteger lastIndex = [[self itemArray] count] - 1 ;
+	NSInteger i ;
 	for (i=lastIndex; i>=0; i--) {
 		NSMenuItem* item = [self itemAtIndex:i] ;
 		[item setSubmenu:nil] ;

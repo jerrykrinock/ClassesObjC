@@ -12,7 +12,7 @@
 
 - (void)keyDown:(NSEvent*)event {
 	NSString *s = [event charactersIgnoringModifiers] ;
-	int unsigned modifierFlags = [event modifierFlags] ;
+	NSUInteger modifierFlags = [event modifierFlags] ;
 	BOOL cmdKeyDown = ((modifierFlags & NSCommandKeyMask) != 0) ;
 	unichar keyChar = 0 ;
 	BOOL didHandle = NO ;

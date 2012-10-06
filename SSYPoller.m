@@ -5,7 +5,7 @@
 
 + (BOOL)waitUntilInvocation:(NSInvocation*)invocation
 			 initialBackoff:(NSTimeInterval)initialBackoff
-			  backoffFactor:(float)backoffFactor
+			  backoffFactor:(CGFloat)backoffFactor
 				 maxBackoff:(NSTimeInterval)maxBackoff
 					timeout:(NSTimeInterval)timeout
 				  timeLimit:(NSTimeInterval)timeLimit

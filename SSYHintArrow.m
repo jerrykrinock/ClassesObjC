@@ -1,5 +1,6 @@
 #import "SSYHintArrow.h"
 #import <QuartzCore/CoreAnimation.h>
+#include <tgmath.h>
 
 NSString* const SSYHintArrowDidCloseNotification = @"SSYHintArrowDidCloseNotification" ;
 
@@ -59,7 +60,7 @@ static SSYHintArrow* static_helpArrow = nil ;
 	CGFloat maxX = floorf(NSMaxX(contentArea) * scaleFactor - 0.5f) ;
 	CGFloat minY = ceilf(NSMinY(contentArea) * scaleFactor + 0.5f) ;
 	CGFloat midY = NSMidY(contentArea) * scaleFactor ;
-	CGFloat maxY = floorf(NSMaxY(contentArea) * scaleFactor - 0.5f) ;
+	CGFloat maxY = floor(NSMaxY(contentArea) * scaleFactor - 0.5f) ;
 	
     NSBezierPath* path = [NSBezierPath bezierPath] ;
     [path setLineJoinStyle:NSRoundLineJoinStyle] ;
@@ -160,7 +161,7 @@ static SSYHintArrow* static_helpArrow = nil ;
 
 - (SSYHintArrow *)initAttachedToPoint:(NSPoint)point 
 							 inWindow:(NSWindow *)window 
-						   atDistance:(float)distance {
+						   atDistance:(CGFloat)distance {
     // Create dummy initial contentRect for window.
     NSRect contentRect = NSMakeRect(0.0, 0.0, m_size.width, m_size.height) ;
     contentRect.size = m_size ;
@@ -290,6 +291,7 @@ static SSYHintArrow* static_helpArrow = nil ;
 	CGPathCloseSubpath(shakePath) ;
 	shakeAnimation.path = shakePath ;
 	shakeAnimation.duration = 3 ;
+    CFRelease(shakePath) ; // I hope that CAKeyframeAnimation retains its -path.
 	return shakeAnimation ;
 }
 
