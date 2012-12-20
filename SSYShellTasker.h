@@ -2,7 +2,7 @@ extern NSInteger const SSYShellTaskerErrorFailedLaunch  ;
 extern NSInteger const SSYShellTaskerErrorTimedOut  ;
 extern NSString* const constKeySSYShellTaskerTimeout ;
 
-@interface SSYShellTasker : NSObject {
+__attribute__((visibility("default"))) @interface SSYShellTasker : NSObject {
 }
 
 /*!

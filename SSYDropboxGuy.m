@@ -4,7 +4,7 @@
 #import "NSArray+SafeGetters.h"
 #import "NSString+Base64.h"
 #import "SSYDropboxGuy.h"
-#import "NSString+PythonPickles.h"
+//#import "NSString+PythonPickles.h"
 #import "NSString+MorePaths.h"
 #import "SSYOtherApper.h"
 #import "SSYShellTasker.h"

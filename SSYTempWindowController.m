@@ -39,6 +39,7 @@ static NSMutableSet* static_windowControllers = nil ;
 		if ([candidate isMemberOfClass:[self class]]) {
 			instance = (SSYTempWindowController*)candidate ;
             [instance retain] ;
+            break ;
 		}
 	}
 	

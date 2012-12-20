@@ -307,7 +307,6 @@ static NSInteger SSAppSQLiteCallback(void* NotUsed, NSInteger nColumns, char **c
 				 [values stringEsquotedSQLValue]] ;
 		
 	}
-	
 	return query ;
 }
 

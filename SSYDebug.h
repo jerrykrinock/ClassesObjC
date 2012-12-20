@@ -3,7 +3,8 @@
 #define SSY_DEBUG_INCLUDED 1
 
 extern id ssyDebugGlobalObject ;
-
+extern double ssyDebugGlobalDouble ;
+extern NSInteger ssyDebugGlobalInteger ;
 /*!
  @brief    Define a trace-level debugging macro
  @param    object  An object whose description you want printed

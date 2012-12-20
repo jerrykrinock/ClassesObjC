@@ -374,12 +374,19 @@ end:;
 	return pid ;
 }
 	
-+ (NSArray*)pidsOfMyRunningExecutablesName:(NSString*)executableName {
++ (NSArray*)pidsOfMyRunningExecutablesName:(NSString*)executableName
+                                   zombies:(BOOL)zombies {
 	// The following reverse-engineering emulates the way that ps presents
 	// an executable name when it is a zombie process:
-	NSString* zombifiedExecutableName = [NSString stringWithFormat:
-										 @"(%@)",
-										 [executableName substringToIndex:16]] ;
+	NSString* zombifiedExecutableName ;
+    if (zombies) {
+        zombifiedExecutableName = [NSString stringWithFormat:
+           @"(%@)",
+           [executableName substringToIndex:16]] ;
+    }
+    else {
+        zombifiedExecutableName = nil ;
+    }
 
 	NSMutableArray* pids = [[NSMutableArray alloc] init] ;
 	NSString* targetUser = NSUserName() ;
@@ -408,6 +415,59 @@ end:;
 	[pids release] ;
 	
 	return [answer autorelease] ;
+}
+
++ (SSYOtherApperProcessState)stateOfPid:(pid_t)pid {
+   NSData* stdoutData ;
+	NSString* options = @"-xww" ;
+    NSString* pidString = [NSString stringWithFormat:@"%ld", (long)pid] ;
+	NSArray* args = [[NSArray alloc] initWithObjects:options, @"-o", @"state=", pidString, nil] ;
+	// In args, the "=" say to omit the column headers
+	[SSYShellTasker doShellTaskCommand:@"/bin/ps"
+							 arguments:args
+						   inDirectory:nil
+							 stdinData:nil
+						  stdoutData_p:&stdoutData
+						  stderrData_p:NULL
+							   timeout:5.0
+							   error_p:NULL] ;
+	[args release] ;
+	SSYOtherApperProcessState processState ;
+    if ([stdoutData length] == 0) {
+        processState = SSYOtherApperProcessDoesNotExist ;
+    }
+	else {
+        NSString* stateString = [[NSString alloc] initWithData:stdoutData
+                                                      encoding:[NSString defaultCStringEncoding]] ;
+        unichar firstChar = [stateString characterAtIndex:0] ;
+        switch (firstChar) {
+            case 'S' :
+                processState = SSYOtherApperProcessStateRunning ;
+                break ;
+            case 'U' :
+                processState = SSYOtherApperProcessStateWaiting ;
+                break ;
+            case 'I' :
+                processState = SSYOtherApperProcessStateIdle ;
+                break ;
+            case 'R' :
+                processState = SSYOtherApperProcessStateRunnable ;
+                break ;
+            case 'T' :
+                processState = SSYOtherApperProcessStateStopped ;
+                break ;
+            case 'Z' :
+                processState = SSYOtherApperProcessStateZombie ;
+                break ;
+            default :
+                processState = SSYOtherApperProcessUnknown ;
+                break ;
+        }
+        
+        [stateString release] ;
+    }
+
+    return processState ;
 }
 
 + (NSInteger)majorVersionOfBundlePath:(NSString*)bundlePath {
@@ -532,7 +592,7 @@ end:;
 	[[processInfo retain] autorelease] ;
 	// Otherwise, it will be released as soon as the app whose bundlePath it is quits.
 	// Before we did that, if Bookdog was running, BookMacster would crash in 
-	// -[SSYOtherApper quitThisUsersAppWithBundlePath:timeout:killAfterTimeout:wasRunning_p:error_p:] after
+	// -[SSYOtherApper quitThisUsersAppWithBundlePath:closeWindows:timeout:killAfterTimeout:wasRunning_p:error_p:] after
 	// quitting Bookdog, when sending [self isThisUsersAppRunningWithBundlePath:bundlePath].
 	// (This bug was fixed in BookMacster 1.5.7.)
 	CFRelease(processInfo) ;
@@ -616,6 +676,7 @@ end:;
 }
 
 + (BOOL)quitThisUsersAppWithBundlePath:(NSString*)bundlePath
+                          closeWindows:(BOOL)closeWindows
 						  wasRunning_p:(BOOL*)wasRunning_p
 							   error_p:(NSError**)error_p {
 	// Because AppleScript 'tell application' will *launch* an app if it is not
@@ -633,15 +694,13 @@ end:;
 	BOOL ok = YES ;
 	if (isRunning) {
 		NSString* source = [NSString stringWithFormat:
-		@"tell application \"%@\"\n"
-		@"  close windows\n"
-		@"  quit\n"
-		@"end tell",
-		bundlePath] ;
-		// The 'close windows' improves the reliability of this script,
-		// thanks to Shane Stanley <sstanley@myriad-com.com.au>
-		// 'AppleScriptObjC Explored' <www.macosxautomation.com/applescript/apps/>
-		// See http://lists.apple.com/archives/applescript-users/2011/Jun/threads.html  June 8
+                            @"tell application \"%@\"\n",
+                            bundlePath] ;
+        if (closeWindows) {
+            source = [source stringByAppendingString:@"close windows\n"] ;
+        }
+        source = [source stringByAppendingString:@"quit\nend tell"] ;
+
 		ok = [self runAppleScriptSource:source
 								error_p:error_p] ;
 	}
@@ -798,6 +857,7 @@ end:;
 }
 
 + (BOOL)quitThisUsersAppWithBundlePath:(NSString*)bundlePath
+                          closeWindows:(BOOL)closeWindows
 							   timeout:(NSTimeInterval)timeout
 					  killAfterTimeout:(BOOL)killAfterTimeout
 						  wasRunning_p:(BOOL*)wasRunning_p
@@ -811,6 +871,7 @@ end:;
 	
 	NSDate* endDate = [NSDate dateWithTimeIntervalSinceNow:timeout] ;
 	BOOL ok = [self quitThisUsersAppWithBundlePath:bundlePath
+                                      closeWindows:closeWindows
 									  wasRunning_p:wasRunning_p
 										   error_p:error_p] ;
 	
@@ -845,6 +906,7 @@ end:;
 		// Sometimes Firefox doesn't "get" it.  Send the AppleScript 'quit' again,
 		// ignoring any error
 		[self quitThisUsersAppWithBundlePath:bundlePath
+                                closeWindows:closeWindows
 								wasRunning_p:NULL  // We want the original wasRunning state, not now's
 									 error_p:NULL] ;
 	}

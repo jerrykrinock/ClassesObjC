@@ -7,6 +7,23 @@ extern NSString* const SSYOtherApperKeyUser ;
 extern NSString* const SSYOtherApperKeyExecutable ;
 
 /*!
+ @brief    Enumeration of process states corresponding to those given by the
+ unix 'ps' program.  See man ps.
+ */
+enum SSYOtherApperProcessState_enum {
+    SSYOtherApperProcessUnknown         = -1, // This would be an error.
+    SSYOtherApperProcessDoesNotExist    = 0,
+    SSYOtherApperProcessStateZombie     = 1,  // Z
+    SSYOtherApperProcessStateStopped    = 2,  // T
+    SSYOtherApperProcessStateRunnable   = 3,  // R
+    SSYOtherApperProcessStateIdle       = 4,  // I
+    SSYOtherApperProcessStateWaiting    = 5,  // U
+    SSYOtherApperProcessStateRunning    = 6,  // S
+    } ;
+typedef enum SSYOtherApperProcessState_enum SSYOtherApperProcessState ;
+
+
+/*!
  @brief    A class of class methods for observing and controlling other applications.
 
  @detail   Many of the methods in this class work upon a process' ProcessSerialNumber,
@@ -14,7 +31,7 @@ extern NSString* const SSYOtherApperKeyExecutable ;
  "things which can appear in the Dock that are not documents and are launched by the Finder or Dock".
  (See documentation of ProcessSerialNumber).
 */
-@interface SSYOtherApper : NSObject {}
+__attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 
 /*!
  @brief    Launches an application specified by its bundle path (i.e. 
@@ -84,12 +101,22 @@ extern NSString* const SSYOtherApperKeyExecutable ;
  and whose user is the current user..
  
  @details  If no such qualified processes exist, or if executableName is nil,
- returns an empty array.  Will even return zombie (Z) and (UEs) processes.
+ returns an empty array.
  It launches an NSTask to do this; NSApp is not required.
  @param    executableName  The last component of the process' command path.
+ @param    zombies  If YES, results will include any qualifying zombie (Z) 
+ and processes, and processes in uninterruptible wait (U or, more typicall, UE
+ states.  If NO, will results will ignore these processes.
  @result   The unix process identifier (pid), or 0 if no qualifying process exists.
  */
-+ (NSArray*)pidsOfMyRunningExecutablesName:(NSString*)executableName ;
++ (NSArray*)pidsOfMyRunningExecutablesName:(NSString*)executableName
+                                   zombies:(BOOL)zombies ;
+
+/*!
+ @brief    Returns a member of an enumeration which gives the current running
+ or not running state of a given process, identified by its pid
+*/
++ (SSYOtherApperProcessState)stateOfPid:(pid_t)pid ;
 
 /*!
  @brief    Returns the major version which is believed to be the version of the
@@ -236,8 +263,16 @@ extern NSString* const SSYOtherApperKeyExecutable ;
  
  @details  Will block the thread until the target app quits, or timeout.
 
- @param    bundle path  The bundle path of the application to be 
+ @param    bundle path  The bundle path of the application to be
  quit, or nil to no-op.
+ @param    closeWindows  If YES, will tell the subject app to 'close windows'
+ before quitting.  This improves the probability that the quitting will work, 
+ and has been found to be effective with Google Chrome and Firefox in
+ particular (June 2011).  It was suggested by Shane Stanley…
+ http://lists.apple.com/archives/applescript-implementors/2011/Jun/msg00010.html
+ But with some apps, for example Roccat, it will cause open tabs,
+ which should be remembered for the next launch, to be forgotten, which is
+ not acceptable.
  @param    killAfterTimeout  This parameter was added in BookMacster 1.9.8
  after I found Google Chrome in a state where it wouldn't quit, not even if
  you activated it and clicked "Quit" in its menu.  Then, I found that this only
@@ -250,6 +285,7 @@ extern NSString* const SSYOtherApperKeyExecutable ;
  still running when timeout expired.
  */
 + (BOOL)quitThisUsersAppWithBundlePath:(NSString*)bundlePath
+                          closeWindows:(BOOL)closeWindows
 							   timeout:(NSTimeInterval)timeout
 					  killAfterTimeout:(BOOL)killAfterTimeout
 						  wasRunning_p:(BOOL*)wasRunning_p
@@ -351,7 +387,7 @@ extern NSString* const SSYOtherApperKeyExecutable ;
 
 NSLog(@"pid=%ld", (long)[SSYOtherApper pidOfMyRunningExecutableName:@"Finder"]) ;
 NSLog(@"pid=%ld", (long)[SSYOtherApper pidOfMyRunningExecutableName:@"loginwindow"]) ;
-NSLog(@"pid=%ld", (long)[SSYOtherApper pidOfMyRunningExecutableName:@"BookMacster-Quatch"]) ;
+NSLog(@"pid=%ld", (long)[SSYOtherApper pidOfMyRunningExecutableName:@"Sheep-Sys-Quatch"]) ;
 NSLog(@"pid=%ld", (long)[SSYOtherApper pidOfMyRunningExecutableName:@"Crap"]) ;
 exit(0) ;	
 

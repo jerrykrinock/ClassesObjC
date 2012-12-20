@@ -7,15 +7,18 @@
 	[self exposeBinding:@"tokenizingCharacter"] ;
 }
 
-- (void)setObjectValue:(id)value {	
+- (void)setObjectValue:(id)value {
 	if ([value isKindOfClass:[NSSet class]]) {
 		// Convert to an NSArray, as required by super
 		value = [value allObjects] ;
+        
+        // The following line was added in BookMacster 1.12.7, to
+        // alphabetize tags in Detail View (littleCloud) and Inspector
+		value = [[(NSCountedSet*)value allObjects] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)] ;
 	}
 
 	[super setObjectValue:value] ;
 }
-
 
 /*!
  @brief    Calculates the expansion frame which is used to display the

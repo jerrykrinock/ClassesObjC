@@ -42,46 +42,6 @@
 	return self ;
 }
 
-/* 
- Bug: The following code does not work, because it never executes
- when invoked by bindings.  I think maybe it might work if it was moved in to 
- SSYTokenFieldCell, whose -setObjectValue: method does execute.
- */
-- (void)setObjectValue:(id)value {
-	if ([value respondsToSelector:@selector(objectAtIndex:)]) {
-		// value is a NSArray
-		value = [(NSArray*)value countedSet] ;
-	}
-	else if ([value respondsToSelector:@selector(countForObject:)]) {
-		value = [(NSSet*)value countedSet] ;
-	}
-	
-	// value is now either a NSCountedSet or a _NSStateMarker
-	if ([value respondsToSelector:@selector(allObjects)]) {
-		NSArray* sortedStrings = [[(NSCountedSet*)value allObjects] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)] ;
-		NSMutableArray* stringsWithCounts = [[NSMutableArray alloc] initWithCapacity:[(NSSet*)value count]] ;
-		for (NSString* string in sortedStrings) {
-			NSString* stringWithCount = [NSString stringWithFormat:
-										 @"%@ [%ld]",
-										 string,
-										 (long)[(NSCountedSet*)value countForObject:string]] ;
-			[stringsWithCounts addObject:stringWithCount] ;
-		}
-		
-		// super wants value to be an NSArray
-		value = [[stringsWithCounts copy] autorelease] ;
-		[stringsWithCounts release] ;
-	}
-	else {
-		// value is an _NSStateMarker
-	}
-	
-	[super setObjectValue:value] ;
-	m_objectValueIsOk = YES ;
-	[self sizeHeightToFit] ;
-	m_objectValueIsOk = NO ;
-}
-
 - (void)sizeToOneLine {
 	NSRect frame = [self frame] ;
 	[self sizeToFit] ;

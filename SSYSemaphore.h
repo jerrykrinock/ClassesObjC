@@ -1,5 +1,19 @@
 #import <Cocoa/Cocoa.h>
 
+__attribute__((visibility("default"))) @interface SSYSemaphorePidKey : NSObject {
+    pid_t m_pid ;
+    NSString* m_key ;
+}
+
+@property (assign) pid_t pid ;
+@property (copy) NSString* key ;
+
++ (NSString*)pidStringForPid:(NSInteger)pid ;
+
++ (SSYSemaphorePidKey*)pidKeyWithPid:(pid_t)pid
+                                 key:(NSString*)key ;
+@end
+
 /*!
  @brief    Useful in running exclusive processes.
  
@@ -27,30 +41,27 @@
  Also, a file is more visible for debugging than a user default.
  Most of the code in this implementation is for checking timeouts.
  */
-@interface SSYSemaphore : NSObject {
+__attribute__((visibility("default"))) @interface SSYSemaphore : NSObject {
 }
 
 /*!
  @brief    Attempts to acquire exclusively the receiver's system
  semaphore, blocking and retrying up to its timeout.
  
- @details  Send this message before beginning a task which
- needs exclusive access to system resources guarded by the
- semaphore.
+ @details  Send this message before beginning a task which needs exclusive
+ access to system resources guarded by the semaphore.
  
- Begins by setting the receiver's current backoff, a private
- attribute, to its initial backoff.  Then begins attempts...
+ Begins by setting the receiver's current backoff, a private attribute, to its
+ initial backoff.  Then begins attempts...
  
- If the receiver's system semaphore cannot be obtained
- because it already exists exclusively on the system, sleeps for
- the receiver's current backoff, multiplies the backoff by the
- backoff factor, limits the backoff to the max backoff,  and
- repeats this until either the semaphore is obtained or the
+ If the receiver's system semaphore cannot be obtained because it already exists
+ exclusively on the system, sleeps for the receiver's current backoff,
+ multiplies the backoff by the backoff factor, limits the backoff to the max
+ backoff, and repeats this until either the semaphore is obtained or the
  receiver's timeout is exceeded.
  
- @param    timeout  The time interval after which lockError_p
- will give up and return NO if it cannot acquire its receiver's
- system semaphore.
+ @param    timeout  The time interval after which lockError_p will give up and
+ return NO if it cannot acquire its receiver's system semaphore.
  @param    timeLimit  The period of time which the previous
  semaphore acquisition is allowed to retain the semaphore,
  after which this method will succeed and rudely overwrite
@@ -68,6 +79,7 @@
 */
 + (BOOL)acquireWithKey:(NSString*)acquireKey
 				setKey:(NSString*)newKey
+                forPid:(pid_t)forPid
 		initialBackoff:(NSTimeInterval)initialBackoff
 		 backoffFactor:(CGFloat)backoffFactor
 			maxBackoff:(NSTimeInterval)maxBackoff
@@ -88,7 +100,7 @@
 + (BOOL)clearError_p:(NSError**)error_p ;
 
 /*!
- @brief    Returns the key with which the currently-active
+ @brief    Returns the pid key with which the currently-active
  semaphore was created, or nil if the semaphore is currently
  available, and, optionally, clears the semaphore if its
  age exceeds a given time limit
@@ -102,7 +114,7 @@
  If a timeLimit of 0.0 is passed, the age of the semaphore is
  ignored and it will not be cleared.
  */
-+ (NSString*)currentKeyEnforcingTimeLimit:(NSTimeInterval)timeLimit ;
++ (SSYSemaphorePidKey*)currentPidKeyEnforcingTimeLimit:(NSTimeInterval)timeLimit ;
 
 /*!
  @brief    Returns the path in the filesystem to a file whose

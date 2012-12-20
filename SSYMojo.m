@@ -222,21 +222,31 @@ end:
 
 - (BOOL)save:(NSError**)error_p {
     NSError* error = nil ;
-	BOOL ok = [[self managedObjectContext] save:&error] ;
-    // The following was added in BookMacster 1.11.10 because Cocoa error
-    // 134030 error is sometimes received from users and, and I think it's
-    // probably coming from here, but I want to prove it.  With this change,
-    // 134030 will now be the underlying error.
-    if (!ok) {
-        error = [SSYMakeError(149034, @"Error saving local settings") errorByAddingUnderlyingError:error] ;
+    BOOL ok = NO ;
+    @try {
+        ok = [[self managedObjectContext] save:&error] ;
+        // The following was added in BookMacster 1.12 because Cocoa error
+        // 134030 error is sometimes received from users and, and I think it's
+        // probably coming from here, but I want to prove it.  With this change,
+        // 134030 will now be the underlying error.
+        if (!ok) {
+            error = [SSYMakeError(149034, @"Error saving local settings") errorByAddingUnderlyingError:error] ;
+        }
+    }
+    @catch (NSException* exception) {
+        ok = NO ;
+        if (!error) {
+            error = SSYMakeError(149035, @"Exception saving local settings") ;
+        }
+        error = [error errorByAddingUnderlyingException:exception] ;
+    }
+
+    if (error_p) {
         NSPersistentStore* store = [[self managedObjectContext] store1] ;
         error = [error errorByAddingUserInfoObject:[store description]
                                             forKey:@"Store"] ;
         error = [error errorByAddingUserInfoObject:[[store URL] path]
                                             forKey:@"Path"] ;
-    }
-    
-    if (error_p) {
         *error_p = error ;
     }
     

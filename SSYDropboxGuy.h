@@ -2,7 +2,7 @@
 
 extern NSString* const SSYDropboxGuyErrorDomain ;
 
-@interface SSYDropboxGuy : NSObject
+__attribute__((visibility("default"))) @interface SSYDropboxGuy : NSObject
 
 /*!
  @brief    Returns the icon of the Dropbox application, or the

@@ -14,6 +14,7 @@ extern NSString* const constKeyParent ;
  Examples: recursivelyPerformSelector:... et al, moveToBkmxParent... et al
 */
 @interface SSYManagedTreeObject : SSYManagedObject <SSYIndexee> {
+    NSArray* m_cachedChildrenOrdered ;
 }
 
 @property (retain) NSSet* children ;

@@ -11,7 +11,7 @@ extern NSString* const SSYLaunchdGuyErrorDomain ;
  where identifier is of the form
     tld.company.appName.docID
 */
-@interface SSYLaunchdGuy : NSObject {
+__attribute__((visibility("default"))) @interface SSYLaunchdGuy : NSObject {
 }
 
 /*!

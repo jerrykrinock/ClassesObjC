@@ -62,7 +62,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 	
     [task setLaunchPath:command] ;
     
-    // The following section was added in BookMacster 1.11.10 to stop annoying
+    // The following section was added in BookMacster 1.12 to stop annoying
     // warnings in Xcode console when running in Xcode:
     // dyld: DYLD_ environment variables being ignored because main executable (/bin/ps) is setuid or setgid
     // This was suggested by Ken Thomases here…

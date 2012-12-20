@@ -37,7 +37,7 @@
 				ReleaseResource(aResHandle );
 			}
             
-            // Added in BookMacster 1.11.10
+            // Added in BookMacster 1.12
             CloseResFile(fileRef) ;
 			
 			// theData is the 'TEXT' resource data

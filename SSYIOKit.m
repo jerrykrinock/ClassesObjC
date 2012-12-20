@@ -126,7 +126,7 @@ CFDataRef CreateMACAddress(io_iterator_t intfIterator)
     
     // IOIteratorNext retains the returned object, so release it when we're done with it.
     while ((intfService = IOIteratorNext(intfIterator))) {
-        // Memory leak fixed by Jerry Krinock in BookMacster 1.11.10:
+        // Memory leak fixed by Jerry Krinock in BookMacster 1.12:
         if (MACAddressAsCFData != NULL) {
             CFRelease(MACAddressAsCFData) ;
         }

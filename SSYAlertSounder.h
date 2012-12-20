@@ -19,7 +19,7 @@
  that, in System Preferences > Sound > Play User Interface Sound Effects
  be enabled.  But this appears to work without it.
 */
-@interface SSYAlertSounder : NSObject {
+__attribute__((visibility("default"))) @interface SSYAlertSounder : NSObject {
 	NSMutableDictionary* m_soundIds ;
 }
 

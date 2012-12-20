@@ -56,19 +56,64 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 
 @implementation SSYManagedTreeObject
 
+
+- (void)didTurnIntoFault {
+	/* cocoa-dev@lists.apple.com
+     
+	 On 20090812 20:41, Jerry Krinock said:
+	 
+	 Now I understand that if nilling an instance variable after releasing
+	 it is done in -dealloc, it is papering over other memory management
+	 problems and is therefore bad programming practice.  But I believe
+	 that this practice is OK in -didTurnIntoFault because, particularly
+	 when Undo is involved, -didTurnIntoFault may be invoked more than once
+	 on an object.  Therefore nilling after releasing in -didTurnIntoFault
+	 is recommended.
+	 
+	 On 20090812 22:06, Sean McBride said
+	 
+	 I made that discovery a few months back too, and I agree with your
+	 reasoning and conclusions.  I also asked an Apple guy at WWDC and he
+	 concurred too.
+	 */
+	
+	[m_cachedChildrenOrdered release] ;	m_cachedChildrenOrdered = nil ;
+	
+	[super didTurnIntoFault] ;
+}
+
+
 @dynamic children ;
 @dynamic index ;
 @dynamic parent ;
 @dynamic nodeId ;
 
-- (void)postWillSetNewChildren:(NSSet*)newValue {
+- (void)handleWillSetNewChildren:(NSSet*)newValue {
 	[self postWillSetNewValue:newValue
 					   forKey:constKeyChildren] ;
+    
+    [m_cachedChildrenOrdered release] ;
+    m_cachedChildrenOrdered = nil ;
 }
 
-- (void)setChildren:(NSSet *)value 
+/* Testing indicates that this method can be invoked, and children can by
+ mutated, without invoking -setChildren: or any other setter.  In other words,
+ this method seems to be an independent value-changer.  Therefore, the following
+ override is necessary.  It was added in BookMacster 1.12.7. */
+- (NSMutableSet*)mutableSetValueForKey:(NSString *)key {
+    if ([key isEqualToString:constKeyChildren]) {
+        // Children may be changed
+        [m_cachedChildrenOrdered release] ;
+        m_cachedChildrenOrdered = nil ;
+    }
+    
+    return [super mutableSetValueForKey:key] ;
+}
+
+
+- (void)setChildren:(NSSet *)value
 {    
-	[self postWillSetNewChildren:value] ;
+	[self handleWillSetNewChildren:value] ;
 	
     [self willChangeValueForKey:constKeyChildren];
     [self setPrimitiveChildren:[NSMutableSet setWithSet:value]];
@@ -77,7 +122,7 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 
 - (void)addChildrenObject:(SSYManagedTreeObject *)value 
 {    
-	[self postWillSetNewChildren:[[self children] setByAddingObject:value]] ;
+	[self handleWillSetNewChildren:[[self children] setByAddingObject:value]] ;
 	
     NSSet *changedObjects = [[NSSet alloc] initWithObjects:&value count:1];
     
@@ -90,7 +135,7 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 
 - (void)removeChildrenObject:(SSYManagedTreeObject *)value 
 {
-	[self postWillSetNewChildren:[[self children] setByRemovingObject:value]] ;
+	[self handleWillSetNewChildren:[[self children] setByRemovingObject:value]] ;
 	
     NSSet *changedObjects = [[NSSet alloc] initWithObjects:&value count:1];
     
@@ -103,7 +148,7 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 
 - (void)addChildren:(NSSet *)value 
 {    
-	[self postWillSetNewChildren:[[self children] setByAddingObjectsFromSet:value]] ;
+	[self handleWillSetNewChildren:[[self children] setByAddingObjectsFromSet:value]] ;
 	
     [self willChangeValueForKey:constKeyChildren withSetMutation:NSKeyValueUnionSetMutation usingObjects:value];
     [[self primitiveChildren] unionSet:value];
@@ -112,7 +157,7 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 
 - (void)removeChildren:(NSSet *)value 
 {
-	[self postWillSetNewChildren:[[self children] setByRemovingObjectsFromSet:value]] ;
+	[self handleWillSetNewChildren:[[self children] setByRemovingObjectsFromSet:value]] ;
 	
     [self willChangeValueForKey:constKeyChildren withSetMutation:NSKeyValueMinusSetMutation usingObjects:value];
     [[self primitiveChildren] minusSet:value];
@@ -148,19 +193,41 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 }
 
 - (NSArray*)childrenOrdered {
+    /* Prior to BookMacster 1.12.7, this implementation was only one line,
     return [[self children] arraySortedByKeyPath:constKeyIndex] ;
+     The m_cachedChildrenOrdered ivar was added to improve performance in
+     BookMacster 1.12.7, particularly when invoked by
+     -[StarkContainersHierarchicalMenu menu:updateItem:atIndex:shouldCancel:]
+     to update the the Doxtus menu in the Dock menu or status menulet, when
+     an open document contained a folder with thousands of children.  Note that,
+     even if the preference "Show Status in Menu Bar" was switched off, the
+     Dock menu would still be active, and the system would pre-populate this
+     menu typically 10 seconds after the application was launched and such a
+     document was opened.  This would cause inexplicable beachballing for
+     tens of seconds. */
+
+    if (!m_cachedChildrenOrdered) {
+        m_cachedChildrenOrdered = [[[self children] arraySortedByKeyPath:constKeyIndex] retain] ;
+    }
+    
+    return m_cachedChildrenOrdered ;
 }
 
+
+/* Performance of this method is not good; it takes too long when invoked by
+ [Stark mergeFoldersWithInfo:].  I tried to make it better by using
+ -[Stark sortedChildren] instead of iterating through -[Stark children].
+ But that made it about 8x slower. */
 - (SSYManagedTreeObject*)childAtIndex:(NSInteger)index {
-	SSYManagedTreeObject* child = nil ;
-	for (SSYManagedTreeObject* aChild in [self children]) {
+    SSYManagedTreeObject* iteratedChild = nil ;
+    for (SSYManagedTreeObject* aChild in [self children]) {
 		if ([aChild indexValue] == index) {
-			child = aChild ;
+			iteratedChild = aChild ;
 			break ;
 		}
 	}
-	
-	return child ;
+    
+    return iteratedChild ;
 }
 
 - (NSInteger)numberOfChildren {

@@ -323,7 +323,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	//   retain cycle, but it was not very well explained and even noted in the header
 	//   file that this was not well understood.  I think I understand it now.  See the
 	//   header file comments for this method, for parameter keepWithNext.
-	// • In iterating through -[info allKeys], constKeyBkmslf and constKeyIxporter are no
+	// • In iterating through -[info allKeys], constKeyDocument and constKeyIxporter are no
 	//   longer skipped.  The former was done to eliminate Internal Error 208-9593, and 
 	//   the latter was done because I couldn't think of any reason why it should be
 	//   omitted either.

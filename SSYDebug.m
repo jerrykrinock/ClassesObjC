@@ -3,6 +3,8 @@
 #import <mach-o/dyld.h>
 
 id ssyDebugGlobalObject = nil ;
+double ssyDebugGlobalDouble = 0.0 ;
+NSInteger ssyDebugGlobalInteger = 0 ;
 
 NSString* SSYDebugBacktrace(void) {
 	NSMutableString* nsString = [[NSMutableString alloc] initWithFormat:
