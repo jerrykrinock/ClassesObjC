@@ -22,6 +22,7 @@ extern NSString* const constKeyParent ;
 - (NSInteger)numberOfChildren ;
 - (SSYManagedTreeObject*)childAtIndex:(NSInteger)index ;
 - (NSArray*)childrenOrdered ;
+- (void)deeplyForgetCachedChildrenOrdered ;
 
 @property (retain) SSYManagedTreeObject* parent ;
 

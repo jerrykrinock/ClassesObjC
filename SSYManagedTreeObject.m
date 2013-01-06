@@ -77,7 +77,7 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 	 concurred too.
 	 */
 	
-	[m_cachedChildrenOrdered release] ;	m_cachedChildrenOrdered = nil ;
+    [self forgetCachedChildrenOrdered] ;
 	
 	[super didTurnIntoFault] ;
 }
@@ -88,12 +88,35 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 @dynamic parent ;
 @dynamic nodeId ;
 
+- (void)forgetCachedChildrenOrdered {
+    // Children may be changed
+    [m_cachedChildrenOrdered release] ;
+    m_cachedChildrenOrdered = nil ;
+}
+
+- (void)deeplyForgetCachedChildrenOrdered {
+    [self forgetCachedChildrenOrdered] ;
+    
+    // Call this method recursively to perform selector on each of this
+    // object's children's...children
+    // Notice that we invoke *children* not *childrenOrdered* since the latter is
+    // cached, and presumably the cache is invalid, because we are being
+    // invoked to wipe it.
+    NSSet* children = [self children] ;
+    for (SSYManagedTreeObject* child in children) {
+        [child deeplyForgetCachedChildrenOrdered] ;
+    }
+}
+
+
+
+
+
 - (void)handleWillSetNewChildren:(NSSet*)newValue {
 	[self postWillSetNewValue:newValue
 					   forKey:constKeyChildren] ;
     
-    [m_cachedChildrenOrdered release] ;
-    m_cachedChildrenOrdered = nil ;
+    [self forgetCachedChildrenOrdered] ;
 }
 
 /* Testing indicates that this method can be invoked, and children can by
@@ -102,9 +125,7 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
  override is necessary.  It was added in BookMacster 1.12.7. */
 - (NSMutableSet*)mutableSetValueForKey:(NSString *)key {
     if ([key isEqualToString:constKeyChildren]) {
-        // Children may be changed
-        [m_cachedChildrenOrdered release] ;
-        m_cachedChildrenOrdered = nil ;
+        [self forgetCachedChildrenOrdered];
     }
     
     return [super mutableSetValueForKey:key] ;
@@ -210,7 +231,14 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
         m_cachedChildrenOrdered = [[[self children] arraySortedByKeyPath:constKeyIndex] retain] ;
     }
     
-    return m_cachedChildrenOrdered ;
+    // arrayWithArray was added in BookMacster 1.12.8 to fix crashes which
+    // were occuring in various methods when m_cachedChildrenOrdered was
+    // changed.  I also removed -arrayWithArray in several methods where the
+    // return of this method is used, and crashes were noted, because it is
+    // no longer necessary now that this method is returning a copy.  In other
+    // words, I removed the ad-hoc fixes and replaced them with the
+    // following global, root-cause fix.
+    return [NSArray arrayWithArray:m_cachedChildrenOrdered] ;
 }
 
 
