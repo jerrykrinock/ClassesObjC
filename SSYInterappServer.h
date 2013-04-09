@@ -14,6 +14,10 @@ extern NSString* const SSYInterappServerErrorDomain ;
  
  Troubleshooting tip.  To see if a port is active in the system,
     sudo launchctl bstree | grep <fragmentOfYourPortName>
+ Example:
+    sudo launchctl bstree | grep sheepsystems
+ For searching so I can find this comment later:
+    command line, active mach port, active mach ports, 
 */
 @interface SSYInterappServer : NSObject {
 	CFMessagePortRef m_port ;
@@ -24,8 +28,10 @@ extern NSString* const SSYInterappServerErrorDomain ;
 /*!
  @brief    The contextInfo which is set in +leaseServerWithPortName::::.
  
- @details  This accessor is typically used to retrieve the receiver's
+ @details  The getter is typically used to retrieve the receiver's
  contextInfo in the delegate method -interappServer:didReceiveHeaderByte:data:.
+ The setter is typically used to re-purpose the receiver to handle a different
+ message.
 */
 @property (assign, nonatomic) void* contextInfo ;
 

@@ -19,11 +19,11 @@
 
 + (NSString*)keyFromString:(NSString*)string {
     NSString* key ;
-    if ([string length] < 5) {
+    if ([string length] < 6) {
         key = nil ;
     }
     else {
-        key = [string substringFromIndex:5] ;
+        key = [string substringFromIndex:6] ;
     }
     
     return key ;
@@ -37,7 +37,7 @@
 	return [NSString stringWithFormat:
             @"%@:%@",
             [[self class] pidStringForPid:[self pid]],
-            [self string]] ;
+            [self key]] ;
 }
 
 @synthesize pid = m_pid ;
@@ -71,13 +71,17 @@
 }
 
 - (NSString*)description {
-    return [self string] ;
+    return [NSString stringWithFormat:
+            @"%@ pid=%ld key=%@",
+            [super description],
+            (long)[self pid],
+            [self key]] ;
 }
 
 + (SSYSemaphorePidKey*)pidKeyWithPid:(pid_t)pid
-                     key:(NSString*)key {
+                                 key:(NSString*)key {
     SSYSemaphorePidKey* instance = [[self alloc] initWithPid:pid
-                                             key:key] ;
+                                                         key:key] ;
     return [instance autorelease] ;
 }
 
@@ -115,8 +119,8 @@
 	else {
 		// Current leasee has not timed out
 		currentPidKeyString = [NSString stringWithContentsOfURL:[NSURL fileURLWithPath:[self path]]
-										  usedEncoding:NULL
-												 error:NULL] ;
+                                                   usedEncoding:NULL
+                                                          error:NULL] ;
 	}
 
     SSYSemaphorePidKey* currentPidKey ;
@@ -126,7 +130,7 @@
     else {
         currentPidKey = nil ;
     }
-    
+
     return currentPidKey ;
 }
 
@@ -164,10 +168,11 @@
 			) {
 			// semaphore is available
 			if (!requestorIsCurrentOwner) {
-				[newKey writeToFile:path
-						 atomically:YES
-						   encoding:NSUTF8StringEncoding
-							  error:NULL] ;
+                NSString* newString = [acquirePidKey string] ;
+				[newString writeToFile:path
+                            atomically:YES
+                              encoding:NSUTF8StringEncoding
+                                 error:NULL] ;
 			}
 
 			return YES ;
@@ -199,7 +204,7 @@
 }
 
 + (BOOL)clearError_p:(NSError**)error_p {
-	NSError* error ;
+	NSError* error = nil  ;
 	BOOL ok = [[NSFileManager defaultManager] removeItemAtPath:[self path]
 														 error:&error] ;
     

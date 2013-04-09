@@ -57,32 +57,6 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 @implementation SSYManagedTreeObject
 
 
-- (void)didTurnIntoFault {
-	/* cocoa-dev@lists.apple.com
-     
-	 On 20090812 20:41, Jerry Krinock said:
-	 
-	 Now I understand that if nilling an instance variable after releasing
-	 it is done in -dealloc, it is papering over other memory management
-	 problems and is therefore bad programming practice.  But I believe
-	 that this practice is OK in -didTurnIntoFault because, particularly
-	 when Undo is involved, -didTurnIntoFault may be invoked more than once
-	 on an object.  Therefore nilling after releasing in -didTurnIntoFault
-	 is recommended.
-	 
-	 On 20090812 22:06, Sean McBride said
-	 
-	 I made that discovery a few months back too, and I agree with your
-	 reasoning and conclusions.  I also asked an Apple guy at WWDC and he
-	 concurred too.
-	 */
-	
-    [self forgetCachedChildrenOrdered] ;
-	
-	[super didTurnIntoFault] ;
-}
-
-
 @dynamic children ;
 @dynamic index ;
 @dynamic parent ;
@@ -108,9 +82,30 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
     }
 }
 
-
-
-
+- (void)didTurnIntoFault {
+	/* cocoa-dev@lists.apple.com
+     
+	 On 20090812 20:41, Jerry Krinock said:
+	 
+	 Now I understand that if nilling an instance variable after releasing
+	 it is done in -dealloc, it is papering over other memory management
+	 problems and is therefore bad programming practice.  But I believe
+	 that this practice is OK in -didTurnIntoFault because, particularly
+	 when Undo is involved, -didTurnIntoFault may be invoked more than once
+	 on an object.  Therefore nilling after releasing in -didTurnIntoFault
+	 is recommended.
+	 
+	 On 20090812 22:06, Sean McBride said
+	 
+	 I made that discovery a few months back too, and I agree with your
+	 reasoning and conclusions.  I also asked an Apple guy at WWDC and he
+	 concurred too.
+	 */
+	
+    [self forgetCachedChildrenOrdered] ;
+	
+	[super didTurnIntoFault] ;
+}
 
 - (void)handleWillSetNewChildren:(NSSet*)newValue {
 	[self postWillSetNewValue:newValue

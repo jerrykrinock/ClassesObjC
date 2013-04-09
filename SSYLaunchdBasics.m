@@ -9,10 +9,6 @@
 
 
 + (NSSet*)installedLaunchdAgentLabelsWithPrefix:(NSString*)prefix {
-#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
-	NSArray* allAgentNames = [[NSFileManager defaultManager] directoryContentsAtPath:[self homeLaunchAgentsPath]] ;
-#else
-	// You don't always get *less* code by using a later SDK…
 	NSError* error = nil ;
 	NSArray* allAgentNames = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:[self homeLaunchAgentsPath]
 																				 error:&error] ;
@@ -25,7 +21,7 @@
 				NSLog(@"Internal Error 257-8032 %@", error) ;
 		}
 	}
-#endif
+
 	NSMutableSet* targetAgentNames = [[NSMutableSet alloc] init] ;
 	if (prefix) {
 		for (NSString* agentName in allAgentNames) {

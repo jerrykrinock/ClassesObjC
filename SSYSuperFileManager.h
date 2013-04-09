@@ -6,7 +6,13 @@
  which can present an authentication dialog and perform some actions with
  elevated permissions if necessary.
 
- @details  
+ @details  This class requires CPHTaskMaster, which in turn requires
+ Mac OS X 10.6, to do anything useful.  If the deployment target
+ (MAC_OS_X_VERSION_MIN_REQUIRED) is Mac OS X 10.5 or less,
+ methods in this class will return an error if called upon to do
+ anything that NSFileManager can't do.  The idea is that you
+ can still use it in targets compiled with low deployment
+ targets
 */
 @interface SSYSuperFileManager : NSFileManager {
 }

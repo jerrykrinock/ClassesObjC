@@ -129,9 +129,6 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 	BOOL ok = YES ;
 	NSString* myAgentDirectory = [SSYLaunchdBasics homeLaunchAgentsPath] ;
 	
-#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
-	NSArray* existingFilenames = [[NSFileManager defaultManager] directoryContentsAtPath:myAgentDirectory] ;
-#else
 	NSError* error = nil ;
 	NSArray* existingFilenames = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:myAgentDirectory
 																					 error:&error] ;
@@ -139,7 +136,6 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 		NSLog(@"Internal Error 923-5347 %@" , error) ;
 		return NO ;
 	}
-#endif
 
 	// Unload and remove file for all agents with given identifier
 	if (prefix) {
@@ -221,14 +217,9 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 	// interpret the remainder of the digits as hexidecimal.  It's C !
 	NSDictionary* attributes = [NSDictionary dictionaryWithObject:octal644
 														   forKey:NSFilePosixPermissions] ;
-#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
-	ok =[[NSFileManager defaultManager] changeFileAttributes:attributes
-													  atPath:path] ;
-#else
 	ok =[[NSFileManager defaultManager] setAttributes:attributes
 										 ofItemAtPath:path
 												error:&error] ;
-#endif
 	if (!ok) {
 		NSString* msg = [NSString stringWithFormat:
 						 @"Could not set permissions for agent %@",

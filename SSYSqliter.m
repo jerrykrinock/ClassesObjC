@@ -48,7 +48,10 @@ NSString* const SSYSqliterSqliteErrorCode = @"SqliteErrorCode" ;
 		// interpreted by sqlite as the sqlite keyword NULL.
 	}
 	else {
-		answer = [NSString stringWithFormat:@"'Unsupported value class %@'", [self class]] ;
+		NSLog(@"%s Error: Class %@ cannot be stringified.",
+                  __PRETTY_FUNCTION__,
+                  [self class]) ;
+        answer = nil ;
 	}
 
 	return answer ;
@@ -413,7 +416,7 @@ static NSInteger SSAppSQLiteCallback(void* NotUsed, NSInteger nColumns, char **c
 
 - (void *)db {
     if (!m_db) {
-		NSError* error ;
+		NSError* error = nil  ;
 		BOOL ok = [self initDatabaseError_p:&error] ;
 		if (!ok) {
 			NSLog(@"Internal Error 928-2928 %@", [error longDescription]) ;
@@ -781,19 +784,24 @@ end:
 	}
 	
 	NSInteger result ;
-	result = sqlite3_wal_checkpoint(
-									m_db,  /* Database handle */
-									NULL   /* Name of attached database (or NULL for main/only database) */
-									) ;
-	// Note that an improved function which has some debugging
-	// features added, sqlite3_wal_checkpoint_v2(), was added in
-	// Sqlite version 3.6.8.
+    int nFramesLogged ;
+    int nFramesCheckpointed ;
+	result = sqlite3_wal_checkpoint_v2(
+                                       m_db,  /* Database handle */
+                                       NULL,  /* Name of attached database, NULL for main/only database */
+                                       SQLITE_CHECKPOINT_PASSIVE,
+                                       &nFramesLogged,
+                                       &nFramesCheckpointed) ;
 	if ((result != SQLITE_OK) && error_p) {  
 		*error_p = [self makeErrorWithAppCode:453035
 								   sqliteCode:result
 							sqliteDescription:sqlite3_errmsg([self db])
-										query:@"Not a query; doing checkpoint"
+										query:@"Doing checkpoint (not a query)"
 							   prettyFunction:__PRETTY_FUNCTION__] ;
+        *error_p = [*error_p errorByAddingUserInfoObject:[NSNumber numberWithInteger:nFramesLogged]
+                                                  forKey:@"Frames Logged"] ;
+        *error_p = [*error_p errorByAddingUserInfoObject:[NSNumber numberWithInteger:nFramesCheckpointed]
+                                                  forKey:@"Frames Checkpointed"] ;
 	}
 	
 	sqlite3_close(m_db) ;
@@ -1228,6 +1236,148 @@ end:
 	
 	return results ;
 }
+
+- (BOOL)setBlobData:(NSData*)blobData
+             forKey:(NSString*)blobKey
+              where:(NSString*)whereKey
+                 is:(id)whereValue
+            inTable:(NSString*)table
+              error:(NSError**)error_p {
+	void* db = [self db] ;
+	char* errMsg = NULL ;
+	NSInteger result ;
+	
+	// Find if the target item exists or not.  We will need this BOOL later
+	// because if it does not exist we do INSERT but if it does we do UPDATE.
+	NSString* statement = [[NSString alloc] initWithFormat:
+                           @"SELECT * FROM `%@` WHERE `%@` = %@",
+                           table,
+                           whereKey,
+                           [whereValue stringEsquotedSQLValue]] ;
+	BOOL itemExists = NO ;
+	NSError* error = nil ;
+	result = sqlite3_exec(db, [statement UTF8String], CheckExistenceOfSQLiteRow, &itemExists, &errMsg) ;
+	if (result != SQLITE_OK) {
+		NSString* errNS = [[NSString stringWithCString:errMsg
+											  encoding:NSUTF8StringEncoding] lowercaseString] ;
+		if ([errNS rangeOfString:@"no such table"].location != NSNotFound) {
+			result = SQLITE_NOTFOUND ;
+		}
+		error = [self makeErrorWithAppCode:453040
+								sqliteCode:result
+						 sqliteDescription:errMsg
+									 query:statement
+                            prettyFunction:__PRETTY_FUNCTION__] ;
+		sqlite3_free(errMsg) ;
+		[statement release] ;
+		goto end ;
+	}
+	else {
+		
+		// open transaction
+		result = sqlite3_exec(db, "begin transaction", NULL, NULL, &errMsg);
+		if (result != SQLITE_OK) {
+			error = [self makeErrorWithAppCode:453041
+									sqliteCode:result
+							 sqliteDescription:errMsg
+										 query:statement
+                                prettyFunction:__PRETTY_FUNCTION__] ;
+			sqlite3_free(errMsg) ;
+			[statement release] ;
+			goto end ;
+		}
+	}
+	[statement release] ;
+	
+	sqlite3_stmt* preparedStatement ;
+	if (result == SQLITE_OK) {
+		// write the SQL statement to UPDATE or INSERT
+		if (itemExists) {
+			// Note that in the WHERE clause, the column name is not enclosed in single quotes, but the value after the equals sign is
+			// Otherwise, it "just doesn't work"
+			statement = [[NSString alloc] initWithFormat:
+                         @"UPDATE %@ SET %@=? WHERE `%@` = %@",
+                         table,
+                         blobKey,
+                         whereKey,
+                         [whereValue stringEsquotedSQLValue]] ;
+		}
+		else {
+			statement = [[NSString alloc] initWithFormat:@"INSERT INTO %@ (`%@`,`%@`) VALUES (%@,?)",
+						 table,
+                         whereKey,
+						 blobKey,
+						 [whereValue stringEsquotedSQLValue]] ;
+		}
+
+		// compile (prepare?) the statement
+		result = sqlite3_prepare(db, [statement UTF8String], -1, &preparedStatement, NULL) ;
+		if (result != SQLITE_OK) {
+			error = [self makeErrorWithAppCode:453042
+									sqliteCode:result
+							 sqliteDescription:sqlite3_errmsg(db)
+										 query:statement
+                                prettyFunction:__PRETTY_FUNCTION__] ;
+			[statement release] ;
+			goto end ;
+		}
+		[statement release] ;
+	}
+	
+	if (result == SQLITE_OK) {
+		// bind attribute object
+		result = sqlite3_bind_blob(preparedStatement, 1, [blobData bytes], [blobData length], SQLITE_TRANSIENT) ;
+		if (result != SQLITE_OK) {
+			error = [self makeErrorWithAppCode:453043
+									sqliteCode:result
+							 sqliteDescription:sqlite3_errmsg(db)
+										 query:@"sqlite3_bind_blob()"
+                                prettyFunction:__PRETTY_FUNCTION__] ;
+		}
+	}
+	
+	if (result == SQLITE_OK) {
+		// execute the preparedStatement
+		result = sqlite3_step(preparedStatement);
+		if (result != SQLITE_DONE) {
+			error = [self makeErrorWithAppCode:453044
+									sqliteCode:result
+							 sqliteDescription:sqlite3_errmsg(db)
+										 query:@"sqlite3_bind_blob()"
+                                prettyFunction:__PRETTY_FUNCTION__] ;
+			goto end ;
+		}
+	}
+	
+	//  If this were in a loop, we would need to do this
+	//	// reset for next loop
+	//	sqlite3_reset(preparedStatement);
+	
+	// finalize simply frees memory
+	sqlite3_finalize(preparedStatement);
+	
+	// commit transaction
+	result = sqlite3_exec(db, "commit transaction", NULL, NULL, &errMsg);
+	if (result != SQLITE_OK) {
+		error = [self makeErrorWithAppCode:453045
+								sqliteCode:result
+						 sqliteDescription:errMsg
+									 query:@"commit transaction"
+                            prettyFunction:__PRETTY_FUNCTION__] ;
+		sqlite3_free(errMsg) ;
+		goto end ;
+	}
+    
+end:
+	if (error && error_p) {
+		*error_p = error ;
+	}
+    
+    return (error == nil) ;
+}
+
+
+
 
 
 // If I added the itemExists switch to the addNewItem... method below, I could invoke that method from

@@ -1,6 +1,15 @@
-#import "SSYSuperFileManager.h"
+#if MAC_OS_X_VERSION_MIN_REQUIRED > 1050
+#define CPH_TASKMASTER_AVAILABLE 1
+#else
+#define CPH_TASKMASTER_AVAILABLE 0
+#endif
+
+#if CPH_TASKMASTER_AVAILABLE
 #import "CPHTaskMaster+SetPermissions.h"
 #import "CPHTaskMaster+StatPaths.h"
+#endif
+
+#import "SSYSuperFileManager.h"
 #import <sys/stat.h>
 #import "NSError+SSYAdds.h"
 
@@ -25,11 +34,19 @@ static SSYSuperFileManager* defaultManager = nil ;
 			   error_p:(NSError**)error_p {
 	
 	NSNumber* oldPermissions = nil ;
+#if CPH_TASKMASTER_AVAILABLE
 	NSNumber* newPermissions = [NSNumber numberWithUnsignedShort:permissions] ;
 	BOOL ok = [[CPHTaskmaster sharedTaskmaster] getPermissionNumber_p:&oldPermissions
 															setPermissionNumber:newPermissions
 																		   path:path
 																		error_p:error_p] ;
+#else
+	BOOL ok = NO ;
+	if (error_p) {
+		*error_p = SSYMakeError(259101, @"Attempted an operation which is not supported in this old version of BookMacster") ;
+	}
+#endif
+
 	if (!ok) {
 		return NO ;
 	}
@@ -143,9 +160,16 @@ static SSYSuperFileManager* defaultManager = nil ;
 
 - (BOOL)setBulkPermissions:(NSDictionary*)permissions
 				   error_p:(NSError**)error_p {
+#if CPH_TASKMASTER_AVAILABLE
 	return [[CPHTaskmaster sharedTaskmaster] getPermissions_p:NULL
 														 setPermissions:permissions
 																error_p:error_p] ;
+#else
+	if (error_p) {
+		*error_p = SSYMakeError(259107, @"Attempted an operation which is not supported in this old version of BookMacster") ;
+	}
+	return NO ;
+#endif
 }
 
 - (BOOL)setDeepPermissions:(mode_t)permissions
@@ -154,11 +178,19 @@ static SSYSuperFileManager* defaultManager = nil ;
 				   error_p:(NSError**)error_p {
 	
 	NSNumber* oldPermissions = nil ;
+#if CPH_TASKMASTER_AVAILABLE
 	NSNumber* newPermissions = [NSNumber numberWithUnsignedShort:permissions] ;
 	BOOL ok = [[CPHTaskmaster sharedTaskmaster] getPermissionNumber_p:&oldPermissions
 															setPermissionNumber:newPermissions
 																		   path:path
 																		error_p:error_p] ;
+#else
+	BOOL ok = NO ;
+	if (error_p) {
+		*error_p = SSYMakeError(259102, @"Attempted an operation which is not supported in this old version of BookMacster") ;
+	}
+#endif
+	
 	if (!ok) {
 		return NO ;
 	}
@@ -284,12 +316,20 @@ BOOL canX = NO ;
 	}
 	else if (errno == EACCES) {
 		// Permission denied.  Haul out the big gun.
+#if CPH_TASKMASTER_AVAILABLE
 		ok = [[CPHTaskmaster sharedTaskmaster] statPath:path
 															 stat:&aStat
 														  error_p:error_p] ;
 		if (!ok && error_p) {
 			*error_p = [SSYMakeError(518383, @"Authorized stat failed") errorByAddingUnderlyingError:*error_p] ;
 		}
+#else
+		ok = NO ;
+		if (error_p) {
+			*error_p = SSYMakeError(259103, @"Attempted an operation which is not supported in this old version of BookMacster") ;
+		}
+		
+#endif
 	}
 	else if (error_p) {
 		NSString* msg = [NSString stringWithFormat:

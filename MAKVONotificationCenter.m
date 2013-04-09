@@ -140,11 +140,17 @@ static char MAKVONotificationMagicContext;
 		//    if center is not nil, does nothing and returns false
 		//       This will happen if another thread snuck in and set it.
 		// Mike's original line, does not work with garbage collection.
-		//   if(!OSAtomicCompareAndSwapPtrBarrier(nil, newCenter, (void *)&center)) {
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
 		// See Brian Webster's first comment in http://www.mikeash.com/?page=pyblog/key-value-observing-done-right.html
 		// Patched line:
-		if(!objc_atomicCompareAndSwapGlobalBarrier(nil, newCenter, &center)) {
-			// Thread race has occurred and we lost
+		BOOL weWon = objc_atomicCompareAndSwapGlobalBarrier(nil, newCenter, &center) ;
+#else
+        // Mike's original code, does not support Garbage Collection but works
+        // in 10.5 and earlier
+        BOOL weWon = OSAtomicCompareAndSwapPtrBarrier(nil, newCenter, (void *)&center) ;
+#endif
+        if (!weWon) {
+            // Thread race has occurred and we lost
 			// center has previously been set to newCenter by another thread
 			[newCenter release];
 		}

@@ -41,7 +41,8 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  @param    activate  If the specified application is not already
  launched, the newly-launched application is activated if YES, and
  if NO is not activated.  If the specified application is already
- launched, this parameter is ignored and the application is activated.
+ launched, this parameter will activate or deactivate it if this code is 
+ compiled with the Mac OS X 10.6 or later, or else do nothing.
  @param    error_p  If not NULL and if an error occurs, upon return,
            will point to an error object encapsulating the error.
  @result   YES if the method completed successfully, otherwise NO

@@ -4,11 +4,15 @@
 enum SSYVectorImageStyles_enum
 {
 	SSYVectorImageStylePlus,
-	SSYVectorImageStyleMinus, 
-	SSYVectorImageStyleTriangle, 
-	SSYVectorImageStyleArrow,
+	SSYVectorImageStyleMinus,
+    /* Triangle, horizonal baseline, pointing up, with top vertex 90 degrees */
+	SSYVectorImageStyleTriangle90,
+    /* Triangle, horizonal baseline, pointing up, with top vertex 2*arctan(.5) = 53.2 degrees */
+	SSYVectorImageStyleTriangle53,
 	SSYVectorImageStyleInfo,
-	SSYVectorImageStyleStar,
+	/* Five-pointed star used in SSYStarRatingView */
+    SSYVectorImageStyleStar,
+    /* White "X" inside a gray circle, used in SSYStarRatingView */
 	SSYVectorImageStyleRemoveX,
 } ;
 typedef enum SSYVectorImageStyles_enum SSYVectorImageStyle ;

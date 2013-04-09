@@ -34,6 +34,7 @@
 	SSYOperationQueue* m_operationQueue ;  // weak
 	NSInvocation* m_cancellor ;
 	BOOL m_skipIfError ;
+    NSConditionLock* m_lock ;
 }
 
 /*!
@@ -109,9 +110,9 @@
  
  SSYOperationLinker provides only one such condition lock.
  If a condition lock has previously been created by this method
- and not yet removed by -blockForLock, and if it has not yet been
- unlocked by -unlockLock, the old lock will be replaced and
- a warning will be logged. 
+ and its current condition indicates that it has not yet been
+ unlocked by -unlockLock, a warning will be logged and, in
+ DEBUG builds, an assertion raised.
  */
 - (void)prepareLock ;
 

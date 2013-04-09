@@ -10,6 +10,9 @@
 				 color:(NSColor*)color
 		 rotateDegrees:(CGFloat)rotateDegrees {
 	NSSize size = NSMakeSize(diameter, diameter) ;
+    // This is the width of a pencil-stroke that would make maximally legible text
+    // if you wanted to draw a single character of text within the given diameter.
+    // Think of an old-fashioned 7-segment LED display maybe.
 	CGFloat textDrawingLineWidth = diameter/TEXT_DRAWING_RECIPROCAL_LINE_WIDTH ;
 
 	NSImage* image = [[NSImage alloc] initWithSize:size] ;
@@ -41,19 +44,19 @@
 				[path stroke] ;
 			}
 			break ;
-		case SSYVectorImageStyleTriangle:
-		case SSYVectorImageStyleArrow:
+		case SSYVectorImageStyleTriangle90:
+		case SSYVectorImageStyleTriangle53:
 			[path setLineWidth:0.0] ;
 			
-			BOOL taller = (style == SSYVectorImageStyleArrow) ;
+			BOOL taller = (style == SSYVectorImageStyleTriangle53) ;
 			
 			CGFloat baselineOffset = 
 			taller
 			? radius
-			: radius/2 - textDrawingLineWidth/2 ; 
+			: radius/2 ; 
 			CGFloat baseline = radius - baselineOffset ;
 			
-			// Start at left
+			// Start at bottom left
 			[path moveToPoint:NSMakePoint(0, baseline)] ;
 
 			// Move to the right

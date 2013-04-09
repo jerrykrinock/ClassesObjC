@@ -135,19 +135,11 @@ static SSYMOCManager* sharedMOCManager = nil ;
 			NSFileManager* fm = [NSFileManager defaultManager] ;
 
             NSError* error = nil ;
-#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060) 
-			[fm removeFileAtPath:newPath
-						 handler:nil] ;
-			BOOL ok = [fm movePath:oldPath
-							toPath:newPath
-						   handler:nil] ;
-#else
 			[fm removeItemAtPath:newPath
 						   error:NULL] ;
 			BOOL ok = [fm moveItemAtPath:oldPath
 								  toPath:newPath
 								   error:&error] ;
-#endif
             if (!ok) {
                 NSLog(@"Error in %s: %@", __PRETTY_FUNCTION__, error) ;
             }

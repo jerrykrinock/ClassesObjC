@@ -347,7 +347,7 @@ NSString* const SSYPathObserverDemoIsDoneNotification = @"DaDemoDone" ;
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;	
 	
 	BOOL ok ;
-	NSError* error ;
+	NSError* error = nil  ;
 	NSInteger i ;
 	NSData* data ;
 	

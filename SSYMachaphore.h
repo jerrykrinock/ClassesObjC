@@ -151,7 +151,7 @@
  @implementation Doer
  
  - (void)doWork {
- NSError* error ;
+ NSError* error = nil  ;
  
  BOOL ok = [[SSYMachaphore sharedMachaphore] lockError_p:&error] ;
  if (ok) {

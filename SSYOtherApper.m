@@ -4,6 +4,7 @@
 #import "NSString+SSYExtraUtils.h"
 #import "NSFileManager+SomeMore.h"
 
+
 #if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060)
 
 /*!
@@ -40,7 +41,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	pid_t pid = 0 ; // not found
 	
 	if (bundleIdentifier) {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060		
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060		
         // Running the main run loop is necessary for -runningApplications to
         // update.  The next line is actually necessary in tools which may be lacking
         // a running run loop, and it actually works.
@@ -75,7 +76,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	pid_t pid = 0 ; // not found
 
     if (bundlePath) {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060		
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060		
         // Running the main run loop is necessary for -runningApplications to
         // update.  The next line is actually necessary in tools which may be lacking
         // a running run loop, and it actually works.
@@ -108,7 +109,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	NSString* path = nil ;
     
 	if (bundleIdentifier) {
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1070		
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060		
         // Running the main run loop is necessary for -runningApplications to
         // update.  To my amazement, the next line is actually necessary, and
         // it actually works.
@@ -139,43 +140,131 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	return path ;
 }
 
-
-
-
-
-
-
 + (BOOL)launchApplicationPath:(NSString*)path
 					 activate:(BOOL)activate
 					  error_p:(NSError**)error_p {
-	NSInteger errorCode = 0 ;
+    BOOL ok = YES ;
+    NSInteger errorCode = 0 ;
 	NSError* underlyingError = nil ;
 
-	FSRef fsRef ;
-	NSURL* url = [NSURL fileURLWithPath:path] ;
-	BOOL ok = [[NSFileManager defaultManager] getFromUrl:url
-												 fsRef_p:&fsRef
-												 error_p:&underlyingError] ;
-	if (!ok) {
-		errorCode = 494985 ;
-		goto end ;
-	}
-	
-	LSApplicationParameters parms ;
-	parms.version = 0 ;
-	parms.flags = activate ? 0 : kLSLaunchAndHide ;
-	parms.application = &fsRef ;
-	parms.asyncLaunchRefCon = NULL ;
-	parms.environment = NULL ;
-	parms.argv = NULL ;
-	parms.initialEvent = NULL ;
-	OSStatus err = LSOpenApplication(&parms, NULL) ;
-	if (err != noErr) {
-		ok = NO ;
-		errorCode = 494986 ;
-		underlyingError = [NSError errorWithMacErrorCode:err] ;
-	}
-	
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+    NSBundle* bundle = [NSBundle bundleWithPath:path] ;
+    NSString* bundleIdentifier = [bundle bundleIdentifier] ;
+    NSArray* apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleIdentifier] ;
+    NSRunningApplication* currentlyRunningApp = [apps lastObject] ;
+    NSString* runningBundlePath = [[currentlyRunningApp bundleURL] path] ;
+    BOOL currentlyRunning = ([path isEqualToString:runningBundlePath]) ;
+    BOOL currentlyActive = currentlyRunning ? [currentlyRunningApp isActive] : NO ;
+#else
+    BOOL currentlyRunning = NO ;
+    NSArray* appDics = [[NSWorkspace sharedWorkspace] launchedApplications] ;
+    // Note that the above method returns only applications launched by the
+    // current user, not other users.  (Not documented, determined by experiment
+    // in Mac OS 10.5.5).  Also it returns only "applications", defined as
+    // "things which can appear in the Dock that are not documents and are launched by the Finder or Dock"
+    // (See documentation of ProcessSerialNumber).  Therefore, it does not return Bookwatchdog
+    for (NSDictionary* appDic in [appDics objectEnumerator]) {
+        if ([[appDic objectForKey:@"NSApplicationPath"] isEqualToString:path]) {
+            currentlyRunning = YES ;
+            break ;
+        }
+    }
+    BOOL currentlyActive = NO ;
+    NSString* activeAppPath = [[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationPath"] ;
+    if ([activeAppPath isEqualToString:path]) {
+        currentlyActive = YES ;
+    }
+#endif
+
+    if (currentlyRunning) {
+#warning Testing That PowerPC Hang
+#if 0
+//#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+        if (currentlyActive != activate) {
+            if (activate) {
+                [currentlyRunningApp unhide] ;
+            }
+            else {
+                [currentlyRunningApp hide] ;
+            }
+        }
+#endif
+    }
+    else {
+        FSRef fsRef ;
+        NSURL* url = [NSURL fileURLWithPath:path] ;
+        ok = [[NSFileManager defaultManager] getFromUrl:url
+                                                fsRef_p:&fsRef
+                                                error_p:&underlyingError] ;
+        if (!ok) {
+            errorCode = 494985 ;
+            goto end ;
+        }
+        
+        LSApplicationParameters parms ;
+        parms.version = 0 ;
+        parms.flags = activate ? 0 : kLSLaunchAndHide ;
+        parms.application = &fsRef ;
+        parms.asyncLaunchRefCon = NULL ;
+        parms.environment = NULL ;
+        parms.argv = NULL ;
+        parms.initialEvent = NULL ;
+        OSStatus err = LSOpenApplication(&parms, NULL) ;
+/*DB?Line*/ NSLog(@"8217: err = %ld opening %@", (long)err, path) ;
+
+		if (err != noErr) {
+            ok = NO ;
+            errorCode = 494986 ;
+            underlyingError = [NSError errorWithMacErrorCode:err] ;
+        }
+        
+        /*
+         The following section was added in BookMacster 1.13.6, when I found
+         that some apps, whose bundle identifiers are listed below as
+         'troublemakers', will maybe re-activate themselves sometimes, or all of
+         the times, rendering kLSLaunchAndHide ineffective.  Probably this is
+         related to window restoration in Mac OS X 10.7+.  Maybe all apps are
+         "troublemakers" under some conditions, but until I verify that, I don't
+         want to do the following nonsense unnecessarily, so it is only done for
+         'troublemaker' apps.  Unfortunately, a window will usually flash on the
+         screen momentarily, but I can't find any way to prevent that.  Reducing
+         the POLL_TIME below 100,000 microseconds does not make that any better.
+         
+         Oh, I made the mistake of trying to use the 'active' property of
+         NSRunningApplication to start and terminate the following poll, but that
+         doesn't work because, as noted in the NSRunningApplication class
+         documentation, "Properties … persist until the next turn of the main
+         run loop in a common mode."
+         */
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+        if (ok && !activate) {
+            NSBundle* bundle = [NSBundle bundleWithPath:path] ;
+            NSString* bundleIdentifier = [bundle bundleIdentifier] ;
+            NSSet* troublemakers = [NSSet setWithObjects:
+                                    @"com.google.Chrome",
+                                    @"com.google.Chrome.canary",
+                                    @"org.chromium.Chromium",
+                                    @"com.apple.TextEdit",
+                                    nil] ;
+            
+            if ([troublemakers member:bundleIdentifier]) {
+#define WAIT_IN_CASE_APP_ACTIVATES 2.0
+                NSTimeInterval doneTime = [NSDate timeIntervalSinceReferenceDate] + WAIT_IN_CASE_APP_ACTIVATES ;
+                do {
+                    NSArray* apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleIdentifier] ;
+                    NSRunningApplication* app = [apps lastObject] ;
+                    if ([app isActive]) {
+                        [app hide] ;
+                        break ;
+                    }
+#define POLL_TIME 100000
+                    usleep(POLL_TIME) ;
+                } while ([NSDate timeIntervalSinceReferenceDate] < doneTime) ;
+            }
+        }
+#endif
+    }
+    
 end:;
 	if (!ok && error_p) {
 		NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
@@ -679,6 +768,7 @@ end:;
                           closeWindows:(BOOL)closeWindows
 						  wasRunning_p:(BOOL*)wasRunning_p
 							   error_p:(NSError**)error_p {
+    NSError* error = nil ;
 	// Because AppleScript 'tell application' will *launch* an app if it is not
 	// running, we do one last test first.  Of course, this still leaves a little
 	// window, a race condition, in which the app might quit and we relaunch it
@@ -702,14 +792,18 @@ end:;
         source = [source stringByAppendingString:@"quit\nend tell"] ;
 
 		ok = [self runAppleScriptSource:source
-								error_p:error_p] ;
+								error_p:&error] ;
 	}
+    
+    if (error_p && error) {
+        *error_p = error ;
+    }
 	
 	return ok ;
 }
 
 #if 0
-// This method works but is no longer used
+// This method worked but is no longer used
 + (BOOL)quitThisUsersAppWithBundleIdentifier:(NSString*)bundleIdentifier
 									 error_p:(NSError**)error_p {
 	NSString* source = [NSString stringWithFormat:
@@ -722,7 +816,8 @@ end:;
 						@"    quit\n"
 						@"  end tell\n"
 						@"end if",
-						bundleIdentifier] ;
+						bundleIdentifier,
+                        applicationId] ;
 	// The 'close windows' improves the reliability of this script,
 	// thanks to Shane Stanley <sstanley@myriad-com.com.au>
 	// 'AppleScriptObjC Explored' <www.macosxautomation.com/applescript/apps/>
@@ -862,45 +957,65 @@ end:;
 					  killAfterTimeout:(BOOL)killAfterTimeout
 						  wasRunning_p:(BOOL*)wasRunning_p
 							   error_p:(NSError**)error_p {
-	if (!bundlePath) {
-		if (wasRunning_p) {
-			*wasRunning_p = NO ;
-		}
-		return YES ;
+	NSError* error = nil ;
+    BOOL ok = YES ;
+    BOOL wasRunning = NO ;
+    
+    if (!bundlePath) {
+		goto end ;
 	}
 	
 	NSDate* endDate = [NSDate dateWithTimeIntervalSinceNow:timeout] ;
-	BOOL ok = [self quitThisUsersAppWithBundlePath:bundlePath
-                                      closeWindows:closeWindows
-									  wasRunning_p:wasRunning_p
-										   error_p:error_p] ;
+	ok = [self quitThisUsersAppWithBundlePath:bundlePath
+                                 closeWindows:closeWindows
+                                 wasRunning_p:&wasRunning
+                                      error_p:&error] ;
 	
 	if (!ok) {
 		// Supposedly no chance that it will quit, so give up immediately.
-		return NO ;
+		goto end ;
 	}
 	
-	while (YES) {
-		// No app is likely to quit in less than 1 second, so we sleep *first*
-		[NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:1.0]] ;
-		
-		// and *then* check if it's running
-		if (![self isThisUsersAppRunningWithBundlePath:bundlePath]) {
-			return YES ;
-		}
-		
-		if ([(NSDate*)[NSDate date] compare:endDate] == NSOrderedDescending) {
-			// Timed out
-			if (killAfterTimeout) {
-				pid_t pid = [self pidOfThisUsersProcessWithBundlePath:bundlePath] ;
-				if (pid != 0) {
-					kill(pid, SIGKILL) ;
-				}
-				
-				return YES ;
-			}
 
-			return NO ;
+	// The following test was added in BookMacster 1.13.6.  No need to wait
+    // for quitting if the app was not running to begin with.
+    if (wasRunning) {
+        NSInteger nTries = 1 ;
+        while (YES) {
+            // No app is likely to quit in less than 1 second, so we sleep *first*
+            [NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:1.0]] ;
+            
+            // and *then* check if it's running
+            if (![self isThisUsersAppRunningWithBundlePath:bundlePath]) {
+                goto end ;
+            }
+            
+            if ([(NSDate*)[NSDate date] compare:endDate] == NSOrderedDescending) {
+                // Timed out
+                if (killAfterTimeout) {
+                    pid_t pid = [self pidOfThisUsersProcessWithBundlePath:bundlePath] ;
+                    if (pid != 0) {
+                        kill(pid, SIGKILL) ;
+                    }
+                    
+                    goto end ;
+                }
+                
+                ok = NO ;
+                NSString* desc = [NSString stringWithFormat:
+                                  @"Asked %@ nicely (via AppleScript) to quit %ld times in %g seconds, but it's still running.",
+                                  bundlePath,
+                                  (long)nTries,
+                                  timeout] ;
+                NSString* sugg = @"Try to activate and quit it yourself." ;
+                error = [NSError errorWithDomain:SSYOtherApperErrorDomain
+                                            code:494987
+                                        userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                  desc, NSLocalizedDescriptionKey,
+                                                  sugg, NSLocalizedRecoverySuggestionErrorKey,
+                                                  nil]] ;
+                goto end ;
+            }
 		}
 		
 		// Sometimes Firefox doesn't "get" it.  Send the AppleScript 'quit' again,
@@ -909,10 +1024,18 @@ end:;
                                 closeWindows:closeWindows
 								wasRunning_p:NULL  // We want the original wasRunning state, not now's
 									 error_p:NULL] ;
+        
+        nTries++ ;
 	}
 
-	
-	return NO ; // Never happens due to infinite loop above; to suppress compiler warning
+end:
+    if (wasRunning_p) {
+        *wasRunning_p = wasRunning ;
+    }
+    if (error && error_p) {
+        *error_p = error ;
+    }
+	return ok ;
 }
 
 + (BOOL)killProcessWithProcessSerialNumber:(ProcessSerialNumber)psn {

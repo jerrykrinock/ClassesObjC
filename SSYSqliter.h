@@ -281,6 +281,10 @@ extern NSString* const SSYSqliterSqliteErrorCode ;
 /*!
  @brief    Runs a query in the receiver
 
+ @details  Note that the values in the query must be expressed as escaped
+ and quoted text (use -stringEsquotedSQLValue).  You cannot set a data blob
+ with this method.  To set a data blob, use -setBlobData::::::.
+ 
  @param    error_p  If an error occurs, if this parameter is not
  nil it will point to an error describing the problem.  This error
  includes a stack backtrace.
@@ -321,6 +325,28 @@ extern NSString* const SSYSqliterSqliteErrorCode ;
 			 inTable:(NSString*)table
 			didAdd_p:(BOOL*)didAdd_p
 			   error:(NSError**)error_p ;
+
+/*!
+ @brief    Updates a database with a blob for a given key in a given table,
+ in all rows that pass a given "WHERE key=value" test
+ 
+ @details  Storing a blob in an sqlite database requires a full transaction,
+ which is more steps (begin, prepare, bind, step, finalize, commit) than a
+ simple query (prepare, step, finalize, exec).  This method was added to do
+ that, in BookMacster 1.13.2.  I think all of the parameters are
+ self-explanatory.
+ 
+ @param    error_p  If an error occurs, and this parameter is not
+ NULL, upon return it will point to an NSError describing the error.
+ @result   YES if the operation succeeded with no error; NO if
+ an error occurred.
+ */
+- (BOOL)setBlobData:(NSData*)blobData
+             forKey:(NSString*)blobKey
+              where:(NSString*)whereKey
+                 is:(id)whereValue
+            inTable:(NSString*)table
+              error:(NSError**)error_p ;
 
 /*!
  @brief    Ensures that a given index exists in a table, by adding it

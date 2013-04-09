@@ -181,7 +181,7 @@ __attribute__((visibility("default"))) @interface SSYSemaphore : NSObject {
  }
  
  - (void)doWork {
- NSError* error ;
+ NSError* error = nil  ;
  
  BOOL ok = [SSYSemaphore acquireWithKey:[self key]
  setKey:[self key]

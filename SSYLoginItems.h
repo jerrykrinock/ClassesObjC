@@ -157,5 +157,7 @@ typedef enum SSYSharedFileListResult_enum SSYSharedFileListResult ;
 										   thatAreNotInPath:(NSString*)path
 													  error:(NSError**)error_p ;
 
++ (NSArray*)allLoginPathsError:(NSError**)error_p ;
+
 @end
 

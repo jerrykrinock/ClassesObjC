@@ -106,20 +106,7 @@
 			encoding = documentInfo->encoding ;
 			CFRelease (tree);
 		}
-		else {
-			NSString* dataString = [[NSString alloc] initWithData:rssData encoding:NSASCIIStringEncoding] ;
-			// We used ASCII because if the string is corrupt UTF8 may fail
-			[dataString release] ;
-			
-			NSString* filePath = [NSString stringWithFormat:
-								  @"%@/Desktop/GoogleBad.%@.%lx.data",
-								  NSHomeDirectory(),
-								  NSUserName(),
-								  (long)[[NSDate date] timeIntervalSinceReferenceDate]] ;
-			NSString* msg = @"Could not parse data from Google containing some bookmarks.\n\n Some of your Google Bookmarks may be missing.\n\nFile containing bad data was written to your desktop." ;
-			[rssData writeToFile:filePath atomically:NO] ;
-			NSRunCriticalAlertPanel(nil, msg, nil, nil, nil) ;
-			
+		else {			
 			// See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
 			[super dealloc] ;
 			self = nil ;

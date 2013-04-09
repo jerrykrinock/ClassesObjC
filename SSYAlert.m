@@ -1,6 +1,6 @@
 #import "SSYAlert.h"
 
-#import "SSYAppLSUI.h"
+#import "SSYProcessTyper.h"
 #import "SSYMailto.h"
 #import "SSYSheetManager.h"
 #import "SSYSystemDescriber.h"
@@ -1859,7 +1859,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 // bottom of the menu bar.
 
 - init {
-	if (!NSApp || [SSYAppLSUI isLSUIElement]) {
+	if (!NSApp || ([SSYProcessTyper currentType] != SSYProcessTyperTypeForeground)) {
 		// See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
 		// Actually, this is unsafe, as pointed out by Quincey Morris…
 		// http://lists.apple.com/archives/Cocoa-dev/2011/May/msg00814.html

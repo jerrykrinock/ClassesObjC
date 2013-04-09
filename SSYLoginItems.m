@@ -134,41 +134,44 @@ end:
 			// references a path has been deleted (not trashed, deleted).  (It may execute
 			// in other situations also.  We don't know, due to lack of LSSharedFileList
 			// documentation from Apple.)
-			if (error) {
-				NSError* underlyingError = [NSError errorWithMacErrorCode:status] ;
-				NSString* desc = @"Mac OS X could not resolve your Login Items." ;
-				NSString* path = [url path] ;
-				if (!path) {
-					path = [url absoluteString] ;
-				}
-				if (!path) {
-					path = [url description] ;
-				}
-				
-				NSString* reason = [NSString stringWithFormat:
-									@"Login Item Number %ld is broken.",
-									(long)i] ;
-				NSMutableDictionary* userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-												 desc, NSLocalizedDescriptionKey,  // won't be nil
-												 reason, NSLocalizedFailureReasonErrorKey, // won't be nil
-												 underlyingError, NSUnderlyingErrorKey,     // won't be nil
-												 [NSNumber numberWithInteger:i], @"Broken Item Index", // won't be nil
-												 [NSNumber numberWithInteger:status], @"Underlying Error Status Code",  // won't be nil
-												 path , @"Path Looking For",   // might be nil
-												 nil] ;
+            
+            // Bug fixed in BookMacster 1.13.6 right here.  The condition
+            // "if (error)" on the next 2  dozen lines, which made no sense,
+            // was removed.
+            NSError* underlyingError = [NSError errorWithMacErrorCode:status] ;
+            NSString* desc = @"Mac OS X could not resolve your Login Items." ;
+            NSString* path = [url path] ;
+            if (!path) {
+                path = [url absoluteString] ;
+            }
+            if (!path) {
+                path = [url description] ;
+            }
+            
+            NSString* reason = [NSString stringWithFormat:
+                                @"Login Item Number %ld is broken.",
+                                (long)i] ;
+            NSMutableDictionary* userInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+                                             desc, NSLocalizedDescriptionKey,  // won't be nil
+                                             reason, NSLocalizedFailureReasonErrorKey, // won't be nil
+                                             underlyingError, NSUnderlyingErrorKey,     // won't be nil
+                                             [NSNumber numberWithInteger:i], @"Broken Item Index", // won't be nil
+                                             [NSNumber numberWithInteger:status], @"Underlying Error Status Code",  // won't be nil
+                                             path , @"Path Looking For",   // might be nil
+                                             nil] ;
+            
+            if ((status == fnfErr) || (status == nsvErr)) {
+                NSString* suggestion = [NSString stringWithFormat:
+                                        @"Visit your System Preferences and delete or reinstall Login Item Number %ld.",
+                                        (long)i] ;
+                [userInfo setObject:suggestion
+                             forKey:NSLocalizedRecoverySuggestionErrorKey] ;
+            }
+            
+            error = [NSError errorWithDomain:constSSYLoginItemsErrorDomain
+                                        code:SSYLoginItemsCouldNotResolveExistingItemErrorCode
+                                    userInfo:userInfo] ;
 
-				if ((status == fnfErr) || (status == nsvErr)) {				
-					NSString* suggestion = [NSString stringWithFormat:
-											@"Visit your System Preferences and delete or reinstall Login Item Number %ld.",
-											(long)i] ;
-					[userInfo setObject:suggestion
-								 forKey:NSLocalizedRecoverySuggestionErrorKey] ;
-				}
-				
-				error = [NSError errorWithDomain:constSSYLoginItemsErrorDomain
-											code:SSYLoginItemsCouldNotResolveExistingItemErrorCode
-										userInfo:userInfo] ;
-			}
 			ok = NO ;
 			break ;
 		}
@@ -273,9 +276,11 @@ end:
                                                                      forKey:NSLocalizedDescriptionKey]] ;
     }
 	else {
+        // Note 21030229
 		// Documentation for LSSharedFileListInsertItemURL says I should release
-		// (Maybe because CF does not feature autorelease?)
-		CFRelease(item) ;
+		// (Maybe because CF does not feature autorelease?).  But if I do, it
+        // causes a crash, not on my Mac, but on that of user Burke Townsend.
+		// CFRelease(item) ;
 	}
 
 end:
@@ -405,6 +410,8 @@ end:
 
 		// Documentation says to release this
 		// (Maybe because CF does not feature autorelease?)
+        // But I commented it out for some reason, apparently long ago.
+        // See also Note 21030229.
 		////CFSafeRelease(aURL) ;
 		
 		if (breakAfterCleanup) {
@@ -562,5 +569,67 @@ end:
     
 	return result ;
 }
+
++ (NSArray*)allLoginPathsError:(NSError**)error_p {
+    BOOL ok = YES ;
+    NSError* error = nil ;
+	NSMutableArray* paths = nil ;
+	CFArrayRef snapshot = NULL ;
+    
+	ok = [self copySnapshotOfLoginItems:&snapshot
+                                  error:&error] ;
+	if (!ok) {
+		goto end ;
+	}
+    
+	OSStatus status = noErr ;
+	paths = [NSMutableArray array] ;
+	for (id item in (NSArray*)snapshot) {
+		NSURL* aURL ;
+		status = LSSharedFileListItemResolve(
+                                             (LSSharedFileListItemRef)item,
+                                             0,
+                                             (CFURLRef*)&aURL,
+                                             NULL) ;
+		if (status == noErr) {
+			NSString* aPath = [aURL path]  ;
+            [paths addObject:aPath] ;
+		}
+        
+		// Documentation says to release this
+		// (Maybe because CF does not feature autorelease?)
+		CFSafeRelease(aURL) ;
+		
+	}
+	
+	if (status != noErr) {
+		if (!error) {
+			error = [NSError errorWithDomain:constSSYLoginItemsErrorDomain
+                                        code:SSYLoginItemsCouldNotResolveGivenItemErrorCode
+                                    userInfo:[NSDictionary dictionaryWithObject:@"LSSharedFileListItemResolve returned error"
+                                                                         forKey:NSLocalizedDescriptionKey]] ;
+		}
+		ok = NO ;
+		goto end ;
+	}
+	
+end:
+	CFSafeRelease(snapshot) ;
+	
+	if (error_p) {
+		*error_p = error ;
+	}
+	
+    NSArray* answer = nil  ;
+    if (ok) {
+        answer = [NSArray arrayWithArray:paths] ;
+    }
+    else {
+        answer = nil ;
+    }
+    
+	return (answer) ;
+}
+
 
 @end

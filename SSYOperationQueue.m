@@ -282,6 +282,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	// was nil or the doneSelector was NULL, doneThread will be nil
 	// and the following statements will return nil.
 	NSThread* doneThread = [doneInfo objectForKey:constKeySSYOperationQueueDoneThread] ;
+    
 	id doneTarget = [doneInfo objectForKey:constKeySSYOperationQueueDoneTarget] ;
 	NSString* doneSelectorName = [doneInfo objectForKey:constKeySSYOperationQueueDoneSelectorName] ;
 
@@ -292,7 +293,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 					   onThread:doneThread
 					 withObject:realInfo
 				  waitUntilDone:YES] ;
-	
+
 	if (![[doneInfo objectForKey:constKeySSYOperationQueueKeepWithNext] boolValue]) {
 		[self removeAllErrorRetryInvocations] ;
 	}
@@ -308,7 +309,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 		doneTarget:(id)doneTarget
 	  doneSelector:(SEL)doneSelector
 	   keepWithNext:(BOOL)keepWithNext {
-	if (!group) {
+    if (!group) {
 		group = [NSString stringWithFormat:@"%f", [[NSDate date] timeIntervalSince1970]] ;
 	}
 	// Capture our invocation, for possible error recovery in case we fail

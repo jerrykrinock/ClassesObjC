@@ -15,10 +15,23 @@ NSString* const SSYInterappClientErrorDomain = @"SSYInterappClientErrorDomain" ;
 			   error_p:(NSError**)error_p {
 	BOOL ok = kCFMessagePortSuccess ;
 	SInt32 result ;
-	CFMessagePortRef remotePort = CFMessagePortCreateRemote(
-															NULL, 
-															(CFStringRef)portName
-															) ;
+    CFMessagePortRef remotePort ;
+    NSTimeInterval txStartTime = [NSDate timeIntervalSinceReferenceDate] ;
+    NSTimeInterval txTimeSpent ;
+	do {
+        remotePort = CFMessagePortCreateRemote(
+                                               NULL,
+                                               (CFStringRef)portName
+                                               ) ;
+        txTimeSpent = [NSDate timeIntervalSinceReferenceDate] - txStartTime ;
+        if (txTimeSpent > txTimeout) {
+            break ;
+        }
+        if (!remotePort) {
+            usleep(100000) ;
+        }
+    } while (!remotePort) ;
+    
 	if (!remotePort) {
 		ok = NO ;
 		result = SSYInterappClientErrorCantFindReceiver ;
@@ -35,6 +48,8 @@ NSString* const SSYInterappClientErrorDomain = @"SSYInterappClientErrorDomain" ;
 	}
 	NSData* aggrRxData = nil ;
 	CFStringRef replyMode = wait ? kCFRunLoopDefaultMode : NULL ;
+    NSTimeInterval txTimeoutUsedUp = [NSDate timeIntervalSinceReferenceDate] - txStartTime ;
+    txTimeout -= txTimeoutUsedUp ;
 	result = CFMessagePortSendRequest(
 									  remotePort,
 									  0, 

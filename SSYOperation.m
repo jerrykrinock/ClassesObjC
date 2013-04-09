@@ -20,12 +20,34 @@
 #define SSY_OPERATION_BLOCKED 1
 #define SSY_OPERATION_CLEARED 2
 
-NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
-
 @interface SSYOperation ()
 
 @property (retain) id target ;
 @property (assign) BOOL skipIfError ;
+@property (retain) NSConditionLock* lock ;
+
+/* 
+ I added the 'lock' ivar in BookMacster 1.13.2, after receiving a crash
+ report from a user when invoking -[NSConditionLock unlockWithCondition:]
+ at the end of -unlockLock, seeing it crash once myself, and noticing
+ random behavior of lock's retainCount in -blockForLock.  At this time, the
+ 'lock' was not an ivar but was stored in SSYOperations' info dictionary.
+ Being in the dictionary was the only thing that retained it.  It was placed
+ into this dictionary at the beginning of -prepareLock and removed at the end of
+ -blockForLock, by sending -removeObjectForKey:.  Well it occurred to me that,
+ since -blockForLock and -unlockLock typically run on different threads, the
+ lock could be unlocked *enough* for -blockForLock to unblock, finish running,
+ and cause the lock to be deallocced before -unlockWithCondition was done
+ running, and if it sent a message to self during this time, indeed that would
+ cause a crash.  So, first of all, I made it an instance variable instead, a
+ more conventional approach.  I don't know why I did the dictioanary thing in
+ the first place.  Probably it was thrown in ad hoc to solve some problem, and
+ I thought it would be rarely used and wanted to "save" an ivar.  Stupid.  But
+ the important part of the fix is that now I no longer remove it at the end
+ of -blockForLock.  I let it persist until the next time that -prepareLock
+ is invoked, which sets a new instance into the ivar, releasing and
+ dealloccing the old one.
+ */
 
 @end
 
@@ -39,6 +61,7 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 @synthesize operationQueue = m_operationQueue ;
 @synthesize cancellor = m_cancellor ;
 @synthesize skipIfError = m_skipIfError ;
+@synthesize lock = m_lock ;
 
 - (id)owner {
 	return m_owner ;
@@ -57,6 +80,7 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
     [m_info release] ;
 	[m_cancellor release] ;
 	[m_target release] ;
+    [m_lock release] ;
 	
     [super dealloc] ;
 }
@@ -120,18 +144,22 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 }
 
 - (void)prepareLock {
-	NSConditionLock* oldLock = [[self info] objectForKey:constKeySSYOperationLock] ;
-	// Normally, oldLock should be nil at this point, if prior usage of this lock is done.
-	// For a while, I did this:
-	//    NSAssert3((oldLock == nil), @"Lock %p is already in info %p for %@", oldLock, [self info], self) ;
-	// but that got me into some trouble.
-	// So now I just log a warning if there's an old lock which has not been cleared.
-	if (oldLock != nil) {
-		if ([oldLock condition] != SSY_OPERATION_CLEARED) {
-			NSLog(@"Warning 209-8483 %@ with condition %ld in info %p for %@ is being replaced.",
-				  oldLock, (long)[oldLock condition], [self info], self) ;
-		}
-	}
+	// Normally, oldLock should be cleared at this point, if prior usage of
+    // this lock is done.
+    if ([self lock]) {
+        NSString* msg = nil ;
+        if ([[self lock] condition] != SSY_OPERATION_CLEARED) {
+            msg = [NSString stringWithFormat:@"Warning 209-8483 %@ lock=%@ info=%@",
+                  self,
+                  [self lock],
+                  [self info] ];
+            NSLog(@"%@", msg) ;
+#if DEBUG
+            NSAssert(NO, msg) ;
+#endif
+        }
+    }
+    
 	// I considered doing this:
 	// [oldLock unlockWithCondition:SSY_OPERATION_CLEARED] ;
 	// But am worried that it might raise an exception trying to unlock a lock on a
@@ -139,8 +167,9 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 	// exception, or getting it mixed up with something else.  Can't find it in
 	// documentation at the moment.
 	NSConditionLock* lock = [[NSConditionLock alloc] initWithCondition:SSY_OPERATION_BLOCKED] ;
-	[[self info] setObject:lock
-					forKey:constKeySSYOperationLock] ;
+    // The above line released the old lock and replaced it with a new lock.
+	[self setLock:lock] ;
+	[lock release] ;
 	NSString* name = [NSString stringWithFormat:
 					  @"SSYOperation's built-in lock created %@ by %@ on %@ (%@main)",
 					  [[NSDate date] geekDateTimeString],
@@ -148,11 +177,10 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 					  [NSThread currentThread],
 					  ([[NSThread currentThread] isMainThread] ? @"" : @"non-")] ;
 	[lock setName:name] ;
-	[lock release] ;
 }
 
 - (void)lockLock {
-	NSConditionLock* lock = [[self info] objectForKey:constKeySSYOperationLock] ;
+	NSConditionLock* lock = [self lock] ;
 	
 	// The following was added in BookMacster 1.11.2
 	BOOL succeeded = [lock tryLock] ;
@@ -160,12 +188,13 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 		// This will happen if the lock is already locked
 		NSLog(@"Warning 094-4701 %@", lock) ;
 	}
-	// Prior to BookMacster 1.11.2, the above was simply [lock lock].  I changed it to eliminate
-	// deadlock if this method is called more than once prior to -unlockLock.
+	// Prior to BookMacster 1.11.2, the above was simply [lock lock].  I changed
+    // it to eliminate deadlock in case this method is called more than once
+    // prior to -unlockLock.
 }
 
 - (void)blockForLock {
-	NSConditionLock* lock = [[self info] objectForKey:constKeySSYOperationLock] ;
+	NSConditionLock* lock = [self lock] ;
 	BOOL workFinishedInTime = [lock lockWhenCondition:SSY_OPERATION_CLEARED
 										   beforeDate:[NSDate distantFuture]] ;
 	
@@ -174,30 +203,20 @@ NSString* const constKeySSYOperationLock = @"SSYOperationLock" ;
 	if (workFinishedInTime) {
 		[lock unlock] ;
 	}
-	
-	// We are done with this lock, so …
-	[[self info] removeObjectForKey:constKeySSYOperationLock] ;
 }
 
 - (void)unlockLock {
-	NSConditionLock* lock = [[self info] objectForKey:constKeySSYOperationLock] ;
-
 	// New code, BookMacster 1.11.2
 	// If we send -unlockWithCondition to a condition lock which has already
 	// been unlocked, Cocoa raises an exception.  To avoid that, we try to
 	// lock it first.  If it's already locked, tryLock is a no-op.
-	[lock tryLock] ;
+	NSConditionLock* lock = [self lock] ;
+    // Local retain/release for additional safety.  See
+    // http://lists.apple.com/archives/cocoa-dev/2013/Jan/msg00443.html
+    [lock retain] ;
+    [lock tryLock] ;
 	[lock unlockWithCondition:SSY_OPERATION_CLEARED] ;
-
-#if 0
-	// Old code
-	// If we send -unlockWithCondition to a condition lock which has already
-	// been unlocked, Cocoa raises an exception.  To avoid that, we check
-	// the condition.
-	if ([lock condition] == SSY_OPERATION_BLOCKED) {
-		[lock unlockWithCondition:SSY_OPERATION_CLEARED] ;
-	}
-#endif
+    [lock release] ;
 }
 
 

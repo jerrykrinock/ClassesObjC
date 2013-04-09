@@ -35,6 +35,18 @@ extern NSString* const SSYInterappClientErrorDomain ;
  response was received, will point to the payload data received from the server.
  @param   txTimeout  Timeout within which the system must find the indicated
  port and return it to this method, before NO and an error are returned.
+ There are actually two system calls involved here (1) "creating" the remote
+ port and (2) sending the request to it and receiving an acknowledgment.  Prior
+ to BookMacster 1.13.6, all of the txTimeout was allocated to step (2), and
+ this method would return immediately with error if step (1) failed on the first
+ try.  This would happen quite readily if the remote port was being vended by a 
+ process which was just starting up!  From a high-level perspective, I have X
+ seconds, and I don't care what it gets used for.  Therefore, starting with 
+ BookMacster 1.13.6, if step (1) fails, it is retried every 100 milliseconds
+ until it works, or up until the txTimeout, and whatever txTimeout remains is
+ allowed for step (2).  Well, all that is a long way of saying that this
+ parameter now does what you'd expect it to, the way it should have been
+ designed to begin with, and you may get fewer unexpected errors!
  @param   rxTimeout  Timeout, after sending the message to the other thread or
  process, within which the other thread or process must return a response,
  before NO and an error are returned.

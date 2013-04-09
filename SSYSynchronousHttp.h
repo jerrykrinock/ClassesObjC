@@ -113,7 +113,7 @@ int main(int argc, const char *argv[]) {
 	NSTimeInterval timeout = 5.0 ;
 	NSHTTPURLResponse* response ;
 	NSData* receiveData ;
-	NSError* error ;
+	NSError* error = nil  ;
 	
 	NSLog(@"269: Beginning synchronous connection") ;
 	BOOL ok = [SSYSynchronousHttp SSYSynchronousHttpUrl:urlString
