@@ -58,10 +58,6 @@
 	while ([NSDate timeIntervalSinceReferenceDate] < endSeconds) {
 		[s appendFormat:@"%ld", (long)i++] ;
 	}
-	[s writeToURL:[NSURL fileURLWithPath:@"/dev/null"]
-	   atomically:NO
-		 encoding:NSUTF8StringEncoding
-			error:NULL] ;
 	[pool release] ;
 	return (CGFloat)i/ITERATIONS_ACHIEVED_BY_2009_MAC_MINI_CORE_2_DUO ;
 }

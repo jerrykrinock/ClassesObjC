@@ -40,7 +40,7 @@
 		  targetInfo:(id)targetInfo {
 	self = [super init] ;
 	
-	if(self) {		
+	if(self) {
 		[self setTarget:target] ;
 		[self setSelector:selector] ;
 		[self setTargetInfo:targetInfo] ;

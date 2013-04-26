@@ -1,5 +1,5 @@
 #import "SSYSynchronousHttp.h"
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
 #import "NSString+Data.h"
 #import "NSString+LocalizeSSY.h"
 #import "NSString+MorePaths.h"

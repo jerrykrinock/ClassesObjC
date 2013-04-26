@@ -42,7 +42,7 @@ extern NSInteger const SSYLoginItemsCallerGaveNilPathErrorCode ;
  
  20090818: Bogus items in Login Items (which, I believe, are items for which the path has disappeared) are now ignored instead of causing an error to be returned and, later, a crash.
  20090819: I believe I fixed conceptual memory-management errors.  In some places, I was releasing the elements in the 'snapshot' array, in addition to releasing the array itself (which is correct), and compensating by retaining (but not always).  I'm still not sure that it's all correct, but it's better than it was.
- 20090925: Removed dependency on NSError+SSYAdds.h/.m, added dependency on smaller NSError+LowLevel.h/.m
+ 20090925: Removed dependency on NSError+InfoAccess/.m, added dependency on smaller NSError+LowLevel.h/.m
  20091125: Added Localized Failure Reason and Localized Recovery Suggestion to error with code 19584 which occurs if the user has a bogus Login Item.
  20100407: Made Localized Recovery Suggestion for error 19584 less confusing, and defined constants for all error codes.  Error 19584 is now SSYLoginItemsCouldNotResolveExistingItemErrorCode.
 */

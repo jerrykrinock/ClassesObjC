@@ -1,7 +1,6 @@
 #import <Cocoa/Cocoa.h>
 
 #if DEBUG
-#warning Logging unreal SSYPopUpTableHeaderCell invocations
 #define LOG_UNREAL_SSY_POP_UP_TABLE_HEADER_CELLS 1
 #endif
 

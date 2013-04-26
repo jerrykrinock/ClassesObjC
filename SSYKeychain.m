@@ -1,5 +1,6 @@
 #import "SSYKeychain.h"
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
+#import "NSError+MyDomain.h"
 
 NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 

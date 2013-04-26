@@ -11,7 +11,8 @@
 
 #import "SSYSuperFileManager.h"
 #import <sys/stat.h>
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
+#import "NSError+MyDomain.h"
 
 static SSYSuperFileManager* defaultManager = nil ;
 

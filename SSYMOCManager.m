@@ -1,10 +1,13 @@
 #import "SSYMOCManager.h"
+#import "NSError+Recovery.h"
+#import "NSError+MyDomain.h"
 #import "NSString+MorePaths.h"
 #import "NSString+LocalizeSSY.h"
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
 #import "NSBundle+MainApp.h"
 #import "SSYPersistentDocumentMultiMigrator.h"
 #import "NSManagedObjectContext+Cheats.h"
+#import "NSError+DecodeCodes.h"
 
 NSString* const constKeyMOC = @"moc" ;
 NSString* const constKeyOwner = @"owr" ;
@@ -59,17 +62,6 @@ static SSYMOCManager* sharedMOCManager = nil ;
 @interface SSYMOCManager (PrivateHeader)
 
 @end
-
-/*
- + (void)fileManager:(NSFileManager *)manager willProcessPath:(NSString *)path {
- NSLog(@"[%@ %s]:855 ", [self class], _cmd) ;
- }
- 
- + (BOOL)fileManager:(NSFileManager *)manager shouldProceedAfterError:(NSDictionary *)errorInfo {
- NSLog(@"[%@ %s]:1011 errorInfo: %@", [self class], _cmd, errorInfo) ;
- return NO ;
- }
- */
 
 @implementation SSYMOCManager
 

@@ -3,7 +3,7 @@
 #import "NSOperationQueue+Depends.h"
 #import "BkmxGlobals.h"
 #import "Extore.h"
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
 #import "NSInvocation+Quick.h"
 #import "NSInvocation+Nesting.h"
 #import "SSYOperation.h"

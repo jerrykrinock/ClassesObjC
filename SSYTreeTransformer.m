@@ -41,8 +41,12 @@
 									   contextObject:(id)contextObject {
 	SSYTreeTransformer* x = [[SSYTreeTransformer alloc] initWithReformatter:reformatter
 													  childrenInExtractor:childrenInExtractor
-														   newParentMover:(SEL)newParentMover
-															contextObject:contextObject] ;
+#if MAC_OS_X_VERSION_MAX_ALLOWED > 1070
+                                                             newParentMover:newParentMover
+#else
+                                                             newParentMover:(SEL)newParentMover
+#endif
+                                                              contextObject:contextObject] ;
 	return [x autorelease] ;
 }
 
@@ -51,8 +55,12 @@
 									  newParentMover:(SEL)newParentMover {
 	SSYTreeTransformer* x = [[SSYTreeTransformer alloc] initWithReformatter:reformatter
 													  childrenInExtractor:childrenInExtractor
-														   newParentMover:(SEL)newParentMover
-															contextObject:nil] ;
+#if MAC_OS_X_VERSION_MAX_ALLOWED > 1070
+                                                             newParentMover:newParentMover
+#else
+                                                             newParentMover:(SEL)newParentMover
+#endif															
+                                                              contextObject:nil] ;
 	return [x autorelease] ;
 }
 

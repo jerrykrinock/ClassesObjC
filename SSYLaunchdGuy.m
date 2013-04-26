@@ -1,6 +1,8 @@
 #import "SSYLaunchdGuy.h"
 #import "SSYShellTasker.h"
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
+#import "NSError+SSYInfo.h"
+#import "NSError+MyDomain.h"
 #import "SSYOtherApper.h"
 #import "SSYShellTasker.h"
 #import "NSString+Data.h"
@@ -8,6 +10,7 @@
 #import "NSFileManager+TempFile.h"
 #import "SSYPathWaiter.h"
 #import "SSYLaunchdBasics.h"
+#import "NSError+DecodeCodes.h"
 
 NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 
@@ -35,31 +38,49 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 + (NSError*)warnUserIfLaunchdHangInTaskResult:(NSInteger)result
 										error:(NSError*)error {
 	if ((result != 0) && ([error code] == SSYShellTaskerErrorTimedOut)) {
+        /*
+         This method was changed in BookMacster 1.14.4.  I've had a couple
+         reports from Mac OS X 10.8 users, and I saw this happen once myself,
+         but unlike the restart that was necessary to fix it in Mac OS X 10.7,
+         it now seems to fix itself.  So Apple didn't really fix it, but they
+         made it enough better that we don't want to annoy the user with the
+         warning any more.
+         */
 		NSTimeInterval timeout = [[[error userInfo] objectForKey:constKeySSYShellTaskerTimeout] doubleValue] ;
-		NSLog(@"Warning 516-7625 launchctl timed out at %0.1f secs.  Time to restart?", timeout) ;
+		NSLog(@"Warning 516-7625 launchctl timed out at %0.1f secs.", timeout) ;
 		NSString* reason = @"The launchd process of Mac OS X is not responding." ;
 		NSString* suggestion = @"You should restart your Mac at the next opportunity.  "
 		@"This bug has reportedly been fixed by Apple in Mac OS 10.8 (Mountain Lion)." ;
 		error = [error errorByAddingLocalizedFailureReason:reason] ;
 		error = [error errorByAddingLocalizedRecoverySuggestion:suggestion] ;
-		NSString* message = [NSString stringWithFormat:@"%@\n\n%@",
-							 reason,
-							 suggestion] ;
 		
-		NSString* windowTitle = [NSString stringWithFormat:
-								 @"%@ : Problem with Mac OS X",
-								 [[NSProcessInfo processInfo] processName]] ;
-		CFUserNotificationDisplayNotice (
-										 60,  // timeout
-										 kCFUserNotificationStopAlertLevel,
-										 NULL,
-										 NULL,
-										 NULL,
-										 (CFStringRef)windowTitle,
-										 (CFStringRef)message,
-										 NULL) ;
-		// The above function returns immediately. It does not wait
-		// for a user response after displaying the dialog.
+        if (NSAppKitVersionNumber < 1187.370000) {
+            // The above condition was added in BookMacster 1.14.4.
+            // The above number is for Mac OS X 10.8.3.  I'd like to use the
+            // number for 10.8.0, but can't find that.  It doesn't matter that
+            // much, oh well.
+            // The reason for the condition now, is that this launchd thing
+            // seems to fix itself after some time in Mac OS X 10.8.  It no
+            // requires a restart
+            NSString* message = [NSString stringWithFormat:@"%@\n\n%@",
+                                 reason,
+                                 suggestion] ;
+            
+            NSString* windowTitle = [NSString stringWithFormat:
+                                     @"%@ : Problem with Mac OS X",
+                                     [[NSProcessInfo processInfo] processName]] ;
+            CFUserNotificationDisplayNotice (
+                                             60,  // timeout
+                                             kCFUserNotificationStopAlertLevel,
+                                             NULL,
+                                             NULL,
+                                             NULL,
+                                             (CFStringRef)windowTitle,
+                                             (CFStringRef)message,
+                                             NULL) ;
+            // The above function returns immediately. It does not wait
+            // for a user response after displaying the dialog.
+        }
 	}
 	
 	return error ;
@@ -348,8 +369,6 @@ end:;
 								   stderrData_p:NULL
 										timeout:3.0
 										error_p:&error] ;
-	error = [self warnUserIfLaunchdHangInTaskResult:result
-											  error:error] ;
 	if ((result != 0) && error) {
 		NSLog(@"SSYLaunchdGuy Error 879-1417 label=%@  %@", label, error) ;
 	}
@@ -414,7 +433,7 @@ end:;
 									  stdinData:nil
 								   stdoutData_p:&listData
 								   stderrData_p:NULL
-										timeout:3.0
+										timeout:LAUNCHCTL_TIMEOUT
 										error_p:&error] ;
 	error = [self warnUserIfLaunchdHangInTaskResult:result
 											  error:error] ;
@@ -442,13 +461,6 @@ end:;
 									   stderrData_p:NULL
 											timeout:3.0
 											error_p:&error] ;
-#if 0
-#warning Faking Brent Robinson error #2
-		result = SSYShellTaskerErrorTimedOut ;
-		error = SSYMakeError(987654, @"Fake Error #2") ;
-#endif
-		error = [self warnUserIfLaunchdHangInTaskResult:result
-												  error:error] ;
 		if (error) {
 			NSLog(@"SSYLaunchdGuy Error 845-6423 label=%@  %@", label, error) ;
 		}
@@ -584,9 +596,6 @@ end:;
 	// point we will have result=0, error=nil, and
 	// stderr=launchctl: Couldn't stat("/path/to/*whatever*.plist"): No such file or directory
 
-	error = [self warnUserIfLaunchdHangInTaskResult:result
-											  error:error] ;
-
 	// Uninstall (Remove .plist file)
 	if (result == 0) {
 		NSString* command = [NSString stringWithFormat:
@@ -683,7 +692,7 @@ end:;
 									  stdinData:nil
 								   stdoutData_p:NULL
 								   stderrData_p:NULL
-										timeout:2.0  // Was 0.0 until BookMacster 1.7.2/1.6.8
+										timeout:LAUNCHCTL_TIMEOUT
 										error_p:&error] ;
 
 	error = [self warnUserIfLaunchdHangInTaskResult:result

@@ -1,8 +1,9 @@
 #import "SSYOperation.h"
 #import "SSYOperationQueue.h"
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
 #import "SSYDebug.h"
 #import "NSDate+NiceFormats.h"
+#import "NSError+MyDomain.h"
 
 #if DEBUG
 // Do not ship with this because method names will be logged so crackers can see.

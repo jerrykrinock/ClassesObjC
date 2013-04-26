@@ -69,19 +69,24 @@
 			NSRectFill(imageFrame);
 		}
 		
-		if ([controlView isFlipped]) {
-			//imageFrame.origin.y += (cellFrame.size.height + imageDimension) / 2 ;
-		}
-		else {
-			//imageFrame.origin.y += (cellFrame.size.height - imageDimension) / 2 ;
-		}
-		
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060 
 		[image drawInRect:imageFrame
                   fromRect:NSZeroRect
                  operation:NSCompositePlusDarker
                   fraction:1.0
             respectFlipped:YES
                      hints:nil] ;
+#else
+		if ([controlView isFlipped]) {
+			imageFrame.origin.y += (cellFrame.size.height + imageDimension) / 2 ;
+		}
+		else {
+			imageFrame.origin.y += (cellFrame.size.height - imageDimension) / 2 ;
+		}
+				
+		[image compositeToPoint:imageFrame.origin
+					  operation:NSCompositePlusDarker] ;
+#endif
 		// I use plusDarker so I don't need an alpha channel - use white background and it "just works"
     }
 	

@@ -1,10 +1,10 @@
 #import "SSYPersistentDocumentMultiMigrator.h"
 #import "NSFileManager+SomeMore.h"
 #import "NSString+LocalizeSSY.h"
-#import "SSYSuperFileManager.h"
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
 #import "NSString+MorePaths.h"
 #import "NSDocument+SyncModDate.h"
+#import "NSError+Recovery.h"
 
 NSString* const SSYPersistentDocumentMultiMigratorErrorDomain = @"SSYPersistentDocumentMultiMigratorErrorDomain" ;
 NSString* const SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification = @"SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification" ;
@@ -172,8 +172,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 		}
 		
 		NSString* path = [url path] ;
-		NSDate* modificationDate = [[SSYSuperFileManager defaultManager] modificationDateForPath:path
-																						 error_p:NULL] ;
+        NSDate *modificationDate = [[[NSFileManager defaultManager] attributesOfItemAtPath:path error:NULL] objectForKey:NSFileModificationDate] ;
 		[errorInfo setValue:modificationDate
 					 forKey:@"Store Modification Date"] ;
 		

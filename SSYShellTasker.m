@@ -1,5 +1,5 @@
 #import "SSYShellTasker.h"
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
 #import "SSYThreadPauser.h"
 #import "SSYRunLoopTickler.h"
 

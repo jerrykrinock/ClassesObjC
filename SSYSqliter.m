@@ -1,6 +1,9 @@
 #import "SSYSqliter.h"
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
 #import "NSArray+SafeGetters.h"
+#import "NSError+MoreDescriptions.h"
+#import "NSError+MyDomain.h"
+#import "NSError+SSYInfo.h"
 
 #include "sqlite3.h"
 
@@ -2057,7 +2060,7 @@ end:
 	NSError* error = nil ;
 	BOOL ok = [self checkpointAndCloseError_p:&error] ;
 	if (!ok) {
-		NSLog(@"Internal Error 624-0404 %@", [error longDescription]) ;
+		NSLog(@"Internal Error 624-0404 %@ closing %@", [error longDescription], m_path) ;
 	}
 
 	[m_path release] ;

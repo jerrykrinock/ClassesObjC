@@ -1,20 +1,17 @@
 #import "SSYDropboxGuy.h"
-#import "SSYSqliter.h"
-#import "NSError+SSYAdds.h"
-#import "NSArray+SafeGetters.h"
-#import "NSString+Base64.h"
-#import "SSYDropboxGuy.h"
+//#import "NSError+InfoAccess.h"
+//#import "NSArray+SafeGetters.h"
+//#import "NSString+Base64.h"
 //#import "NSString+PythonPickles.h"
-#import "NSString+MorePaths.h"
+//#import "NSString+MorePaths.h"
 #import "SSYOtherApper.h"
-#import "SSYShellTasker.h"
+//#import "SSYShellTasker.h"
 #import "SSWebBrowsing.h"
 #import "NSFileManager+SomeMore.h"
+#import "NSDate+NiceFormats.h"
 
 NSString* const SSYDropboxGuyErrorDomain = @"SSYDropboxGuyErrorDomain" ;
 NSString* const constDropboxBundleIdentifier = @"com.getdropbox.dropbox" ;
-
-#define THRESHOLD_AVERAGE_CPU_PERCENT 1.0
 
 @implementation SSYDropboxGuy
 
@@ -37,126 +34,6 @@ NSString* const constDropboxBundleIdentifier = @"com.getdropbox.dropbox" ;
 	return [path hasPrefix:[NSHomeDirectory() stringByAppendingPathComponent:@".dropbox/cache/"]] ;
 }
 
-#define LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX 0
-#if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
-#warning Will log stats during -[SSYDropboxGuy waitForIdleDropboxTimeout:::]
-#endif
-
-+ (BOOL)waitForIdleDropboxTimeout:(NSTimeInterval)timeout
-						   isIdle:(BOOL*)isIdle_p
-						  error_p:(NSError**)error_p {
-	// Since the Dropbox app does not appear in the Dock, I'm somehwat sure, we
-	// get 0 pid from +[SSYOtherApper pidOfThisUsersAppWithBundleIdentifier:].  So
-	// we use +[SSYOtherApper pidOfThisUsersProcessWithBundlePath:] instead
-	NSString* bundlePath = [[NSWorkspace sharedWorkspace] fullPathForApplication:@"Dropbox"] ;
-	pid_t dropboxPid = [SSYOtherApper pidOfThisUsersProcessWithBundlePath:bundlePath] ;
-	if (dropboxPid == 0) {
-		// Dropbox app is not running
-		if (isIdle_p) {
-			*isIdle_p = YES ;
-		}
-		
-		return YES ;
-	}
-	
-	BOOL ok ;
-
-	NSDate* outerEndDate = [NSDate dateWithTimeIntervalSinceNow:timeout] ;
-	NSString* const errorDescription = @"Could not get Dropbox CPU Usage" ;
-	do {
-		NSTimeInterval const innerLoopPeriod = 10.0 ;
-		NSDate* innerEndDate = [NSDate dateWithTimeIntervalSinceNow:innerLoopPeriod] ;
-		NSInteger n = 0 ;
-		CGFloat total = 0.0 ;
-		CGFloat cpuPercent ;
-		do {
-			ok = [SSYOtherApper processPid:dropboxPid
-								   timeout:innerLoopPeriod  // better be much less than this, to get lots of samples
-							  cpuPercent_p:&cpuPercent
-								   error_p:error_p] ;
-#if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
-				printf("%0.1f ", *cpuPercent) ;
-#endif
-			if (ok) {
-				total += cpuPercent ;
-				n++ ;
-			}
-			else {
-				if (error_p) {
-					*error_p = [NSError errorWithDomain:SSYDropboxGuyErrorDomain
-												   code:651106
-											   userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-														 errorDescription, NSLocalizedDescriptionKey,
-														 [NSNumber numberWithInteger:dropboxPid], @"PID",
-														 *error_p, NSUnderlyingErrorKey,
-														 nil]] ;
-				}				
-				break ;
-			}
-			
-			usleep(1800000) ; // 1.8 seconds
-		} while ([(NSDate*)[NSDate date] compare:innerEndDate] == NSOrderedAscending) ;
-		
-		if (ok) {
-			CGFloat avgCpuUsage = total/n ;
-#if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
-			printf("\nDropbox avgCpuUsage = %0.3f\n", avgCpuUsage) ;
-#endif
-			if (avgCpuUsage < THRESHOLD_AVERAGE_CPU_PERCENT) {
-				NSInteger i ;
-				for (i=0; i<3; i++) {
-					// See if we can get three more in a row with CPU usage 0.25 percent or less
-					ok = [SSYOtherApper processPid:dropboxPid
-										   timeout:innerLoopPeriod  // better be much less than this, to get lots of samples
-									  cpuPercent_p:&cpuPercent
-										   error_p:error_p] ;
-#if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
-					printf("%0.1f ", *cpuPercent) ;
-#endif
-					if (cpuPercent > 0.25) {
-#if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
-						printf(" Failed 3x retest") ;
-#endif
-					}
-					
-					if (!ok) {
-						if (error_p) {
-							*error_p = [NSError errorWithDomain:SSYDropboxGuyErrorDomain
-														   code:651107
-													   userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-																 errorDescription, NSLocalizedDescriptionKey,
-																 [NSNumber numberWithInteger:dropboxPid], @"PID",
-																 *error_p, NSUnderlyingErrorKey,
-																 nil]] ;
-						}				
-						break ;
-					}
-					
-					sleep(1.0) ;
-				}
-				
-#if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
-				printf("\n Got i=%ld\n", (long)i) ;
-#endif
-				if (i==3) {
-					if (isIdle_p) {
-						*isIdle_p = YES ;
-						break ;
-					}
-				}
-			}
-		}
-		else {
-			break ;
-		}
-	} while ([(NSDate*)[NSDate date] compare:outerEndDate] == NSOrderedAscending) ;
-
-#if LOG_STATS_DURING_WAIT_FOR_IDLE_DROPBOX
-	printf("RESULT:  ok=%hhd  isIdle=%ld  err=%s\n\n", ok, (long)(*isIdle_p), [[*error_p longDescription] UTF8String]) ;
-#endif	
-	return ok ;
-}
-
 + (NSString*)defaultDropboxPath {
 	NSString* path = [NSHomeDirectory() stringByAppendingPathComponent:@"Dropbox"] ;
 	
@@ -171,6 +48,31 @@ NSString* const constDropboxBundleIdentifier = @"com.getdropbox.dropbox" ;
 	return ([[NSFileManager defaultManager] fileIsPermanentAtPath:[[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:constDropboxBundleIdentifier]]) ;
 #endif
 }
+
++ (NSInteger)isInDropboxPath:(NSString*)path {
+    NSFileManager* fm = [NSFileManager defaultManager] ;
+    do {
+        path = [path stringByDeletingLastPathComponent] ;
+        if ([path isEqualToString:NSHomeDirectory()]) {
+            return NSOffState ;
+        }
+        
+        NSError* error = nil ;
+        NSArray* siblings = [fm contentsOfDirectoryAtPath:path
+                                                    error:&error] ;
+        if (error) {
+            return NSMixedState ;
+        }
+        if ([siblings indexOfObject:@".dropbox.cache"] != NSNotFound) {
+            return NSOnState ;
+        }
+        
+    } while ([path length] > 2) ;
+    
+    return NSOffState ;
+}
+
+
 
 /*
  The following methods no longer work if user has Dropbox 1.2 or later, because

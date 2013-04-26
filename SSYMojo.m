@@ -1,5 +1,6 @@
 #import "SSYMojo.h"
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
+#import "NSError+MyDomain.h"
 #import "SSYAlert.h"
 #import "NSManagedObjectContext+Cheats.h"
 #import "NSObject+MoreDescriptions.h"

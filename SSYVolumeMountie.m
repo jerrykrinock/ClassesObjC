@@ -1,6 +1,7 @@
 #import "SSYVolumeMountie.h"
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
 #import "NSError+LowLevel.h"
+#import "NSError+MyDomain.h"
 
 /*
  FROM : Bill Monk

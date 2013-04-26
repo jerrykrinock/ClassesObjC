@@ -177,9 +177,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 #endif
 
     if (currentlyRunning) {
-#warning Testing That PowerPC Hang
-#if 0
-//#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
         if (currentlyActive != activate) {
             if (activate) {
                 [currentlyRunningApp unhide] ;
@@ -210,7 +208,6 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
         parms.argv = NULL ;
         parms.initialEvent = NULL ;
         OSStatus err = LSOpenApplication(&parms, NULL) ;
-/*DB?Line*/ NSLog(@"8217: err = %ld opening %@", (long)err, path) ;
 
 		if (err != noErr) {
             ok = NO ;

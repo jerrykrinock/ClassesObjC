@@ -6,13 +6,16 @@
 #import "SSYSystemDescriber.h"
 #import "SSYWrappingCheckbox.h"
 
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
 #import "NSInvocation+Quick.h"
 #import "NSString+Clipboard.h"
 #import "NSString+LocalizeSSY.h"
 #import "NSString+Truncate.h"
 #import "NSView+Layout.h"
 #import "NSWindow+Sizing.h"
+#import "NSError+MoreDescriptions.h"
+#import "NSError+Recovery.h"
+#import "NSError+SSYInfo.h"
 
 NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager = nil ;
 static SSYAlert *sharedAlert = nil ;

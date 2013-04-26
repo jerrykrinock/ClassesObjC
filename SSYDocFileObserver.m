@@ -1,6 +1,6 @@
 #import "SSYDocFileObserver.h"
 #import "SSYPathObserver.h"
-#import "NSError+SSYAdds.h"
+#import "NSError+InfoAccess.h"
 #import "NSFileManager+SomeMore.h"
 #import "NSFileManager+SSYFileDescriptor.h"
 #import <sys/event.h>
