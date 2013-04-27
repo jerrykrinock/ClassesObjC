@@ -2,8 +2,10 @@
 #import "SSYOTherApper.h"
 #import "NSDate+NiceFormats.h"
 
-#define PRIMARY_TEST_THRESHOLD_AVERAGE_CPU_PERCENT 1.0
-#define SECONDARY_TEST_THRESHOLD_AVERAGE_CPU_PERCENT 0.25
+// See data at the bottom of this file to see the reason for setting
+// these values as I did.
+#define PRIMARY_TEST_THRESHOLD_AVERAGE_CPU_PERCENT 2.0
+#define SECONDARY_TEST_THRESHOLD_AVERAGE_CPU_PERCENT 2.0
 #define COUNT_OF_SECONDARY_TESTS 3
 
 NSString* const SSYDropboxIdlerErrorDomain = @"SSYDropboxIdlerErrorDomain" ;
@@ -235,3 +237,470 @@ NSString* const SSYDropboxIdlerErrorDomain = @"SSYDropboxIdlerErrorDomain" ;
 }
 
 @end
+
+/*
+ The following data comes from a user for whom this code
+ indicated that Dropbox was always busy, when the two thresholds were
+ set to 1.0 and 0.25 percent.  This is why I just increased them both to 2.0
+ percent.  That probably makes this class not very useful, because there will
+ be missed detections for the average user.  That is, on my Mac, settings of
+ 1.0 and 0.25 percent work perfectly well because my Dropbox CPU
+ falls to 0.0 when it's not uploading or downloading anything.
+ 
+ ***** 2013-04-26 09:30:23 Beginning Wait with timeout 1200.0 seconds *****
+ Will perform primary test for 10.000 seconds.
+ Samples: 56.8% 1.4% 1.5% 1.5% 1.3% 1.3%
+ Primary Test average result = 10.633%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.4% 1.2% 1.4% 1.6% 2.0%
+ Primary Test average result = 1.483%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.9% 1.5% 1.4% 1.4% 1.3% 1.4%
+ Primary Test average result = 1.483%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.3% 1.5% 2.2% 1.4% 1.6%
+ Primary Test average result = 1.567%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.7% 2.2% 2.2% 1.9% 1.5% 1.3%
+ Primary Test average result = 1.800%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.6% 1.3% 1.4% 1.4% 1.3% 1.4%
+ Primary Test average result = 1.400%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.5% 2.0% 1.4% 1.5% 2.3%
+ Primary Test average result = 1.667%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.4% 2.3% 1.4% 1.3% 1.3%
+ Primary Test average result = 1.533%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.4% 1.6% 1.3% 1.4% 1.4%
+ Primary Test average result = 1.400%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.5% 1.3% 1.3% 1.3% 1.4%
+ Primary Test average result = 1.350%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.4% 1.4% 1.4% 1.4% 1.4%
+ Primary Test average result = 1.400%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.3% 1.4% 1.5% 1.9% 1.5%
+ Primary Test average result = 1.500%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.4% 1.4% 3.6%
+ Primary Test average result = 1.717%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.7% 1.3% 1.4% 1.4% 1.3% 1.6%
+ Primary Test average result = 1.450%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.5% 1.3% 1.3% 1.5% 1.3%
+ Primary Test average result = 1.367%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.7% 1.3% 1.6% 1.6% 1.4%
+ Primary Test average result = 1.500%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.4% 1.4% 1.5% 1.2%
+ Primary Test average result = 1.350%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.6% 1.9% 1.6% 1.5% 1.3%
+ Primary Test average result = 1.550%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.3% 1.3% 1.3% 1.3% 1.5%
+ Primary Test average result = 1.367%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.3% 1.5% 1.3%
+ Primary Test average result = 1.333%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.6% 1.4% 1.4% 1.3% 1.3%
+ Primary Test average result = 1.417%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.7% 1.4% 1.4% 1.3% 1.2%
+ Primary Test average result = 1.417%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.5% 1.4% 1.3% 1.3% 1.7%
+ Primary Test average result = 1.433%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.6% 1.3% 2.3% 1.3% 1.3% 2.7%
+ Primary Test average result = 1.750%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.6% 1.5% 1.3% 1.3% 1.5% 1.4%
+ Primary Test average result = 1.433%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.8% 1.3% 1.3%
+ Primary Test average result = 1.383%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.4% 1.6% 1.5% 1.9% 1.5%
+ Primary Test average result = 1.567%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.5% 1.4% 1.3%
+ Primary Test average result = 1.350%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.3% 1.6% 1.5% 1.3% 1.4%
+ Primary Test average result = 1.433%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.4% 1.7% 1.7% 1.5% 1.3%
+ Primary Test average result = 1.483%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.5% 1.4% 1.4% 1.3% 1.2%
+ Primary Test average result = 1.350%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 2.3% 1.4% 1.7% 1.5% 1.2% 1.3%
+ Primary Test average result = 1.567%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.6% 1.5% 1.5% 1.9% 1.4% 1.3%
+ Primary Test average result = 1.533%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.2% 1.3% 1.6% 1.9% 1.9%
+ Primary Test average result = 1.533%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 2.7% 1.3% 1.5% 1.3% 1.4% 1.3%
+ Primary Test average result = 1.583%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.7% 1.5% 1.3% 2.1% 2.4% 2.1%
+ Primary Test average result = 1.850%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.9% 2.0% 1.9% 1.6% 1.5% 2.3%
+ Primary Test average result = 1.867%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.3% 1.3% 1.2%
+ Primary Test average result = 1.283%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.3% 1.5% 1.3% 1.5% 1.5%
+ Primary Test average result = 1.433%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.2% 1.3% 1.3% 1.5% 1.3%
+ Primary Test average result = 1.317%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.4% 1.3% 3.1% 1.3% 1.3%
+ Primary Test average result = 1.617%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.5% 1.5% 1.3% 1.3% 1.3%
+ Primary Test average result = 1.383%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.4% 1.3% 1.3% 1.3%
+ Primary Test average result = 1.317%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.5% 1.3% 1.3% 1.3% 1.4%
+ Primary Test average result = 1.350%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.5% 1.2% 1.3% 1.3% 1.3%
+ Primary Test average result = 1.333%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 2.2% 1.3% 1.4% 1.4%
+ Primary Test average result = 1.483%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 5.2% 2.4% 1.6% 1.5% 1.7% 1.3%
+ Primary Test average result = 2.283%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.3% 1.5% 1.3% 1.8% 2.1%
+ Primary Test average result = 1.583%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.9% 1.3% 1.2% 1.3% 1.9% 1.2%
+ Primary Test average result = 1.467%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 2.1% 1.5% 1.9%
+ Primary Test average result = 1.567%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.6% 1.8% 1.2% 1.7% 1.3%
+ Primary Test average result = 1.500%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.3% 1.2% 1.3%
+ Primary Test average result = 1.283%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.4% 1.3% 1.4% 1.2% 1.3%
+ Primary Test average result = 1.317%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.6% 1.3% 1.9%
+ Primary Test average result = 1.450%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.6% 1.4% 2.0% 1.4% 1.3% 1.3%
+ Primary Test average result = 1.500%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.3% 1.4% 1.3% 1.5% 1.3%
+ Primary Test average result = 1.383%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.6% 1.9% 1.5% 1.6% 1.5%
+ Primary Test average result = 1.567%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.6% 1.5% 1.6% 1.5% 1.4% 1.5%
+ Primary Test average result = 1.517%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.6% 1.8% 1.6% 1.3% 1.4% 1.2%
+ Primary Test average result = 1.483%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.5% 1.2% 1.3% 1.3% 1.4%
+ Primary Test average result = 1.333%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.3% 1.3% 1.3% 1.5% 1.4%
+ Primary Test average result = 1.383%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.5% 1.4% 1.4% 1.3% 1.7%
+ Primary Test average result = 1.433%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.4% 1.3% 1.7% 1.3% 1.3%
+ Primary Test average result = 1.383%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.8% 1.3% 1.5% 1.3% 1.3% 1.4%
+ Primary Test average result = 1.433%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.8% 1.4% 1.8% 1.5% 1.5%
+ Primary Test average result = 1.583%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.6% 1.3% 1.6% 1.5% 1.5% 1.5%
+ Primary Test average result = 1.500%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.4% 1.6% 1.5% 1.5% 1.5%
+ Primary Test average result = 1.500%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.5% 40.0% 1.6% 10.6% 9.0%
+ Primary Test average result = 10.700%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 3.2% 2.1% 1.7% 1.2% 1.5% 1.5%
+ Primary Test average result = 1.867%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.4% 1.4% 1.3% 1.5% 1.3%
+ Primary Test average result = 1.400%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.5% 1.4% 1.4% 1.2% 1.3%
+ Primary Test average result = 1.350%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.4% 1.5% 1.5% 1.4% 1.5%
+ Primary Test average result = 1.450%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.5% 1.3% 1.3% 1.3%
+ Primary Test average result = 1.333%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.9% 1.3% 1.7% 1.3% 2.0% 1.8%
+ Primary Test average result = 1.667%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 2.3% 3.2% 2.5% 1.4% 1.5% 1.5%
+ Primary Test average result = 2.067%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.9% 1.3% 1.4% 1.5% 1.3% 1.5%
+ Primary Test average result = 1.483%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.5% 1.5% 1.8% 1.4% 1.3%
+ Primary Test average result = 1.467%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.7% 1.5% 1.4% 1.5% 1.6% 1.6%
+ Primary Test average result = 1.550%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.3% 1.3% 1.3% 1.6% 1.3%
+ Primary Test average result = 1.367%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 3.9% 1.6% 3.6% 1.5% 1.3%
+ Primary Test average result = 2.217%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.6% 2.0% 1.9% 2.0% 1.4%
+ Primary Test average result = 1.717%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.3% 1.6% 1.3% 1.3% 2.1%
+ Primary Test average result = 1.500%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.6% 1.8% 1.5%
+ Primary Test average result = 1.467%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.2% 1.4% 1.3% 1.7%
+ Primary Test average result = 1.367%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 2.1% 1.9% 2.0% 1.5% 1.9% 2.2%
+ Primary Test average result = 1.933%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.4% 1.3% 1.3% 1.3% 1.2%
+ Primary Test average result = 1.333%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 2.2% 1.4% 2.9% 1.4%
+ Primary Test average result = 1.750%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 2.1% 1.6% 1.8% 1.3% 1.3% 1.4%
+ Primary Test average result = 1.583%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.9% 1.6% 1.3% 1.4% 1.3%
+ Primary Test average result = 1.500%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.6% 1.6% 1.5% 1.3%
+ Primary Test average result = 1.433%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.4% 2.7% 1.6% 1.8% 1.4%
+ Primary Test average result = 1.717%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.5% 1.3% 1.3% 5.0%
+ Primary Test average result = 1.950%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.3% 1.4% 1.3% 1.6% 1.6%
+ Primary Test average result = 1.450%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.2% 1.4% 1.5% 1.4% 1.8% 1.3%
+ Primary Test average result = 1.433%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.3% 1.4% 1.5% 1.3% 1.4%
+ Primary Test average result = 1.400%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.4% 1.5% 1.3% 2.1% 1.5%
+ Primary Test average result = 1.533%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.3% 1.3% 1.3% 1.3% 1.4%
+ Primary Test average result = 1.350%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.2% 1.4% 1.3% 1.9% 1.7%
+ Primary Test average result = 1.467%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 2.1% 1.4% 1.3% 1.3% 1.2%
+ Primary Test average result = 1.433%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.3% 1.6% 1.4%
+ Primary Test average result = 1.367%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.4% 1.5% 1.4% 1.5% 1.5%
+ Primary Test average result = 1.433%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.4% 1.7% 1.4% 1.3% 1.3%
+ Primary Test average result = 1.417%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.6% 1.3% 1.5% 1.3% 1.3%
+ Primary Test average result = 1.383%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.3% 1.4% 1.3% 1.3% 1.6%
+ Primary Test average result = 1.383%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.3% 1.3% 1.6% 1.3% 1.3%
+ Primary Test average result = 1.367%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.7% 2.3% 1.4% 2.5% 1.4%
+ Primary Test average result = 1.783%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.5% 1.4% 1.3% 1.4% 2.5%
+ Primary Test average result = 1.567%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.4% 2.5% 2.4% 2.3%
+ Primary Test average result = 1.867%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.7% 1.4% 1.4% 1.3% 1.3% 1.4%
+ Primary Test average result = 1.417%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 2.3% 2.1% 1.9% 1.9% 2.1%
+ Primary Test average result = 1.933%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 2.3% 2.7% 2.3% 1.5% 1.6% 1.5%
+ Primary Test average result = 1.983%.  Requires < 1.000%
+ 2013-04-26 09:50:28 1205.3 secs elapsed.  No error.  Dropbox is not idle.
+ 
+ ***** 2013-04-26 09:50:28 Beginning Wait with timeout 1200.0 seconds *****
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.6% 1.3% 1.2% 1.5% 1.3%
+ Primary Test average result = 1.400%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.3% 2.4% 1.3% 2.1% 1.3%
+ Primary Test average result = 1.650%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.3% 1.6% 1.3%
+ Primary Test average result = 1.350%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.4% 1.4% 1.4% 1.3% 1.3%
+ Primary Test average result = 1.350%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.2% 1.4% 1.3% 1.3% 1.6%
+ Primary Test average result = 1.383%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.2% 1.3% 1.3%
+ Primary Test average result = 1.283%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.3% 1.4% 4.3%
+ Primary Test average result = 1.817%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.3% 1.3% 1.3%
+ Primary Test average result = 1.300%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.3% 1.3% 1.2%
+ Primary Test average result = 1.283%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.5% 1.3% 1.5% 1.3% 1.3%
+ Primary Test average result = 1.367%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.5% 1.3% 1.3% 1.3% 1.3%
+ Primary Test average result = 1.333%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 2.2% 1.2% 1.3% 1.3% 2.2%
+ Primary Test average result = 1.583%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.3% 1.5% 1.6% 1.4% 1.3%
+ Primary Test average result = 1.417%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.4% 1.5% 1.3% 1.4% 1.2%
+ Primary Test average result = 1.383%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.2% 1.3% 1.2% 1.3%
+ Primary Test average result = 1.267%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.5% 1.3% 1.3% 1.3%
+ Primary Test average result = 1.333%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.3% 1.5% 1.2% 1.3% 1.2%
+ Primary Test average result = 1.317%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.9% 1.8% 2.1% 1.3% 1.6% 1.7%
+ Primary Test average result = 1.733%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.7% 1.8% 1.5% 1.4% 1.5% 1.4%
+ Primary Test average result = 1.550%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.6% 1.4% 1.4% 1.5% 1.9%
+ Primary Test average result = 1.533%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 3.1% 1.5% 1.8% 1.4% 2.1% 1.3%
+ Primary Test average result = 1.867%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.4% 1.5% 1.3% 1.3% 1.3%
+ Primary Test average result = 1.383%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.3% 1.7% 1.3%
+ Primary Test average result = 1.367%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 1.3% 1.3% 1.8% 1.3% 1.4%
+ Primary Test average result = 1.417%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.9% 2.3% 1.8% 1.8% 1.3%
+ Primary Test average result = 1.733%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.3% 1.3% 1.3% 1.6% 1.5% 1.6%
+ Primary Test average result = 1.433%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.6% 1.7% 1.8% 2.5% 1.8% 1.9%
+ Primary Test average result = 1.883%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 2.1% 2.0% 2.0% 2.1% 1.5% 1.8%
+ Primary Test average result = 1.917%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 2.2% 1.7% 2.3% 1.4% 1.3% 2.3%
+ Primary Test average result = 1.867%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.9% 1.7% 1.3% 1.4% 2.5% 1.9%
+ Primary Test average result = 1.783%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.7% 2.0% 1.6% 2.0% 1.6% 1.4%
+ Primary Test average result = 1.717%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.9% 2.0% 1.5% 2.0% 2.4% 1.3%
+ Primary Test average result = 1.850%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 2.1% 1.9% 1.9% 1.5% 1.9% 1.5%
+ Primary Test average result = 1.800%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.5% 1.5% 1.7% 1.5% 1.9% 1.6%
+ Primary Test average result = 1.617%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.9% 1.5% 1.8% 2.0% 1.7% 1.3%
+ Primary Test average result = 1.700%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.4% 2.3% 1.8% 2.1% 2.0% 1.5%
+ Primary Test average result = 1.850%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.9% 1.5% 1.8% 1.5% 1.5% 1.7%
+ Primary Test average result = 1.650%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.7% 1.4% 1.6% 1.4% 1.6% 1.4%
+ Primary Test average result = 1.517%.  Requires < 1.000%
+ Will perform primary test for 10.000 seconds.
+ Samples: 1.6% 1.3% 1.4%
+ 
+ Test was abruptly terminated at this point.
+ 
+ */
