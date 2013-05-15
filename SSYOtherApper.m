@@ -304,10 +304,10 @@ end:;
 
 + (NSArray*)pidsExecutablesFull:(BOOL)fullExecutablePath {
 	// Run unix task "ps" and get results as an array, with each element containing process command and user
-	// The invocation to be constructed is: ps -x[c]awww -o pid -o user -o command
+	// The invocation to be constructed is: ps -xa[c]awww -o pid -o user -o command
 	// -ww is required for long command path strings!!
 	NSData* stdoutData ;
-	NSString* options = fullExecutablePath ? @"-xww" : @"-xcww" ;
+	NSString* options = fullExecutablePath ? @"-xaww" : @"-xacww" ;
 	NSArray* args = [[NSArray alloc] initWithObjects:options, @"-o", @"pid=", @"-o", @"user=", @"-o", @"comm=", nil] ;
 	// In args, the "=" say to omit the column headers
 	[SSYShellTasker doShellTaskCommand:@"/bin/ps"

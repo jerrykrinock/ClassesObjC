@@ -147,20 +147,18 @@
 - (void)prepareLock {
 	// Normally, oldLock should be cleared at this point, if prior usage of
     // this lock is done.
-    if ([self lock]) {
+    if ([self lockIsBlocking]) {
         NSString* msg = nil ;
-        if ([[self lock] condition] != SSY_OPERATION_CLEARED) {
-            msg = [NSString stringWithFormat:@"Warning 209-8483 %@ lock=%@ info=%@",
-                  self,
-                  [self lock],
-                  [self info] ];
-            NSLog(@"%@", msg) ;
+        msg = [NSString stringWithFormat:@"Warning 209-8483 %@ lock=%@ info=%@",
+               self,
+               [self lock],
+               [self info] ];
+        NSLog(@"%@", msg) ;
 #if DEBUG
-            NSAssert(NO, msg) ;
+        NSAssert(NO, msg) ;
 #endif
-        }
     }
-    
+
 	// I considered doing this:
 	// [oldLock unlockWithCondition:SSY_OPERATION_CLEARED] ;
 	// But am worried that it might raise an exception trying to unlock a lock on a
@@ -220,6 +218,16 @@
     [lock release] ;
 }
 
+- (BOOL)lockIsBlocking {
+    BOOL answer = NO ;
+    if ([self lock]) {
+        if ([[self lock] condition] != SSY_OPERATION_CLEARED) {
+            answer = YES ;
+        }
+    }
+    
+    return answer ;
+}
 
 - (void)main {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;

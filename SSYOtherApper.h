@@ -130,7 +130,7 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 
 /*!
  @brief    Returns the unix process ID (pid) of any process whose last path
- component matches a given process name, and whose  which has the same unit
+ component matches a given process name, and whose user id is the same
  user id as the current process, or 0 if no such process is running.
 
  @details  Starting with BookMacster 1.9, this method is now based on

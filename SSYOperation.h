@@ -154,4 +154,14 @@
  */
 - (void)unlockLock ;
 
+/*!
+ @brief    Unlocks the receiver's condition lock.
+ 
+ @details  This method may be used in special cases where an error or other
+ unexpected event might cause -prepareLock to be re-run before -unlockLock,
+ when some operation is retried.  If this method returns YES, you should skip
+ -prepareLock.
+ */
+- (BOOL)lockIsBlocking ;
+
 @end

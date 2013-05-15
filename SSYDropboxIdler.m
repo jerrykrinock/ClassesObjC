@@ -156,13 +156,15 @@ NSString* const SSYDropboxIdlerErrorDomain = @"SSYDropboxIdlerErrorDomain" ;
                     NSInteger i ;
                     [self appendProgress: @"   Samples: "] ;
                     for (i=0; i<COUNT_OF_SECONDARY_TESTS; i++) {
-                        // See if we can get three more in a row with CPU usage 0.25 percent or less
+                        // See if we can get three more in a row with CPU usage
+                        // is SECONDARY_TEST_THRESHOLD_AVERAGE_CPU_PERCENT
+                        // percent or less
                         ok = [SSYOtherApper processPid:dropboxPid
                                                timeout:innerLoopPeriod  // better be much less than this, to get lots of samples
                                           cpuPercent_p:&cpuPercent
                                                error_p:error_p] ;
                         [self appendProgress:[NSString stringWithFormat:@"%0.1f%% ", cpuPercent]] ;
-                        if (cpuPercent > 0.25) {
+                        if (cpuPercent > SECONDARY_TEST_THRESHOLD_AVERAGE_CPU_PERCENT) {
                             [self appendProgress:[NSString stringWithFormat:
                                                   @"Threshold exceeded during %ld/%ld secondary tests.\nBack out to primary test.",
                                                   (long)(i+1),

@@ -159,7 +159,13 @@
 							  launchIdentifiers:NULL] ;
 	}
 	else {
-		NSLog(@"Internal Error 324-6754.  SSOpenURLInBrowser: could not create URL from %@", urlString) ;
+		// Starting in BookMacster 1.15, we NSBeep() here instead of logging
+        // Internal Error 324-6754.  This happens if we are passed an invalid
+        // URL such as a JavaScript bookmarklet, for example…
+        //    javascript:var%20wRWMain1=window.open('','RefWorksBookmark');d=document;i='AddToRWScript';if(d.getElementById(i))RWAddToRW1();else{s=d.createElement('script');s.type='text/javascript';s.src='http://www.refworks.com/refworks/include/addtorw.asp';s.id=i;d.getElementsByTagName('head')[0].appendChild(s);}void(0);
+        if (NSApp) {
+            NSBeep() ;
+        }
 	}
 	
 	//	openURLs
