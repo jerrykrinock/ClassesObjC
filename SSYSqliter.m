@@ -795,7 +795,7 @@ end:
                                        SQLITE_CHECKPOINT_PASSIVE,
                                        &nFramesLogged,
                                        &nFramesCheckpointed) ;
-	if ((result != SQLITE_OK) && error_p) {  
+	if ((result != SQLITE_OK) && error_p) {
 		*error_p = [self makeErrorWithAppCode:453035
 								   sqliteCode:result
 							sqliteDescription:sqlite3_errmsg([self db])

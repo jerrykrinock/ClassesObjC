@@ -33,7 +33,7 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 	if (self != nil) {
 		NSAssert(document != nil, @"SSYDooDooUndoManager got no document") ;
 		
-	//	[self setGroupsByEvent:NO] ;  // Causes all hell to break loose with Core Data.
+        //	[self setGroupsByEvent:NO] ;  // Causes all hell to break loose with Core Data.
 
 		// We cast to an id since the compiler expects these to methods
 		// to get something which inherits from NSUndoManager, which 

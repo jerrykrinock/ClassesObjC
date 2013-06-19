@@ -30,10 +30,6 @@ NSString* const constDropboxBundleIdentifier = @"com.getdropbox.dropbox" ;
 							activate:YES] ;
 }
 
-+ (BOOL)wasReplacedByDropboxPath:(NSString*)path {
-	return [path hasPrefix:[NSHomeDirectory() stringByAppendingPathComponent:@".dropbox/cache/"]] ;
-}
-
 + (NSString*)defaultDropboxPath {
 	NSString* path = [NSHomeDirectory() stringByAppendingPathComponent:@"Dropbox"] ;
 	
@@ -72,7 +68,17 @@ NSString* const constDropboxBundleIdentifier = @"com.getdropbox.dropbox" ;
     return NSOffState ;
 }
 
-
++ (NSInteger)isInDropboxTrashPath:(NSString*)path {
+    BOOL answer = NO ;
+    if (path) {
+        NSArray* components = [path pathComponents] ;
+        if ([components indexOfObject:@".dropbox.cache"] != NSNotFound) {
+            answer = YES ;
+        }
+    }
+    
+    return answer ;
+}
 
 /*
  The following methods no longer work if user has Dropbox 1.2 or later, because

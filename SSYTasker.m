@@ -97,6 +97,7 @@ void* writeDataToHandle(NSDictionary*info) {
 @synthesize error = m_error ;
 
 - (void)processNote:(NSNotification*)note
+              logAs:(NSString*)logAs
            intoData:(NSMutableData *)mutableData {
     NSFileHandle* fileHandle = (NSFileHandle*)[note object] ;
     NSError* error = nil ;
@@ -104,17 +105,19 @@ void* writeDataToHandle(NSDictionary*info) {
     if (error) {
         [self setError:error] ;
     }
+
+    /*SSYDBL*/ NSLog(@"Got from %@ %04ld bytes.", logAs, [data length]) ;
     if ([data length] > 0) {
-        [mutableData appendData:data] ;
+
+       [mutableData appendData:data] ;
         // Tell the fileHandle that we want more data.
         [fileHandle waitForDataInBackgroundAndNotify] ;
     }
     else {
-        // I've not seen this happen, because I always get
-        // NSTaskDidTerminateNotification first.  But it might??  If it does,
-        // according to documentation, it tells us that either stdout or stderr
-        // is done.  We ignore it and wait instead for
-        // NSTaskDidTerminateNotification.
+        // According to documentation, it tells us that either stdout or stderr
+        // is done.  In my experience, this branch usually does not execute
+        // in a typical program run.  But somtimes it does.  We ignore it and
+        // wait instead for NSTaskDidTerminateNotification which is reliable.
     }
 }
 
@@ -126,6 +129,7 @@ void* writeDataToHandle(NSDictionary*info) {
     }
 
     [self processNote:note
+                logAs:@"stdout"
              intoData:mutableData];
 }
 
@@ -137,6 +141,7 @@ void* writeDataToHandle(NSDictionary*info) {
     }
 
     [self processNote:note
+                logAs:@"stderr"
              intoData:mutableData];
 }
 
@@ -256,7 +261,8 @@ void* writeDataToHandle(NSDictionary*info) {
                 // Just run the loop again, to wait for next notification or done.
             }
         } while ([self isTaskDone] == NO) ;
-        
+        /*SSYDBL*/ NSLog(@"Done") ;
+
         exitStatus = [task terminationStatus] ;
         
         [[NSNotificationCenter defaultCenter] removeObserver:self] ;

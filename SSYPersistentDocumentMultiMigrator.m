@@ -251,7 +251,33 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 			goto end ;
 		}
 		
-		// Do the migration, creating a new file at destempUrl.
+#if 0
+        // Fix 20130610
+        BOOL isWritable = [[NSFileManager defaultManager] isWritableFileAtPath:[url absoluteString]] ;
+        BOOL isInViewingMode = [document isInViewingMode] ;
+        /*SSYDBL*/ NSLog(@"isWritable = %ld   isInViewingMode = %ld ", isWritable, isInViewingMode) ;
+        if (isInViewingMode) {
+            NSString* fileNameExtension = [[url absoluteString] pathExtension] ;
+            NSString* writablePath = [[[NSFileManager defaultManager] temporaryFilePath] stringByAppendingPathExtension:fileNameExtension] ;
+            /*SSYDBL*/ NSLog(@"Not writable.\nCopying: %@\n     To: %@", [url absoluteString], writablePath) ;
+            ok = [[NSFileManager defaultManager] copyItemAtPath:[url absoluteString]
+                                                         toPath:writablePath
+                                                          error:&underlyingError] ;
+            if (!ok) {
+                errorCode = SSYPersistentDocumentMultiMigratorErrorCodeCouldNotCopyUnwriteableFile ;
+                [errorInfo setValue:writablePath
+                             forKey:@"Writable Path"] ;
+                [errorInfo setValue:[url absoluteString]
+                             forKey:@"Source Path"] ;
+                goto end ;
+            }
+            
+            url = [NSURL fileURLWithPath:writablePath] ;
+            [document setFileURL:url] ;
+        }
+#endif
+        
+        // Do the migration, creating a new file at destempUrl.
 		// Because the Core Data Model Versioning and Data Migration Programming Guide
 		// indicates that this method reads the whole store into memory, and this
 		// could be a lot, we use a local autorelease pool, transferring any

@@ -13,11 +13,11 @@ NSString* SSYDebugBacktrace(void) {
 								 [[NSThread currentThread] name]] ;
 
 	[nsString appendString:@"   Slide(0x) Library\n"] ;
-	NSUInteger i;
+	uint32_t i;
 	NSUInteger count = _dyld_image_count();
 
 	for (i = 0; i < count; i++) {
-		intptr_t slide = _dyld_get_image_vmaddr_slide(i); 
+		intptr_t slide = (intptr_t)_dyld_get_image_vmaddr_slide(i);
 		NSString* name = [NSString stringWithUTF8String:_dyld_get_image_name(i)] ;
 		NSString* exclude1 = @"/usr/lib/" ;
 		NSString* exclude2 = @"/System/Library/" ;
@@ -34,7 +34,7 @@ NSString* SSYDebugBacktrace(void) {
 	// An infinite loop will "blow its stack" at 512 calls, so
 	// we allow a little more than that.
 	void* callstack[514] ;
-	NSInteger frames = backtrace(callstack, 514) ;
+	int frames = backtrace(callstack, 514) ;
 	char** strs = backtrace_symbols(callstack, frames) ;
 	NSInteger iFrame ;
 	for (iFrame = 1; iFrame < frames; ++iFrame) {
@@ -73,7 +73,7 @@ NSString* SSYDebugBacktraceDepth(NSInteger depth) {
 	NSMutableString* nsString = [[NSMutableString alloc] init] ;
 	
 	void* callstack[depth] ;
-	NSInteger frames = backtrace(callstack, depth) ;
+	int frames = backtrace(callstack, (int)depth) ;
 	char** strs = backtrace_symbols(callstack, frames) ;
 	NSInteger iFrame ;
 	for (iFrame = 2; iFrame < frames; ++iFrame) {
@@ -92,7 +92,7 @@ NSString* SSYDebugBacktraceDepth(NSInteger depth) {
 
 NSString* SSYDebugCaller(void) {
 	void* callstack[3] ;
-	NSInteger frames = backtrace(callstack, 3) ;
+	int frames = backtrace(callstack, 3) ;
 	char** strs = backtrace_symbols(callstack, frames) ;
 	NSString* caller = [NSString stringWithCString:strs[2]
 										  encoding:NSUTF8StringEncoding] ;

@@ -25,13 +25,13 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 @interface SSYPathWatch : NSObject {
 	NSString* m_path ;
 	id m_userInfo ;
-	NSInteger m_fileDescriptor ;
+	uint32_t m_fileDescriptor ;
 	NSThread* m_notifyThread ;
 }
 
 @property (retain) NSString* path ;
 @property (retain) id userInfo ;
-@property (assign) NSInteger fileDescriptor ;
+@property (assign) uint32_t fileDescriptor ;
 @property (assign) NSThread* notifyThread ;
 
 @end
@@ -120,7 +120,7 @@ void handleUSR1(NSInteger signum) {
 	 oh, well if you don't try to write perfect code, you'll have
 	 lots of bugs. */
 	
-	NSInteger fileDescriptor ;
+	int fileDescriptor ;
 	@synchronized(self) {
 		NSAutoreleasePool* pool1 = [[NSAutoreleasePool alloc] init] ;
 		
@@ -210,7 +210,7 @@ void handleUSR1(NSInteger signum) {
 		[self setIsWatching:YES] ;
 		[self setPathWatches:[NSMutableSet set]] ;
 
-		NSInteger kqueueFileDescriptor = kqueue() ;
+		uint32_t kqueueFileDescriptor = kqueue() ;
 		if (kqueueFileDescriptor == -1) {
 			NSLog(@"Internal Error 153-9092.  Failed creating kqueue") ;
 			// See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
@@ -335,7 +335,7 @@ void handleUSR1(NSInteger signum) {
 			// Close any file descriptors which might still be open
 			for (SSYPathWatch* pathWatch in [self pathWatches]) {
 				// Unregister kqueue of the target pathWatch
-				NSInteger fileDescriptor = [pathWatch fileDescriptor] ;
+				uint32_t fileDescriptor = [pathWatch fileDescriptor] ;
 				NSInteger result = close(fileDescriptor) ;
 				if (result != 0) {
 				}
@@ -352,7 +352,7 @@ void handleUSR1(NSInteger signum) {
 			}
 #endif
 			
-			NSInteger kqfd = [self kqueueFileDescriptor] ;
+			uint32_t kqfd = [self kqueueFileDescriptor] ;
 			
 			// The following causes the watcher thread to exit in Mac OS 10.6,
 			// but not in Mac OS 10.5.
@@ -384,7 +384,7 @@ void handleUSR1(NSInteger signum) {
 	BOOL ok = YES ;
 	
 	// Get file descriptor for given path
-	NSInteger fileDescriptor = open([path UTF8String], O_RDONLY) ;	
+	uint32_t fileDescriptor = open([path UTF8String], O_RDONLY) ;	
 	if (fileDescriptor == -1) {
 		if (error_p) {
 			NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:

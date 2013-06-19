@@ -20,12 +20,6 @@ __attribute__((visibility("default"))) @interface SSYDropboxGuy : NSObject
 */
 + (void)getDropbox ;
 
-/*!
- @brief    Returns whether or not a given path is in the Dropbox
- archive, indicating that it was replaced by Dropbox.
-*/
-+ (BOOL)wasReplacedByDropboxPath:(NSString*)path ;
-
 + (NSString*)defaultDropboxPath ;
 
 + (BOOL)dropboxIsAvailable ;
@@ -42,6 +36,22 @@ __attribute__((visibility("default"))) @interface SSYDropboxGuy : NSObject
  error, returns NSMixedState.
  */
 + (NSInteger)isInDropboxPath:(NSString*)path ;
+
+/*!
+ @brief    Returns whether or not a given path is probably in the user's
+ Dropbox "cache", which is its "Trash".
+ 
+ @details  A folder gets in the Dropbox "Trash" if it is trashed on another
+ computer, or replaced on another computer.
+ 
+ This method detects whether or not any of the given path's ancester
+ folders are ".dropbox.cache".  Therefore, it can return a false positive if
+ some user creates such a folder of their own accord and puts stuff in it.
+ 
+ If path is nil, returns NO.
+ */
++ (NSInteger)isInDropboxTrashPath:(NSString*)path ;
+
 
 #if 0
 /*

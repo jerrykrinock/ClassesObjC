@@ -187,7 +187,15 @@
 
 	NSManagedObject* object = [NSEntityDescription insertNewObjectForEntityForName:[self entityName]
 															inManagedObjectContext:moc] ;	
-	return object ;
+#if 11
+#warning Testing insertions not on main thread
+    if (![[NSThread currentThread] isMainThread]) {
+        NSLog(@"Internal Error 523-0024 %@\n%@",
+              [self entityName],
+              SSYDebugBacktraceDepth(8)) ;
+    }
+#endif
+    return object ;
 }
 
 - (NSManagedObject*)objectWithID:(NSManagedObjectID*)objectID {

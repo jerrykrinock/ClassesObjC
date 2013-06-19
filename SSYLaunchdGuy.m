@@ -382,7 +382,7 @@ end:;
 		NSArray* words = [trimmedResponse componentsSeparatedByString:@" "] ;
 		if ([words count] > 0) {
 			NSString* pidString = [words objectAtIndex:0] ;
-			pid = [pidString integerValue] ;
+            pid = [pidString intValue] ;
 		}
 	}
 	

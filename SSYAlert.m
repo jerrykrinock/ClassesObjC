@@ -663,7 +663,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		if ([mailableDescription hasSuffix:SSYDidTruncateErrorDescriptionTrailer]) {
 			// We'll write a file to package the error's longDescription which was too long to
 			// fit in the email, and ask the user to zip and attach it.
-			NSString* longDescription = [error performSelector:@selector(longDescription)] ;
+			NSString* longDescription = [error longDescription] ;
 
 			NSString* filename = [NSString stringWithFormat:
 								  @"%@-Error-%lx.txt",
