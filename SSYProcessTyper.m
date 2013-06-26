@@ -69,7 +69,6 @@
 	if (err != noErr) {
         NSLog(@"Internal Error 915-9385 %ld", (long)err) ;
     }
-	//NSLog(@"2000 New ActiveApp: %@", [[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationName"]) ;
 	activeAppPid = (pid_t)[[[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationProcessIdentifier"] integerValue] ;
     return activeAppPid ;
 }

@@ -13,6 +13,15 @@ extern NSInteger SSYTaskerMetaErrorCode ;
 
 typedef enum SSYTaskerErrorCodes_enum SSYTaskerErrorCodes ;
 
+@protocol SSYTaskerProgressDelegate
+
+- (void)gotBytesCount:(NSInteger)bytesCount
+             pipeName:(NSString*)pipeName ;
+
+@end
+
+
+
 /*!
  @brief    A wrapper around NSTask which runs a task synchronously, as in
  -[NSTask waitUntilExit], but is more robust.
@@ -33,7 +42,11 @@ typedef enum SSYTaskerErrorCodes_enum SSYTaskerErrorCodes ;
  
  This class assumes Objective-C Automatic Reference Counting (ARC).
  */
-@interface SSYTasker : NSObject
+@interface SSYTasker : NSObject {
+    NSObject <SSYTaskerProgressDelegate> * __weak m_delegate ;
+}
+
+@property NSObject <SSYTaskerProgressDelegate> * __weak delegate ;
 
 /*!
  @brief    Runs a shell task synchronously and robustly

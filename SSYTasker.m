@@ -1,5 +1,6 @@
 #import "SSYTasker.h"
 #import <pthread.h>
+#import "SSYRunLoopTickler.h"
 
 NSString* constKeySSYTaskerFileHandle = @"fileHandle" ;
 NSString* constKeySSYTaskerData = @"data" ;
@@ -95,9 +96,10 @@ void* writeDataToHandle(NSDictionary*info) {
 @synthesize stdoutData = m_stdoutData ;
 @synthesize stderrData = m_stderrData ;
 @synthesize error = m_error ;
+@synthesize delegate = m_delegate ;
 
 - (void)processNote:(NSNotification*)note
-              logAs:(NSString*)logAs
+           pipeName:(NSString*)pipeName
            intoData:(NSMutableData *)mutableData {
     NSFileHandle* fileHandle = (NSFileHandle*)[note object] ;
     NSError* error = nil ;
@@ -105,11 +107,14 @@ void* writeDataToHandle(NSDictionary*info) {
     if (error) {
         [self setError:error] ;
     }
-
-    /*SSYDBL*/ NSLog(@"Got from %@ %04ld bytes.", logAs, [data length]) ;
+    
+    if (pipeName) {
+        [[self delegate] gotBytesCount:[data length]
+                              pipeName:pipeName] ;
+    }
     if ([data length] > 0) {
-
-       [mutableData appendData:data] ;
+        
+        [mutableData appendData:data] ;
         // Tell the fileHandle that we want more data.
         [fileHandle waitForDataInBackgroundAndNotify] ;
     }
@@ -127,9 +132,9 @@ void* writeDataToHandle(NSDictionary*info) {
         mutableData = [[NSMutableData alloc] init] ;
         [self setStdoutData:mutableData] ;
     }
-
+    
     [self processNote:note
-                logAs:@"stdout"
+             pipeName:@"stdout"
              intoData:mutableData];
 }
 
@@ -139,9 +144,9 @@ void* writeDataToHandle(NSDictionary*info) {
         mutableData = [[NSMutableData alloc] init] ;
         [self setStderrData:mutableData] ;
     }
-
+    
     [self processNote:note
-                logAs:@"stderr"
+             pipeName:@"stderr"
              intoData:mutableData];
 }
 
@@ -150,12 +155,17 @@ void* writeDataToHandle(NSDictionary*info) {
     [self setIsTaskDone:YES] ;
 }
 
+- (void)kickFromTimer:(NSTimer*)timer {
+    fprintf(stderr, "t") ;
+    [SSYRunLoopTickler tickle] ;
+}
+
 - (NSInteger)runCommand:(NSString*)launchPath
               arguments:(NSArray*)arguments
               stdinData:(NSData*)stdinData
               workingIn:(NSString*)workingDirectory {
     NSInteger errorCode = 0 ;
-    
+
     // Reset in case we are invoked more than once in a lifetime.
     [self setIsTaskDone:NO] ;
     [self setStdoutData:nil] ;
@@ -178,7 +188,7 @@ void* writeDataToHandle(NSDictionary*info) {
         fileStdin = [pipeStdin fileHandleForWriting] ;
         [task setStandardInput:pipeStdin] ;
     }
-
+    
     /*
      In order to prevent the stdout and stderr pipes from clogging and stalling
      tasks that return a lot of stdout or stderr, instead of invoking
@@ -193,7 +203,7 @@ void* writeDataToHandle(NSDictionary*info) {
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(eatStdoutNote:)
                                                  name:NSFileHandleDataAvailableNotification
-                                               object:fileStdout] ;    
+                                               object:fileStdout] ;
 	[task setStandardOutput:pipeStdout] ;
     [fileStdout waitForDataInBackgroundAndNotify] ;
     
@@ -203,17 +213,17 @@ void* writeDataToHandle(NSDictionary*info) {
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(eatStderrNote:)
                                                  name:NSFileHandleDataAvailableNotification
-                                               object:fileStderr] ;    
+                                               object:fileStderr] ;
 	[task setStandardError:pipeStderr] ;
     [fileStderr waitForDataInBackgroundAndNotify] ;
     
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(taskTerminatedNote:)
                                                  name:NSTaskDidTerminateNotification
-                                               object:task] ;    
+                                               object:task] ;
     
     [task launch] ;
-
+    
     if (stdinData) {
         // Torsten Curdt says that we need to write to stdin in a separate
         // thread, in case it is more than 64 KB.  I don't know if that is
@@ -243,13 +253,18 @@ void* writeDataToHandle(NSDictionary*info) {
                 errorCode = SSYTaskerErrorCodeCouldNotDetachThreadForStdin ;
             }
         }
-            
-            
+        
+        
     }
     
     int exitStatus = -1 ;
     if (errorCode == 0) {
         NSRunLoop *runLoop = [NSRunLoop currentRunLoop] ;
+        NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:5.0
+                                                          target:self
+                                                        selector:@selector(kickFromTimer:)
+                                                        userInfo:nil
+                                                         repeats:YES] ;
         do {
             @autoreleasepool {
                 BOOL keepRunning = [runLoop runMode:NSDefaultRunLoopMode
@@ -261,8 +276,9 @@ void* writeDataToHandle(NSDictionary*info) {
                 // Just run the loop again, to wait for next notification or done.
             }
         } while ([self isTaskDone] == NO) ;
-        /*SSYDBL*/ NSLog(@"Done") ;
-
+        
+        [timer invalidate] ;
+        
         exitStatus = [task terminationStatus] ;
         
         [[NSNotificationCenter defaultCenter] removeObserver:self] ;
@@ -292,15 +308,18 @@ void* writeDataToHandle(NSDictionary*info) {
     NSError* error = [self error] ;
     if (!error) {
         if (errno) {
+            NSString* desc = [NSString stringWithFormat:
+                              @"Command returned Unix errno %d",
+                              errno] ;
             error = [NSError errorWithDomain:SSYTaskerErrorDomain
                                         code:SSYTaskerErrorCodeUnixCommandError
                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-                                              @"Command returned Unix errno", NSLocalizedDescriptionKey,
+                                              desc, NSLocalizedDescriptionKey,
                                               [NSNumber numberWithInt:errno], @"errno",
                                               nil]] ;
         }
     }
-
+    
     return error ;
 }
 

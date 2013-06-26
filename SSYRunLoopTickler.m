@@ -18,8 +18,10 @@
 		NSLog(@"%s failed to send its message.", __PRETTY_FUNCTION__) ;
 	}
 	
+#if NO_ARC
 	[message release] ;
-
+#endif
+    
 	// If I remove the port now, the desired "tickle" causing a
 	// blocked -[NSRunLoop runMode:beforeDate:] to return will
 	// not occur.  But if I do so with a delay of 0.0, it works.

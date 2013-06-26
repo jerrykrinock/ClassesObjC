@@ -46,9 +46,12 @@ NSString* SSYDebugBacktrace(void) {
 	free(strs) ;
 	
 	NSString* answer = [nsString copy] ;
+#if NO_ARC
 	[nsString release] ;
-	
-	return [answer autorelease] ;
+    [answer autorelease] ;
+#endif
+    
+	return answer ;
 }
 	
 void SSYDebugLogBacktrace (void) {
@@ -85,9 +88,12 @@ NSString* SSYDebugBacktraceDepth(NSInteger depth) {
 	free(strs) ;
 	
 	NSString* answer = [nsString copy] ;
+#if NO_ARC
 	[nsString release] ;
+    [answer autorelease] ;
+#endif
 	
-	return [answer autorelease] ;
+	return answer ;
 }
 
 NSString* SSYDebugCaller(void) {
@@ -108,7 +114,9 @@ NSString* SSYDebugCaller(void) {
 									 range:NSMakeRange(0, [mutant length])] ;
 	} while ([mutant length] < oldLength) ;
 	caller = [NSString stringWithString:mutant] ;
+#if NO_ARC
 	[mutant release] ;
+#endif
 	NSArray* comps = [caller componentsSeparatedByString:@" "] ;
 	caller = [comps objectAtIndex:3] ;
 	if ([comps count] > 6) {
