@@ -7,6 +7,10 @@
  SDK.  So I did it the correct way now.  For defensive programming,,
  the three values here match the values of the corresponding
  kProcessTransformToForegroundApplication and friends.
+ 
+ I don't know what is the difference between the types "Background" and
+ "UIElement".  I never user the former, only the latter.  I have not been able
+ to find any explanation in Apple documemtation.
  */
 enum SSYProcessTyperType_enum {
 	SSYProcessTyperTypeForeground = 1,
@@ -15,13 +19,12 @@ enum SSYProcessTyperType_enum {
 } ;
 typedef enum SSYProcessTyperType_enum SSYProcessTyperType ;
 
+
 @interface SSYProcessTyper : NSObject {
 
 }
 
 + (SSYProcessTyperType)currentType ;
-
-+ (void)transformToType:(SSYProcessTyperType)type ;
 
 + (void)transformToForeground:(id)sender ;
 

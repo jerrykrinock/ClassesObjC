@@ -39,4 +39,22 @@ NSString* const SSYSearchFieldDidCancelNotification = @"SSYSearchFieldDidCancelN
 									withObject:sender] ;
 }
 
+- (void)appendToRecentSearches:(NSString*)newString {
+    if ([newString length] > 0) {
+        NSMutableArray* recentSearches = [[self recentSearches] mutableCopy] ;
+
+        // In case newString is a re-do of an earlier search,
+        [recentSearches removeObject:newString] ;
+        // Now add newString at the top
+        [recentSearches insertObject:newString
+                             atIndex:0] ;
+
+        if (![[self recentSearches] isEqualToArray:recentSearches]) {
+            [self setRecentSearches:recentSearches] ;
+        }
+        
+        [recentSearches release] ;
+    }
+}
+
 @end

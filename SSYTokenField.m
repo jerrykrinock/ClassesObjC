@@ -90,11 +90,30 @@
 			if (nRows == 1) {
 				// This would only happen if the first token by itself was too wide
 				// to fit in a row, which would be very rare
+                /*SSYDBL*/ NSLog(@"My fix 1") ;
 				height += (tokenHeight + 2 * interrowSpace) ;
 			}
 			else {
+                /*SSYDBL*/ NSLog(@"My fix 2") ;
 				height += (tokenHeight + interrowSpace) ;
 			}
+            
+            // Bug fix contributed by francesco-romano, 2012-07-07, supposedly
+            // to keep this from becoming an infinite loop if token's required
+            // width is larger than the availableWidth
+            if (!nTokensInThisRow) {
+               // This happens if one tag is too long to be added in one row,
+                // so we want to add a row with a lone tag.  It will be
+                // truncated by the NSTokenField. We now increase the height of
+                // the field.
+                height += (tokenHeight + interrowSpace) ;
+                // The above counts another row for the too-long tag
+                // We now count a fake row with one tag
+                nRows++;
+                nTokensInThisRow = 1;
+                nTokensPlaced++;
+            }
+            
 			startingToken = startingToken + nTokensInThisRow ;
 			nTokensInThisRow = 0 ;
 		}

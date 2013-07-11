@@ -9,6 +9,12 @@ NSString* SSYTaskerErrorDomain = @"SSYTaskerErrorDomain" ;
 
 NSInteger SSYTaskerMetaErrorCode = 444000 ;
 
+@interface SSYTasker ()
+
+@property (assign) FILE * restrict heartbeatTo ;
+
+@end
+
 @implementation NSFileHandle (CSFileHandleExtensions)
 
 - (NSData*)availableDataError_p:(NSError**)error_p {
@@ -156,12 +162,16 @@ void* writeDataToHandle(NSDictionary*info) {
 }
 
 - (void)kickFromTimer:(NSTimer*)timer {
-    fprintf(stderr, "t") ;
+    FILE * restrict heartbeatTo = [self heartbeatTo] ;
+    if (heartbeatTo != NULL) {
+        fprintf(heartbeatTo, "H") ;
+    }
     [SSYRunLoopTickler tickle] ;
 }
 
 - (NSInteger)runCommand:(NSString*)launchPath
               arguments:(NSArray*)arguments
+            heartbeatTo:(FILE *restrict)heartbeatTo
               stdinData:(NSData*)stdinData
               workingIn:(NSString*)workingDirectory {
     NSInteger errorCode = 0 ;
@@ -171,6 +181,8 @@ void* writeDataToHandle(NSDictionary*info) {
     [self setStdoutData:nil] ;
     [self setStderrData:nil] ;
     [self setError:nil] ;
+
+    [self setHeartbeatTo:heartbeatTo] ;
     
     // Create task with given parameters
     NSTask *task = [[NSTask alloc] init] ;

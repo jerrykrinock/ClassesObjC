@@ -187,7 +187,7 @@
 
 	NSManagedObject* object = [NSEntityDescription insertNewObjectForEntityForName:[self entityName]
 															inManagedObjectContext:moc] ;	
-    // Added in BookMacster 1.15.7 to try and find a rare bug
+    // Added in BookMacster 1.16 to try and find a rare bug
     if (![[NSThread currentThread] isMainThread]) {
         NSLog(@"Internal Error 523-0024 %@\n%@",
               [self entityName],

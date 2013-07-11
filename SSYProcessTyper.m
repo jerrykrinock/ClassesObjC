@@ -1,6 +1,5 @@
 #import "SSYProcessTyper.h"
 
-
 @implementation SSYProcessTyper
 
 /*
@@ -99,7 +98,8 @@
             return ;
         }
     }
-	
+    
+    // Actual Subtance
     ProcessSerialNumber psn = { 0, kCurrentProcess } ;
     OSStatus err ;
     err = TransformProcessType(&psn, [self appleTypeForType:type]) ;

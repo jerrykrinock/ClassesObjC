@@ -44,6 +44,7 @@ typedef enum SSYTaskerErrorCodes_enum SSYTaskerErrorCodes ;
  */
 @interface SSYTasker : NSObject {
     NSObject <SSYTaskerProgressDelegate> * __weak m_delegate ;
+    FILE * restrict m_heartbeatTo ;
 }
 
 @property NSObject <SSYTaskerProgressDelegate> * __weak delegate ;
@@ -57,6 +58,10 @@ typedef enum SSYTaskerErrorCodes_enum SSYTaskerErrorCodes ;
  @param    launchPath  The command to run.  See -[NSTask setLaunchPath:].
  @param    arguments  The arguments passed to the command.  See
  -[NSTask setArguments:].  May be nil.
+ @param    heartbeatTo  Handle to a file to which the ASCII character "H"
+ will be written once every few seconds, if no stdout or stderr has been
+ written in the last few seconds.  Typically, you will pass either stdout
+ or stderr, or NULL if you don't want any heartbeat.
  @param    stdinData  Data to be passed to the command's stdin.  May be nil.
  
  @result   The exit status from running the command, or if a higher level error
@@ -65,6 +70,7 @@ typedef enum SSYTaskerErrorCodes_enum SSYTaskerErrorCodes ;
  */
 - (NSInteger)runCommand:(NSString*)launchPath
               arguments:(NSArray*)arguments
+            heartbeatTo:(FILE* restrict)heartbeatTo
               stdinData:(NSData*)stdinData
               workingIn:(NSString*)workingDirectory ;
 

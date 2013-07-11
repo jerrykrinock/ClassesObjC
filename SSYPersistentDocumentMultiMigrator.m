@@ -276,7 +276,13 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
             [document setFileURL:url] ;
         }
 #endif
-        
+#if MAC_OS_X_VERSION_MAX_ALLOWED > 1060
+        if ([document isInViewingMode]) {
+            [newStoreOptions setObject:[NSNumber numberWithBool:YES]
+                                forKey:NSReadOnlyPersistentStoreOption] ;
+        }
+#endif
+             
         // Do the migration, creating a new file at destempUrl.
 		// Because the Core Data Model Versioning and Data Migration Programming Guide
 		// indicates that this method reads the whole store into memory, and this
