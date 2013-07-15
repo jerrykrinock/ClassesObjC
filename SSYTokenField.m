@@ -90,11 +90,9 @@
 			if (nRows == 1) {
 				// This would only happen if the first token by itself was too wide
 				// to fit in a row, which would be very rare
-                /*SSYDBL*/ NSLog(@"My fix 1") ;
 				height += (tokenHeight + 2 * interrowSpace) ;
 			}
 			else {
-                /*SSYDBL*/ NSLog(@"My fix 2") ;
 				height += (tokenHeight + interrowSpace) ;
 			}
             

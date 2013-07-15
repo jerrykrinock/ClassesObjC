@@ -104,10 +104,9 @@ void* writeDataToHandle(NSDictionary*info) {
 @synthesize error = m_error ;
 @synthesize delegate = m_delegate ;
 
-- (void)processNote:(NSNotification*)note
-           pipeName:(NSString*)pipeName
-           intoData:(NSMutableData *)mutableData {
-    NSFileHandle* fileHandle = (NSFileHandle*)[note object] ;
+- (void)eatFromFilehandle:(NSFileHandle*)fileHandle
+                 pipeName:(NSString*)pipeName
+                 intoData:(NSMutableData *)mutableData {
     NSError* error = nil ;
     NSData* data = [fileHandle availableDataError_p:&error] ;
     if (error) {
@@ -132,28 +131,38 @@ void* writeDataToHandle(NSDictionary*info) {
     }
 }
 
-- (void)eatStdoutNote:(NSNotification*)note {
+- (void)eatStdoutFromFileHandle:(NSFileHandle *)fileHandle {
     NSMutableData* mutableData = [self stdoutData] ;
     if (!mutableData) {
         mutableData = [[NSMutableData alloc] init] ;
         [self setStdoutData:mutableData] ;
     }
     
-    [self processNote:note
-             pipeName:@"stdout"
-             intoData:mutableData];
+    [self eatFromFilehandle:fileHandle
+                   pipeName:@"stdout"
+                   intoData:mutableData] ;
 }
 
-- (void)eatStderrNote:(NSNotification*)note {
+- (void)eatStdoutNote:(NSNotification*)note {
+    NSFileHandle* fileHandle = [note object] ;
+    [self eatStdoutFromFileHandle:fileHandle] ;
+}
+
+- (void)eatStderrFromFileHandle:(NSFileHandle *)fileHandle {
     NSMutableData* mutableData = [self stderrData] ;
     if (!mutableData) {
         mutableData = [[NSMutableData alloc] init] ;
         [self setStderrData:mutableData] ;
     }
     
-    [self processNote:note
-             pipeName:@"stderr"
-             intoData:mutableData];
+    [self eatFromFilehandle:fileHandle
+                   pipeName:@"stderr"
+                   intoData:mutableData];
+}
+
+- (void)eatStderrNote:(NSNotification*)note {
+    NSFileHandle* fileHandle = [note object] ;
+    [self eatStderrFromFileHandle:fileHandle];
 }
 
 - (void)taskTerminatedNote:(NSNotification*)note {
@@ -282,7 +291,7 @@ void* writeDataToHandle(NSDictionary*info) {
                 BOOL keepRunning = [runLoop runMode:NSDefaultRunLoopMode
                                          beforeDate:[NSDate distantFuture]] ;
                 if (!keepRunning) {
-                    [self setIsTaskDone:YES] ;
+                   [self setIsTaskDone:YES] ;
                 }
                 // That's all. Actual work is done by notification handlers.
                 // Just run the loop again, to wait for next notification or done.
@@ -292,6 +301,15 @@ void* writeDataToHandle(NSDictionary*info) {
         [timer invalidate] ;
         
         exitStatus = [task terminationStatus] ;
+        
+        // Added the following to fix bug, 20130712, which caused stderr or
+        // stdout to be not returned about 0.5% of the time.  Apparently there
+        // is some kind of race condition wherein an NSTask can terminate
+        // before the final notification of available stdout or stderr has
+        // been processed, or something like that.  Anyhow, it took me two days
+        // to figure this out.  This fixed it…
+        [self eatStdoutFromFileHandle:fileStdout] ;
+        [self eatStderrFromFileHandle:fileStderr] ;
         
         [[NSNotificationCenter defaultCenter] removeObserver:self] ;
     }
