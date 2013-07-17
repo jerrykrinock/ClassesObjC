@@ -276,7 +276,7 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 		asyncCallbackTarget:(id)asyncCallbackTarget
 	  asyncCallbackSelector:(SEL)asyncCallbackSelector
 					  err_p:(OSErr*)err_p {
-	// Determine which mode to run
+    // Determine which mode to run
 	BOOL runAsync = (asyncCallbackTarget || asyncCallbackSelector) ;
 	
 	const char* searchCString = [searchString UTF8String] ;
@@ -344,6 +344,8 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 		goto end ;
 	}
 	else {
+        // There is a leak somewhere in this branch, when runAsync = YES.
+        
 		// This is the first of many allocations we will make.
 		// Any variable accessed by PBCatalogSearchAsync() or SearchCompletionProc()
 		// must be allocated because otherwise they will go away when this method exits
@@ -464,9 +466,12 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 		if (!runAsync) {
 			summary = ExtractResults(searchInfo_p) ;
 			DisposeAndRelease(searchInfo_p) ;
-		}		
-	}	
+		}
+    }
 
+    // Memory leak fixed in BookMacster 1.16.5…
+    FSCloseIterator(iterator) ;
+    
 end:
 	if (syncResults_p != NULL) {
 		*syncResults_p = summary ;

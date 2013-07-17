@@ -252,7 +252,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 		}
 		
 #if 0
-        // Fix 20130610
+        // Fix 20130610 - Does not work.
         BOOL isWritable = [[NSFileManager defaultManager] isWritableFileAtPath:[url absoluteString]] ;
         BOOL isInViewingMode = [document isInViewingMode] ;
         /*SSYDBL*/ NSLog(@"isWritable = %ld   isInViewingMode = %ld ", isWritable, isInViewingMode) ;
