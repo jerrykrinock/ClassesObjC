@@ -4,10 +4,8 @@
 #import "SSYAlert.h"
 #import "NSManagedObjectContext+Cheats.h"
 #import "NSObject+MoreDescriptions.h"
-#import "NSManagedObject+Debug.h"
 
 // For debugging
-#import "SSYMOCManager.h"
 
 
 @implementation SSYMojo

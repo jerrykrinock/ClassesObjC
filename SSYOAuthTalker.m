@@ -6,11 +6,9 @@
 #import "SSYSynchronousHttp.h"
 #import "NSError+MyDomain.h"
 #import "NSString+Data.h"
-#import "BkmxBasis.h"
 #import "NSString+URIQuery.h"
 #import "NSString+LocalizeSSY.h"
 #import "NSObject+MoreDescriptions.h"
-#import "NSError+InfoAccess.h"
 
 NSString* const constNoteGotOAuthInfo = @"gotOAuthInfo" ;
 NSString* const constPathOAuth = @"OAuth" ;

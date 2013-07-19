@@ -1,11 +1,7 @@
 #import "SSYPathWaiter.h"
-#import "SSYPathObserver.h"
 #import "SSYBlocker.h"
-#import "NSInvocation+Quick.h"
-#import "SSYRunLoopTickler.h"
 
 // For debugging
-#import "NSDate+NiceFormats.h"
 
 #define SSYPathWaiterNotifeeConditionWaiting 0
 #define SSYPathWaiterNotifeeConditionDone 1

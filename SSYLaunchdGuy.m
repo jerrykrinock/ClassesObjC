@@ -3,8 +3,6 @@
 #import "NSError+InfoAccess.h"
 #import "NSError+SSYInfo.h"
 #import "NSError+MyDomain.h"
-#import "SSYOtherApper.h"
-#import "SSYShellTasker.h"
 #import "NSString+Data.h"
 #import "NSFileManager+SomeMore.h"
 #import "NSFileManager+TempFile.h"

@@ -20,12 +20,9 @@
  
  */
 
-#include <stdio.h>
 #import "SSYIOKit.h"
 #import <AddressBook/ABAddressBook.h>
 #import <AddressBook/ABMultiValue.h>
-#include <CoreFoundation/CoreFoundation.h>
-#include <IOKit/IOKitLib.h>
 #include <IOKit/network/IOEthernetInterface.h>
 #include <IOKit/network/IONetworkInterface.h>
 #include <IOKit/network/IOEthernetController.h>

@@ -1314,7 +1314,6 @@ end:
  Some code that someone posted on CocoaBuilder.  Seems similar to mine except uses
  more process serial numbers instead of process identifiers (pid).
  
- #include <IOKit/IOCFBundle.h>
 		
 int ProcessIsRunningWithBundleID(CFStringRef inBundleID, ProcessSerialNumber* outPSN) {
 	int theResult = 0;
@@ -1380,7 +1379,6 @@ OSErr QuitApplicationByPSN(const ProcessSerialNumber* inPSN) {
 
 // Or, try this....
 		
-#include <Carbon/Carbon.h>
 		
 OSStatus QuitApplication(char *bundleID) {
 	AppleEvent evt, res;

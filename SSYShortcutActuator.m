@@ -1,7 +1,5 @@
 #import "SSYShortcutActuator.h"
-#import <Carbon/Carbon.h>
 #import "NSUserDefaults+KeyPaths.h"
-#import "SRCommon.h"
 
 static SSYShortcutActuator* sharedActuator = nil ;
 

@@ -1,7 +1,4 @@
 #import "SSYNetServiceResolver.h"
-#import "NSArray+SSYMutations.h"
-#import "NSDictionary+SimpleMutations.h"
-#include <CoreServices/CoreServices.h>
 
 NSString* const SSYNetServiceResolverDidFinishNotification = @"SSYNetServiceResolverDFi" ;
 NSString* const SSYNetServiceResolverDidFailNotification = @"SSYNetServiceResolverDFa" ;

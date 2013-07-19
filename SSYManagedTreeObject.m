@@ -1,10 +1,6 @@
 #import "SSYManagedTreeObject.h"
 #import "NSSet+SimpleMutations.h"
-#import "NSArray+SortDescriptorsHelp.h"
-#import "NSKeyedUnarchiver+CatchExceptions.h"
-#import "NSError+InfoAccess.h"
 #import "NSSet+Indexing.h"
-#import "NSManagedObject+Attributes.h"
 #import "NSObject+DoNil.h"
 
 NSString* const constKeyChildren = @"children" ;

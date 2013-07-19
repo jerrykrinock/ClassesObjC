@@ -1,6 +1,4 @@
 #import "SSYToolbar.h"
-#import "MAKVONotificationCenter.h"
-#import "BkmxGlobals.h"
 
 NSString* const constBindingToolbarDisplayStyle = @"displayStyle" ;
 static BOOL static_alreadyEntered = NO ;

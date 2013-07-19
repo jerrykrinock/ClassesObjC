@@ -1,10 +1,8 @@
 #import "SSYManagedObject.h"
 #import "SSYMOCManager.h"
 #import "SSYIndexee.h"
-#import "BkmxBasis+Strings.h"
 #import "SSYDooDooUndoManager.h"
 #import "NSSet+Identicalness.h"
-#import "NSManagedObject+Attributes.h"
 #import "NSDocument+SyncModDate.h"
 #import "NSObject+MoreDescriptions.h"
 

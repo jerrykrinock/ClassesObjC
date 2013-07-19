@@ -1,6 +1,4 @@
 #import "SSYDynamicMenu.h"
-#import "NSMenu+Populating.h"
-#import "NSMenu+Ancestry.h"
 #import "SSYRuntimeUtilities.h"
 
 

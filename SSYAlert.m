@@ -7,8 +7,6 @@
 #import "SSYWrappingCheckbox.h"
 
 #import "NSError+InfoAccess.h"
-#import "NSInvocation+Quick.h"
-#import "NSString+Clipboard.h"
 #import "NSString+LocalizeSSY.h"
 #import "NSString+Truncate.h"
 #import "NSView+Layout.h"

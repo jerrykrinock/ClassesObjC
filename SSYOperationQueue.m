@@ -1,12 +1,9 @@
 #import "SSYOperationQueue.h"
 #import "SSYOperation.h"
 #import "NSOperationQueue+Depends.h"
-#import "BkmxGlobals.h"
-#import "Extore.h"
 #import "NSError+InfoAccess.h"
 #import "NSInvocation+Quick.h"
 #import "NSInvocation+Nesting.h"
-#import "SSYOperation.h"
 
 
 NSString* const SSYOperationQueueDidEndWorkNotification = @"SSYOperationQueueDidEndWorkNotification" ;
@@ -477,7 +474,6 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
  
  Here is code for a demo Foundation Tool project for anyone who'd like to play with this:
  
- #import <Cocoa/Cocoa.h>
  
  NSString* const MyNote1 = @"MyNote1" ;
  NSString* const MyNote2 = @"MyNote2" ;

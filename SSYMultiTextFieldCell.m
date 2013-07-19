@@ -1,6 +1,4 @@
 #import "SSYMultiTextFieldCell.h"
-#import "NSString+Truncate.h"
-#import "NS(Attributed)String+Geometrics.h"
 
 
 @implementation SSYMultiTextFieldCell

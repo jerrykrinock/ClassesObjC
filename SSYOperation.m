@@ -1,7 +1,6 @@
 #import "SSYOperation.h"
 #import "SSYOperationQueue.h"
 #import "NSError+InfoAccess.h"
-#import "SSYDebug.h"
 #import "NSDate+NiceFormats.h"
 #import "NSError+MyDomain.h"
 
@@ -10,9 +9,6 @@
 #if 0
 #warning Logging SSYOperationLinker Operations (a cracking risk)
 #define LOGGING_SSYOPERATIONLINKER_OPERATIONS 1
-#import "BkmxGlobals.h"
-#import "Client.h"
-#import "Ixporter.h"
 #endif	
 #endif
 
