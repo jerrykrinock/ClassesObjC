@@ -45,6 +45,7 @@ void CStringToUnicode(
 struct SearchInfo {
 	FSCatalogBulkParam searchPB ;  // Needed so we can back out of it using offsetof()
 	FSCatalogBulkParamPtr searchPB_p ; // Needed so we can dealloc it
+    FSIterator iterator ; // Needed so we can close it.  Added in BookMacster 1.16.5.
 	UInt32 maxFindsGrandTotal ;
 	NSInteger maxIterations ;
 	BOOL runAsync ;
@@ -61,7 +62,11 @@ struct SearchInfo {
 typedef struct SearchInfo SearchInfo ;
 
 void DisposeAndRelease(SearchInfo *searchInfo_p) {
-	if (searchInfo_p->verbose) {
+    // Memory leak fixed in BookMacster 1.16.5.  Without this, it leaks…
+    FSCloseIterator(searchInfo_p->iterator) ;
+
+    
+    if (searchInfo_p->verbose) {
 		printf("Disposing/Releasing allocations\n") ;
 	}
 	
@@ -344,8 +349,6 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 		goto end ;
 	}
 	else {
-        // There is a leak somewhere in this branch, when runAsync = YES.
-        
 		// This is the first of many allocations we will make.
 		// Any variable accessed by PBCatalogSearchAsync() or SearchCompletionProc()
 		// must be allocated because otherwise they will go away when this method exits
@@ -363,7 +366,8 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 		else {
 			searchParams_p->searchBits = fsSBPartialName ; 
 		}
-		FSCatalogInfo* searchInfo1_p = (FSCatalogInfo*)NewPtrClear(sizeof(FSCatalogInfo)) ;
+		
+        FSCatalogInfo* searchInfo1_p = (FSCatalogInfo*)NewPtrClear(sizeof(FSCatalogInfo)) ;
 		FSCatalogInfo* searchInfo2_p = (FSCatalogInfo*)NewPtrClear(sizeof(FSCatalogInfo)) ; ;
 		if (!findDirectories || !findFiles)
 		{
@@ -404,6 +408,7 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 		// Note: NewIOCompletionUPP() is just a silly macro that typecasts to IOCompletionUPP
 		
 		SearchInfo* searchInfo_p = (SearchInfo*) NewPtrClear( sizeof(SearchInfo) );
+		searchInfo_p->iterator = iterator ; // Added in BookMacster 1.16.5
 		searchInfo_p->paths = [[NSMutableArray alloc] init] ;
 		searchParams_p->searchName = (UniChar*) NewPtrClear(MAX_SEARCH_BYTES) ;
 		// I suppose that if we broke up CStringTo Unicode so that we could get a
@@ -469,9 +474,6 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 		}
     }
 
-    // Memory leak fixed in BookMacster 1.16.5…
-    FSCloseIterator(iterator) ;
-    
 end:
 	if (syncResults_p != NULL) {
 		*syncResults_p = summary ;

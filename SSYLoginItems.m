@@ -126,6 +126,7 @@ end:
 		if ((status == noErr) && (aURL != nil)) {
 			if ([aURL isEqual:url]) {
 				targetItem = (LSSharedFileListItemRef)item ;
+                CFSafeRelease(aURL) ;  // Memory leak fixed in BookMacster 1.16.5
 				break ;
 			}
 		}
@@ -173,8 +174,13 @@ end:
                                     userInfo:userInfo] ;
 
 			ok = NO ;
+            CFSafeRelease(aURL) ;  // Memory leak fixed in BookMacster 1.16.5
 			break ;
 		}
+        
+        // Memory leak fixed in BookMacster 1.16.5
+        CFSafeRelease(aURL) ;
+        
 		i++ ;
 	}
 	
@@ -281,6 +287,13 @@ end:
 		// (Maybe because CF does not feature autorelease?).  But if I do, it
         // causes a crash, not on my Mac, but on that of user Burke Townsend.
 		// CFRelease(item) ;
+        
+        // Memory leak fixed in BookMacster 1.16.5.
+        // Probably the reason why the above crashed for that user is because
+        // I was using CFRelease() instead of CFSafeRelease()?  Maybe his
+        // url was nil, so item was NULL?  We'll release this as a beta and
+        // see how if anyone reports any crashes, I guess.
+        CFSafeRelease(item) ;
 	}
 
 end:
@@ -413,6 +426,8 @@ end:
         // But I commented it out for some reason, apparently long ago.
         // See also Note 21030229.
 		////CFSafeRelease(aURL) ;
+        // Added back in BookMacster 1.16.5…
+        CFSafeRelease(aURL) ;
 		
 		if (breakAfterCleanup) {
 			break ;

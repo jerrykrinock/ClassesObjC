@@ -64,6 +64,11 @@
 	if (!name) {
 		name = @"??" ;
 	}
+    
+    // Memory leak fixed in BookMacster 1.16.5.  See LSGetApplicationForURL() doc.
+    if (defaultBrowserURL) {
+        CFRelease(defaultBrowserURL) ;
+    }
 	
 	return name ;
 }
