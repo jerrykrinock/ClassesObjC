@@ -17,7 +17,7 @@
  must conform to the protocol SSYFolderItemRepresentedObject.
  
  A flattened-but-indented hierarchical menu is used in three
- places in BookMacster.  In Bkmslf.xib ▸ Settings ▸ New Bookmark Landing,
+ places in BookMacster.  In BkmxDoc.xib ▸ Settings ▸ New Bookmark Landing,
  I use a StarkContainersFlatMenu, which is populated dynamically.  I tried
  to use that in TalderMapsController.xib, in the two "Folder" columns in the
  tables, but couldn't get it to work with bindings.  So in those cases I

@@ -1,14 +1,14 @@
 #import <Cocoa/Cocoa.h>
 
-@class Bkmslf ;
+@class BkmxDoc ;
 
 @interface SSYDocChildObject : NSObject {
-	Bkmslf* m_document ; 
+	BkmxDoc* m_document ; 
 }
 
-- (id)initWithDocument:(Bkmslf*)document ;
+- (id)initWithDocument:(BkmxDoc*)document ;
 
 // Weak reference, not retained, to avoid retain cycles
-@property (assign) Bkmslf* document ;
+@property (assign) BkmxDoc* document ;
 
 @end

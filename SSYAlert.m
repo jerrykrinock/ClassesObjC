@@ -1783,7 +1783,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		// Clear for next usage.  Before 20090526, I did this after endSheet:returnCode:,
 		// but this cleared a ^new^ document window in case endSheet:returnCode:
 		// starts a new session, as does 
-		// -[Bkmslf legacyArtifactDialogDidEnd:returnCode:contextInfo:].
+		// -[BkmxDoc legacyArtifactDialogDidEnd:returnCode:contextInfo:].
 		[self setDocumentWindow:nil] ;
 		// Without the retain above (or an external retain)
 		// the following will cause self to be dealloced

@@ -80,8 +80,8 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 #if 0
 #warning Hokey Code
 - (void)undo {
-	id bkmslf = [SSYMOCManager ownerOfManagedObjectContext:[self managedObjectContext]] ;
-	[bkmslf endEditing:nil] ;
+	id bkmxDoc = [SSYMOCManager ownerOfManagedObjectContext:[self managedObjectContext]] ;
+	[bkmxDoc endEditing:nil] ;
 	[super undo] ;
 }
 #endif

@@ -305,7 +305,7 @@ end:;
 - (void)postWillSetNewValue:(id)value
 					 forKey:(NSString*)key {
 	// Extores do need the notification, to count changes, but they are not
-	// undoable.  So we only begin an undo grouping if the owner is a Bkmslf.
+	// undoable.  So we only begin an undo grouping if the owner is a BkmxDoc.
 	if ([[self owner] isKindOfClass:[NSPersistentDocument class]]) {
 		// Note that beginAutoEndingUndoGrouping will coalesce for us.
         [(SSYDooDooUndoManager*)[[self owner] undoManager] beginAutoEndingUndoGrouping] ;
@@ -337,11 +337,11 @@ end:;
 	 Indeed, the coalescing improved speed when deleting many starks of
 	 the same parent, by a factor of 2.77, because it was not necessary to
 	 re-index all of the siblings whenever one was removed.  However, it broke
-	 when, for example, dragging a stark from one Bkmslf to another, because
+	 when, for example, dragging a stark from one BkmxDoc to another, because
 	 of the coalescing on sender (object=stark).  Since a new stark is created
 	 in this case, all of its attributes are changed from nil.  NSNotificationQueue
 	 selects one of these notifications to send.  The userInfo from all the other
-	 notifications is lost, which breaks the action of the -[Bkmslf objectWillChangeNote:]
+	 notifications is lost, which breaks the action of the -[BkmxDoc objectWillChangeNote:]
 	 which receives this notifications.  Chances are that it will find no change
 	 between newValue and oldValue, and thus do an early return. 
 	 I imagine there are many other test cases that would break also.*/

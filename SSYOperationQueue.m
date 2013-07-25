@@ -326,7 +326,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	//   the latter was done because I couldn't think of any reason why it should be
 	//   omitted either.
 	// After making these two changes, I tested the new code for memory leaks and retain
-	// cycles, but all Extore and Bkmslf instances seem to dealloc as expected.
+	// cycles, but all Extore and BkmxDoc instances seem to dealloc as expected.
 	NSMutableDictionary* originalInfo = [NSMutableDictionary dictionary] ; //WithDictionary:info] ;
 	for (NSString* key in [info allKeys]) {
 		if ([key isEqualToString:@"Export Info Leak Detector"]) {

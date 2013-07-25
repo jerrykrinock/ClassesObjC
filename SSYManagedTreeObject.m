@@ -8,7 +8,7 @@ NSString* const constKeyParent = @"parent" ;
 /*
  See note on DropboxFalseStart below
  // NodeId was going to be needed because, when adding a new bookmark
- // from one .bkmslf to another on a different Mac, they may have
+ // from one .bkmxDoc to another on a different Mac, they may have
  // different Core Data objectID, since Core Data does not allow objectID
  // to be set and insists on composing objectID on its own.  So I was
  // going to identify parent <-> child relationships, and possible other
@@ -255,7 +255,7 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 	return count ;
 }
 
-// This is required to trigger -[Bkmslf objectWillChangeNote:]
+// This is required to trigger -[BkmxDoc objectWillChangeNote:]
 - (void)setParent:(SSYManagedTreeObject*)newValue  {
 	[self postWillSetNewValue:newValue
 					   forKey:constKeyParent] ;

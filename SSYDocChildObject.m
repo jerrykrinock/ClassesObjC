@@ -4,15 +4,15 @@
 
 @implementation SSYDocChildObject
 
-- (Bkmslf*)document {
-	Bkmslf* document ;
+- (BkmxDoc*)document {
+	BkmxDoc* document ;
 	@synchronized(self) {
 		document = [[m_document retain] autorelease] ;
 	}
 	return document ;
 }
 
-- (void)setDocument:(Bkmslf *)document {
+- (void)setDocument:(BkmxDoc *)document {
 	@synchronized(self) {
 		m_document = document ;
 	}
@@ -30,7 +30,7 @@
 	}
 }
 
-- (id)initWithDocument:(Bkmslf*)document_ {
+- (id)initWithDocument:(BkmxDoc*)document_ {
 	self = [super init];
 
 	if (self != 0)  {		
