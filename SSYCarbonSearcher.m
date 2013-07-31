@@ -62,7 +62,7 @@ struct SearchInfo {
 typedef struct SearchInfo SearchInfo ;
 
 void DisposeAndRelease(SearchInfo *searchInfo_p) {
-    // Memory leak fixed in BookMacster 1.16.5.  Without this, it leaks…
+    // Memory leak fixed in BookMacster 1.16.5.  Without this, it definitely leaks…
     FSCloseIterator(searchInfo_p->iterator) ;
 
     
