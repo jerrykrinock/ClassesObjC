@@ -44,5 +44,5 @@ extern NSString* const constDiscontiguousTabViewHierarchyString ;
  receiver's identifier appended.
  */
 - (BOOL)isDeeplySelected ;
-
+#warning The 'unfortunately' above is not true because -superview returns the tab view  (Not the item, but at least it's something)
 @end

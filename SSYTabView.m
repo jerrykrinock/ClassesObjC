@@ -51,16 +51,6 @@ static NSString* SSYTabViewObservedKeyPath = @"selectedTabIndex" ;
 		// overrides below.
 		m_lockOutInfiniteLoop = YES ;
 		[super selectTabViewItemAtIndex:selectedTabIndex] ;
-        /*SSYDBL*/ NSLog(@"Did select tab view item by index %ld", (long)selectedTabIndex) ;
-#if 11
-#warning Doing More
-        NSTabViewItem* item = [[self tabViewItems] objectAtIndex:selectedTabIndex] ;
-        [super selectTabViewItem:item] ;
-        /*SSYDBL*/ NSLog(@"Did select tab view item by item %@", item) ;
-        NSString* selectedIdentifier = [item identifier] ;
-        [super selectTabViewItemWithIdentifier:selectedIdentifier] ;
-        /*SSYDBL*/ NSLog(@"Did select tab view item by identifier %@", selectedIdentifier) ;
-#endif
         
 		// When the above message invokes any of the methods we have
 		// overridden below, they'll route to super too.
@@ -73,7 +63,6 @@ static NSString* SSYTabViewObservedKeyPath = @"selectedTabIndex" ;
 
 - (void)selectTabViewItem:(NSTabViewItem *)tabViewItem {
 	if (m_lockOutInfiniteLoop) {
-        /*SSYDBL*/ NSLog(@"Super select item %@", tabViewItem) ;
 		[super selectTabViewItem:tabViewItem] ;
 	}
 	else {
@@ -86,7 +75,6 @@ static NSString* SSYTabViewObservedKeyPath = @"selectedTabIndex" ;
 
 - (void)selectTabViewItemAtIndex:(NSInteger)index {
 	if (m_lockOutInfiniteLoop) {
-        /*SSYDBL*/ NSLog(@"Super select index %ld", (long)index) ;
 		[super selectTabViewItemAtIndex:index] ;
 	}
 	else {
@@ -96,7 +84,6 @@ static NSString* SSYTabViewObservedKeyPath = @"selectedTabIndex" ;
 
 - (void)selectTabViewItemWithIdentifier:(id)identifier {
 	if (m_lockOutInfiniteLoop) {
-        /*SSYDBL*/ NSLog(@"Super select identifier %@", identifier) ;
 		[super selectTabViewItemWithIdentifier:identifier] ;
 	}
 	else {
@@ -116,10 +103,6 @@ static NSString* SSYTabViewObservedKeyPath = @"selectedTabIndex" ;
 }
 
 - (void)awakeFromNib {
-#if 11
-#warning More wildness
-    /*SSYDBL*/ NSLog(@"Tab View is %@", self) ;
-#endif
     // Set the initial state
 	NSTabViewItem* selectedTabViewItem = [self selectedTabViewItem] ;
 	// We have required that corresponding tab view items and toolbar items
