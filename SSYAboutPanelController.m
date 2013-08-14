@@ -236,7 +236,7 @@
     {
         sharedInstance = [[self alloc] init];
        [NSBundle loadNibNamed: @"SSYAboutPanel.nib"
-						owner: sharedInstance];
+						owner: sharedInstance] ;
     }
 
     return sharedInstance;

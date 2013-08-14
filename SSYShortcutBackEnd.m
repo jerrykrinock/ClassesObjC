@@ -17,6 +17,7 @@
 - (void)awakeFromNib {
 	// Safely invoke super
 	[self safelySendSuperSelector:_cmd
+                   prettyFunction:__PRETTY_FUNCTION__
 						arguments:nil] ;
 	
 	// Do this with a delay, in case we get -awakeFromNib before the

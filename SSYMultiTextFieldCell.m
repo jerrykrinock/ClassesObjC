@@ -81,7 +81,7 @@
 		else {
 			imageFrame.origin.y += (cellFrame.size.height - imageDimension) / 2 ;
 		}
-				
+#warning 10.5!!!!!!!!!!!!!!
 		[image compositeToPoint:imageFrame.origin
 					  operation:NSCompositePlusDarker] ;
 #endif

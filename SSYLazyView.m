@@ -1,20 +1,47 @@
 #import "SSYLazyView.h"
 #import "SSYExtrospectiveViewController.h"
 
+@implementation NSTabViewItem (SSYLazyPayload)
+
+- (BOOL)isViewPayloaded {
+    NSView* view = [self view] ;
+    BOOL answer = YES ;
+    if ([view respondsToSelector:@selector(isPayloaded)]) {
+        if (![(SSYLazyView*)view isPayloaded]) {
+            answer = NO ;
+        }
+    }
+    
+    return answer ;
+}
+
+
+@end
+
+
+NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNotification" ;
+
+@interface SSYLazyView ()
+
+@property (retain) NSArray* topLevelObjects ;
+
+@end
+
 @implementation SSYLazyView
 
-@synthesize viewController = m_viewController ;
-@synthesize isLoaded = m_isLoaded ;
+@synthesize isPayloaded = m_isPayloaded ;
+@synthesize topLevelObjects = m_topLevelObjects ;
 
+#if 0
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame] ;
     if (self) {
-        /*SSYDBL*/ NSLog(@"%@ did init", self) ;
         // Initialization code here.
     }
     
     return self ;
 }
+#endif
 
 + (Class)lazyViewControllerClass {
     return [NSViewController class] ;
@@ -24,21 +51,34 @@
     return @"Internal Error 939-7834" ;
 }
 
-- (void)loadInWindow:(NSWindow*)window {
-   if ([self isLoaded]) {
+- (void)loadWithOwner:(id)owner {
+    // Only do this once
+    if ([self isPayloaded]) {
 		return ;
 	}
 	
     NSString* nibName = [[self class] lazyNibName] ;
-    Class viewControllerClass = [[self class] lazyViewControllerClass] ;
-    SSYExtrospectiveViewController* viewCon = [(SSYExtrospectiveViewController*)[viewControllerClass alloc] initWithNibName:nibName
-                                                                                                                            bundle:nil] ;
-    [self setViewController:viewCon] ;
-    [viewCon setWindow:window] ; // experimental
-    [viewCon release] ;
-    [viewCon loadView] ;
+    NSBundle* bundle = [NSBundle mainBundle] ;
+
+    NSArray* topLevelObjects ;
     
-    // Remove any placeholder subviews.  In BookMacster,  there are two…
+    if ([bundle respondsToSelector:@selector(loadNibNamed:owner:topLevelObjects:)]) {
+        // Mac OS X 10.8 or later
+       [bundle loadNibNamed:nibName
+                       owner:owner
+             topLevelObjects:&topLevelObjects] ;
+
+        // See details of doc for -loadNibNamed:owner:topLevelObjects:,
+        // https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/LoadingResources/CocoaNibs/CocoaNibs.html#//apple_ref/doc/uid/10000051i-CH4-SW6
+        [self setTopLevelObjects:topLevelObjects] ;
+    }
+    else {
+        [NSBundle loadNibNamed:nibName
+                         owner:owner] ;
+    }
+
+    // Remove any placeholder subviews.
+    // In BookMacster et al,  there are two such placeholders…
     // (0) An SSYSizeFixxerSubview.
     // (1) A text field with a string that says "Loading <Something>…"
     NSInteger nSubviews = [[self subviews] count] ;
@@ -47,19 +87,35 @@
         [subview removeFromSuperviewWithoutNeedingDisplay] ;
     }
     
-    // Resize the incoming new view
-    NSView* newView = [viewCon view] ;
+    // Ferret out the new top-level view
+    NSView* payloadView = nil ;
+    for (NSObject* object in topLevelObjects) {
+        if ([object isKindOfClass:[NSView class]]) {
+            payloadView = (NSView*)object ;
+            break ;
+        }
+    }
+    if (!payloadView) {
+        NSLog(@"Internal Error 210-0209  No view in %@", nibName) ;
+    }
+    
+    // Resize the incoming new view to match the current size of
+    // the placeholder view
     NSRect frame = NSMakeRect(
-                              [newView frame].origin.x,
-                              [newView frame].origin.y,
+                              [payloadView frame].origin.x,
+                              [payloadView frame].origin.y,
                               [self frame].size.width,
                               [self frame].size.height
                               ) ;
-    [newView setFrame:frame] ;
+    [payloadView setFrame:frame] ;
 
     // Place the incoming new view.
-    [self addSubview:newView] ;
+    [self addSubview:payloadView] ;
     [self display] ;
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:SSYLazyViewDidLoadPayloadNotification
+                                                        object:[self window]
+                                                      userInfo:nil] ;
     
 #if 0
     /*
@@ -81,24 +137,17 @@
     }
 #endif
     
-    [self setIsLoaded:YES] ;
+    // So we don't do this again…
+    [self setIsPayloaded:YES] ;
 }
 
 - (void)viewDidMoveToWindow {
-    /*SSYDBL*/ NSLog(@"%@ did move to window", self) ;
 	[super viewDidMoveToWindow] ;
-
-#if 11
-#define LAZY_LOAD_DELAY 0.0
-#endif
-    [self performSelector:@selector(loadInWindow:)
-               withObject:[self window]
-               afterDelay:LAZY_LOAD_DELAY] ;
+    [self loadWithOwner:[[self window] windowController]] ;
 }
 
 - (void)dealloc {
-    /*SSYDBL*/ NSLog(@"%@ is dealloccing", self) ;
-    [m_viewController release] ;
+    [m_topLevelObjects release] ;
     
     [super dealloc] ;
 }

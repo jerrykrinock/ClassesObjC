@@ -45,7 +45,7 @@ void CStringToUnicode(
 struct SearchInfo {
 	FSCatalogBulkParam searchPB ;  // Needed so we can back out of it using offsetof()
 	FSCatalogBulkParamPtr searchPB_p ; // Needed so we can dealloc it
-    FSIterator iterator ; // Needed so we can close it.  Added in BookMacster 1.16.5.
+    FSIterator iterator ; // Needed so we can close it.  Added in BookMacster 1.17.
 	UInt32 maxFindsGrandTotal ;
 	NSInteger maxIterations ;
 	BOOL runAsync ;
@@ -62,7 +62,7 @@ struct SearchInfo {
 typedef struct SearchInfo SearchInfo ;
 
 void DisposeAndRelease(SearchInfo *searchInfo_p) {
-    // Memory leak fixed in BookMacster 1.16.5.  Without this, it definitely leaks…
+    // Memory leak fixed in BookMacster 1.17.  Without this, it definitely leaks…
     FSCloseIterator(searchInfo_p->iterator) ;
 
     
@@ -408,7 +408,7 @@ void SearchCompletionProc (FSCatalogBulkParamPtr searchPB_p) {
 		// Note: NewIOCompletionUPP() is just a silly macro that typecasts to IOCompletionUPP
 		
 		SearchInfo* searchInfo_p = (SearchInfo*) NewPtrClear( sizeof(SearchInfo) );
-		searchInfo_p->iterator = iterator ; // Added in BookMacster 1.16.5
+		searchInfo_p->iterator = iterator ; // Added in BookMacster 1.17
 		searchInfo_p->paths = [[NSMutableArray alloc] init] ;
 		searchParams_p->searchName = (UniChar*) NewPtrClear(MAX_SEARCH_BYTES) ;
 		// I suppose that if we broke up CStringTo Unicode so that we could get a

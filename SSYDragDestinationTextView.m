@@ -12,6 +12,7 @@
 	
 	// Safely invoke super
 	[self safelySendSuperSelector:_cmd
+                   prettyFunction:__PRETTY_FUNCTION__
 						arguments:nil] ;
 }
 

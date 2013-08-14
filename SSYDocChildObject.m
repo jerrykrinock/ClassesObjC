@@ -37,6 +37,7 @@
 		[self setDocument:document_] ;
 	}
 	
+    /*SSYDBL*/ NSLog(@"Initted %@", self) ;
 	return self;
 }
 

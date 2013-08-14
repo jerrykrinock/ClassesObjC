@@ -25,24 +25,4 @@ extern NSString* const constDiscontiguousTabViewHierarchyString ;
  */
 - (NSTabViewItem*)selectedLeafmostTabViewItem ;
 
-/*
- @brief    Returns whether or not the receiver is selected, *and* all of its
- ancestor tab view items are selected, which means that the receiver should be
- actually visible.
- 
- @details  Unfortunately, because there is no way for a given view, which
- happens to be the 'view' of a tab view item, to access its "parent' tab view
- item, we cannot walk the hierarchy upward as we would like.  A tab view item
- can access its window, though, and a view can access its subviews.  So we start
- at the receiver's window and walk down.
- 
- Because of this walking down, this method will fail if the receiver's greatest
- ancestor tab view is directly a subview of the the receiver's window, or if
- any of its intermediate ancestor tab views are not directly a subview of the
- view of the parent tab view items.  If this condition occurs, this method will
- return NO and NSLog constDiscontiguousTabViewHierarchyString with the
- receiver's identifier appended.
- */
-- (BOOL)isDeeplySelected ;
-#warning The 'unfortunately' above is not true because -superview returns the tab view  (Not the item, but at least it's something)
 @end
