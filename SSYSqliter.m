@@ -220,6 +220,8 @@ static int AddValueStringToArray(void* sneakback, int nColumns, char **colValues
 	return result;
 }
 
+#if 0
+!! This function is no longer used.
 static NSInteger AddKeyStringToArray(void* sneakback, NSInteger nColumns, char **colValues, char **colKeys) {
 	// sneakback must be the address of an initialized NSMutableArray*.
 	
@@ -234,7 +236,10 @@ static NSInteger AddKeyStringToArray(void* sneakback, NSInteger nColumns, char *
 
 	return 0;
 }
+#endif
 
+#if 0
+!! This function is no longer used.
 static NSInteger AddValueIntegerToArray(void* sneakback, NSInteger nColumns, char **colValues, char **colKeys) {
 	// sneakback must be the address of an initialized NSMutableArray*.
 	
@@ -254,7 +259,10 @@ static NSInteger AddValueIntegerToArray(void* sneakback, NSInteger nColumns, cha
 	
 	return result;
 }
+#endif
 
+#if 0
+!! This function is no longer used.
 static NSInteger CountColumns(void* sneakback, NSInteger nColumns, char **colValues, char **colKeys) {
 	// sneakback must be the address of an int.
 	
@@ -262,8 +270,10 @@ static NSInteger CountColumns(void* sneakback, NSInteger nColumns, char **colVal
 	
 	return 0 ;
 }
+#endif
 
-// The following callback is not used
+#if 0
+!! This callback is no longer used.
 static NSInteger SSAppSQLiteCallback(void* NotUsed, NSInteger nColumns, char **colValues, char **colKeys) {
 	NSInteger i;
 	for(i=0; i<nColumns; i++){
@@ -277,6 +287,7 @@ static NSInteger SSAppSQLiteCallback(void* NotUsed, NSInteger nColumns, char **c
 	}
 	return 0;
 }
+#endif
 
 @implementation SSYSqliter
 

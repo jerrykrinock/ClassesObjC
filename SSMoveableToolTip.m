@@ -60,8 +60,9 @@ static SSMoveableToolTip	*sharedToolTip = nil;
 }
 
 - (void) dealloc {
-    [_window release];
-    [_textAttributes release];
+    [_window release] ;
+    [_textAttributes release] ;
+    [_textField release] ;  // Memory leak fixed in BookMacster 1.17
 
     [super dealloc];
 }

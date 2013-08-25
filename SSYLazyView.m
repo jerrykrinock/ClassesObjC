@@ -1,5 +1,9 @@
 #import "SSYLazyView.h"
 #import "SSYExtrospectiveViewController.h"
+#import "SSYAlert.h"
+
+NSString* SSYLazyViewErrorDomain = @"SSYLazyViewErrorDomain" ;
+
 
 @implementation NSTabViewItem (SSYLazyPayload)
 
@@ -19,7 +23,9 @@
 @end
 
 
+NSString* SSYLazyViewWillLoadPayloadNotification = @"SSYLazyViewWillLoadPayloadNotification" ;
 NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNotification" ;
+
 
 @interface SSYLazyView ()
 
@@ -57,88 +63,139 @@ NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNot
 		return ;
 	}
 	
-    NSString* nibName = [[self class] lazyNibName] ;
-    NSBundle* bundle = [NSBundle mainBundle] ;
-
-    NSArray* topLevelObjects ;
-    
-    if ([bundle respondsToSelector:@selector(loadNibNamed:owner:topLevelObjects:)]) {
-        // Mac OS X 10.8 or later
-       [bundle loadNibNamed:nibName
-                       owner:owner
-             topLevelObjects:&topLevelObjects] ;
-
-        // See details of doc for -loadNibNamed:owner:topLevelObjects:,
-        // https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/LoadingResources/CocoaNibs/CocoaNibs.html#//apple_ref/doc/uid/10000051i-CH4-SW6
-        [self setTopLevelObjects:topLevelObjects] ;
-    }
-    else {
-        [NSBundle loadNibNamed:nibName
-                         owner:owner] ;
-    }
-
-    // Remove any placeholder subviews.
-    // In BookMacster et al,  there are two such placeholders…
-    // (0) An SSYSizeFixxerSubview.
-    // (1) A text field with a string that says "Loading <Something>…"
-    NSInteger nSubviews = [[self subviews] count] ;
-    for (NSInteger i=(nSubviews-1); i>=0; i--) {
-        NSView* subview = [[self subviews] objectAtIndex:i] ;
-        [subview removeFromSuperviewWithoutNeedingDisplay] ;
-    }
-    
-    // Ferret out the new top-level view
-    NSView* payloadView = nil ;
-    for (NSObject* object in topLevelObjects) {
-        if ([object isKindOfClass:[NSView class]]) {
-            payloadView = (NSView*)object ;
-            break ;
-        }
-    }
-    if (!payloadView) {
-        NSLog(@"Internal Error 210-0209  No view in %@", nibName) ;
-    }
-    
-    // Resize the incoming new view to match the current size of
-    // the placeholder view
-    NSRect frame = NSMakeRect(
-                              [payloadView frame].origin.x,
-                              [payloadView frame].origin.y,
-                              [self frame].size.width,
-                              [self frame].size.height
-                              ) ;
-    [payloadView setFrame:frame] ;
-
-    // Place the incoming new view.
-    [self addSubview:payloadView] ;
-    [self display] ;
-    
-    [[NSNotificationCenter defaultCenter] postNotificationName:SSYLazyViewDidLoadPayloadNotification
+    [[NSNotificationCenter defaultCenter] postNotificationName:SSYLazyViewWillLoadPayloadNotification
                                                         object:[self window]
                                                       userInfo:nil] ;
-    
-#if 0
-    /*
-     I considered actually swapping in [viewCon view] in place of the
-     receiver, and allowing the receiver to be released and deallocced.
-     But that is too messy because not only does the tab view item need
-     to get a new view, but the outlet to this Lazy View, needed for other
-     purposes, from the window controller, would need to be rewired.
-     Before realizing that this was approach was the more problematic,
-     I solved the first problem, but not the second, by doing this…
-     */
-    if (parentTabViewItem) {
-        // parentTabViewItem is an outlet.  (More mess)
-        [parentTabViewItem setView:[viewCon view]] ;
+
+    NSString* nibName = [[self class] lazyNibName] ;
+    NSBundle* bundle = [NSBundle mainBundle] ;
+    NSInteger errorCode = 0 ;
+    NSString* errorDesc = nil ;
+    BOOL ok ;
+
+    NSArray* topLevelObjects = nil ;
+    BOOL isMacOSX10_8orLater = [bundle respondsToSelector:@selector(loadNibNamed:owner:topLevelObjects:)] ;
+
+    if (isMacOSX10_8orLater) {
+        ok = [bundle loadNibNamed:nibName
+                            owner:owner
+                  topLevelObjects:&topLevelObjects] ;
+        if (ok) {
+            // See details of doc for -loadNibNamed:owner:topLevelObjects:,
+            // https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/LoadingResources/CocoaNibs/CocoaNibs.html#//apple_ref/doc/uid/10000051i-CH4-SW6
+            [self setTopLevelObjects:topLevelObjects] ;
+        }
+        else {
+            errorCode = SSY_LAZY_VIEW_ERROR_CODE_COULD_NOT_LOAD_NIB ;
+            errorDesc = [NSString stringWithFormat:
+                         @"Could not load %@.nib",
+                         nibName] ;
+        }
     }
     else {
-        NSView* superview = [self superview] ;
-        [superview addSubview:[viewCon view]] ;
+        NSString* nibFile = [bundle pathForResource:nibName
+                                             ofType:@"nib"] ;
+        if (nibFile) {
+            NSMutableArray* mutableTopLevelObjects = [[NSMutableArray alloc] init] ;
+            NSDictionary* externalNameTable = [NSDictionary dictionaryWithObjectsAndKeys:
+                                               mutableTopLevelObjects, NSNibTopLevelObjects,
+                                               owner, NSNibOwner,
+                                               nil] ;
+            ok = [NSBundle loadNibFile:nibFile
+                     externalNameTable:externalNameTable
+                              withZone:nil] ;
+            if (ok) {
+                topLevelObjects = [NSArray arrayWithArray:mutableTopLevelObjects] ;
+            }
+            else {
+                errorCode = SSY_LAZY_VIEW_ERROR_CODE_LEGACY_COULD_NOT_LOAD_NIB ;
+                errorDesc = [NSString stringWithFormat:
+                             @"Could not load %@",
+                             nibFile] ;
+            }
+            
+            [mutableTopLevelObjects release] ;
+        }
+        else {
+            ok = NO ;
+            errorCode = SSY_LAZY_VIEW_ERROR_CODE_LEGACY_COULD_NOT_FIND_NIB ;
+            errorDesc = [NSString stringWithFormat:
+                         @"Could not load %@.nib",
+                         nibName] ;
+        }
     }
-#endif
+
+   NSView* payloadView = nil ;
+    if (ok) {
+        // Remove any placeholder subviews.
+        // In BookMacster et al,  there are two such placeholders…
+        // (0) An SSYSizeFixxerSubview.
+        // (1) A text field with a string that says "Loading <Something>…"
+        NSInteger nSubviews = [[self subviews] count] ;
+        for (NSInteger i=(nSubviews-1); i>=0; i--) {
+            NSView* subview = [[self subviews] objectAtIndex:i] ;
+            [subview removeFromSuperviewWithoutNeedingDisplay] ;
+        }
+        
+        // Ferret out the new top-level view
+        for (NSObject* object in topLevelObjects) {
+            if ([object isKindOfClass:[NSView class]]) {
+                payloadView = (NSView*)object ;
+                break ;
+            }
+        }
+    }
     
-    // So we don't do this again…
-    [self setIsPayloaded:YES] ;
+    if (!payloadView) {
+        ok = NO ;
+        errorCode = SSY_LAZY_VIEW_ERROR_CODE_NO_PAYLOAD ;
+        errorDesc = [NSString stringWithFormat:
+                     @"No payload in %@.nib",
+                     nibName] ;
+    }
+    
+    if (ok) {
+        // Resize the incoming new view to match the current size of
+        // the placeholder view
+        NSRect frame = NSMakeRect(
+                                  [payloadView frame].origin.x,
+                                  [payloadView frame].origin.y,
+                                  [self frame].size.width,
+                                  [self frame].size.height
+                                  ) ;
+        [payloadView setFrame:frame] ;
+        
+        // Place the incoming new view.
+        [self addSubview:payloadView] ;
+        [self display] ;
+        
+        // So we don't do this again…
+        [self setIsPayloaded:YES] ;
+        
+        /*
+         We must setIsPayloaded:YES before posting
+         SSYLazyViewDidLoadPayloadNotification.  Otherwise,
+         -[BkmxDocWinCon tabDidPayloadNote:] is invoked
+         which invokes -[BkmxDocWinCon resizeWindowAndConstrainSizeForActiveTabViewItem]
+         which invokes -[BkmxDocWinCon resizeWindowForTabViewItem:size:]
+         That last method will find [tabViewItem isViewPayloaded] == NO and
+         thus not resize the window
+         */
+        [[NSNotificationCenter defaultCenter] postNotificationName:SSYLazyViewDidLoadPayloadNotification
+                                                            object:[self window]
+                                                          userInfo:nil] ;
+    }
+    else {
+        NSString* suggestion = @"Reinstall this app." ;
+        NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
+                                  errorDesc, NSLocalizedDescriptionKey,
+                                  suggestion, NSLocalizedRecoverySuggestionErrorKey,
+                                  nil] ;
+        NSError* error = [NSError errorWithDomain:SSYLazyViewErrorDomain
+                                             code:errorCode
+                                         userInfo:userInfo] ;
+        [SSYAlert alertError:error] ;
+    }
 }
 
 - (void)viewDidMoveToWindow {

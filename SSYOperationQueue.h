@@ -275,4 +275,6 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
 */
 - (NSInvocation*)errorRetryInvocation ;
 
+- (void)doDone:(NSDictionary*)doneInfo ;
+
 @end

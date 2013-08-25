@@ -177,4 +177,6 @@
 */
 - (void)reload ;
 
+- (IBAction)hierarchicalMenuAction:(id)sender  ;
+
 @end

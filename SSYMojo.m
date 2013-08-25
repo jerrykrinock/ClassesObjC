@@ -185,13 +185,17 @@
 
 	NSManagedObject* object = [NSEntityDescription insertNewObjectForEntityForName:[self entityName]
 															inManagedObjectContext:moc] ;	
+
+#if 0
     // Added in BookMacster 1.16 to try and find a rare bug
+    // Removed in BookMacster 1.17 because we now have a better method,
+    // in -[Starker freshStark]
     if (![[NSThread currentThread] isMainThread]) {
         NSLog(@"Internal Error 523-0024 %@\n%@",
               [self entityName],
               SSYDebugBacktraceDepth(8)) ;
     }
-
+#endif
     return object ;
 }
 

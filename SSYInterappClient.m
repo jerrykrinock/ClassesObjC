@@ -85,6 +85,8 @@ NSString* const SSYInterappClientErrorDomain = @"SSYInterappClientErrorDomain" ;
 			}
 		}
 	}
+    
+    [aggrRxData release] ;
 	
 end:
 	if (!ok && error_p) {

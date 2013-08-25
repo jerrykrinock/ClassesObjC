@@ -4,7 +4,6 @@
 
 NSString* const SSYHintArrowDidCloseNotification = @"SSYHintArrowDidCloseNotification" ;
 
-NSString* const SSYHintArrowWillProcessEventNotification = @"SSYHintArrowWillProcessEventNotification" ;
 NSString* const SSYHintArrowEventKey = @"SSYHintArrowEventKey" ;
 
 #define SSYHINTARROW_TOP_COLOR [NSColor colorWithCalibratedRed:(80.0/256.0) green:(111.0/256.0) blue:(246.0/256.0) alpha:1.0]
@@ -187,11 +186,6 @@ static SSYHintArrow* static_helpArrow = nil ;
 		[[NSNotificationCenter defaultCenter] addObserver:self
 												 selector:@selector(endWithNote:)
 													 name:NSWindowWillCloseNotification
-												   object:window] ;
-		
-		[[NSNotificationCenter defaultCenter] addObserver:self
-												 selector:@selector(didReceiveEvent:)
-													 name:SSYHintArrowWillProcessEventNotification
 												   object:window] ;
 		
         // Configure window

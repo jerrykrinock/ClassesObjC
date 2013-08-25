@@ -28,6 +28,10 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 				getAttributes:(SecKeychainAttributeInfo)attributeInfo {
 	NSArray *output= nil ;
 	NSMutableArray* results = [[NSMutableArray alloc] init] ;
+    // Unbelieveable bug fixed in BookMacster 1.17.  How could this have been
+    // so wrong for so long?  Prior to this, returnArrayOfDics was determined
+    // by the count of attributeList instead of attributeInfo.
+    BOOL returnArrayOfDics = (attributeInfo.count > 1) ;
 	OSStatus status = noErr ;
 	while (status == noErr) {
 		SecKeychainItemRef itemRef = NULL ;
@@ -50,7 +54,7 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 																		NULL) ;
 			if (attrResult == noErr) {
 				NSMutableDictionary* itemDic = nil ;
-				if (attributeList->count > 1) {
+				if (returnArrayOfDics) {
 					itemDic = [[NSMutableDictionary alloc] init] ;
 				}
 
@@ -65,7 +69,7 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 															   attribute->length,
 															   kCFStringEncodingUTF8,
 															   false) ;
-					if (attributeList->count > 1) {
+					if (returnArrayOfDics) {
 						[itemDic setObject:value
 									forKey:[NSNumber numberWithInteger:(attribute->tag)]] ;
 					}
@@ -76,7 +80,7 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 				}
 				SecKeychainItemFreeAttributesAndData(attributeList, NULL) ;
 				
-				if (attributeList->count > 1) {
+				if (returnArrayOfDics) {
 					[results addObject:[NSDictionary dictionaryWithDictionary:itemDic]] ;
 				}
 				
@@ -87,8 +91,7 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 	
 	output = [[results copy] autorelease] ;
 	[results release] ;
-	
-	return output;
+	return output ;
 }
 
 + (NSArray*)allGenericItems {	
@@ -205,7 +208,7 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 		
 		output = [self searchKeychainFor:searchRef
 						   getAttributes:attributeInfo] ;
-	}
+  	}
 	
 	if (searchRef) {
 		CFRelease(searchRef) ;

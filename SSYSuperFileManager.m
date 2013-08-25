@@ -319,8 +319,8 @@ BOOL canX = NO ;
 		// Permission denied.  Haul out the big gun.
 #if CPH_TASKMASTER_AVAILABLE
 		ok = [[CPHTaskmaster sharedTaskmaster] statPath:path
-															 stat:&aStat
-														  error_p:error_p] ;
+                                                   stat:&aStat
+                                                error_p:error_p] ;
 		if (!ok && error_p) {
 			*error_p = [SSYMakeError(518383, @"Authorized stat failed") errorByAddingUnderlyingError:*error_p] ;
 		}

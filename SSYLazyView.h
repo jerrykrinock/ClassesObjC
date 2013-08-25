@@ -1,12 +1,27 @@
 #import <Cocoa/Cocoa.h>
 
+extern NSString* SSYLazyViewErrorDomain ;
+
+#define SSY_LAZY_VIEW_ERROR_CODE_COULD_NOT_LOAD_NIB        992611
+#define SSY_LAZY_VIEW_ERROR_CODE_LEGACY_COULD_NOT_LOAD_NIB 992613
+#define SSY_LAZY_VIEW_ERROR_CODE_LEGACY_COULD_NOT_FIND_NIB 992614
+#define SSY_LAZY_VIEW_ERROR_CODE_NO_PAYLOAD                992616
+
 /*
- @brief    Notification which is posted when the payload view loads.
+ @brief    Notification which is posted when the payload view is about to be
+ loaded.
  
  @details  The notification object is the window in which the SSYLazyView object
- resides.  Note that the
- loading of the payload, and hence the posting of this notification, occurs no
- more than once during the lifetime of an SSYLazyView object.
+ resides.  Note that the loading of the payload, and hence the posting of this
+ notification, occurs no more than once during the lifetime of an SSYLazyView
+ object.
+ */
+extern NSString* SSYLazyViewWillLoadPayloadNotification;
+
+/*
+ @brief    Notification which is posted after the payload view loads.
+ 
+ @details  Ditto from SSYLazyViewWillLoadPayloadNotification.
  */
 extern NSString* SSYLazyViewDidLoadPayloadNotification;
 
@@ -39,6 +54,13 @@ extern NSString* SSYLazyViewDidLoadPayloadNotification;
  in your Lazy View.  For example, you may place a text field with large
  font size that says "Loading Stuff…".  All of these placeholder subviews
  will be removed when the new view is placed in.
+
+ If an error occurs when attempting to load the payload, in either case (when
+ receiver is moved to a window or upon -loadWithOwner:), an error dialog
+ suggesting that the user reinstall the application is displayed.  We did this
+ because these errors should occur very rarely, and in the first case, there
+ is no message for us to return an error in.  Yeah, we could have used a 
+ delegate or something, but it's not worth the effort.
  */
 @interface SSYLazyView : NSView {
     BOOL m_isPayloaded ;

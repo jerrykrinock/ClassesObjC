@@ -1,5 +1,6 @@
 #import "SSYDragTableView.h"
 #import "NSInvocation+Quick.h"
+#import "SSYArrayController.h"
 
 
 @implementation SSYDragTableView

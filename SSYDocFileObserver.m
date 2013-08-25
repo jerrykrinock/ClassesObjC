@@ -112,9 +112,11 @@ end:
 	// when retainCount==2.
 	if (([self retainCount] == 2) && m_retainedByTimer) {
 		// 
-		m_retainedByTimer = NO ;			
+		m_retainedByTimer = NO ;
+        // The following line has a bug fixed in BookMacster 1.17.  Prior to
+        // that, @selector(analyzePathChange:) was lacking the colon!
 		[NSObject cancelPreviousPerformRequestsWithTarget:self
-												 selector:@selector(analyzePathChange)
+												 selector:@selector(analyzePathChange:)
 												   object:nil] ;
 		// But we don't invoke -dealloc directly.  The above cancellation
 		// will send us a -release (since the timer retains us) which

@@ -522,7 +522,10 @@
 			title = @"Untitled";	
 	} /*if*/
 	
-	[rssItem setObject: title forKey: titleKey];
+	if (title != nil) {
+		
+        [rssItem setObject: title forKey: titleKey];
+	} /*if*/
 	
 	/*dangerousmeta case: super-long title with no description*/
 	
@@ -578,7 +581,8 @@
 				if ([NSString stringIsEmpty: convertedTitle])
 					convertedTitle = @"Untitled";
 				
-				[rssItem setObject: convertedTitle forKey: @"convertedTitle"];
+				if (convertedTitle != nil)
+                    [rssItem setObject: convertedTitle forKey: @"convertedTitle"];
 			} /*if*/
 		} /*if*/
 	} /*deal with entities*/
