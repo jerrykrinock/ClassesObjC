@@ -561,39 +561,41 @@ end:;
 	infoPlistPath = [infoPlistPath stringByAppendingPathComponent:@"Info.plist"] ;
 	NSData* data = [NSData dataWithContentsOfFile:infoPlistPath] ;
 	NSDictionary* infoDic = nil ;
-	if ([[NSPropertyListSerialization class] respondsToSelector:@selector(propertyListWithData:options:format:error:)]) {
-		// Mac OS X 10.6 or later
-		NSError* error = nil ;
-		infoDic = [NSPropertyListSerialization propertyListWithData:data
-															options:NSPropertyListImmutable
-															 format:NULL
-															  error:&error] ;
-		// Documentation of this method is vague, but it appears to be
-		// better to check for error != nil than infoDic == nil.
-		if (error) {
-			NSLog(@"Internal Error 425-2349 %@", error) ;
-		}
-	}
-	else if ([[NSPropertyListSerialization class] respondsToSelector:@selector(propertyListFromData:mutabilityOption:format:errorDescription:)]) {
-		// Mac OS X 10.5 or earlier
-		NSString* errorDescription = nil ;
-		infoDic = [NSPropertyListSerialization propertyListFromData:data
-												   mutabilityOption:NSPropertyListImmutable
-															 format:NULL
-												   errorDescription:&errorDescription] ;
-		if (errorDescription) {
-			NSLog(@"Internal Error 425-2349 %@", errorDescription) ;
-		}
-	}
-	
+    if (data) {
+        if ([[NSPropertyListSerialization class] respondsToSelector:@selector(propertyListWithData:options:format:error:)]) {
+            // Mac OS X 10.6 or later
+            NSError* error = nil ;
+            infoDic = [NSPropertyListSerialization propertyListWithData:data
+                                                                options:NSPropertyListImmutable
+                                                                 format:NULL
+                                                                  error:&error] ;
+            // Documentation of this method is vague, but it appears to be
+            // better to check for error != nil than infoDic == nil.
+            if (error) {
+                NSLog(@"Internal Error 425-2349 %@", error) ;
+            }
+        }
+        else if ([[NSPropertyListSerialization class] respondsToSelector:@selector(propertyListFromData:mutabilityOption:format:errorDescription:)]) {
+            // Mac OS X 10.5 or earlier
+            NSString* errorDescription = nil ;
+            infoDic = [NSPropertyListSerialization propertyListFromData:data
+                                                       mutabilityOption:NSPropertyListImmutable
+                                                                 format:NULL
+                                                       errorDescription:&errorDescription] ;
+            if (errorDescription) {
+                NSLog(@"Internal Error 425-2349 %@", errorDescription) ;
+            }
+        }
+    }
+    
 	NSString* string ;
 	NSInteger majorVersion ;
 	if (infoDic) {
-		string = [infoDic objectForKey:@"CFBundleVersion"] ;
+		string = [infoDic objectForKey:@"CFBundleShortVersionString"] ;
 		majorVersion = [string majorVersion] ;
 		
 		if (majorVersion == 0) {
-			string = [infoDic objectForKey:@"CFBundleShortVersionString"] ;
+			string = [infoDic objectForKey:@"CFBundleVersion"] ;
 			majorVersion = [string majorVersion] ;
 		}
 	}

@@ -123,8 +123,16 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  @brief    Returns the major version which is believed to be the version of the
  package at a given bundle path, or 0 if no such version could be found
  
- @result   First, tries to parse the answer from CFBundleVersion of the given
- bundlePath, and if that fails tries CFBundleShortVersionString.
+ @result   First, tries to parse the answer from CFBundleShortVersionString of the given
+ bundlePath, and if that fails tries CFBundleVersion.  Usually the former is the one
+ you want.  For example, today I find…
+ 
+               CFBundleShortVersionString     CFBundleVersion
+               --------------------------     ---------------
+ *  Firefox    23.0a2                         2313.5.17
+ *   Safari    6.0.5                          8536.30.1
+ 
+ Given the above Info.plists, this method would return 23 for Firefox and 6 for Safari.
  */
 + (NSInteger)majorVersionOfBundlePath:(NSString*)bundlePath ;
 
