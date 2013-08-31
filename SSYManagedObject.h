@@ -118,9 +118,9 @@ extern NSString* const constKeyNewValue ;
  owns the receiver's managed object context
 
  @details  See +[SSYMOCManager ownerOfManagedObjectContext:] for exact search algorithm
- and definition of "owner".&nbsp; Assuming that the owner must be of a specific type or
- conform to a certain formal protocol, it is recommended to override this method in
- subclasses.&nbsp; Just invoke super, but return the required type.
+ and definition of "owner".  If the owner must be of a specific type or
+ conform to a certain formal protocol, you can re-declare and override this
+ method in subclasses.  The implementation simply returns super's owner.
  @result   The owner of the receiver
 */
 - (id)owner ;
@@ -215,6 +215,7 @@ extern NSString* const constKeyNewValue ;
 
 - (NSUInteger)countOfNonNilValues ;
 
+
 /*!
  @brief    A hash representing all relevant current property values of
  the receiver
@@ -222,6 +223,9 @@ extern NSString* const constKeyNewValue ;
  @details  The default implementation considers all attribute values to
  be relevant, and excludes all relationships.  Subclasses may override
  to exclude some attributes, or include some relationships, as desired. 
+ 
+ I don't use this implementation in BookMacster any more.  Instead, I have
+ tweaked implementations in two subclasses.
  */
 - (uint32_t)valuesHash ;
 

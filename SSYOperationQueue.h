@@ -63,6 +63,7 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
 	id m_scriptResult ;
 	NSMutableArray* m_errorRetryInvocations ;
 	NSSet* m_skipOperationsExceptGroups ;
+    id m_noAppNapActivity ;
 }
 
 /*!
@@ -265,9 +266,9 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  recovery option, you make the adjustments and, to repeat the operations,
  simply invoke the invocations in the array returned by this method.  
  However, you must grab this array during your isDoneSelector, because after
- your isDoneSelector returns, the array you get will be empty, as explained below.
- Typically, after grabbing this array you process the contents into a single
- invocation of invocations, and add the resulting "errorRetryInvocation"
+ your isDoneSelector returns, the array you get will be empty, as explained
+ below.  Typically, after grabbing this array you process the contents into a
+ single invocation of invocations, and add the resulting "errorRetryInvocation"
  to the -userInfo of your error object.
  
  After invoking your isDoneSelector, unless you passed keepWithNext:YES,

@@ -4,7 +4,7 @@
 #import "NSError+InfoAccess.h"
 #import "NSInvocation+Quick.h"
 #import "NSInvocation+Nesting.h"
-
+#import "NSDate+NiceFormats.h"
 
 NSString* const SSYOperationQueueDidEndWorkNotification = @"SSYOperationQueueDidEndWorkNotification" ;
 NSString* const SSYOperationQueueDidBeginWorkNotification = @"SSYOperationQueueDidBeginWorkNotification" ;
@@ -17,16 +17,11 @@ NSString* const constKeySSYOperationQueueError = @"SSYOperationQueueError" ;
 NSString* const constKeySSYOperationQueueKeepWithNext = @"SSYOperationQueueKeepWithNext" ;
 NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 
+@interface SSYOperationQueue ()
 
-// No longer needed since override of -[SSYOperationQueue setError:] does this.  @implementation NSError (SSYOperationQueueExtras)
+@property (retain) id noAppNapActivity ;
 
-// No longer needed since override of -[SSYOperationQueue setError:] does this.  - (NSError*)errorByAddingOperationGroupFromInfo:(NSDictionary*)info {
-// No longer needed since override of -[SSYOperationQueue setError:] does this.  	return [self errorByAddingUserInfoObject:[info objectForKey:constKeySSYOperationGroup]
-// No longer needed since override of -[SSYOperationQueue setError:] does this.  									  forKey:constKeySSYOperationGroup] ;
-// No longer needed since override of -[SSYOperationQueue setError:] does this.  }
-
-// No longer needed since override of -[SSYOperationQueue setError:] does this.  @end
-
+@end
 
 
 @implementation SSYOperationQueue
@@ -34,6 +29,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 @synthesize scriptCommand = m_scriptCommand ;
 @synthesize scriptResult = m_scriptResult ;
 @synthesize skipOperationsExceptGroups = m_skipOperationsExceptGroups ;
+@synthesize noAppNapActivity = m_noAppNapActivity ;
 
 - (BOOL)shouldSkipOperationsInGroup:(NSString*)group {
 	NSSet* skipOperationsExceptGroups = [self skipOperationsExceptGroups] ;
@@ -132,6 +128,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	[m_scriptResult release] ;
 	[m_errorRetryInvocations release] ;
 	[m_skipOperationsExceptGroups release] ;
+    [m_noAppNapActivity release] ;
 	
 	[super dealloc] ;
 }
@@ -231,6 +228,15 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 			else {
 				owner = self ;
 			}
+            
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+            // Being built with Mac OS X 10.9 or later SDK
+            id activity = [self noAppNapActivity] ;
+            if (activity) {
+                [[NSProcessInfo processInfo] endActivity:activity];
+                /*SSYDBL*/ NSLog(@"Ended no-app-nap activity=%@", activity) ;
+            }
+#endif
 
 			// It is stated in the documentation of NSOperationQueue (in the
 			// introduction, not in -operations) that KVO notifications
@@ -252,6 +258,33 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 			// when the count jumps from 0 to, say, 5.  Apparently,
 			// KVO notifications are coalesced.
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
+#warning "Built for 10.9"
+            // Being built with Mac OS X 10.9 or later SDK
+            if ([[NSProcessInfo processInfo] respondsToSelector:@selector(beginActivityWithOptions:reason:)]) {
+                // Running in Mac OS X 10.9 or later
+                NSString* groupName = nil ;
+                if ([[self operations] count] > 0) {
+                    SSYOperation* firstOperation = [[self operations] objectAtIndex:0] ;
+                    if ([firstOperation respondsToSelector:@selector(info)]) {
+                        NSDictionary* info = [firstOperation info] ;
+                        groupName = [info objectForKey:constKeySSYOperationGroup] ;
+                    }
+                }
+                if (!groupName) {
+                    groupName = @"?**?" ;
+                }
+                NSString* reason = [NSString stringWithFormat:
+                                    @"SSYOperations beginning with group %@ at %@",
+                                    groupName,
+                                    [[NSDate date] geekDateTimeString]] ;
+                id activity = [[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityAutomaticTerminationDisabled
+                                                                             reason:reason] ;
+                /*SSYDBL*/ NSLog(@"Suspended app nap with activity=%@ for reason: %@", activity, reason) ;
+                [self setNoAppNapActivity:activity] ;
+            }
+#endif
+            
 			NSOperation <SSYOwnee> * operation = [[self operations] objectAtIndex:0] ;
 			id owner ;
 			if ([operation respondsToSelector:@selector(owner)]) {
