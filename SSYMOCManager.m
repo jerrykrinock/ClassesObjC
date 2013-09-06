@@ -8,6 +8,8 @@
 #import "SSYPersistentDocumentMultiMigrator.h"
 #import "NSManagedObjectContext+Cheats.h"
 #import "NSError+DecodeCodes.h"
+#import "NSObject+MoreDescriptions.h"
+
 
 NSString* const constKeyMOC = @"moc" ;
 NSString* const constKeyOwner = @"owr" ;
@@ -23,40 +25,6 @@ NSString* const constKeyStoreUrl = @"sturl" ;
 //    -release
 //    -autorelease
 static SSYMOCManager* sharedMOCManager = nil ;
-
-#if DEBUG
-
-@interface NSCountedSet (SSYMOCManagerHelp)
-
-- (NSString*)shortDescription ;
-
-@end
-
-@implementation NSCountedSet (SSYMOCManagerHelp)
-
-- (NSString*)shortDescription {
-	NSMutableString* desc = [NSMutableString string] ;
-	for (id object in self) {
-		[desc appendFormat:
-		 @"%@ [%ld],",
-		 [object shortDescription],
-		 (long)[self countForObject:object]] ;
-	}
-
-	// Delete the trailing comma
-	if ([desc length] > 0) {
-		[desc deleteCharactersInRange:NSMakeRange([desc length] - 1, 1)] ;
-	}
-	else {
-		[desc appendString:@"<Empty Set>"] ;
-	}
-
-	return [[desc copy] autorelease] ;
-}
-
-@end
-
-#endif
 
 
 @interface SSYMOCManager (PrivateHeader)
@@ -338,7 +306,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 																						momdName:momdName
 																						 error_p:error_p] ;
 		if (coordinator) {
-			managedObjectContext = [[NSManagedObjectContext alloc] init] ;
+            managedObjectContext = [[NSManagedObjectContext alloc] init] ;
 			[managedObjectContext setPersistentStoreCoordinator:coordinator] ;
 			if (!owner_) {
 				// A no-owner moc is a "cheap" moc.
@@ -355,6 +323,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 						forKey:identifier] ;
 			
 			[managedObjectContext release] ; // balances +alloc, above
+            ;
 		}
 	}
 	
@@ -424,7 +393,13 @@ static SSYMOCManager* sharedMOCManager = nil ;
 	return answer ;
 }
 
-- (BOOL)releaseManagedObjectContext:(NSManagedObjectContext*)managedObjectContext
+- (void)destroyManagedObjectContextWithIdentifier:(NSString*)identifier {
+	[[self inMemoryMOCDics] removeObjectForKey:identifier] ;
+    [[self sqliteMOCDics] removeObjectForKey:identifier] ;
+    [[self docMOCDics] removeObjectForKey:identifier] ;
+}
+
+- (BOOL)destroyManagedObjectContext:(NSManagedObjectContext*)managedObjectContext
 					   inDictionary:(NSMutableDictionary*)dictionary {
 	NSString* removeeIdentifier = nil ;
 	for (NSString* identifier in dictionary) {
@@ -442,17 +417,17 @@ static SSYMOCManager* sharedMOCManager = nil ;
 	return (removeeIdentifier != nil) ;
 }	
 
-- (BOOL)releaseManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
+- (BOOL)destroyManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
 	BOOL didDo = NO ;
-	didDo = [self releaseManagedObjectContext:managedObjectContext
+	didDo = [self destroyManagedObjectContext:managedObjectContext
 								inDictionary:[self inMemoryMOCDics]] ;
 	if (!didDo) {
-		didDo = [self releaseManagedObjectContext:managedObjectContext
+		didDo = [self destroyManagedObjectContext:managedObjectContext
 									inDictionary:[self sqliteMOCDics]] ;
 	}
 	
 	if (!didDo) {
-		didDo = [self releaseManagedObjectContext:managedObjectContext
+		didDo = [self destroyManagedObjectContext:managedObjectContext
 									inDictionary:[self docMOCDics]] ;
 	}
 
@@ -484,8 +459,12 @@ static SSYMOCManager* sharedMOCManager = nil ;
 	return [[self sharedMOCManager] ownerOfManagedObjectContext:managedObjectContext] ;
 }
 
-+ (BOOL)releaseManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
-	return [[self sharedMOCManager] releaseManagedObjectContext:managedObjectContext] ;
++ (BOOL)destroyManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
+	return [[self sharedMOCManager] destroyManagedObjectContext:managedObjectContext] ;
+}
+
++ (void)destroyManagedObjectContextWithIdentifier:(NSString*)identifier {
+	[[self sharedMOCManager] destroyManagedObjectContextWithIdentifier:identifier] ;
 }
 
 + (void)removeSqliteStoreForIdentifier:(NSString*)identifier {

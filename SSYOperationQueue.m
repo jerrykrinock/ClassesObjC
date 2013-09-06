@@ -234,7 +234,6 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
             id activity = [self noAppNapActivity] ;
             if (activity) {
                 [[NSProcessInfo processInfo] endActivity:activity];
-                /*SSYDBL*/ NSLog(@"Ended no-app-nap activity=%@", activity) ;
             }
 #endif
 
@@ -259,7 +258,6 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 			// KVO notifications are coalesced.
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
-#warning "Built for 10.9"
             // Being built with Mac OS X 10.9 or later SDK
             if ([[NSProcessInfo processInfo] respondsToSelector:@selector(beginActivityWithOptions:reason:)]) {
                 // Running in Mac OS X 10.9 or later
@@ -280,7 +278,6 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
                                     [[NSDate date] geekDateTimeString]] ;
                 id activity = [[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityAutomaticTerminationDisabled
                                                                              reason:reason] ;
-                /*SSYDBL*/ NSLog(@"Suspended app nap with activity=%@ for reason: %@", activity, reason) ;
                 [self setNoAppNapActivity:activity] ;
             }
 #endif

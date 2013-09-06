@@ -350,40 +350,67 @@ end:;
 	NSInteger result ;
 	pid_t pid = 0 ;	
 	
-	NSData* stdoutData = nil ;
-	NSError* error = nil ;
-	NSString* command = [NSString stringWithFormat:
-						 @"/bin/launchctl list | /usr/bin/grep %@",
-						 [self bashEscapementOfLabel:label]] ;
-	NSArray* arguments = [NSArray arrayWithObjects:
-						  @"-c",
-						  command,
-						  nil] ;
-	result = [SSYShellTasker doShellTaskCommand:@"/bin/sh"
-									  arguments:arguments
-									inDirectory:nil
-									  stdinData:nil
-								   stdoutData_p:&stdoutData
-								   stderrData_p:NULL
-										timeout:3.0
-										error_p:&error] ;
-	if ((result != 0) && error) {
-		NSLog(@"SSYLaunchdGuy Error 879-1417 label=%@  %@", label, error) ;
-	}
-	
-	if (stdoutData) {
-		NSString* response = [[NSString alloc] initWithData:stdoutData
-												   encoding:NSUTF8StringEncoding] ;
-		// Next line is defensive programming
-		NSString* trimmedResponse = [response stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] ;
-        [response release] ;
-		NSArray* words = [trimmedResponse componentsSeparatedByString:@" "] ;
-		if ([words count] > 0) {
-			NSString* pidString = [words objectAtIndex:0] ;
-            pid = [pidString intValue] ;
-		}
-	}
-	
+	if ([label length] > 0) {
+        NSData* stdoutData = nil ;
+        NSError* error = nil ;
+        NSString* commandString = [NSString stringWithFormat:
+                                   @"/bin/launchctl list | /usr/bin/grep %@",
+                                   [self bashEscapementOfLabel:label]] ;
+        NSArray* arguments = [NSArray arrayWithObjects:
+                              @"-c",  // Tells sh: Read commands from next argument
+                              commandString,
+                              nil] ;
+        result = [SSYShellTasker doShellTaskCommand:@"/bin/sh"
+                                          arguments:arguments
+                                        inDirectory:nil
+                                          stdinData:nil
+                                       stdoutData_p:&stdoutData
+                                       stderrData_p:NULL
+                                            timeout:3.0
+                                            error_p:&error] ;
+        if ((result != 0) && error) {
+            NSLog(@"SSYLaunchdGuy Error 879-1417 label=%@  %@", label, error) ;
+        }
+        
+        if (stdoutData) {
+            NSString* response = [[NSString alloc] initWithData:stdoutData
+                                                       encoding:NSUTF8StringEncoding] ;
+            NSString* trimmedResponse = [response stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] ;
+            /*
+             The following line was fixed in BookMacster 1.17 so that it works
+             if fields are separated by tabs (as they are in Mac OS X 10.8)
+             instead of spaces.  Maybe they were spaces in an earlier OS X
+             version?  Anyhow, we handle either now.
+             */
+            NSArray* words = [trimmedResponse componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] ;
+            /*
+             If the 3 "words" (pid, <last exit status>, label) printed by
+             launchctl are separated by multiple spaces instead of tabs,
+             'words' will contain bunches of empty strings in addition to these
+             3 actual "words".  This is because
+             -componentsSeparatedByCharactersInSet: does not coalesce
+             consecutive separators.  However, since we are only interested in
+             the first object in words (the pid), we still get it OK.
+             */
+            if ([words count] > 2) {   // Was "> 0" until BookMacster 1.17
+                NSString* pidString = [words objectAtIndex:0] ;
+                pid = [pidString intValue] ;
+                /* If the label does not have a running process, launchctl will
+                 signify that by a dash ("-") and hence pidString will be "-",
+                 and hence we'll get pid=0 as desired, because -intValue
+                 "Returns 0 if the receiver doesn’t begin with a valid decimal
+                 text representation of a number." */
+            }
+            else if ([words count] > 1){
+                NSLog(@"SSYLaunchdGuy Error 879-1418 label=%@  response=\"%@\"", label, response) ;
+            }
+            else {
+                // Expected if the given label is not registered with launchd.
+            }
+            [response release] ;
+        }
+    }
+    
 	return pid ;
 }
 

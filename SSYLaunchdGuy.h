@@ -169,6 +169,23 @@ __attribute__((visibility("default"))) @interface SSYLaunchdGuy : NSObject {
 + (BOOL)removeAgentsWithGlob:(NSString*)glob
 					 error_p:(NSError**)error_p ;
 
+/*
+ @brief    Returns the pid of the currently-running process launched in honor
+ of a given launchd label for the current user, or 0 if there is no such 
+ process currently running.
+
+ @details  This method relies on the 'list' subcommand of 'launchctl' returning
+ the three columns {pid, last exit status, label} as documented in the man 
+ page launchctl(1).  If that return is not as expected, this method logs a
+ message to stderr and returns 0.  Likewise if launchctl or grep don't exit
+ with status 0.
+ 
+ If you pass nil or a non-label string, returns 0 and does not log anything.
+ 
+ This method had a bug until BookMacster 1.17.  Prior to that, if your label's
+ last exit status was not 0, and the label's process was not current running,
+ this method would return the negative of that last exit status, instead of 0.
+ */
 + (pid_t)pidIfRunningLabel:(NSString*)label ;
 
 /*!

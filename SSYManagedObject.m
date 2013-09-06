@@ -311,7 +311,7 @@ end:;
         [(SSYDooDooUndoManager*)[[self owner] undoManager] beginAutoEndingUndoGrouping] ;
 	}
 
-	NSDictionary* info = [NSDictionary dictionaryWithObjectsAndKeys:
+    NSDictionary* info = [NSDictionary dictionaryWithObjectsAndKeys:
 						  key, constKeySSYChangedKey,
 						  value, constKeyNewValue,  // May be nil, so keep this last!
 						  nil] ;

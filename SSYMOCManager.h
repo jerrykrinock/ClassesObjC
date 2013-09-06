@@ -56,7 +56,7 @@
  
  This method retains a reference to the managed object context (in any of the three MOCDics).
  To avoid leaks or retain cycles, send a 
- -releaseManagedObjectContext: message whenever a managed object context returned from this
+ +destroyManagedObjectContext: message whenever a managed object context returned from this
  method is no longer needed.
  @param    type  NSSQLiteStoreType or NSInMemoryStoreType.
  @param    owner  If a new managed object context must be created, an arbitrary object which
@@ -93,7 +93,7 @@
  for the managed objects.
  
  This method retains the -document parameter until it receives a corresponding
- +releaseManagedObjectContext message, so be careful or you will create retain cycles.
+ +destroyManagedObjectContext message, so be careful or you will create retain cycles.
  This method will, however, *replace* its record for a particular document if you later
  send this message again for the same document with a new or same managedObjectContext.
  @param    document  The document which owns the managed object context
@@ -133,11 +133,25 @@
  needed, in order to avoid memory leaks in your program.  To avoid retain cycles,
  don't do it in -dealloc.  Put it in a method which runs prior to -dealloc.
  It is OK to send this message more than once; further invocations will no-op.
+ 
+ However, note that SSYMOCManager does not have a retain count mechanism.  That
+ is why this method is named "destroy…" instead of "release…".  If more than one
+ of your objects could be using the subject managed object context, it is your
+ responsibility to not send this message until all such objects no longer need
+ it.
  @param    managedObjectContext  The managed object context to be removed.
  @return  YES if an entry with the given managed object context was found and removed,
  otherwise NO. 
 */
-+ (BOOL)releaseManagedObjectContext:(NSManagedObjectContext*)managedObjectContext ;
++ (BOOL)destroyManagedObjectContext:(NSManagedObjectContext*)managedObjectContext ;
+
+/*@brief    Removes any managed object context with a give identifier,
+which would be returned by -managedObjectContextType:::::, from the
+ receiver's instance's data.
+
+@details  Ditto the details from +destroyManagedObjectContext:.
+ */
++ (void)destroyManagedObjectContextWithIdentifier:(NSString*)identifier ;
 
 /*!
  @brief    Deletes the local store file on disk for an sqlite store with a given
