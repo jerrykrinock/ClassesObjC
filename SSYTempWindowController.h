@@ -21,7 +21,7 @@
  In this nib,
  *  File's Owner should be set to your subclass of this class
  *  File's Owner 'window' outlet should be wired to a window
- *  Said window should have checked
+ *  Said window should have these checkboxes switched ON
  **  ON  Release When Closed
  **  OFF Visible At Launch
  **  In the MEMORY section,

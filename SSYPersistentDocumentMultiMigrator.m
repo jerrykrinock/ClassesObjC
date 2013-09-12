@@ -255,11 +255,9 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
         // Fix 20130610 - Does not work.
         BOOL isWritable = [[NSFileManager defaultManager] isWritableFileAtPath:[url absoluteString]] ;
         BOOL isInViewingMode = [document isInViewingMode] ;
-        /*SSYDBL*/ NSLog(@"isWritable = %ld   isInViewingMode = %ld ", isWritable, isInViewingMode) ;
         if (isInViewingMode) {
             NSString* fileNameExtension = [[url absoluteString] pathExtension] ;
             NSString* writablePath = [[[NSFileManager defaultManager] temporaryFilePath] stringByAppendingPathExtension:fileNameExtension] ;
-            /*SSYDBL*/ NSLog(@"Not writable.\nCopying: %@\n     To: %@", [url absoluteString], writablePath) ;
             ok = [[NSFileManager defaultManager] copyItemAtPath:[url absoluteString]
                                                          toPath:writablePath
                                                           error:&underlyingError] ;

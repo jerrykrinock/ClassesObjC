@@ -60,7 +60,7 @@ static SSYAppInfo *sharedInfo = nil ;
 	_upgradeState = upgradeState ;
 }
 
-// Keep this method private, vecause it gives the value from User Defaults, which
+// Keep this method private, because it gives the value from User Defaults, which
 // will already have been changed to the current version after the SSYAppInfo
 // singleton instance has been created, which is probably not what you expect.
 // You probably want +previousVersionTriplet instead.
@@ -71,27 +71,22 @@ static SSYAppInfo *sharedInfo = nil ;
 }
 
 + (SSYVersionTriplet*)rawCurrentVersionTriplet {
-	// Prior BookMacster 1.6.8/1.7.0, we used this:
-	// 	SSYVersionTriplet* cvt = [SSYVersionTriplet versionTripletFromBundleIdentifier:[[NSBundle mainBundle] bundleIdentifier]] ;
-	// which was bad because it allowed Launch Services to give us the bundle, which
-	// may have been from a different app instance if different versions of thisapp
-	// are installed on this Mac.  That was pretty stupid, but probably is because
-	// originally that method was used to get versions of *other* apps.
-	NSString* versionString = [SSYVersionTriplet rawVersionStringFromBundle:[NSBundle mainBundle]] ; 
+	NSString* versionString = [SSYVersionTriplet rawVersionStringFromBundle:[NSBundle mainBundle]] ;
 	SSYVersionTriplet* cvt = [SSYVersionTriplet versionTripletFromString:versionString] ;
 	return cvt ;
 }
 
 
 - (id)init {
-	self = [super init];
+	self = [super init] ;
 	if (self != nil) {
 		SSYVersionTriplet* previousVersionTriplet = [SSYAppInfo rawPreviousVersionTriplet] ;
 		[self setPreviousVersionTriplet:previousVersionTriplet] ;
 		[self setCurrentVersionTriplet:[SSYAppInfo rawCurrentVersionTriplet]] ;
-		_upgradeState = [SSYAppInfo upgradeStateForCurrentVersionTriplet:[self currentVersionTriplet] 
-												  previousVersionTriplet:[self previousVersionTriplet]] ;
-		if (_upgradeState != SSYCurrentRev) {
+        enum SSYAppInfoUpgradeState upgradeState = [SSYAppInfo upgradeStateForCurrentVersionTriplet:[self currentVersionTriplet]
+                                                                             previousVersionTriplet:[self previousVersionTriplet]] ;
+		[self setUpgradeState:upgradeState] ;
+		if ([self upgradeState] != SSYCurrentRev) {
 			// Get a nice, clean, filtered versionString of the form "major.minor.bugFix" using SSVersionTriplet methods
 			SSYVersionTriplet* currentVersionTriplet = [SSYVersionTriplet versionTripletFromBundleIdentifier:[[NSBundle mainBundle] bundleIdentifier]] ;
 			NSString* currentVersionString = [currentVersionTriplet string] ;
@@ -110,7 +105,9 @@ static SSYAppInfo *sharedInfo = nil ;
 
 
 + (BOOL)isNewUser {
-	return ([[self sharedInfo] upgradeState] >= SSYNewUser) ;
+    enum SSYAppInfoUpgradeState upgradeState = [[self sharedInfo] upgradeState] ;
+    BOOL answer = (upgradeState >= SSYNewUser) ;
+	return answer ;
 }
 
 + (BOOL)didUpgradeSinceLastRun {

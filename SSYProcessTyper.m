@@ -5,9 +5,9 @@
 /*
  Added in BookMacster 1.14.4.  See piggyback comment in counterpart .h file.
  */
-+ (ProcessApplicationTransformState)appleTypeForType:(SSYProcessTyperType)type {	
++ (ProcessApplicationTransformState)appleTypeForType:(SSYProcessTyperType)type {
 	ProcessApplicationTransformState answer ;
-
+    
 #if MAC_OS_X_VERSION_MAX_ALLOWED > 1060
 	switch (type) {
 		case SSYProcessTyperTypeForeground:
@@ -47,7 +47,7 @@
     else {
         type = SSYProcessTyperTypeForeground ;
     }
-
+    
 	if (info != NULL) {
 		CFRelease((CFDictionaryRef)info) ;
 	}
@@ -86,10 +86,11 @@
 }
 
 + (void)transformToType:(SSYProcessTyperType)type {
-    if (type == [self currentType]) {
-        // Nothing to do
-        return ;
-    }
+    // The following was removed in BookMacster 1.18
+    //    if (type == [self currentType]) {
+    //        // Nothing to do
+    //        return ;
+    //    }
     
     if (type != SSYProcessTyperTypeForeground) {
         if (NSAppKitVersionNumber < 1100) {
@@ -102,19 +103,19 @@
     // Actual Subtance
     ProcessSerialNumber psn = { 0, kCurrentProcess } ;
     OSStatus err ;
-    err = TransformProcessType(&psn, [self appleTypeForType:type]) ;
+    ProcessApplicationTransformState appleType = [self appleTypeForType:type] ;
+    err = TransformProcessType(&psn, appleType) ;
     if (err != noErr) {
-        NSLog(@"Internal Error 915-9387 %ld", (long)err) ;
+        // If you TransformProcessType to the current process type, that is,
+        // don't change the type, you'll get err = -50 = paramErr here.
+        // We don't consider that to be an error, and there are no other
+        // reasonable errors that we know of.  So we ignore err.
     }
     
     BOOL doShow = (type == SSYProcessTyperTypeForeground) ;
-
+    
     if (doShow) {
 		[NSApp activateIgnoringOtherApps:YES] ;
-        err = ShowHideProcess(&psn, true);
-        if (err != noErr) {
-            NSLog(@"Internal Error 915-9172 %ld", (long)err) ;
-        }
     }
 }
 
