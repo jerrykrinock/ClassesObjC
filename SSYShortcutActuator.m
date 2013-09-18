@@ -483,6 +483,11 @@ OSStatus SSYShortcutActuate(
 
 - (KeyCombo)keyComboForSelectorName:(NSString*)selectorName {
 	KeyCombo keyCombo ;
+    // Fixed in BookMacster 1.18.0 so garbage values are not returned if
+    // shortcutInfos (below) comes up nil from user defaults.
+    keyCombo.code = -1 ;
+    keyCombo.flags = 0 ;
+    
 	NSUserDefaults* sud = [NSUserDefaults standardUserDefaults] ;
 	// Use -respondsToSelector: since one should never trust anything
 	// that comes out of user defaults
@@ -496,21 +501,11 @@ OSStatus SSYShortcutActuate(
 			if ([number respondsToSelector:@selector(integerValue)]) {
 				keyCombo.code = [number integerValue] ;
 			}
-			else {
-				keyCombo.code = -1 ;
-			}
 
 			number = [shortcutInfo objectForKey:constKeyModifierFlags] ;
 			if ([number respondsToSelector:@selector(unsignedIntegerValue)]) {
 				keyCombo.flags = [number unsignedIntegerValue] ;
 			}
-			else {
-				keyCombo.flags = 0 ;
-			}
-		}
-		else {
-			keyCombo.code = -1 ;
-			keyCombo.flags = 0 ;
 		}
 	}
 	

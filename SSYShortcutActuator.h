@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
-#import "SRCommon.h"  // for KeyCombo
+#import "SRCommon.h"  // for KeyCombo, also this imports <Carbon/Carbon.h>
 
 extern NSString* const SSYShortcutActuatorDidNonemptyNotification ;
 extern NSString* const SSYShortcutActuatorDidEmptyNotification ;
