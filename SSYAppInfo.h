@@ -1,6 +1,7 @@
 #import <Cocoa/Cocoa.h>
 #import "SSYVersionTriplet.h"
 
+extern NSString* const constKeyLastVersion ;
 
 /*!
  @enum       SSYAppInfoUpgradeState
@@ -35,18 +36,7 @@ enum SSYAppInfoUpgradeState  {
  previous launch.  I'm not sure where I'm going with this class right now.  Might
  add other "features" later.
 
- @details  Upon initialization, if found to be running a version that is different
- than the previous version in standard user defaults' constKeyLastVersion, an
- instance of this class (the shared instance, for instance) will overwrite the
- constKeyLastVersion user default with the current version.  This should be done
- early in the application launch to make sure that this information gets updated.
- It should be done at least once during an application launch in order to register
- constKeyLastVersion to provide accurate info during the ^next^ launch of this
- application.
- That being said, this is now a reason for using an instance with instance variables. The
- ivars _previousVersionNumbers and consequently _upgradeState can no longer be computed
- from data stored on disk (in user defaults) after this overwriting has been done.
- 
+ @details
  Regarding version strings, this class uses what I call "SSYSimpleVersioningSystem" instead
  of Apple Generic Versioning.  In SSYSimpleVersioningSystem, CFBundleVersion contains two-dot
  string of three integers, major.minor.bugfix.  So, for example in the About box your
@@ -85,6 +75,25 @@ enum SSYAppInfoUpgradeState  {
 + (SSYVersionTriplet*)currentVersionTriplet ;
 
 + (SSYVersionTriplet*)previousVersionTriplet ;
+
+/*
+ @brief    Sets the current upgrade state in the receiver's shared instance,
+ and updates the constKeyLastVersion in the user defaults to the current
+ version found in the app's main bundle.
+ 
+ @details  This method must be invoked before you invoke any other methods
+ in this class, such as early in -applicaitonDidFinishLaunching, or else
+ other methods will give wrong answers.
+ 
+ The current upgrade state is calculated by comparing the
+ last-run version found in standard user defaults' constKeyLastVersion
+ with the current version found in the main bundle, and remembers it.
+ 
+ The reason for setting the current upgrade state (it's an instance variable)
+ is that, after the user defaults' constKeyLastVersion has been updated to the
+ current version, it can no longer be calculated.
+ */
++ (void)calculateUpgradeState ;
 
 @end
 

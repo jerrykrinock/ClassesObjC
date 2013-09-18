@@ -10,7 +10,8 @@ static SSYAppInfo *sharedInfo = nil ;
 + (SSYAppInfo*)sharedInfo {
 	@synchronized(self) {
         if (sharedInfo == nil) {
-            sharedInfo = [[self alloc] init] ; 
+            sharedInfo = [[self alloc] init] ;
+            [sharedInfo setUpgradeState:SSYNotDefined] ;
         }
 	}
     return sharedInfo ;
@@ -76,31 +77,26 @@ static SSYAppInfo *sharedInfo = nil ;
 	return cvt ;
 }
 
-
-- (id)init {
-	self = [super init] ;
-	if (self != nil) {
-		SSYVersionTriplet* previousVersionTriplet = [SSYAppInfo rawPreviousVersionTriplet] ;
-		[self setPreviousVersionTriplet:previousVersionTriplet] ;
-		[self setCurrentVersionTriplet:[SSYAppInfo rawCurrentVersionTriplet]] ;
-        enum SSYAppInfoUpgradeState upgradeState = [SSYAppInfo upgradeStateForCurrentVersionTriplet:[self currentVersionTriplet]
-                                                                             previousVersionTriplet:[self previousVersionTriplet]] ;
-		[self setUpgradeState:upgradeState] ;
-		if ([self upgradeState] != SSYCurrentRev) {
-			// Get a nice, clean, filtered versionString of the form "major.minor.bugFix" using SSVersionTriplet methods
-			SSYVersionTriplet* currentVersionTriplet = [SSYVersionTriplet versionTripletFromBundleIdentifier:[[NSBundle mainBundle] bundleIdentifier]] ;
-			NSString* currentVersionString = [currentVersionTriplet string] ;
-
-			// Record currently-launched version into prefs
-			// Note that this must be done AFTER the above reading,
-			// or else the pref constKeyLastVersion will be written as the previous version!
-			NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults] ;
-			[userDefaults setObject:currentVersionString
-							 forKey:constKeyLastVersion] ;
-			[userDefaults synchronize] ;
-		}
-	}
-	return self;
+- (void)calculateUpgradeState {
+    SSYVersionTriplet* previousVersionTriplet = [SSYAppInfo rawPreviousVersionTriplet] ;
+    [self setPreviousVersionTriplet:previousVersionTriplet] ;
+    [self setCurrentVersionTriplet:[SSYAppInfo rawCurrentVersionTriplet]] ;
+    enum SSYAppInfoUpgradeState upgradeState = [SSYAppInfo upgradeStateForCurrentVersionTriplet:[self currentVersionTriplet]
+                                                                         previousVersionTriplet:[self previousVersionTriplet]] ;
+    [self setUpgradeState:upgradeState] ;
+    if ([self upgradeState] != SSYCurrentRev) {
+        // Get a nice, clean, filtered versionString of the form "major.minor.bugFix" using SSVersionTriplet methods
+        SSYVersionTriplet* currentVersionTriplet = [SSYVersionTriplet versionTripletFromBundleIdentifier:[[NSBundle mainBundle] bundleIdentifier]] ;
+        NSString* currentVersionString = [currentVersionTriplet string] ;
+        
+        // Record currently-launched version into prefs
+        // Note that this must be done AFTER the above reading,
+        // or else the pref constKeyLastVersion will be written as the previous version!
+        NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults] ;
+        [userDefaults setObject:currentVersionString
+                         forKey:constKeyLastVersion] ;
+        [userDefaults synchronize] ;
+    }
 }
 
 
@@ -120,6 +116,10 @@ static SSYAppInfo *sharedInfo = nil ;
 
 + (SSYVersionTriplet*)previousVersionTriplet {
 	return [[self sharedInfo] previousVersionTriplet] ;
+}
+
++ (void)calculateUpgradeState {
+    [[self sharedInfo] calculateUpgradeState] ;
 }
 
 
