@@ -1827,6 +1827,35 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[self release] ;  // Balances retain, above
 }
 
+- (void)someWindowDidBecomeKey:(NSNotification*)note {
+    if ([note object] != [self window]) {
+        [self goAway] ;
+    }
+}
+
+- (void)startObservingOtherWindowsToBecomeKey {
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(someWindowDidBecomeKey:)
+                                                 name:NSWindowDidBecomeKeyNotification
+                                               object:nil] ;
+}
+
+- (void)stopObservingOtherWindowsToBecomeKey {
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:NSWindowDidBecomeKeyNotification
+                                                  object:nil] ;
+    
+}
+
+- (void)setGoAwayWhenAnotherWindowBecomesKey:(BOOL)yn {
+    if (yn) {
+        [self startObservingOtherWindowsToBecomeKey] ;
+    }
+    else {
+        [self stopObservingOtherWindowsToBecomeKey] ;
+    }
+}
+
 #pragma mark * Public Methods for Getting Status
 
 - (BOOL)modalSessionRunning {
@@ -1859,7 +1888,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 // The value WINDOW_PROTOTYPE_HEIGHT = 486 places it at 900, 100 pixels from the 
 // bottom of the menu bar.
 
-- init {
+- (id)init {
 	if (!NSApp || ([SSYProcessTyper currentType] != SSYProcessTyperTypeForeground)) {
 		// See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
 		// Actually, this is unsafe, as pointed out by Quincey Morris…
@@ -1911,6 +1940,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		self.windowTopCenter = windowTopCenter_ ;
 	}
 
+    ///*SSYDBL*/ NSLog(@"Created alert %p", self) ;
 	return self ;
 }
 
@@ -2164,6 +2194,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 #pragma mark * Basic Infrastructure
 
 - (void)dealloc {
+    [self stopObservingOtherWindowsToBecomeKey] ;
+    
 	[icon release] ;
 	[progressBar release] ;
 	[titleTextView release] ;
@@ -2181,7 +2213,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[buttonPrototype release] ;
 	[wordAlert release] ;
 	[documentWindow release] ;
-	
+    ///*SSYDBL*/ NSLog(@"Deallocced alert %p", self) ;
+
 	[otherSubviews release] ;
 	
 	[clickTarget release] ;

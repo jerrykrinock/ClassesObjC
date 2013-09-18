@@ -736,6 +736,15 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 - (void)cleanSlate ;
 
 /*!
+ @brief    Sets whether or not the receiver observes for a window other than
+ its own to become key, and when so sends itself a -goAway message
+ 
+ @details  Provides a loosely-coupled self-cleanup mechanism so that the
+ receiver's window does not annoy the user.  Value is NO by default.
+ */
+- (void)setGoAwayWhenAnotherWindowBecomesKey:(BOOL)yn ;
+
+/*!
  @brief    Sets the title of the receiver's window
 
  @details  If not set, or set to nil, window title defaults to mainBundle's
@@ -797,7 +806,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 
 /*!
  @brief    Sets the title of the (rightmost) "default" button, the
- one whose key equivalent is \r.
+ one whose key equivalent is \\r.
  @param    title  The desired button title, or nil.
 */
 - (void)setButton1Title:(NSString*)title ;
