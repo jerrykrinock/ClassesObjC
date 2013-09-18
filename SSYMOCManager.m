@@ -394,9 +394,11 @@ static SSYMOCManager* sharedMOCManager = nil ;
 }
 
 - (void)destroyManagedObjectContextWithIdentifier:(NSString*)identifier {
-	[[self inMemoryMOCDics] removeObjectForKey:identifier] ;
-    [[self sqliteMOCDics] removeObjectForKey:identifier] ;
-    [[self docMOCDics] removeObjectForKey:identifier] ;
+	if (identifier) {
+        [[self inMemoryMOCDics] removeObjectForKey:identifier] ;
+        [[self sqliteMOCDics] removeObjectForKey:identifier] ;
+        [[self docMOCDics] removeObjectForKey:identifier] ;
+    }
 }
 
 - (BOOL)destroyManagedObjectContext:(NSManagedObjectContext*)managedObjectContext
