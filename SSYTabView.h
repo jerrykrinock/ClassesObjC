@@ -34,7 +34,7 @@ extern NSString* const SSYTabViewDidChangeItemNotification ;
  item.  (We figure out  which one sent it by looking at the sender.)</li>
  <li>Third, in order for this class to "just work" without alot of programming,
  we require that the corresponding tab view items and toolbar items
- have the same identifiers (strings).</li>
+ have the same identifiers (setSelectedTabIndex:).</li>
  </ul>
 */
 @interface SSYTabView : NSTabView {

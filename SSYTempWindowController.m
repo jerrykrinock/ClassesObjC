@@ -9,7 +9,6 @@ static NSMutableSet* static_windowControllers = nil ;
 	return nil ;
 }
 
-
 - (void)goAway {
 	[[NSNotificationCenter defaultCenter] removeObserver:self] ;
 	[[self window] setWindowController:nil] ;
