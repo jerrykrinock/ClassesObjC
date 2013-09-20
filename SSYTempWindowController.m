@@ -9,7 +9,7 @@ static NSMutableSet* static_windowControllers = nil ;
 	return nil ;
 }
 
-- (void)goAway {
+- (void)goAway:(NSNotification*)note {
 	[[NSNotificationCenter defaultCenter] removeObserver:self] ;
 	[[self window] setWindowController:nil] ;
     [[self retain] autorelease] ;
@@ -21,7 +21,7 @@ static NSMutableSet* static_windowControllers = nil ;
 	self = [super initWithWindowNibName:[[self class] nibName]] ;
 	if (self) {
 		[[NSNotificationCenter defaultCenter] addObserver:self
-												 selector:@selector(goAway)
+												 selector:@selector(goAway:)
 													 name:NSWindowWillCloseNotification
 												   object:[self window]] ;
 	}

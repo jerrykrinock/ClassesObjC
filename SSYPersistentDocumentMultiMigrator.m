@@ -251,10 +251,15 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 			goto end ;
 		}
 		
+        // Fix in BookMacster 1.18.1, for Mac OS X 10.6
+        BOOL isInViewingMode = NO ;
+        if ([document respondsToSelector:@selector(isInViewingMode)]) {
+            isInViewingMode = [document isInViewingMode] ;
+            /*SSYDBL*/ NSLog(@"Check 3") ;
+        }
 #if 0
         // Fix 20130610 - Does not work.
         BOOL isWritable = [[NSFileManager defaultManager] isWritableFileAtPath:[url absoluteString]] ;
-        BOOL isInViewingMode = [document isInViewingMode] ;
         if (isInViewingMode) {
             NSString* fileNameExtension = [[url absoluteString] pathExtension] ;
             NSString* writablePath = [[[NSFileManager defaultManager] temporaryFilePath] stringByAppendingPathExtension:fileNameExtension] ;
@@ -275,7 +280,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
         }
 #endif
 #if MAC_OS_X_VERSION_MAX_ALLOWED > 1060
-        if ([document isInViewingMode]) {
+        if (isInViewingMode) {
             [newStoreOptions setObject:[NSNumber numberWithBool:YES]
                                 forKey:NSReadOnlyPersistentStoreOption] ;
         }

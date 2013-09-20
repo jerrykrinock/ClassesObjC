@@ -2,14 +2,15 @@
 
 
 @implementation SSYGrayRect
-
-
-
+    
+@synthesize topWhite = m_topWhite ;
+@synthesize bottomWhite = m_bottomWhite ;
+    
 - (void)awakeFromNib {
     [self setTopWhite:0.627] ;
     [self setBottomWhite:0.784] ;
 }
-
+    
 - (void)drawRect:(NSRect)dirtyRect {
 	[super drawRect:dirtyRect] ;
 	
