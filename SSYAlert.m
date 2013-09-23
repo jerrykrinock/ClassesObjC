@@ -14,9 +14,9 @@
 #import "NSError+MoreDescriptions.h"
 #import "NSError+Recovery.h"
 #import "NSError+SSYInfo.h"
+#import "SSYWindowHangout.h"
 
 NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager = nil ;
-static SSYAlert *sharedAlert = nil ;
 
 NSString* const SSYAlertDidRecoverInvocationKey = @"SSYAlertDidRecoverInvocationKey" ;
 NSString* const SSYAlert_ErrorSupportEmailKey = @"SSYAlert_ErrorSupportEmail" ;
@@ -168,7 +168,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @property (copy) NSString* wordAlert ;
 // @property (copy) NSString* whyDisabled ; // in public @interface
 // @property (assign) isEnabled ; // in public @interface
-@property (assign) BOOL isRetainedForSheet ;
 @property (assign) BOOL isVisible ;
 @property (assign) NSInteger nDone ;
 // @property (assign) float rightColumnMinimumWidth ; // in public @interface
@@ -383,7 +382,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @synthesize wordAlert ;
 @synthesize documentWindow ;
 
-@synthesize isRetainedForSheet ;
 @synthesize isVisible ;
 @synthesize nDone ;
 @synthesize rightColumnMinimumWidth = m_rightColumnMinimumWidth ; 
@@ -1213,14 +1211,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[[self class] tryRecoveryAttempterForError:[self errorPresenting]
 								   recoveryOption:returnCode
 								   contextInfo:contextInfo] ;
-	
-	// Balance self-retain in alertError:onWindow:modalDelegate:didEndSelector:contextInfo:
-	// But autorelease, not immediately, because -goAway and then -clickedButton:
-	// usually run later.  I'm not sure why they are later.
-	if ([self isRetainedForSheet]) {
-		[self autorelease] ;
-		[self setIsRetainedForSheet:NO] ;
-	}
 }
 
 /*!
@@ -1237,14 +1227,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		contextInfo:(void *)contextInfo {
 	[self setAlertReturn:returnCode] ;
     [sheet orderOut:self] ;
-
-	// Balance self-retain in runModalSheetOnWindow:modalDelegate:didEndSelector:contextInfo
-	// But autorelease, not immediately, because -goAway and then -clickedButton:
-	// usually run later.  I'm not sure why they run later.
-	if ([self isRetainedForSheet]) {
-		[self autorelease] ;
-		[self setIsRetainedForSheet:NO] ;
-	}
 }
 
 - (void)setDontAddOkButton {
@@ -1287,9 +1269,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			modalDelegate = self ;
 		}
 		
-		[self setIsRetainedForSheet:YES] ;
-		[self retain] ;
-		
 		if (!didEndSelector) {
 			didEndSelector = @selector(sheetDidEnd:returnCode:contextInfo:) ;
 		}
@@ -1306,7 +1285,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		
 		[SSYSheetManager enqueueSheet:[self window]
 					   modalForWindow:documentWindow_
-                         retainHelper:nil  // Because this code was written before SSYSheetManager had 'retainHelper:'.  I use -setIsRetainedForSheet here, above, instead.
+                         retainHelper:nil  // Not needed because we use SSYWindowHangout
 						modalDelegate:modalDelegate
 					   didEndSelector:didEndSelector
 						  contextInfo:contextInfo] ;
@@ -1938,9 +1917,11 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		windowTopCenter_.x += WINDOW_PROTOTYPE_WIDTH/2 ;
 		windowTopCenter_.y += WINDOW_PROTOTYPE_HEIGHT ;  // move from bottom to top
 		self.windowTopCenter = windowTopCenter_ ;
+        
+        [SSYWindowHangout hangOutWindowController:self] ;
 	}
 
-    ///*SSYDBL*/ NSLog(@"Created alert %p", self) ;
+    /*SSYDBL*/ NSLog(@"Created alert %p", self) ;
 	return self ;
 }
 
@@ -2007,15 +1988,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		[[NSNotificationCenter defaultCenter] postNotificationName:SSYAlertDidProcessErrorNotification
 															object:error] ;
 	}
-}
-
-+ (SSYAlert*)sharedAlert {
-	@synchronized(self) {
-        if (sharedAlert == nil) {
-            sharedAlert = [[self alloc] init] ; 
-        }
-	}
-    return sharedAlert ;
 }
 
 + (SSYAlert*)alert {
@@ -2213,7 +2185,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[buttonPrototype release] ;
 	[wordAlert release] ;
 	[documentWindow release] ;
-    ///*SSYDBL*/ NSLog(@"Deallocced alert %p", self) ;
+    /*SSYDBL*/ NSLog(@"Deallocced alert %p", self) ;
 
 	[otherSubviews release] ;
 	

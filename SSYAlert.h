@@ -208,8 +208,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  </p>
  <p>
  <ol>
- <li>Get the shared or create a temporary alert using +sharedAlert, +alert.</li>
- <li>[Optional] If shared, and if most of the previous subviews are to be removed, -cleanSlate.</li>
+ <li>Get an alert using +alert.</li>
  <li>Send configuration messages to show the desired title, message, progress
  bar, checkbox, other subviews, buttons, whatever you want.</li>
  <li>To run as a non-modal window, set a clickTarget, clickSelector and optional clickObject.&nbsp;
@@ -220,7 +219,8 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  <li>If running a modal session, send -modalSessionRunning in your modal session loop.</li>
  <li>To end a modal session without causing alert to go away, -endModalSession.</li>
  <li>To get results from a non-modal window, implement clickSelector in your clickTarget.</ol>
- <li>If you retained the SSYAlert, release it when it is done.</li>
+ <li>Alerts are retained by the global SSYWindowHangout "hangout" until their
+ window is closed.  Normally, no memory management is required.</li>
 </p>
  
 <p>
@@ -276,7 +276,6 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 	NSInvocation* m_checkboxInvocation ;
 	
 	BOOL m_isEnabled ;
-	BOOL isRetainedForSheet ;
 	BOOL isVisible ;
 	NSInteger nDone ;
 	NSInteger m_alertReturn ;
@@ -552,15 +551,6 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  @result   An initialized instance of SSYAlert.
 */
 - (id)init ;
-
-/*!
- @brief    Convenience method for returning the application-wide sharedAlert
- instance of NSAlert.
-
- @details  The fact that this alert is shared has advantages and disadvantages.
- @result   The application-wide sharedAlert, autoreleased
-*/
-+ (SSYAlert*)sharedAlert ;
 
 /*!
  @brief    Convenience method for returning an autoreleased SSYAlert, or
