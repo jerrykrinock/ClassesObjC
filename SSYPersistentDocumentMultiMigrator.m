@@ -255,7 +255,6 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
         BOOL isInViewingMode = NO ;
         if ([document respondsToSelector:@selector(isInViewingMode)]) {
             isInViewingMode = [document isInViewingMode] ;
-            /*SSYDBL*/ NSLog(@"Check 3") ;
         }
 #if 0
         // Fix 20130610 - Does not work.

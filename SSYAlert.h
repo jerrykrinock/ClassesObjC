@@ -23,7 +23,8 @@ enum SSYAlertRecovery_enum {
 	SSYAlertRecoveryNotAttempted             = 102,
 	SSYAlertRecoveryAttemptedAsynchronously  = 103,
 	SSYAlertRecoveryErrorIsHidden            = 104,
-	SSYAlertRecoveryUserCancelledPreviously  = 105
+	SSYAlertRecoveryUserCancelledPreviously  = 105,
+    SSYAlertRecoveryInternalError            = 106
 } ;
 typedef enum SSYAlertRecovery_enum SSYAlertRecovery ;
 enum SSYAlertRecoveryApplescriptCode_enum {
@@ -166,20 +167,11 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  </li>
  <li>  A checkbox which is a text-wrapping SSYWrappingCheckbox.</li>
  <li>  0 to 3 buttons.</li>
+ <li>  Ability to re-use the alert, for example, to avoid
  </ul>
  </p>
  
  @detail
- <p>
- <b>Automatically Disabled if no User Interface</b>.&nbsp; For safety in
- projects that have both foreground application and background worker
- target products, its instance method -init checks if NSApp is non-nil
- and also whether or not the process is an LSUIElement.  If either is
- true, -init returns nil and consequently this entire class becomes a no-op.
- Actually, it also deallocs super and there may be some danger in this.
- See notes in the implementation.
- </p>
-
  <p>
  The additional features are:
  <ul>
@@ -224,6 +216,41 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 </p>
  
 <p>
+ By default, SSYAlert closes its window and itself is no longer retained by
+ SSYWindowHangout when the user clicks a button.  If you want to present another
+ alert immediately after that, you can avoid the flicker of having one window
+ disappear and another appear by re-using the same SSYAlert.  The following
+ code snipper shows how to do that.
+ 
+ SSYAlert alert = [SSYAlert alert] ;
+
+ // So that we can re-use this alert…
+ [alert setShouldStickAround:YES] ;
+ 
+ // First use
+ [alert setSmallText:firstMessage] ;
+ ... other confguration messasges
+ [alert display] ;
+ [alert runModalDialog] ;
+ NSInteger alertReturn = [alert alertReturn] ;
+ ... do whatever
+ 
+ // Re-use
+ [alert cleanSlate] ;
+ [alert setSmallText:firstMessage] ;
+ ... other confguration messasges
+ [alert display] ;
+ [alert runModalDialog] ;
+ NSInteger alertReturn = [alert alertReturn] ;
+ ... do whatever
+ 
+ // Done.  But with setShouldStickAround:YES, SSYAlert does not go away
+ // automatically.
+ [alert goAway] ;
+</p>
+
+ 
+ <p>
  SSYAlert's alertError:XXX methods provide a back door with which display of certain
  errors may be inhibited.  This is useful if you want to use NSError to indicate
  conditions which will cause your app to take some action under certain conditions
@@ -242,6 +269,14 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  </p> 
  <ol>
  <li>
+ As of the commit of 2013-09-20, because SSYAlert objects are deallocced
+ when their window is closed, the practice of re-using an SSYAlert, which was
+ carried since we had the +sharedAlert, is now discouraged and may result in
+ Internal Error 624-9218, for example, if you send -alertError: to an SSYAlert
+ instance whose window is closed and nil, or Internal Error 624-9229 if you
+ send -runModalDialog: to an SSYAlert instance whose window is closed and nil.
+ </li>
+ <li>
  One time I tried to "nest" modal sessions and got unpredictable behavior and crashes.&nbsp; 
  I'm not if this is legal or makes sense and recommend against it.
  </li>
@@ -251,6 +286,16 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  document-modal sheet if the document is occupying the modal delegate and 
  didEndSelector to do the generic cleanup.
  </li>
+ <li>For safety in projects that have both foreground application and background
+  workertarget products, its instance method -init checks if NSApp is non-nil
+ and also whether or not the process is an LSUIElement.  If either is
+ true, -init returns nil and consequently this entire class becomes a no-op.
+ Actually, it also deallocs super and there may be some danger in this.
+ See notes in the implementation.
+ </li>
+ 
+ 
+ 
  </ol>
  */
 @interface SSYAlert : NSWindowController {

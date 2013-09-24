@@ -742,8 +742,15 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// Button3 --> tag=NSAlertOtherReturn = -1
 	[self setAlertReturn:[sender tag]] ;
 
-	if (!m_shouldStickAround) {
-		// 20120320.  Crashes at next line, or sometimes in unspecified stack, if you click "Test" (Add-On) during an Export to Chrome
+	if (m_shouldStickAround) {
+        if ([self isDoingModalDialog]) {
+            /*SSYDBL*/ NSLog(@"Will stop modal due to stick around") ;
+            [NSApp stopModal] ;
+            /*SSYDBL*/ NSLog(@"D stop modal due to stick around") ;
+            [self setIsDoingModalDialog:NO] ;
+        }
+    }
+    else {
 		[self goAway] ;
 	}
 	
@@ -1333,16 +1340,21 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 							   &psn,
 							   kSetFrontProcessFrontWindowOnly
 							   ) ;
-	
-	// The following method will also make the window "key" and "visible" 
-	[NSApp runModalForWindow:[self window]] ;
-	
-	// Will block here until user clicks a button //
-	
-	if (progressBarWasAnimating) {
-		[[self progressBar] startAnimation:self] ;
-	}
-}	
+    NSWindow* window = [self window] ;
+    if (window) {
+        // The following method will also make the window "key" and "visible"
+        [NSApp runModalForWindow:[self window]] ;
+        
+        // Will block here until user clicks a button //
+        
+        if (progressBarWasAnimating) {
+            [[self progressBar] startAnimation:self] ;
+        }
+    }
+    else {
+        NSLog(@"Internal Error 624-9229 Don't re-use SSYAlert instances!") ;
+    }
+}
 
 - (void)runModalSession {
 	if (![self modalSession]) {
@@ -2065,16 +2077,23 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		[self endModalSession] ;
 		
 		[self setIsDoingModalDialog:YES] ;
-		[NSApp runModalForWindow:[self window]] ;
-		// Will block here until user clicks a button
-
-		alertReturn = [self alertReturn] ;
-		NSInteger recoveryResult = [SSYAlert tryRecoveryAttempterForError:error
-														   recoveryOption:alertReturn
-															  contextInfo:nil] ;
-		if (recoveryResult != SSYAlertRecoveryNotAttempted) {
-			alertReturn = recoveryResult ;
-		}
+        NSWindow* window = [self window] ;
+        if (window) {
+            [NSApp runModalForWindow:window] ;
+            // Will block here until user clicks a button
+            
+            alertReturn = [self alertReturn] ;
+            NSInteger recoveryResult = [SSYAlert tryRecoveryAttempterForError:error
+                                                               recoveryOption:alertReturn
+                                                                  contextInfo:nil] ;
+            if (recoveryResult != SSYAlertRecoveryNotAttempted) {
+                alertReturn = recoveryResult ;
+            }
+        }
+        else {
+            alertReturn = SSYAlertRecoveryInternalError ;
+            NSLog(@"Internal Error 624-9218 Don't re-use SSYAlert instances!") ;
+        }
 	}
 	
 	[self noteError:error] ;
