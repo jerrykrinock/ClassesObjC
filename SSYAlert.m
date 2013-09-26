@@ -744,9 +744,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 	if (m_shouldStickAround) {
         if ([self isDoingModalDialog]) {
-            /*SSYDBL*/ NSLog(@"Will stop modal due to stick around") ;
             [NSApp stopModal] ;
-            /*SSYDBL*/ NSLog(@"D stop modal due to stick around") ;
             [self setIsDoingModalDialog:NO] ;
         }
     }
@@ -1933,7 +1931,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
         [SSYWindowHangout hangOutWindowController:self] ;
 	}
 
-    /*SSYDBL*/ NSLog(@"Created alert %p", self) ;
 	return self ;
 }
 
@@ -2204,7 +2201,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[buttonPrototype release] ;
 	[wordAlert release] ;
 	[documentWindow release] ;
-    /*SSYDBL*/ NSLog(@"Deallocced alert %p", self) ;
 
 	[otherSubviews release] ;
 	
