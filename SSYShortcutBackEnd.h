@@ -16,7 +16,6 @@
 @property (copy) NSString* selectorName ;
 @property (assign) BOOL ignoreThisAppValidation ;
 
-- (void)awakeWithSelectorName:(NSString*)selectorName
-	  ignoreThisAppValidation:(BOOL)ignoreThisAppValidation ;
+- (void)awakeWithSelectorName:(NSString*)selectorName ;
 
 @end

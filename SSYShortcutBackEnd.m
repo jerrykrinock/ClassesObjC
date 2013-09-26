@@ -14,29 +14,8 @@
 	[super dealloc] ;
 }
 
-- (void)awakeFromNib {
-	// Safely invoke super
-	[self safelySendSuperSelector:_cmd
-                   prettyFunction:__PRETTY_FUNCTION__
-						arguments:nil] ;
-	
-	// Do this with a delay, in case we get -awakeFromNib before the
-	// window containing the SRRecorderControl.  In that case, assuming
-	// that -setIgnoreThisAppValidation is set in the window controller's
-	// -awakeFromNib, our -ignoreThisAppValidation has not been set yet.
-	[self performSelector:@selector(propagateIgnoreThisAppValidation)
-			   withObject:nil
-			   afterDelay:0.0] ;
-}
-
-- (void)propagateIgnoreThisAppValidation {
-	[recorderControl setIgnoreThisValidation:[self ignoreThisAppValidation]] ;
-}
-
-- (void)awakeWithSelectorName:(NSString*)selectorName
-	  ignoreThisAppValidation:(BOOL)ignoreThisAppValidation {
+- (void)awakeWithSelectorName:(NSString*)selectorName {
 	[self setSelectorName:selectorName] ;
-	[self setIgnoreThisAppValidation:ignoreThisAppValidation] ;
 	KeyCombo keyCombo = [[SSYShortcutActuator sharedActuator] keyComboForSelectorName:selectorName] ;
 	[recorderControl setKeyCombo:keyCombo] ;
 }
