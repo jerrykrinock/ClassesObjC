@@ -13,6 +13,9 @@
  which the owner is desired turns out to not be one of this class's creations.
  This class itself is instantiated as an app-wide
  singleton and no public instance methods are available.
+ 
+ When using this class, [NSApp delegate] must conform to protocol 
+ SSYAppSupporter.
  */
 @interface SSYMOCManager : NSObject {
 	NSMutableDictionary* inMemoryMOCDics ;

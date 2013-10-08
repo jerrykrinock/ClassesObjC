@@ -185,10 +185,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @end
 
 
-@interface SSYAlertWindow : NSWindow
-
-@end
-
 @implementation SSYAlertWindow
 
 /*!
@@ -243,7 +239,26 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 }
 
-#pragma mark * 
+- (NSInteger)checkboxState {
+    NSInteger state = NSMixedState ; // default answer in case we can't find checkbox
+    BOOL didFindCheckbox = NO ;
+    for (NSView* view in [[self contentView] subviews]) {
+        if ([view isKindOfClass:[SSYWrappingCheckbox class]]) {
+            SSYWrappingCheckbox* checkbox = (SSYWrappingCheckbox*)view ;
+            state = [checkbox state] ;
+            didFindCheckbox = YES ;
+            break ;
+        }
+    }
+    
+    if (!didFindCheckbox) {
+        NSLog(@"Internal Error 624-9382 %@ %@", [self title], [[self contentView] subviews]) ;
+    }
+    
+    return state ;
+}
+
+#pragma mark *
 
 // At one time, I thought that NSWindow's keyboard loop was
 // broken in a programmatically-created window.
@@ -841,48 +856,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 }
 
-//#define DEFAULT_MIN_TEXT_FIELD_WIDTH 250.0
-- (void)cleanSlate {
-	[self setWindowTitle:nil] ; // Defaults to mainBundle's CFBundleName (which should be the localized name of the app)
-	[self setShowsProgressBar:NO] ;
-	[self setTitleText:nil] ;
-	[self setSmallText:nil] ;
-	[self setIconStyle:SSYAlertIconNoIcon] ;
-	[self setButton1Title:nil] ;
-	[self setButton2Title:nil] ;
-	[self setButton3Title:nil] ;
-	[self setHelpAnchor:nil] ;
-	[self setCheckboxTitle:nil] ;
-	[self setWhyDisabled:nil] ;
-	[self removeAllOtherSubviews] ;
-
-	// The following is a holdover from when SSYAlert support a
-	// configuration stack, and may no longer be needed...
-	// Now, there may still be some subviews left in the view...
-	// The -removeAllOtherSubviews only removed those which are in
-	// the current self.otherSubviews array.  But if the configuration has
-	// been pushed, self.otherSubviews will be a new, empty array.
-	// Therefore, we now ask the -contentView if it has any more subviews
-	// left and if so remove them...
-	NSView* contentView = [[self window] contentView] ;
-	// We use a regular C loop since -removeFromSuperviewWithoutNeedingDisplay
-	// mutates the [contentView subviews] and therefore we cannot 
-	// use an enumeration
-	NSArray* subviews = [contentView subviews] ;
-	NSInteger i ;
-	for (i=[subviews count]-1; i>=0; i--) {
-		NSView* subview = [subviews objectAtIndex:i] ;
-		[subview removeFromSuperviewWithoutNeedingDisplay] ;
-	}
-	
-	self.allowsShrinking = YES ;
-	[self setIsEnabled:YES] ;
-	self.isVisible = YES ;
-	self.progressBarShouldAnimate = NO ;
-	[self setRightColumnMinimumWidth:0.0] ;
-	[self setRightColumnMaximumWidth:CGFLOAT_MAX] ;
-}
-
 - (void)setWindowTitle:(NSString*)title {
 	if (!title) {
 		title = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"] ; // CFBundleName may be localized
@@ -1198,6 +1171,48 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 - (void)setCheckboxState:(NSCellStateValue)state {
 	[[self checkbox] setState:state] ;
+}
+
+//#define DEFAULT_MIN_TEXT_FIELD_WIDTH 250.0
+- (void)cleanSlate {
+	[self setWindowTitle:nil] ; // Defaults to mainBundle's CFBundleName (which should be the localized name of the app)
+	[self setShowsProgressBar:NO] ;
+	[self setTitleText:nil] ;
+	[self setSmallText:nil] ;
+	[self setIconStyle:SSYAlertIconNoIcon] ;
+	[self setButton1Title:nil] ;
+	[self setButton2Title:nil] ;
+	[self setButton3Title:nil] ;
+	[self setHelpAnchor:nil] ;
+	[self setCheckboxTitle:nil] ;
+	[self setWhyDisabled:nil] ;
+	[self removeAllOtherSubviews] ;
+    
+	// The following is a holdover from when SSYAlert support a
+	// configuration stack, and may no longer be needed...
+	// Now, there may still be some subviews left in the view...
+	// The -removeAllOtherSubviews only removed those which are in
+	// the current self.otherSubviews array.  But if the configuration has
+	// been pushed, self.otherSubviews will be a new, empty array.
+	// Therefore, we now ask the -contentView if it has any more subviews
+	// left and if so remove them...
+	NSView* contentView = [[self window] contentView] ;
+	// We use a regular C loop since -removeFromSuperviewWithoutNeedingDisplay
+	// mutates the [contentView subviews] and therefore we cannot
+	// use an enumeration
+	NSArray* subviews = [contentView subviews] ;
+	NSInteger i ;
+	for (i=[subviews count]-1; i>=0; i--) {
+		NSView* subview = [subviews objectAtIndex:i] ;
+		[subview removeFromSuperviewWithoutNeedingDisplay] ;
+	}
+	
+	self.allowsShrinking = YES ;
+	[self setIsEnabled:YES] ;
+	self.isVisible = YES ;
+	self.progressBarShouldAnimate = NO ;
+	[self setRightColumnMinimumWidth:0.0] ;
+	[self setRightColumnMaximumWidth:CGFLOAT_MAX] ;
 }
 
 #pragma mark * Public Methods for Displaying and Running

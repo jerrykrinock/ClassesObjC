@@ -62,6 +62,23 @@ extern NSString* const SSYAlert_ErrorSupportEmailKey ;
 extern NSString* const SSYAlertDidProcessErrorNotification ;
 
 /*!
+ @brief    The subclass of NSWindow created by SSYAlert.  The interface
+ is exposed so that you can get the checkbox state after an SSYAlert is closed,
+ without setting shouldStickAround to YES
+ 
+ @details  Typically, in a -didEndSheet:returnCode:contextInfo: callback
+ on a sheet whose window controller is an SSYAlert alert, the SSYAlert may
+ already be gone and [sheet windowController] will return nil.  So you can't
+ get control values from the window controller.  This class allows you to get
+ control states from the window directly.
+ */
+@interface SSYAlertWindow : NSWindow
+
+- (NSInteger)checkboxState ;
+
+@end
+
+/*!
  @brief    The SSYErrorRecoveryAttempting informal protocol is a 
  replacement for Cocoa's NSErrorRecoveryAttempting informal protocol
  which has a different name for the second parameter of the two methods,
@@ -921,19 +938,6 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 - (void)addOtherSubview:(NSView*)subview
 				atIndex:(NSInteger)index ;
 
-/*!
- @brief    Removes the "other subview" with a given index
- from the receiver.
-
- @details  The index must exist or an exception will be raised.
- @param    index  The index of the "other subview" to be removed.
-*/
-- (void)removeOtherSubviewAtIndex:(NSInteger)index ;
-
-/*!
- @brief    Removes all of the <i>other subviews</i> from the receiver.
-*/
-- (void)removeAllOtherSubviews ;
 
 /*!
  @brief    Returns a text view which looks like the receiver's 

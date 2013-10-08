@@ -40,6 +40,9 @@ __attribute__((visibility("default"))) @interface SSYSemaphorePidKey : NSObject 
  writing and synchronizing user defaults is two lines of code.
  Also, a file is more visible for debugging than a user default.
  Most of the code in this implementation is for checking timeouts.
+ 
+ When using this class, [NSApp delegate] must conform to protocol
+ SSYAppSupporter.
  */
 __attribute__((visibility("default"))) @interface SSYSemaphore : NSObject {
 }

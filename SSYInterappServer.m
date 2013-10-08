@@ -144,6 +144,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
 											  SSYInterappServerCallBackCreateData,
 											  &context,
 											  NULL) ;
+            
 			if (m_port) {
 				[self setDelegate:delegate] ;
 				CFRunLoopSourceRef source = CFMessagePortCreateRunLoopSource(
@@ -177,7 +178,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
 			*error_p = [NSError errorWithDomain:SSYInterappServerErrorDomain
 										   code:errorCode
 									   userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-												 @"Could not initialize server", NSLocalizedDescriptionKey,
+												 @"Mac OS X failed to create a local message port.", NSLocalizedDescriptionKey,
 												 portName, @"Port Name",
 												 nil]] ;
 		}
@@ -221,8 +222,9 @@ CFDataRef SSYInterappServerCallBackCreateData(
 		}
 		else {
 			// When testing, I got a crash of BookMacster-Worker here because
-			// server was nil.  Maybe the port was already in use?
-			NSLog(@"Internal Error 713-0192 %@ %@ %@ del=%@", portName, static_serversInUse, error, delegate) ;
+			// server was nil.  Until BookMacster 1.19, I logged
+            // Internal Error 713-0192 here, but it was not providing any
+            // useful information not already in the error.
 		}
 		[server release] ;
 	}

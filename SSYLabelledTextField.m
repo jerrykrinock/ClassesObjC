@@ -9,6 +9,7 @@ NSString* const constKeyValidationSelector = @"ValidationSelector" ;
 NSString* const constKeyValidationObject = @"ValidationObject" ;
 NSString* const constKeyWindowController = @"WindowController" ;
 NSString* const constKeyErrorMessage = @"ErrorMessage" ;
+NSString* const constKeyTextFieldTag = @"tag" ;
 
 
 @interface NSWindowController (Disableable) 
@@ -26,6 +27,7 @@ NSString* const constKeyErrorMessage = @"ErrorMessage" ;
 @synthesize validationObject ;
 @synthesize windowController ;
 @synthesize errorMessage ;
+@synthesize tag = m_tag ;
 
 - (void)setStringValue:(NSString*)stringValue {
 	[[self valueField] setStringValue:stringValue] ;
@@ -70,6 +72,7 @@ validationSelector:(SEL)validationSelector_
 	  displayedKey:(NSString*)displayedKey
 	displayedValue:(NSString*)displayedValue
 		  editable:(BOOL)editable_
+               tag:(NSInteger)tag
 	  errorMessage:(NSString*)errorMessage_ {
 	self = [super initWithFrame:NSZeroRect];
 	if (self != nil) {
@@ -129,6 +132,7 @@ validationSelector:(SEL)validationSelector_
 		}
 		[[self valueField] setEditable:editable_] ;
 		[self setErrorMessage:errorMessage_] ;
+        [self setTag:tag] ;
 		
 		// The following is needed in the usual case where, upon initialization,
 		// the initial value of @"" is invalid.&nbsp; We need to send validation
@@ -145,13 +149,16 @@ validationSelector:(SEL)validationSelector_
 									displayedKey:(NSString*)displayedKey
 								  displayedValue:(NSString*)displayedValue
 										editable:(BOOL)editable
+                                             tag:(NSInteger)tag
 									errorMessage:(NSString*)errorMessage {
 	SSYLabelledTextField* instance = [[SSYLabelledTextField alloc] initAsSecure:secure
 															 validationSelector:validationSelector
 															   validationObject:validationObject
 															   windowController:windowController
 																   displayedKey:displayedKey
-																 displayedValue:displayedValue																	   editable:editable
+																 displayedValue:displayedValue
+                                                                       editable:editable
+                                                                            tag:tag
 																   errorMessage:errorMessage] ;
 	return [instance autorelease] ;
 }
@@ -178,7 +185,12 @@ validationSelector:(SEL)validationSelector_
 	NSMutableDictionary* dic = [NSMutableDictionary dictionaryWithDictionary:dictionary] ;
 	[dic setValue:NSStringFromSelector([self validationSelector])
 		   forKey:@"validationSelector"] ;
-	return [dic description] ;
+    [dic setValue:[NSNumber numberWithInteger:[self tag]]
+           forKey:@"tag"] ;
+	return [NSString stringWithFormat:
+            @"%@ %@",
+            [super description],
+            [dic description]] ;
 }
 
 - (void)sizeHeightToFitAllowShrinking:(BOOL)allowShrinking {
@@ -246,6 +258,7 @@ validationSelector:(SEL)validationSelector_
     [coder encodeObject:validationObject forKey:constKeyValidationObject] ;
 	[coder encodeObject:windowController forKey:constKeyWindowController] ;
     [coder encodeObject:errorMessage forKey:constKeyErrorMessage] ;
+    [coder encodeInteger:m_tag forKey:constKeyTextFieldTag] ;
 }
 
 - (id)initWithCoder:(NSCoder *)coder {
@@ -257,6 +270,7 @@ validationSelector:(SEL)validationSelector_
 	validationObject = [[coder decodeObjectForKey:constKeyValidationObject] retain] ;
 	windowController = [[coder decodeObjectForKey:constKeyWindowController] retain] ;
 	errorMessage = [[coder decodeObjectForKey:constKeyErrorMessage] retain] ;
+    m_tag = [coder decodeIntegerForKey:constKeyTextFieldTag] ;
 	
 	return self ;
 }

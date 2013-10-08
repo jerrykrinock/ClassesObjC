@@ -18,6 +18,7 @@
 	NSWindowController* windowController ;  // Documentation explains why this kludge is necessary
 	id validationObject ;
 	NSString* errorMessage ;
+    NSInteger m_tag ;
 }
 
 @property (retain) NSTextField* keyField ;
@@ -26,6 +27,7 @@
 @property (retain) id windowController ;
 @property (retain) id validationObject ;
 @property (retain) NSString* errorMessage ;
+@property (assign) NSInteger tag ;
 
 /*!
  @brief    Convenience method for getting an autoreleased instance of this class.
@@ -83,6 +85,7 @@
 									displayedKey:(NSString*)displayedKey
 								  displayedValue:(NSString*)displayedValue
 										editable:(BOOL)editable
+                                             tag:(NSInteger)tag
 									errorMessage:(NSString*)errorMessage ;
 
 /*!

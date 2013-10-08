@@ -965,11 +965,14 @@ end:;
 	}
 	
 	NSDate* endDate = [NSDate dateWithTimeIntervalSinceNow:timeout] ;
-	ok = [self quitThisUsersAppWithBundlePath:bundlePath
+#if 0
+#warning Feigning Quitting 1
+#else
+    ok = [self quitThisUsersAppWithBundlePath:bundlePath
                                  closeWindows:closeWindows
                                  wasRunning_p:&wasRunning
                                       error_p:&error] ;
-	
+#endif
 	if (!ok) {
 		// Supposedly no chance that it will quit, so give up immediately.
 		goto end ;
@@ -1019,11 +1022,14 @@ end:;
 		
 		// Sometimes Firefox doesn't "get" it.  Send the AppleScript 'quit' again,
 		// ignoring any error
+#if 0
+#warning Feigning Quitting 2
+#else
 		[self quitThisUsersAppWithBundlePath:bundlePath
                                 closeWindows:closeWindows
 								wasRunning_p:NULL  // We want the original wasRunning state, not now's
 									 error_p:NULL] ;
-        
+#endif
         nTries++ ;
 	}
 

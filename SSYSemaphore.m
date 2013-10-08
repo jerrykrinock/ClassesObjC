@@ -2,6 +2,7 @@
 #import "NSFileManager+SomeMore.h"
 #import "NSString+MorePaths.h"
 #import "SSYOtherApper.h"
+#import "BkmxBasis.h"
 
 @implementation SSYSemaphorePidKey
 
@@ -98,7 +99,7 @@
 @implementation SSYSemaphore
 
 + (NSString*)path {
-	return [[NSString applicationSupportFolderForThisApp] stringByAppendingPathComponent:@".SSYSemaphore"] ;
+	return [[NSString applicationSupportPathForMotherApp] stringByAppendingPathComponent:@".SSYSemaphore"] ;
 }
 
 + (SSYSemaphorePidKey*)currentPidKeyEnforcingTimeLimit:(NSTimeInterval)timeLimit  {

@@ -1,4 +1,3 @@
-#import "SSYDebug.h"
 #import <execinfo.h>
 #import <mach-o/dyld.h>
 

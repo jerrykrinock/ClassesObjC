@@ -9,6 +9,7 @@
 #import "NSManagedObjectContext+Cheats.h"
 #import "NSError+DecodeCodes.h"
 #import "NSObject+MoreDescriptions.h"
+#import "BkmxBasis.h"
 
 
 NSString* const constKeyMOC = @"moc" ;
@@ -116,8 +117,14 @@ static SSYMOCManager* sharedMOCManager = nil ;
 		identifier = @"Shared" ;
 	}
 	filename = [identifier stringByAppendingPathExtension:SSYManagedObjectContextPathExtensionForSqliteStores] ;
-	NSString* path = [[NSString applicationSupportFolderForThisApp] stringByAppendingPathComponent:filename] ;
-    NSURL* url = [NSURL fileURLWithPath:path] ;
+	NSString* path = [[NSString applicationSupportPathForMotherApp] stringByAppendingPathComponent:filename] ;
+    NSURL* url = nil ;
+    if (path) {
+        // Above if() was added in BookMacster 1.19 to eliminate crash in case
+        // the app's Application Suppport folder is trashed while Worker is
+        // watching one or more files in it for changes.
+        url = [NSURL fileURLWithPath:path] ;
+    }
 	return url ;
 }
 
@@ -141,20 +148,29 @@ static SSYMOCManager* sharedMOCManager = nil ;
 		// i.e file://localhost/Users/jk/Library/Application%20Support/BookMacster/BookMacster.sql
 		
 		NSFileManager* fm = [NSFileManager defaultManager] ;
+		BOOL ok = YES ;
 
 		// An undocumented fact about addPersistentStoreWithType:configuration:URL:options:error:
 		// is that if the parent folder does not exist, the method will fail to create a
 		// persistent store with no explanation.  So we make sure it exists
 		NSString* parentPath = [[url path] stringByDeletingLastPathComponent] ;
-		BOOL isDirectory ;
-		BOOL fileExists = [fm fileExistsAtPath:parentPath isDirectory:&isDirectory] ;
-		BOOL ok = YES ;
-		if (fileExists && !isDirectory) {
-			// Someone put a file where our directory should be
-			ok = [fm removeItemAtPath:parentPath
-								error:error_p] ;
-		}
-		
+        
+        if (!parentPath) {
+            ok = NO ;
+        }
+        
+		BOOL isDirectory = NO ;
+		BOOL fileExists = NO ;
+        
+        if (ok) {
+            [fm fileExistsAtPath:parentPath isDirectory:&isDirectory] ;
+            if (fileExists && !isDirectory) {
+                // Someone put a file where our directory should be
+                ok = [fm removeItemAtPath:parentPath
+                                    error:error_p] ;
+            }
+        }
+
 		NSError* error = nil ;
 		if (ok && ((fileExists && !isDirectory) || !fileExists)) {
 			// Create parent directory
@@ -166,12 +182,13 @@ static SSYMOCManager* sharedMOCManager = nil ;
 	   
 		if (!ok) {
 			NSString* msg = [NSString stringWithFormat:
-							 @"Could not create directory at path %@",
+							 @"Could not create directory at %@",
 							 parentPath] ;
-			NSLog(@"%@", msg) ;
-			if (error_p) { 
-				*error_p = [SSYMakeError(95745, msg) errorByAddingUnderlyingError:error];
-			}
+            error = [SSYMakeError(95745, msg) errorByAddingUnderlyingError:error] ;
+            NSLog(@"%@", error) ;
+			if (error_p) {
+				*error_p = error ;
+            }
 		}
 		
 		if (ok) {	
