@@ -9,6 +9,7 @@
 #import "NSString+URIQuery.h"
 #import "NSString+LocalizeSSY.h"
 #import "NSObject+MoreDescriptions.h"
+#import "NSBundle+MainApp.h"
 
 NSString* const constNoteGotOAuthInfo = @"gotOAuthInfo" ;
 NSString* const constPathOAuth = @"OAuth" ;
@@ -52,7 +53,7 @@ NSString* const constValueOAuthVersion = @"1.0" ;
 @synthesize accounter = m_accounter ;
 
 + (NSString*)keychainServiceNameForAccounter:(NSObject <SSYOAuthAccounter> *)accounter {
-	NSString* answer = [[NSBundle mainBundle] bundleIdentifier] ;
+	NSString* answer = [[NSBundle mainAppBundle] bundleIdentifier] ;
 	if ([accounter respondsToSelector:@selector(serviceName)]) {
 		answer = [answer stringByAppendingFormat:
 				  @".%@",

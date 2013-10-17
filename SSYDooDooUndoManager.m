@@ -38,7 +38,7 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 		// We cast to an id since the compiler expects these to methods
 		// to get something which inherits from NSUndoManager, which 
 		// GCUndoManager does not.
-		[document setUndoManager:(id)self] ;
+		[document setUndoManager:(id)self] ; // Causes moc to be created, which causes persisten store to be created ??
 		[[document managedObjectContext] setUndoManager:(id)self] ;
 		
 		[self setManagedObjectContext:[document managedObjectContext]] ;

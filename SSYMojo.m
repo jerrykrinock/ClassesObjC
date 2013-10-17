@@ -154,17 +154,33 @@
 	// when it invoked -[NSArrayController removeSelectionIndexes:[self selectionIndexes]] ;
 	// [managedObjectContext processPendingChanges] ;  // Do not do this
 	
-	[fetchRequest setEntity:[NSEntityDescription entityForName:[self entityName]  
-										inManagedObjectContext:managedObjectContext]];
-	// Since we didn't set a predicate in fetchRequest, we get all objects
-	NSArray* allObjects = [managedObjectContext executeFetchRequest:fetchRequest
-															  error:&error] ;
-	if (error) {
-		NSLog(@"Internal Error 915-1874 %@", [error localizedDescription]) ;
-		if (error_p) {
-			*error_p = error ;
-		}
-	}		
+	NSEntityDescription* entity = [NSEntityDescription entityForName:[self entityName]
+                                              inManagedObjectContext:managedObjectContext] ;
+    NSArray* allObjects ;
+    if (entity) {
+        [fetchRequest setEntity:entity] ;
+        // Since we didn't set a predicate in fetchRequest, we get all objects
+        allObjects = [managedObjectContext executeFetchRequest:fetchRequest
+                                                         error:&error] ;
+        if (error) {
+            NSLog(@"Internal Error 915-1874 %@", [error localizedDescription]) ;
+            if (error_p) {
+                *error_p = error ;
+            }
+        }
+    }
+    else {
+        // Defensive programming added in BookMacster 1.19.2.  If data model
+        // is not available, entity will be nil and if we didn't test for that,
+        // -[NSManagedObjectContext executeFetchRequest:error] would crash
+        // due to nil entity in fetch request.
+        NSString* errorDesc = [NSString stringWithFormat:@"No entity for %@", [self entityName]] ;
+        NSLog(@"Internal Error 915-0893 %@", errorDesc) ;
+        if (error_p) {
+            *error_p = SSYMakeError(262049, errorDesc) ;
+        }
+        allObjects = nil ;
+    }
 	[fetchRequest release] ;
 	
 	return allObjects ;

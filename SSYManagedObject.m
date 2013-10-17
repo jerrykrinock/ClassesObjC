@@ -5,6 +5,7 @@
 #import "NSSet+Identicalness.h"
 #import "NSDocument+SyncModDate.h"
 #import "NSObject+MoreDescriptions.h"
+#import "NSBundle+MainApp.h"
 
 // Public Notifications
 NSString* const constNoteWillUpdateObject = @"willUpdateObject" ;
@@ -124,7 +125,7 @@ NSString* const constKeyObserverContext = @"context" ;
 }
 
 + (NSEntityDescription*)entityDescription {
-	NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainBundle]] ;
+	NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainAppBundle]] ;
 	NSManagedObjectModel* mom = [NSManagedObjectModel mergedModelFromBundles:bundles] ;
 	NSPersistentStoreCoordinator* psc = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:mom] ;
 	NSManagedObjectContext* moc = [[NSManagedObjectContext alloc] init] ;

@@ -11,6 +11,7 @@
 #import "NSObject+MoreDescriptions.h"
 #import "BkmxBasis.h"
 #import "NSBundle+SSYMotherApp.h"
+#import "NSBundle+MainApp.h"
 
 
 NSString* const constKeyMOC = @"moc" ;
@@ -85,7 +86,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 			NSString* extension = [oldFilename pathExtension] ;
 			NSString* newFilename = [NSString stringWithFormat:
 									 @"%@-Unreadable-%@",
-									 [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"],
+									 [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"],
 									 oldBaseFilename] ;
 			// We used CFBundleExecutable instead of CFBundleName to get an unlocalized app name.
 			newFilename = [newFilename stringByAppendingPathExtension:extension] ;
@@ -118,7 +119,8 @@ static SSYMOCManager* sharedMOCManager = nil ;
 		identifier = @"Shared" ;
 	}
 	filename = [identifier stringByAppendingPathExtension:SSYManagedObjectContextPathExtensionForSqliteStores] ;
-	NSString* path = [[[NSBundle mainBundle] applicationSupportPathForMotherApp] stringByAppendingPathComponent:filename] ;
+    NSBundle* mainAppBundle = [NSBundle mainAppBundle] ;
+	NSString* path = [[mainAppBundle applicationSupportPathForMotherApp] stringByAppendingPathComponent:filename] ;
     NSURL* url = nil ;
     if (path) {
         // Above if() was added in BookMacster 1.19 to eliminate crash in case
@@ -126,6 +128,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
         // watching one or more files in it for changes.
         url = [NSURL fileURLWithPath:path] ;
     }
+
 	return url ;
 }
 
@@ -140,7 +143,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 														error_p:(NSError**)error_p {
 	NSPersistentStore* persistentStore = nil ;
 	
-	NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainBundle]] ;
+	NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainAppBundle]] ;
 	NSManagedObjectModel* mergedMOM = [NSManagedObjectModel mergedModelFromBundles:bundles] ;
 	NSPersistentStoreCoordinator* newPSC = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:mergedMOM] ;
 
@@ -155,7 +158,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 		// is that if the parent folder does not exist, the method will fail to create a
 		// persistent store with no explanation.  So we make sure it exists
 		NSString* parentPath = [[url path] stringByDeletingLastPathComponent] ;
-        
+
         if (!parentPath) {
             ok = NO ;
         }
@@ -192,7 +195,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
             }
 		}
 		
-		if (ok) {	
+		if (ok) {
 			NSDictionary* options ;
 		   if (momdName) {
 			   // Using Multi-Hop Migration
@@ -230,7 +233,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 					   // If we did not get a store but file exists, must be a corrupt file.
 					   NSString* msg = [NSString stringWithFormat:@"Click 'Move' to move the unreadable database\n%@\nto your desktop and start a new database.  The item properties in your old database will not be available to %@.",
 										[url path],
-										[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"]] ;
+										[[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"]] ;
 					   // We used CFBundleExecutable instead of CFBundleName to get an unlocalized app name.
 					   if (error_p) {
 						   *error_p = [*error_p errorByAddingLocalizedRecoverySuggestion:msg] ;

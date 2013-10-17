@@ -1,4 +1,5 @@
 #import "SSWebBrowsing.h"
+#import "NSBundle+MainApp.h"
 
 @implementation NSString (FirefoxQuicksearch)
 
@@ -17,7 +18,7 @@
 		// So, first we replace %s with our app name,
 		NSMutableString* temp = [self mutableCopy] ;
 		[temp replaceOccurrencesOfString:@"%s"
-							  withString:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"]
+							  withString:[[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleName"]
 								 options:NSBackwardsSearch
 								   range:NSMakeRange(0, [temp length])] ;
 		output =  [NSString stringWithString:temp] ;

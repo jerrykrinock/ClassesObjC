@@ -5,6 +5,7 @@
 #import "NSString+MorePaths.h"
 #import "NSDocument+SyncModDate.h"
 #import "NSError+Recovery.h"
+#import "NSBundle+MainApp.h"
 
 NSString* const SSYPersistentDocumentMultiMigratorErrorDomain = @"SSYPersistentDocumentMultiMigratorErrorDomain" ;
 NSString* const SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification = @"SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification" ;
@@ -71,7 +72,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 	}
 	
 	// Read the "VersionInfo" plist.
-	NSString* momdPath = [[NSBundle mainBundle] pathForResource:momdName
+	NSString* momdPath = [[NSBundle mainAppBundle] pathForResource:momdName
 														 ofType:@"momd"] ;
 	NSBundle* modelBundle = [NSBundle bundleWithPath:momdPath] ;
 	if (!modelBundle) {
@@ -201,7 +202,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 		// successful destination the destinModel.
 		NSManagedObjectModel* destinModel = nil ;
 		NSMappingModel* mappingModel = nil ;
-		NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainBundle]] ;
+		NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainAppBundle]] ;
 		NSString* destinModelVersionName = nil ;
 		for (destinModelVersionName in modelVersionNames) {
 			NSString* modelPath = [modelBundle pathForResource:destinModelVersionName

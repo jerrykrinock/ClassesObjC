@@ -1,5 +1,6 @@
 #import "SSYAlertSounder.h"
 #import <AudioToolbox/AudioServices.h>
+#import "NSBundle+MainApp.h"
 
 
 static SSYAlertSounder* static_sharedSounder = nil ;
@@ -79,7 +80,7 @@ static SSYAlertSounder* static_sharedSounder = nil ;
 	
 	// If not found, look in the current application's bundle
 	if (!soundId) {
-		path = [[NSBundle mainBundle] pathForResource:name
+		path = [[NSBundle mainAppBundle] pathForResource:name
 											   ofType:@"aiff"] ;
 
 		soundId = [self soundIdForPath:path

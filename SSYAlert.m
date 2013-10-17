@@ -15,6 +15,7 @@
 #import "NSError+Recovery.h"
 #import "NSError+SSYInfo.h"
 #import "SSYWindowHangout.h"
+#import "NSBundle+MainApp.h"
 
 NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager = nil ;
 
@@ -363,7 +364,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 
 + (NSString*)supportEmailString {
-	return [[NSBundle mainBundle] objectForInfoDictionaryKey:SSYAlert_ErrorSupportEmailKey] ;
+	return [[NSBundle mainAppBundle] objectForInfoDictionaryKey:SSYAlert_ErrorSupportEmailKey] ;
 }
 
 - (id)clickObject {
@@ -651,7 +652,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 - (IBAction)help:(id)sender {
 	[[NSHelpManager sharedHelpManager] openHelpAnchor:[self helpAnchorString]
-											   inBook:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleHelpBookName"]] ;
+											   inBook:[[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleHelpBookName"]] ;
 }
 
 - (IBAction)support:(id)sender {
@@ -659,10 +660,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 + (void)supportError:(NSError*)error {
-	NSString* appName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"] ;
+	NSString* appName = [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"] ;
 	// Note: If you'd prefer the app name to be localized, use "CFBundleName" instead.
-	NSString* appVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"] ;
-	NSString* appVersionString = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"] ;
+	NSString* appVersion = [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleVersion"] ;
+	NSString* appVersionString = [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"] ;
 	NSString* systemDescription = [SSYSystemDescriber softwareVersionAndArchitecture] ;
 	NSString* mailableDescription ;
 	if (
@@ -678,7 +679,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 			NSString* filename = [NSString stringWithFormat:
 								  @"%@-Error-%lx.txt",
-								  [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"],
+								  [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleName"],
 								  (long)[NSDate timeIntervalSinceReferenceDate]] ;
 			NSString* filePath = [[NSHomeDirectory() stringByAppendingPathComponent:@"Desktop"] stringByAppendingPathComponent:filename] ;
 			NSError* writeError = nil ;
@@ -836,7 +837,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			[button setBezelStyle:NSRegularSquareBezelStyle] ;
 			[button setTarget:self] ;
 			[button setAction:@selector(support:)] ;
-			NSString* imagePath = [[NSBundle mainBundle] pathForResource:@"support"
+			NSString* imagePath = [[NSBundle mainAppBundle] pathForResource:@"support"
 																  ofType:@"tif"] ;
 			NSImage* image = [[NSImage alloc] initByReferencingFile:imagePath] ;
 			[button setImage:image] ;
@@ -858,7 +859,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 - (void)setWindowTitle:(NSString*)title {
 	if (!title) {
-		title = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"] ; // CFBundleName may be localized
+		title = [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleName"] ; // CFBundleName may be localized
 	}
 	
 	[[self window] setTitle:title] ;
@@ -1912,7 +1913,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 														 styleMask:NSTitledWindowMask
 														   backing:NSBackingStoreBuffered
 															 defer:NO] ;
-	NSString* appName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"] ; // CFBundleName may be localized
+	NSString* appName = [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleName"] ; // CFBundleName may be localized
 	if (appName) {
 		[window setTitle:appName] ;
 	}

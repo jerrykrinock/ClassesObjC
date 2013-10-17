@@ -3,6 +3,7 @@
 #import "SSYOtherApper.h"
 #import "BkmxBasis.h"
 #import "NSBundle+SSYMotherApp.h"
+#import "NSBundle+MainApp.h"
 
 @implementation SSYSemaphorePidKey
 
@@ -99,7 +100,7 @@
 @implementation SSYSemaphore
 
 + (NSString*)path {
-	return [[[NSBundle mainBundle] applicationSupportPathForMotherApp] stringByAppendingPathComponent:@".SSYSemaphore"] ;
+	return [[[NSBundle mainAppBundle] applicationSupportPathForMotherApp] stringByAppendingPathComponent:@".SSYSemaphore"] ;
 }
 
 + (SSYSemaphorePidKey*)currentPidKeyEnforcingTimeLimit:(NSTimeInterval)timeLimit  {

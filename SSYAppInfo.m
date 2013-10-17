@@ -1,4 +1,5 @@
 #import "SSYAppInfo.h"
+#import "NSBundle+MainApp.h"
 
 NSString * const constKeyLastVersion = @"lastVersion" ;
 
@@ -72,7 +73,7 @@ static SSYAppInfo *sharedInfo = nil ;
 }
 
 + (SSYVersionTriplet*)rawCurrentVersionTriplet {
-	NSString* versionString = [SSYVersionTriplet rawVersionStringFromBundle:[NSBundle mainBundle]] ;
+	NSString* versionString = [SSYVersionTriplet rawVersionStringFromBundle:[NSBundle mainAppBundle]] ;
 	SSYVersionTriplet* cvt = [SSYVersionTriplet versionTripletFromString:versionString] ;
 	return cvt ;
 }
@@ -86,7 +87,7 @@ static SSYAppInfo *sharedInfo = nil ;
     [self setUpgradeState:upgradeState] ;
     if ([self upgradeState] != SSYCurrentRev) {
         // Get a nice, clean, filtered versionString of the form "major.minor.bugFix" using SSVersionTriplet methods
-        SSYVersionTriplet* currentVersionTriplet = [SSYVersionTriplet versionTripletFromBundleIdentifier:[[NSBundle mainBundle] bundleIdentifier]] ;
+        SSYVersionTriplet* currentVersionTriplet = [SSYVersionTriplet versionTripletFromBundleIdentifier:[[NSBundle mainAppBundle] bundleIdentifier]] ;
         NSString* currentVersionString = [currentVersionTriplet string] ;
         
         // Record currently-launched version into prefs
