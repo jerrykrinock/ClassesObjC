@@ -12,9 +12,17 @@
 		// Convert to an NSArray, as required by super
 		value = [value allObjects] ;
         
-        // The following line was added in BookMacster 1.12.7, to
-        // alphabetize tags in Detail View (littleCloud) and Inspector
-		value = [[(NSCountedSet*)value allObjects] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)] ;
+        /*
+         The following line was added in BookMacster 1.12.7, to alphabetize
+         tags in Detail View (littleCloud) and Inspector.  However, it also
+         cast 'value' to an NSCountedSet and re-invoked -allObjects on it.
+         This *worked* in Mac OS X 10.7 and later, because, strangely, NSArray
+         *does* respond to -allObjects in these systems, returns a copy of self.
+         But not in 10.6, where an exception could be raised here
+         The troublesome cast and -allObjects were removed in 
+         BookMacster 1.19.2.
+         */
+		value = [value sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)] ;
 	}
 
 	[super setObjectValue:value] ;

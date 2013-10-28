@@ -6,6 +6,7 @@
 #import "NSDocument+SyncModDate.h"
 #import "NSObject+MoreDescriptions.h"
 #import "NSBundle+MainApp.h"
+#import "NSEntityDescription+SSYMavericksBugFix.h"
 
 // Public Notifications
 NSString* const constNoteWillUpdateObject = @"willUpdateObject" ;
@@ -125,16 +126,20 @@ NSString* const constKeyObserverContext = @"context" ;
 }
 
 + (NSEntityDescription*)entityDescription {
+    // This method was rewritten for BookMacster 1.19.2, to work around a
+    // bug in Mac OS X 10.9.  See
+    // http://stackoverflow.com/questions/19626858/over-optimization-bug-in-10-9-core-data-entity-description-methods
+    
 	NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainAppBundle]] ;
 	NSManagedObjectModel* mom = [NSManagedObjectModel mergedModelFromBundles:bundles] ;
-	NSPersistentStoreCoordinator* psc = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:mom] ;
-	NSManagedObjectContext* moc = [[NSManagedObjectContext alloc] init] ;
-	[moc setPersistentStoreCoordinator:psc] ;
-	[psc release] ;
-	NSEntityDescription* entityDescription = [NSEntityDescription entityForName:[self entityNameForClass:self]
-														 inManagedObjectContext:moc] ;
-	[moc release] ;
-	
+    NSString* entityName = [self entityNameForClass:self] ;
+    NSDictionary* entities = [[NSDictionary alloc] initWithDictionary:[mom entitiesByName]] ;
+    NSEntityDescription* entityDescription = [entities objectForKey:entityName] ;
+    if (!entityDescription) {
+        NSLog(@"Internal Error 561-3831 for %@", entityName) ;
+    }
+    [entities release] ;
+    
 	return entityDescription ;
 }
 
@@ -164,8 +169,8 @@ NSString* const constKeyObserverContext = @"context" ;
 			}
 			
 			NSFetchRequest* fetchRequest = [[NSFetchRequest alloc] init] ;
-			[fetchRequest setEntity:[NSEntityDescription entityForName:[[self entity] name]  
-												inManagedObjectContext:managedObjectContext]] ;
+			[fetchRequest setEntity:[NSEntityDescription SSY_entityForName:[[self entity] name]
+											    	inManagedObjectContext:managedObjectContext]] ;
 			[fetchRequest setPredicate:[NSPredicate predicateWithFormat:@"(%K == %@) AND (SELF != %@)",
 				uniqueAttributeKey, uniqueAttributeValue, self]] ;
 			NSArray* conflictingObjects = [managedObjectContext executeFetchRequest:fetchRequest
@@ -357,8 +362,8 @@ end:;
 	NSArray* entityNames = [[[[moc persistentStoreCoordinator] managedObjectModel] entities] valueForKey:@"name"] ;
 	NSUInteger nObjects = 0, nChanged = 0 ;
 	for (NSString* entityName in entityNames) {
-		NSEntityDescription* entity = [NSEntityDescription entityForName:entityName
-												  inManagedObjectContext:moc] ;
+		NSEntityDescription* entity = [NSEntityDescription SSY_entityForName:entityName
+                                                      inManagedObjectContext:moc] ;
 		[fetchRequest setEntity:entity] ;
 		NSArray* objects = [moc executeFetchRequest:fetchRequest
 											  error:&error_] ;

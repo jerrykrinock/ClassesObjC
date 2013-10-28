@@ -4,8 +4,10 @@
 #import "SSYAlert.h"
 #import "NSManagedObjectContext+Cheats.h"
 #import "NSObject+MoreDescriptions.h"
+#import "NSEntityDescription+SSYMavericksBugFix.h"
 
 // For debugging
+
 
 
 @implementation SSYMojo
@@ -68,8 +70,8 @@
 	NSManagedObjectContext* managedObjectContext = [self managedObjectContext] ;
 	NSArray* fetches = nil ;
 	if (managedObjectContext) {
-		[fetchRequest setEntity:[NSEntityDescription entityForName:[self entityName]  
-											inManagedObjectContext:managedObjectContext]] ;
+		[fetchRequest setEntity:[NSEntityDescription SSY_entityForName:[self entityName]
+                                                inManagedObjectContext:managedObjectContext]] ;
 		if (compoundPredicate) {
 			[fetchRequest setPredicate:compoundPredicate] ;
 		}
@@ -154,8 +156,8 @@
 	// when it invoked -[NSArrayController removeSelectionIndexes:[self selectionIndexes]] ;
 	// [managedObjectContext processPendingChanges] ;  // Do not do this
 	
-	NSEntityDescription* entity = [NSEntityDescription entityForName:[self entityName]
-                                              inManagedObjectContext:managedObjectContext] ;
+	NSEntityDescription* entity = [NSEntityDescription SSY_entityForName:[self entityName]
+                                                  inManagedObjectContext:managedObjectContext] ;
     NSArray* allObjects ;
     if (entity) {
         [fetchRequest setEntity:entity] ;

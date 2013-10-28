@@ -48,7 +48,10 @@ extern NSString* SSYLazyViewDidLoadPayloadNotification;
  
  @details  When the receiver loads its nib as a result of being moved to a
  window, the window controller of the window to which it was moved is assigned
- as the file's owner of the nib.
+ as the file's owner of the nib.  This will cause it to receive -awakeFromNib,
+ which has probably happened already.  Therefore, such a window controller's
+ -awakeFromNib method typically needs a lockout to prevent it from running more
+ than once in an instance.
  
  In the Xcode xib editor, you may have one or more initial placeholder subviews
  in your Lazy View.  For example, you may place a text field with large

@@ -6,8 +6,11 @@
  instance in the application.
 
  @details  An instance of this object is allocated when required, observes
- NSWindowWillCloseNotification, and releases itself when it receives notification
- that its window is closing.
+ NSWindowWillCloseNotification, and releases itself when it receives
+ notification that its window is closing.
+ 
+ For a cleaner approach to this problem, which does not require subclassing,
+ see [SSYWindowHangout hungOutWindowControllerOfClass:].
 */
 @interface SSYTempWindowController : NSWindowController {
 }
@@ -15,8 +18,8 @@
 /*!
  @brief    Returns the name of the nib file containing the receiver's window.
 
- @details  Subclasses must implement.  Simply return an NSString constant.&nbsp;
- Default implementation logs an internal error and returns nil.&nbsp;
+ @details  Subclasses must implement.  Simply return an NSString constant.
+ Default implementation logs an internal error and returns nil.  
  
  In this nib,
  *  File's Owner should be set to your subclass of this class

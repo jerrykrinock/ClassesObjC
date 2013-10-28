@@ -78,6 +78,9 @@
  If you do not wish to support multi-hop migration, you may pass nil
  and only Core Data's built-in single-hop automatic migration will
  be used.  For store types other than sqlite, this parameter is ignored.
+ @param    useLegacyRollbackJournaling.  See Apple WWDC 2013 Session 207,
+ "What's New in Core Data and iCloud", 40:00 - 48:00.  Ignored if storeType
+ is not NSSQLiteStoreType.
  @param    error_p  If managed object context could not be created, points to an NSError
  on output. This should not occur for NSInMemoryStoreType, only NSSQLiteStoreType.
  @result   The new or pre-existing managed object context, or nil if one could not be created.
@@ -86,6 +89,7 @@
 											  owner:(id)owner
 										 identifier:(NSString*)identifier
 										   momdName:(NSString*)momdName
+                        useLegacyRollbackJournaling:(BOOL)useLegacyRollbackJournaling
 											error_p:(NSError**)error_p ;
 
 /*!
@@ -96,10 +100,12 @@
  for the managed objects.
  
  This method retains the -document parameter until it receives a corresponding
- +destroyManagedObjectContext message, so be careful or you will create retain cycles.
- This method will, however, *replace* its record for a particular document if you later
- send this message again for the same document with a new or same managedObjectContext.
- @param    document  The document which owns the managed object context
+ +destroyManagedObjectContext message, so be careful or you will create retain
+ cycles.  This method will, however, *replace* its record for a particular
+ document if you later send this message again for the same document with a new
+ or same managedObjectContext.
+ @param    document  The document which will own the managed object context
+ 
  @param    managedObjectContext  The managed object context to be registered.
 */
 + (void)registerOwnerDocument:(NSPersistentDocument*)document

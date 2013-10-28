@@ -12,6 +12,7 @@
 #import "BkmxBasis.h"
 #import "NSBundle+SSYMotherApp.h"
 #import "NSBundle+MainApp.h"
+#import "NSDictionary+SimpleMutations.h"
 
 
 NSString* const constKeyMOC = @"moc" ;
@@ -140,6 +141,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 + (NSPersistentStoreCoordinator*)persistentStoreCoordinatorType:(NSString*)storeType
 													 identifier:(NSString*)identifier
 													   momdName:(NSString*)momdName
+                                                        options:(NSDictionary*)options
 														error_p:(NSError**)error_p {
 	NSPersistentStore* persistentStore = nil ;
 	
@@ -196,26 +198,30 @@ static SSYMOCManager* sharedMOCManager = nil ;
 		}
 		
 		if (ok) {
-			NSDictionary* options ;
-		   if (momdName) {
+            if (momdName) {
 			   // Using Multi-Hop Migration
 			   ok = [SSYPersistentDocumentMultiMigrator migrateIfNeededStoreAtUrl:url
-																	 storeOptions:nil
+																	 storeOptions:options
 																		storeType:NSSQLiteStoreType
 																		 momdName:momdName
 																		 document:nil
 																		  error_p:error_p] ;
-			   options = nil ;
 		   }
 		   else {
 			   // Using Core Data's built-in Single-Hop Migration only
-			   options = [NSDictionary dictionaryWithObjectsAndKeys:
-						  [NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption,
-						  nil] ;
+               NSDictionary* moreOption = [NSDictionary dictionaryWithObjectsAndKeys:
+                                           [NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption,
+                                           nil] ;
+               if (options) {
+                   options = [options dictionaryByAddingEntriesFromDictionary:moreOption] ;
+               }
+               else {
+                   options = moreOption ;
+               }
 		   }
 		   
 		   if (ok) {
-			   // Add persistent store to it
+               // Add persistent store to it
 			   persistentStore = [newPSC addPersistentStoreWithType:NSSQLiteStoreType
 													  configuration:nil
 																URL:url
@@ -282,7 +288,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 	   persistentStore = [newPSC addPersistentStoreWithType:NSInMemoryStoreType
 											  configuration:nil
 														URL:nil
-													options:nil
+													options:options
 													  error:error_p] ;
 	   
 	   if (!persistentStore) {
@@ -304,6 +310,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 											  owner:(id)owner_
 										 identifier:(NSString*)identifier
 										   momdName:(NSString*)momdName
+                                            options:(NSDictionary*)options
 											error_p:(NSError**)error_p {
 	NSManagedObjectContext* managedObjectContext = nil ;
     NSMutableDictionary* mocDics = nil ;
@@ -325,6 +332,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 		NSPersistentStoreCoordinator* coordinator = [[self class] persistentStoreCoordinatorType:type
 																					  identifier:identifier
 																						momdName:momdName
+                                                                                         options:options
 																						 error_p:error_p] ;
 		if (coordinator) {
             managedObjectContext = [[NSManagedObjectContext alloc] init] ;
@@ -469,11 +477,25 @@ static SSYMOCManager* sharedMOCManager = nil ;
 											  owner:(id)owner
 										 identifier:(NSString*)identifier
 										   momdName:(NSString*)momdName
+                        useLegacyRollbackJournaling:(BOOL)useLegacyRollbackJournaling
 											error_p:(NSError**)error_p {
+    NSDictionary* options = nil ;
+    if ([type isEqualToString:NSSQLiteStoreType]) {
+        if (useLegacyRollbackJournaling) {
+            NSDictionary* sqlitePragmas = [NSDictionary dictionaryWithObjectsAndKeys:
+                                           @"DELETE", @"journal_mode",
+                                           nil] ;
+            options = [NSDictionary dictionaryWithObjectsAndKeys:
+                       sqlitePragmas, NSSQLitePragmasOption,
+                       nil] ;
+        }
+    }
+
 	NSManagedObjectContext* moc = [[self sharedMOCManager] managedObjectContextType:type
 																			  owner:owner
 																		 identifier:identifier
 																		   momdName:momdName
+                                                                            options:options
 																			error_p:error_p] ;
 	return moc ;
 }
@@ -551,6 +573,6 @@ static SSYMOCManager* sharedMOCManager = nil ;
 @end
 
 // Note 1.
-// Because our method +persistentStoreCoordinatorType:identifier:momdName:error_p: always creates
+// Because our method +persistentStoreCoordinatorType:identifier:momdName:options:error_p: always creates
 // a new persistent store coordinator and always adds exactly one persistent
 // store to it, we can just grab its first (and only) store.

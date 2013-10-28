@@ -8,9 +8,14 @@ __attribute__((visibility("default"))) @interface SSYShellTasker : NSObject {
 /*!
  @brief    A wrapper around NSTask to launch a command-line process, with a timeout.
 
- @details  Only use this function after you have searched far and wide for a Cocoa, CoreFoundation,
- Carbon, or any built-in API to do what you want to do.&nbsp;   That is because this function will spawn
- another process which often leads to trouble.&nbsp;   Use it sparingly.&nbsp;  Examine the return value,
+ @details  TODO: This method will fail due to clogged pipe if the stdout
+ or stderr data is too long.  To fix that, incorporate the incremental pipe
+ emptying as demonstrated in my other class, SSYTasker.  Note that this
+ method does stuff that SSYTasker does not, such as timeout.
+ 
+ Only use this function after you have searched far and wide for a Cocoa, CoreFoundation,
+ Carbon, or any built-in API to do what you want to do.   That is because this function will spawn
+ another process which often leads to trouble.&nbsp;   Use it sparingly.  Examine the return value,
  stdout_p and stderr_p and write code to recover from errors. 
  
  TIMEOUT   Narrated result       result     *stdoutData_p    *stderrData_p    *error_p  
