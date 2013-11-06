@@ -58,13 +58,13 @@ typedef enum SSYProcessTyperType_enum SSYProcessTyperType ;
 
 /*
  @brief    Transforms the current process to UIElement type if it is not.
- @details  Available in Mac OS X 10.7 or later
+ @details  Available in Mac OS X 10.7 or later.
 */
 + (void)transformToUIElement:(id)sender ;
 
 /*
  @brief    Transforms the current process to background type if it is not.
- @details  Available in Mac OS X 10.7 or later
+ @details  Available in Mac OS X 10.7 or later.
  */
 + (void)transformToBackground:(id)sender ;
 
