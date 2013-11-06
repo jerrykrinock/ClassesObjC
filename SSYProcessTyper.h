@@ -43,7 +43,7 @@ typedef enum SSYProcessTyperType_enum SSYProcessTyperType ;
  Mac OS X 10.9 or later is indicated by this expression:
  (NSAppKitVersionNumber >= 1200).
  
- work propStarting with BookMacster 1.19.6, this method features a "dance
+ Starting with BookMacster 1.19.6, this method features a "dance
  with Finder" kludge.  This kludge is to fix the issue which arose in Mac
  OS X 10.9 Mavericks, after I began invoking this method in app delegate's
  -applicationDidFinishLaunching instead of -init.  The new issue was that the
