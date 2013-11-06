@@ -20,6 +20,10 @@ enum SSYProcessTyperType_enum {
 typedef enum SSYProcessTyperType_enum SSYProcessTyperType ;
 
 
+/*
+ @brief    Class which provides methods for reading and setting the 'type' of
+ the current process, where 'type' means Foreground, LSUIElement, or Background
+*/
 @interface SSYProcessTyper : NSObject {
 
 }
@@ -29,7 +33,17 @@ typedef enum SSYProcessTyperType_enum SSYProcessTyperType ;
 /*
  @brief    Transforms the current process to foreground type if it is not.
  
- @details  Starting with BookMacster 1.19.6, this method features a "dance
+ @details  For this method to work properly, if you are running in Mac OS X
+ 10.9 or later, you should invoke this method in your app delegate's
+ -applicationDidFinishLaunching.  Otherwise, you should invoke this method in
+ your app delegate's -init.  I have no explanation for this.  That's just the
+ way it works.  If you do it wrong, the menu bar will not show until the user
+ activates a different application (a third app, not the prior frontmost app.)
+ 
+ Mac OS X 10.9 or later is indicated by this expression:
+ (NSAppKitVersionNumber >= 1200).
+ 
+ work propStarting with BookMacster 1.19.6, this method features a "dance
  with Finder" kludge.  This kludge is to fix the issue which arose in Mac
  OS X 10.9 Mavericks, after I began invoking this method in app delegate's
  -applicationDidFinishLaunching instead of -init.  The new issue was that the
