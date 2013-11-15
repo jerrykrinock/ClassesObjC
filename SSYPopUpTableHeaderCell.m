@@ -13,9 +13,21 @@
 @synthesize lostWidth ;
 
 - (id)init {
+#if LOG_UNREAL_SSY_POP_UP_TABLE_HEADER_CELLS
+    BOOL didReinitialize = NO ;
+    if (realSelf) {
+        NSLog(@"Internal Error 340-8282 Re-initializing? oldSelf = %p realSelf = %p", self, realSelf) ;\
+        didReinitialize = YES ;
+    }
+#endif
 	if (self = [super init]) {
 		
-		// Set up the popup cell attributes
+#if LOG_UNREAL_SSY_POP_UP_TABLE_HEADER_CELLS
+        if (didReinitialize) {
+            NSLog(@"Internal Error 340-8257 Re-initializing? newSelf = %p realSelf = %p", self, realSelf) ;\
+        }
+#endif
+        // Set up the popup cell attributes
 		[self setControlSize:NSMiniControlSize] ;
 		[self setBordered:NO] ;
 		[self setBezeled:NO] ;

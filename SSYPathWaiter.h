@@ -10,7 +10,7 @@
 
 /*!
  @brief    Blocks until a given path in the filesystem is changed
- in a given way.
+ in a given way, or a given timeout, whichever comes first
  
  @details  "Deleted in the Unix sense" means that the vnode
  has been removed.  A file which has been trashed has not been
@@ -25,6 +25,20 @@
  */
 - (BOOL)blockUntilWatchFlags:(uint32_t)watchFlags
 						path:(NSString*)path
+					 timeout:(NSTimeInterval)timeout ;
+
+/*!
+ @brief    Blocks until any one in a given set paths in the filesystem is
+ changed in a given way, or a given timeout, whichever comes first
+ 
+ @details  This method behaves the same as blockUntilWatchFlags:path:timeout:
+ except it watches multiple paths.
+ 
+ @result   YES if the path does not exist already, or if it was deleted
+ before the timeout expired.
+ */
+- (BOOL)blockUntilWatchFlags:(uint32_t)watchFlags
+                       paths:(NSSet*)paths
 					 timeout:(NSTimeInterval)timeout ;
 
 @end

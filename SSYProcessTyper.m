@@ -75,11 +75,14 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
     return activeAppPid ;
 }
 
-#define TIMEOUT_BEFORE_TRYING_DANCE_WITH_FINDER 1.5
+#define TIMEOUT_BEFORE_TRYING_DANCE_WITH_FINDER 2.0
 /*
  The above should be long enough that it does not do the dance when launched
  from Finder, but short enough that it is not too annoying for Alfred users
- who will require the dance.
+ who will require the dance.  Because there are many more non-Alfred users than
+ Alfred, I have biased it up toward being longer.  With only 1.5 seconds,
+ launching from Xcode, I would see the dance on my 2013 MacBook Air about
+ 5% of the time.
  */
 #define TIMEOUT_AFTER_DANCE 0.5
 #define WAIT_TO_TEST_AFTER_DANCE 1.0

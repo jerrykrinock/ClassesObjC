@@ -6,7 +6,6 @@
 
 @implementation SSYDragDestinationTextView : NSTextView
 
-
 - (void)awakeFromNib {
 	[self patchPreLeopardFocusRingDrawingForScrolling] ;
 	
@@ -15,6 +14,7 @@
                    prettyFunction:__PRETTY_FUNCTION__
 						arguments:nil] ;
 }
+
 
 /*
  
@@ -83,18 +83,15 @@
 - (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender {
 	BOOL answer = NO ;
 	
-	// Panther does not respond to -registeredDraggedTypes.
-	// We simply do not support dragging in Panther.
-	if ([self respondsToSelector:@selector(registeredDraggedTypes)]) {
-		NSPasteboard* pasteboard = [sender draggingPasteboard] ;
-		NSString* anAcceptableType = [pasteboard availableTypeFromArray:[self registeredDraggedTypes]] ;
-		if (anAcceptableType != nil) {
-			_isInDrag = NO ;
-			[self setSelectedRange:NSMakeRange(0,0)] ;
-			[self setNeedsDisplay:YES] ;
-			answer = YES ;
-		}
-	}
+    NSPasteboard* pasteboard = [sender draggingPasteboard] ;
+    NSArray* registeredTypes = [self registeredDraggedTypes] ;
+    NSString* anAcceptableType = [pasteboard availableTypeFromArray:registeredTypes] ;
+    if (anAcceptableType != nil) {
+        _isInDrag = NO ;
+        [self setSelectedRange:NSMakeRange(0,0)] ;
+        [self setNeedsDisplay:YES] ;
+        answer = YES ;
+    }
 	
 	return answer ;
 } 

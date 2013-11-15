@@ -23,7 +23,6 @@
 	// BOOL _tabToNextKeyView ; Depracated.  See comments in .m
 }
 
-
 /*!
  @brief    Sets the ivar _tabToNextKeyView
 

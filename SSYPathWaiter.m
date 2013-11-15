@@ -9,7 +9,7 @@
 NSString* const constKeySSYPathWaiterObserver = @"obsr" ;
 NSString* const constKeySSYPathWaiterNotifee = @"ntfe" ;
 NSString* const constKeySSYPathWaiterBlocker = @"blkr" ;
-NSString* const constKeySSYPathWaiterPath = @"path" ;
+NSString* const constKeySSYPathWaiterPaths = @"paths" ;
 NSString* const constKeySSYPathWaiterWatchFlags = @"flgs" ;
 NSString* const constKeySSYPathWaiterTimeout = @"tmot" ;
 
@@ -56,7 +56,7 @@ NSString* const constKeySSYPathWaiterTimeout = @"tmot" ;
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
 	
 	NSTimeInterval timeout = [[info objectForKey:constKeySSYPathWaiterTimeout] doubleValue] ;
-	NSString* path = [info objectForKey:constKeySSYPathWaiterPath] ;
+	NSSet* paths = [info objectForKey:constKeySSYPathWaiterPaths] ;
 	uint32_t watchFlags = (uint32_t)[[info objectForKey:constKeySSYPathWaiterWatchFlags] unsignedIntegerValue] ;
 	SSYBlocker* blocker = [info objectForKey:constKeySSYPathWaiterBlocker] ;
 
@@ -66,11 +66,18 @@ NSString* const constKeySSYPathWaiterTimeout = @"tmot" ;
 	[blocker lockLock] ;
 	
 	NSError* error = nil ;
-	BOOL ok = [observer addPath:path
+	BOOL ok = YES ;
+    for (NSString* path in paths) {
+        ok = [observer addPath:path
 					 watchFlags:watchFlags
 				   notifyThread:[NSThread currentThread]
 					   userInfo:self
 						error_p:&error] ;
+        if (!ok) {
+            break ;
+        }
+    }
+    
 	if (ok) {
 		[[NSNotificationCenter defaultCenter] addObserver:notifee
 												 selector:@selector(processNote:)
@@ -112,16 +119,24 @@ NSString* const constKeySSYPathWaiterTimeout = @"tmot" ;
 
 
 - (BOOL)blockUntilWatchFlags:(uint32_t)watchFlags
-						path:(NSString*)path
+                       paths:(NSSet*)paths
 					 timeout:(NSTimeInterval)timeout {
 	BOOL ok = YES ;
-	// There may be a possibility of a race condition here.  I'm not sure if this fixes it
-	if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+	// There may be a possibility of a race condition here.  I'm not sure if this fixes it.
+    
+    NSMutableSet* pathsExisting = [[NSMutableSet alloc] init] ;
+    for (NSString* path in paths) {
+        if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+            [pathsExisting addObject:path] ;
+        }
+    }
+    
+    if ([paths count] > 0) {
 		SSYBlocker* blocker = [[SSYBlocker alloc] init] ;
 		
 		NSDictionary* info = [NSDictionary dictionaryWithObjectsAndKeys:
 							  blocker, constKeySSYPathWaiterBlocker,
-							  path, constKeySSYPathWaiterPath,
+							  pathsExisting, constKeySSYPathWaiterPaths,
 							  [NSNumber numberWithUnsignedLong:watchFlags], constKeySSYPathWaiterWatchFlags,
 							  [NSNumber numberWithDouble:timeout], constKeySSYPathWaiterTimeout,
 							  nil] ;
@@ -143,6 +158,17 @@ NSString* const constKeySSYPathWaiterTimeout = @"tmot" ;
 		[blocker release] ;
 	}
 
+    [pathsExisting release] ;
+    
 	return ok ;
 }
+
+- (BOOL)blockUntilWatchFlags:(uint32_t)watchFlags
+						path:(NSString*)path
+					 timeout:(NSTimeInterval)timeout {
+    return [self blockUntilWatchFlags:watchFlags
+                                paths:[NSSet setWithObject:path]
+                              timeout:timeout] ;
+}
+
 @end
