@@ -233,7 +233,13 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
             // Being built with Mac OS X 10.9 or later SDK
             id activity = [self noAppNapActivity] ;
             if (activity) {
-                [[NSProcessInfo processInfo] endActivity:activity];
+                // The following test is actually defensive programming, because
+                // activity should only be YES if NSProcessInfo
+                // responds to -beginActivityWithOptions:reason:,
+                // which means that it should also respond to -endActivity:
+                if ([[NSProcessInfo processInfo] respondsToSelector:@selector(endActivity:)]) {
+                    [[NSProcessInfo processInfo] endActivity:activity] ;
+                }
             }
 #endif
 

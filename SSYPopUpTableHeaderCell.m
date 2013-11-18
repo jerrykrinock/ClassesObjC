@@ -2,75 +2,36 @@
 
 @interface SSYPopUpTableHeaderCell ()
 
-@property (retain) SSYPopUpTableHeaderCell* realSelf ;
 @property CGFloat lostWidth ;
+
 @end
 
 
 @implementation SSYPopUpTableHeaderCell
 
-@synthesize realSelf ;
 @synthesize lostWidth ;
 
+- (id)copyWithZone:(NSZone *)zone {
+    SSYPopUpTableHeaderCell* copy = [[SSYPopUpTableHeaderCell allocWithZone: zone] init] ;
+	[copy setLostWidth:[self lostWidth]] ;
+	
+    return copy ;
+}
+
 - (id)init {
-#if LOG_UNREAL_SSY_POP_UP_TABLE_HEADER_CELLS
-    BOOL didReinitialize = NO ;
-    if (realSelf) {
-        NSLog(@"Internal Error 340-8282 Re-initializing? oldSelf = %p realSelf = %p", self, realSelf) ;\
-        didReinitialize = YES ;
-    }
-#endif
 	if (self = [super init]) {
-		
-#if LOG_UNREAL_SSY_POP_UP_TABLE_HEADER_CELLS
-        if (didReinitialize) {
-            NSLog(@"Internal Error 340-8257 Re-initializing? newSelf = %p realSelf = %p", self, realSelf) ;\
-        }
-#endif
         // Set up the popup cell attributes
 		[self setControlSize:NSMiniControlSize] ;
 		[self setBordered:NO] ;
 		[self setBezeled:NO] ;
 		[self setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]] ;
-
-		// Our mysterious bug catcher
-		[self setRealSelf:self] ;
 	}
 
 	return self ;
 }
 
-/*- (void)stopTracking:(NSPoint)lastPoint
-				  at:(NSPoint)stopPoint
-			  inView:(NSView *)controlView
-		   mouseIsUp:(BOOL)flag {
-NSLog(@"1068 %s", __PRETTY_FUNCTION__) ;
-}
-*/
-
-- (void)dealloc {
-	if (self != [self realSelf]) {
-#if LOG_UNREAL_SSY_POP_UP_TABLE_HEADER_CELLS
-		NSLog(@"Internal Error 340-9281 in %s", __PRETTY_FUNCTION__) ;
-#endif
-		return ;
-	}
-
-	[realSelf release] ;
-	[super dealloc] ;
-}
-
 - (void)drawWithFrame:(NSRect)cellFrame
 			   inView:(NSView*)controlView {
-	if (self != [self realSelf]) {
-#if LOG_UNREAL_SSY_POP_UP_TABLE_HEADER_CELLS
-		NSLog(@"Internal Error 300-9481 in %s", __PRETTY_FUNCTION__) ;
-		NSLog(@"      self: %p %@ %p %p %@", self, NSStringFromSize([self cellSize]), [self itemArray], [self controlView], [[self selectedItem] title]) ;
-		NSLog(@"  realSelf: %p %@ %p %p %@", realSelf, NSStringFromSize([realSelf cellSize]), [realSelf itemArray], [realSelf controlView], [[self selectedItem] title]) ;
-#endif
-		return ;
-	}
-	
 	// Apple's documentation for this -[NSCell drawWithFrame:inView: states
 	// "This method draws the cell in the currently focused view,
 	// which can be different from the controlView passed in. Taking advantage

@@ -4,6 +4,25 @@
 @implementation SSYTableHeaderView : NSTableHeaderView
 
 - (void)drawRect:(NSRect)dirtyRect {
+    /*
+     Added in BookMacster 1.19.6.  After eliminating the realSelf crap from
+     SSYPopUpTableHeaderCell, when closing a document once, I got a failure in
+     this method, at end where it invokes [headerCell drawWithFrame:inView:],
+     an assertion was raised in -[NSView lockFocus].
+     
+     ** Assertion failure in -[SSYTableHeaderView lockFocus], /SourceCache/AppKit/AppKit-1265/AppKit.subproj/NSView.m:7041
+     2013-11-15 06:52:03.413 BookMacster[11590:303] -[SSYTableHeaderView(0x6080003ab6e0) lockFocus] failed with window=0x6000001f6700, windowNumber=-1, [self isHiddenOrHasHiddenAncestor]=0
+
+     Poking around with the
+     debugger, it seems that while the window controller is still around, its
+     -document is nil, and furthermore
+     [[NSDocumentController sharedDocumentController] documents] returns an
+     empty set.  So it seems like the following should fix this problem…
+     */
+    if ([[[self window] windowController] document] == nil) {
+        return ;
+    }
+    
 	CGFloat height = [self frame].size.height ;
 	CGFloat overallWidth = [self frame].size.width ;
 	CGFloat intercellWidth = [[self tableView] intercellSpacing].width ;
