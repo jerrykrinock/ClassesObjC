@@ -6,6 +6,8 @@
 #import "NSDocument+SyncModDate.h"
 #import "NSError+Recovery.h"
 #import "NSBundle+MainApp.h"
+#import "NSDocument+SSYAutosaveBetter.h"
+
 
 NSString* const SSYPersistentDocumentMultiMigratorErrorDomain = @"SSYPersistentDocumentMultiMigratorErrorDomain" ;
 NSString* const SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification = @"SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification" ;
@@ -255,7 +257,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
         // Fix in BookMacster 1.18.1, for Mac OS X 10.6
         BOOL isInViewingMode = NO ;
         if ([document respondsToSelector:@selector(isInViewingMode)]) {
-            isInViewingMode = [document isInViewingMode] ;
+            isInViewingMode = [document ssy_isInViewingMode] ;
         }
 #if 0
         // Fix 20130610 - Does not work.

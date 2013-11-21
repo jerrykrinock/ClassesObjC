@@ -81,9 +81,26 @@
 - (NSError*)error ;
 
 /*!
- @brief    Sets the error of the receiver's operation queue.
+ @brief    Sets the error of the receiver's operation queue, and into the
+ userInfo dictionary of the error, adds key constKeySSYOperationGroup
+ with value equal to the name of the receiver's operation group
+ 
+ @details  Due to the addition of constKeySSYOperationGroup in the error's
+ userInfo, when other operations in the receiver's queue receive an -error
+ message, they will only return the error given here if their operation group's
+ name is the same as that of the receiver of this message.
 */
 - (void)setError:(NSError*)error ;
+
+/*!
+ @brief    Sets the error of the receiver's operation queue, without adding
+ key constKeySSYOperationGroup to the userInfo of the error
+ 
+ @details  Due to the non-addition of constKeySSYOperationGroup in the error's
+ userInfo, when other operations in the receiver's queue receive an -error
+ message, they will always return the error given here.
+ */
+- (void)setAllGroupsError:(NSError*)error ;
 
 /*!
  @brief    Appends the suffix _unsafe to the name of a given selector

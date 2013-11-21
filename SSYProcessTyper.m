@@ -154,7 +154,9 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
         &&
         [[NSWorkspace sharedWorkspace] respondsToSelector:@selector(menuBarOwningApplication)]
         ) {
+#pragma deploymate push "ignored-api-availability" // Skip it until next "pop"
         NSRunningApplication* menuBarApp = [[NSWorkspace sharedWorkspace] menuBarOwningApplication] ;
+#pragma deploymate pop
         BOOL weGotMenuBar = ([menuBarApp isEqual:[NSRunningApplication currentApplication]]) ;
         answer = weGotMenuBar ? NSOnState : NSOffState ;
     }

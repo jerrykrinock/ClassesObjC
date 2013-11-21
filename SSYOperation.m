@@ -118,6 +118,12 @@
 						  operation:self] ;
 }
 
+- (void)setAllGroupsError:(NSError*)error {
+        [[self operationQueue] setError:error
+                              operation:nil] ;
+}
+
+
 - (NSString*)description {
 	NSString* selectorName = NSStringFromSelector([self selector]) ;
 	if ([selectorName isEqualToString:@"doDone:"]) {

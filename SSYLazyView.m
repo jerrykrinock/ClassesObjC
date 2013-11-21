@@ -1,5 +1,4 @@
 #import "SSYLazyView.h"
-#import "SSYExtrospectiveViewController.h"
 #import "SSYAlert.h"
 
 NSString* SSYLazyViewErrorDomain = @"SSYLazyViewErrorDomain" ;
@@ -77,9 +76,11 @@ NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNot
     BOOL isMacOSX10_8orLater = [bundle respondsToSelector:@selector(loadNibNamed:owner:topLevelObjects:)] ;
 
     if (isMacOSX10_8orLater) {
+#pragma deploymate push "ignored-api-availability" // Skip it until next "pop"
         ok = [bundle loadNibNamed:nibName
                             owner:owner
                   topLevelObjects:&topLevelObjects] ;
+#pragma deploymate pop
         if (ok) {
             // See details of doc for -loadNibNamed:owner:topLevelObjects:,
             // https://developer.apple.com/library/ios/documentation/Cocoa/Conceptual/LoadingResources/CocoaNibs/CocoaNibs.html#//apple_ref/doc/uid/10000051i-CH4-SW6

@@ -238,7 +238,9 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
                 // responds to -beginActivityWithOptions:reason:,
                 // which means that it should also respond to -endActivity:
                 if ([[NSProcessInfo processInfo] respondsToSelector:@selector(endActivity:)]) {
+#pragma deploymate push "ignored-api-availability" // Skip this until matching "pop"
                     [[NSProcessInfo processInfo] endActivity:activity] ;
+#pragma deploymate pop
                 }
             }
 #endif
@@ -282,8 +284,10 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
                                     @"SSYOperations beginning with group %@ at %@",
                                     groupName,
                                     [[NSDate date] geekDateTimeString]] ;
+#pragma deploymate push "ignored-api-availability" // Skip it until next "pop"
                 id activity = [[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityAutomaticTerminationDisabled
                                                                              reason:reason] ;
+#pragma deploymate pop
                 [self setNoAppNapActivity:activity] ;
             }
 #endif
