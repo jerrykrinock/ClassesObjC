@@ -1760,7 +1760,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// See discussion:
 	// http://www.cocoabuilder.com/archive/message/cocoa/2007/4/9/181560
 	[[self window] display] ;
-	[[self window] makeKeyAndOrderFront:self] ;
+    [[self window] makeKeyAndOrderFront:self] ;
 }
 
 - (void)goAway {

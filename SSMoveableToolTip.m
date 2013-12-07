@@ -19,7 +19,7 @@ static SSMoveableToolTip	*sharedToolTip = nil;
 
 @implementation SSMoveableToolTip
 
-- (id) init {
+- (id)init {
     self = [super init] ;
     
     if (self != nil) {
@@ -49,11 +49,8 @@ static SSMoveableToolTip	*sharedToolTip = nil;
         [_textField setDrawsBackground:NO];
         [_textField setAlignment:NSLeftTextAlignment];
         [_textField setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        [_textField setFont:[NSFont toolTipsFontOfSize:[NSFont smallSystemFontSize]]];
         [[_window contentView] addSubview:_textField];
         
-        [_textField setStringValue:@" "]; // Just having at least 1 char to allow the next message...
-        _textAttributes = [[[_textField attributedStringValue] attributesAtIndex:0 effectiveRange:nil] retain];
     }
     
     return self ;
@@ -61,47 +58,62 @@ static SSMoveableToolTip	*sharedToolTip = nil;
 
 - (void) dealloc {
     [_window release] ;
-    [_textAttributes release] ;
     [_textField release] ;  // Memory leak fixed in BookMacster 1.17
 
     [super dealloc];
 }
 
-- (void) setString:(NSString *)string
+#define GRRRRR_MARGIN_REQUIRED_TO_SAFELY_PREVENT_TEXT_WRAPPING 10.0
+
+- (void) setString:(NSString*)string
+              font:(NSFont*)font
 			origin:(NSPoint)origin
-		  inWindow:(NSWindow*)hostWindow
-{
+		  inWindow:(NSWindow*)hostWindow {
+    if (!font) {
+        font = [NSFont toolTipsFontOfSize:[NSFont smallSystemFontSize]] ;
+    }
+    
+    if ([string length] == 0) {
+        string = @ " " ;
+    }
+	
+    [_textField setStringValue:string] ;
+    [_textField setFont:font] ;
+
+    NSDictionary* textAttributes = [[_textField attributedStringValue] attributesAtIndex:0
+                                                                          effectiveRange:nil] ;
     origin.x += _offset.x ;
 	origin.y += _offset.y ;
 	
-	NSSize size = [string sizeWithAttributes:_textAttributes];
-    NSSize windowSize = NSMakeSize(size.width + 10, size.height + 1) ;
+	NSSize size = [string sizeWithAttributes:textAttributes] ;
+    NSSize windowSize = NSMakeSize(
+                                   size.width + GRRRRR_MARGIN_REQUIRED_TO_SAFELY_PREVENT_TEXT_WRAPPING,
+                                   size.height + 1
+                                   ) ;
 	
     NSPoint cursorScreenPosition = [hostWindow convertBaseToScreen:origin];
-	
-	[_window setFrameTopLeftPoint:NSMakePoint(cursorScreenPosition.x + 10, cursorScreenPosition.y + 28)];    
-    [_window setContentSize:windowSize] ;
 
-    if (string) {
-		[_textField setStringValue:string] ;
-    }
-	
+    // On 2013-12-04, removed hard-coded offsets in here which were for my app.
+    // Any offset you need should be passed in the 'origin' parameter!
+	[_window setFrameTopLeftPoint:NSMakePoint(cursorScreenPosition.x, cursorScreenPosition.y)];
+    [_window setContentSize:windowSize] ;
 }
 
 - (void)setOffset:(NSPoint)offset {
 	_offset = offset ;
 }
 
-+ (void) setString:(NSString *)string
++ (void) setString:(NSString*)string
+              font:(NSFont*)font
 			origin:(NSPoint)origin
 		  inWindow:(NSWindow*)hostWindow
 {
     if (sharedToolTip == nil) {
-        
         sharedToolTip = [[SSMoveableToolTip alloc] init];
     }
     
     [sharedToolTip setString:string
+                        font:font
 					  origin:origin
 					inWindow:hostWindow];
 }
