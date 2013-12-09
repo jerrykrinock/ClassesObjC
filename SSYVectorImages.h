@@ -16,6 +16,8 @@ enum SSYVectorImageStyles_enum
     SSYVectorImageStyleStar,
     /* White "X" inside a gray circle, used in SSYStarRatingView */
 	SSYVectorImageStyleRemoveX,
+    /* "Bookmark", solid color except for a white hole near the top */
+    SSYVectorImageStyleBookmark
 } ;
 typedef enum SSYVectorImageStyles_enum SSYVectorImageStyle ;
 

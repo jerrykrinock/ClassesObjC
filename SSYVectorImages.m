@@ -135,6 +135,42 @@
 			[path lineToPoint:NSMakePoint(xMax, xMax)] ;
 			[path stroke] ;
 			break ;
+		case SSYVectorImageStyleBookmark:;
+            [color setFill] ;
+            [color setStroke] ;
+			
+#define TOP_MARGIN (radius/10)
+#define BOTTOM_MARGIN 0
+			// Draw the bookmark body
+			[path setLineWidth:0.5] ;
+#define BOOKMARK_HALF_WIDTH (radius*5/10)
+#define BOOKMARK_INSEAM (radius*5/8)
+			[path moveToPoint:NSMakePoint(radius-BOOKMARK_HALF_WIDTH, diameter - TOP_MARGIN)] ;
+			[path lineToPoint:NSMakePoint(radius-BOOKMARK_HALF_WIDTH, 0 + BOTTOM_MARGIN)] ;
+			[path lineToPoint:NSMakePoint(radius, BOOKMARK_INSEAM)] ;
+			[path lineToPoint:NSMakePoint(radius+BOOKMARK_HALF_WIDTH, 0 + BOTTOM_MARGIN)] ;
+			[path lineToPoint:NSMakePoint(radius+BOOKMARK_HALF_WIDTH, diameter - TOP_MARGIN)] ;
+            [path closePath] ;
+            [path fill] ;
+			[path stroke] ;
+
+			// Draw the round hole near the top of the bookmark
+            [path removeAllPoints] ;
+			[path setLineWidth:(diameter/20)] ;
+#define HOLE_RADIUS (radius/6)
+            [[NSColor whiteColor] setStroke] ;
+            [[NSColor whiteColor] setFill] ;
+			NSRect holeRect = NSMakeRect(
+                                          (radius - HOLE_RADIUS),
+                                          diameter - TOP_MARGIN - radius/2,
+                                          2*HOLE_RADIUS,
+                                          2*HOLE_RADIUS
+                                          ) ;
+			[path appendBezierPathWithOvalInRect:holeRect] ;
+            [path fill] ;
+            [path stroke] ;			
+			
+            break ;
 	}
 			
 	[image unlockFocus] ;
