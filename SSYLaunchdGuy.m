@@ -92,6 +92,17 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 // 35.0 seconds.
 #define LAUNCHCTL_TIMEOUT 35.0
 
+/*
+ @details  TODO: See if there is a better way to do this, without using
+ /bin/lauchctl, and NSTask in general.  First, see here…
+ http://www.opensource.apple.com/source/initng/initng-12/initng/src/launch.h
+ http://www.opensource.apple.com/source/initng/initng-12/initng/src/launchctl.c
+ which seems to have several useful functions, but they are not formally
+ documented.  On the other hand, the overview of the Service Management
+ framework says that it "...provides support for loading and unloading launchd
+ jobs and reading and manipulating job dictionaries from within an application."
+ That's great, except the last time I look, it didn't.
+ */
 + (BOOL)agentLoadPath:(NSString*)plistPath
 			  error_p:(NSError**)error_p {	
 	NSString* subcmd = @"load" ;
@@ -569,7 +580,7 @@ end:;
 	[[NSFileManager defaultManager] createFileAtPath:cmdPath
 											contents:data
 										  attributes:attributes] ;
-    NSTask* task = [[NSTask alloc] init] ;	
+    NSTask* task = [[NSTask alloc] init] ;
     [task setLaunchPath:cmdPath] ;
 	[task launch] ;
 	[task release] ;

@@ -61,6 +61,9 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 	NSURL* destempUrl = nil ; 	// destemp means "destination/temporary"
 	
 	// Get store metadata for the document to be opened.
+    // If the file indicated at url will not load, Core Data will log an
+    // "error" here.  I @tryed to @catch exceptions, but got nothing.
+    // Oh well, just ignore it.
 	NSDictionary *storeMetadata = [NSPersistentStoreCoordinator metadataForPersistentStoreOfType:nil
 																							 URL:url 
 																						   error:&underlyingError] ;  

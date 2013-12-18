@@ -688,9 +688,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 							  @"*** Note to user***  It is possible that this file may have some of your private "
 							  @"information in it, bookmarks in particular.  Please skim through it before sending.  "
 							  @"Delete anything which is too private, add a little note in its place, then save this file.\n\n"
-							  @"To zip this file, select it in Finder, then execute a secondary click.  A secondary click "
-							  @"can also be produced by clicking it with the right/secondary mouse button, or holding down "
-							  @"the 'control' key while clicking on it.  From the contextual menu which appears, click 'Compress...' "
+							  @"To zip this file, select it in Finder, then execute a secondary click.  (A secondary click "
+							  @"means to click it while holding down the 'control' key, or to tap with two fingers if you "
+                              @"have a trackpad, or to use the secondary button if you have a multi-button mouse.)  "
+							  @"From the contextual menu which appears, click 'Compress...' "
 							  @"A new file with a name ending in .zip will appear.\n\n"
 							  @"Please send the .zip file to our support crew, and thank you for helping us to support",
 							  appName,
@@ -711,7 +712,12 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 									  buttons:nil] ;
 				
 				mailableDescription = [NSString stringWithFormat:
-									   @"*** Please review, zip and attach file %@. ***",
+									   @"******   I M P O R T A N T   I N S T R U C T I O N S   ******\n\n"
+									   @"*** Please look on your Desktop and find the file named %@ ***\n"
+                                       @"Review for your privacy, zip and ATTACH it before sending this.\n"
+                                       @"To zip a file, perform a secondary click (right-click or control-click)\n"
+                                       @"on it, then from the contextual menu which appears, click 'Compress ...'.\n"
+                                       @"Attach the .zip file which appears.  Thank you.\n",
 									   filename] ;
 			}
 			else {

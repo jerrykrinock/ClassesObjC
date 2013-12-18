@@ -1,8 +1,33 @@
 #import <Cocoa/Cocoa.h>
 #import "SRCommon.h"  // for KeyCombo, also this imports <Carbon/Carbon.h>
 
+/*
+ @brief    Posted whenever the count of shortcuts registered with the shared
+ actuator increases from 0 to 1
+ 
+ @details  The notification object is the shared actuator.  If the user defaults
+ contains one or more shortcuts to be registered, this notification will be
+ posted during the -init of the shared actuator.
+ */
 extern NSString* const SSYShortcutActuatorDidNonemptyNotification ;
+
+/*
+ @brief    Posted whenever the count of shortcuts registered with the shared
+ actuator decreases from 1 to 0
+ 
+ @details  The notification object is the shared actuator.
+ */
 extern NSString* const SSYShortcutActuatorDidEmptyNotification ;
+
+/*
+ @brief    Posted at the conclusion of -setKeyCode:modifierFlags:selectorName:,
+ whether or not any shortcut was actually registered or unregistered
+ 
+ @details  The notification object is the actuator to which
+ -setKeyCode:modifierFlags:selectorName: was sent.
+ */
+extern NSString* const SSYShortcutActuatorDidChangeShortcutsNotification ;
+
 
 
 @interface SSYShortcutActuator : NSObject {
@@ -21,7 +46,6 @@ extern NSString* const SSYShortcutActuatorDidEmptyNotification ;
  http://inquisitivecocoa.com/2009/04/05/key-code-translator/
  @param    keyCode  
  @param    modifierFlags  
- @result   
 */
 + (NSString*)stringForKeyCode:(NSInteger)keyCode
 				modifierFlags:(NSUInteger)modifierFlags ;
@@ -66,7 +90,26 @@ extern NSString* const SSYShortcutActuatorDidEmptyNotification ;
 	 modifierFlags:(NSUInteger)modifierFlags
 	  selectorName:(NSString*)selectorName ;
 
+/*!
+ @brief    Returns the KeyCombo of the shortcut which is currently registered to
+ invoke a give selector
+ 
+ @details  If no such shortcut is currently registered, the 'code' member of
+ the result is -1.  Or use -hasKeyComboForSelectorName: instead.
+ */
 - (KeyCombo)keyComboForSelectorName:(NSString*)selectorName ;
+
+/*!
+ @brief    Returns whether or not a keyboard shortcut is currently registered
+ to invoke a given selector
+ */
+- (BOOL)hasKeyComboForSelectorName:(NSString*)selectorName ;
+
+/*!
+ @brief    Returns whether or not the receiver has one or more keyboard
+ shortcuts currently registered
+ */
+- (BOOL)hasAnyKeyCombo ;
 
 - (void)disableAllShortcuts ;
 - (void)enableAllShortcuts ;

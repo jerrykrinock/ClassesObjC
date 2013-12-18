@@ -47,7 +47,7 @@ static NSString* const constErrorsHeader = @"  See HIToolbox/CarbonEventsCore.h 
 
 NSString* const SSYShortcutActuatorDidNonemptyNotification = @"SSYShortcutActuatorDidNonemptyNotification" ;
 NSString* const SSYShortcutActuatorDidEmptyNotification = @"SSYShortcutActuatorDidEmptyNotification" ;
-
+NSString* const SSYShortcutActuatorDidChangeShortcutsNotification = @"SSYShortcutActuatorDidChangeShortcutsNotification" ;
 
 @interface SSYShortcutActuator ()
 
@@ -512,6 +512,32 @@ OSStatus SSYShortcutActuate(
 	return keyCombo ;
 }
 
+- (BOOL)hasKeyComboForSelectorName:(NSString*)selectorName {
+    return ([self keyComboForSelectorName:selectorName].code != -1) ;
+}
+
+- (BOOL)hasAnyKeyCombo {
+    BOOL answer = NO ;
+    NSDictionary* shortcutInfos = [[NSUserDefaults standardUserDefaults] objectForKey:SSYShortcutActuatorKeyBindings] ;
+    if ([shortcutInfos respondsToSelector:@selector(objectForKey:)]) {
+        for (NSString* selectorName in shortcutInfos) {
+            NSDictionary* shortcutInfo = [shortcutInfos objectForKey:selectorName] ;
+            if ([shortcutInfo respondsToSelector:@selector(objectForKey:)]) {
+                NSNumber* number = [shortcutInfo objectForKey:constKeyKeyCode] ;
+                if ([number respondsToSelector:@selector(integerValue)]) {
+                    NSInteger value = [number integerValue] ;
+                    if (value != -1) {
+                        answer = YES ;
+                        break ;
+                    }
+                }
+            }
+        }
+    }
+    
+    return answer ;
+}
+
 - (void)disableAllShortcuts {
 	[self unregisterAllShortcuts] ;
 	[self removeAllRegisteredShortcutInfos] ;
@@ -581,6 +607,9 @@ OSStatus SSYShortcutActuate(
 		// Since we've got at least one shortcut now, start observing
 		[self postDidEmpty:NO] ;
 	}
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:SSYShortcutActuatorDidChangeShortcutsNotification
+                                                        object:self] ;
 }
 
 @end
