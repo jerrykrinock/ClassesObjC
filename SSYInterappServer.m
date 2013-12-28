@@ -138,13 +138,25 @@ CFDataRef SSYInterappServerCallBackCreateData(
 			context.release = NULL ;
 			context.copyDescription = NULL ;
 			
-			m_port = CFMessagePortCreateLocal(
-											  NULL, 
-											  (CFStringRef)portName,
-											  SSYInterappServerCallBackCreateData,
-											  &context,
-											  NULL) ;
-            
+			// Loop added to retry in case of failure, in BookMacster 1.20
+#define MESSAGE_PORT_CREATE_LOCAL_TIMEOUT 5.0
+            NSDate* endDate = [NSDate dateWithTimeIntervalSinceNow:MESSAGE_PORT_CREATE_LOCAL_TIMEOUT] ;
+            do {
+                m_port = CFMessagePortCreateLocal(
+                                                  NULL,
+                                                  (CFStringRef)portName,
+                                                  SSYInterappServerCallBackCreateData,
+                                                  &context,
+                                                  NULL) ;
+               if (m_port) {
+                    break ;
+                }
+                if ([endDate timeIntervalSinceNow] < 0.0) {
+                    break ;
+                }
+                sleep(1) ;
+            } while (YES) ;
+
 			if (m_port) {
 				[self setDelegate:delegate] ;
 				CFRunLoopSourceRef source = CFMessagePortCreateRunLoopSource(
