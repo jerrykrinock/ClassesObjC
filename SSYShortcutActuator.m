@@ -99,8 +99,15 @@ OSStatus SSYShortcutActuate(
 
 #define NumberOfUnicodeGlyphReplacements 24
 
-+ (NSString *)stringForKeyCode:(NSInteger)keyCode
-				 modifierFlags:(NSUInteger)modifierFlags {
++ (NSString*)userDefaultsKeyPathForSelectorName:(NSString*)selectorName {
+    return [NSString stringWithFormat:
+            @"%@.%@",
+            SSYShortcutActuatorKeyBindings,
+            selectorName] ;
+}
+
++ (NSString*)stringForKeyCode:(NSInteger)keyCode
+                modifierFlags:(NSUInteger)modifierFlags {
 	modifierFlags = SRCocoaToCarbonFlags(modifierFlags) ;
 	TISInputSourceRef currentKeyboard = TISCopyCurrentKeyboardInputSource();
 	CFDataRef uchr = (CFDataRef)TISGetInputSourceProperty(currentKeyboard, kTISPropertyUnicodeKeyLayoutData);

@@ -151,22 +151,23 @@
 			[path lineToPoint:NSMakePoint(radius+BOOKMARK_HALF_WIDTH, 0 + BOTTOM_MARGIN)] ;
 			[path lineToPoint:NSMakePoint(radius+BOOKMARK_HALF_WIDTH, diameter - TOP_MARGIN)] ;
             [path closePath] ;
-            [path fill] ;
-			[path stroke] ;
 
-			// Draw the round hole near the top of the bookmark
-            [path removeAllPoints] ;
-			[path setLineWidth:(diameter/20)] ;
-#define HOLE_RADIUS (radius/6)
-            [[NSColor whiteColor] setStroke] ;
-            [[NSColor whiteColor] setFill] ;
+			/* Punch a round hole near the top of the bookmark
+             This is done by with a separate bezier path which we first
+             *reverse* and then *append* to the bookmark bezier path.
+             (Prior to BookMacster  1.20.1, this was a solid white cirle.) */
+			NSBezierPath* holePath = [NSBezierPath bezierPath] ;
+            [holePath setLineWidth:(diameter/20)] ;
+#define HOLE_RADIUS (radius*0.28)
 			NSRect holeRect = NSMakeRect(
                                           (radius - HOLE_RADIUS),
-                                          diameter - TOP_MARGIN - radius/2,
+                                          diameter - TOP_MARGIN - radius*0.6,
                                           2*HOLE_RADIUS,
                                           2*HOLE_RADIUS
                                           ) ;
-			[path appendBezierPathWithOvalInRect:holeRect] ;
+			[holePath appendBezierPathWithOvalInRect:holeRect] ;
+            holePath = [holePath bezierPathByReversingPath] ;
+            [path appendBezierPath:holePath] ;
             [path fill] ;
             [path stroke] ;			
 			

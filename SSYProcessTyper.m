@@ -37,8 +37,12 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
 + (SSYProcessTyperType)currentType {
 	ProcessSerialNumber psn = { 0, kCurrentProcess } ;
 	NSDictionary* info = nil ;
+#if NO_ARC
 	info = (NSDictionary*)ProcessInformationCopyDictionary (&psn, kProcessDictionaryIncludeAllInformationMask) ;
-	
+#else
+    info = (__bridge NSDictionary*)ProcessInformationCopyDictionary (&psn, kProcessDictionaryIncludeAllInformationMask) ;
+#endif
+    
     SSYProcessTyperType type ;
     
 	if ([[info objectForKey:@"LSUIElement"] boolValue]) {
@@ -181,6 +185,46 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
             // Sorry, transforming to UIElement or Background requires
             // Mac OS X 10.7 or later.
             return ;
+        }
+
+        // This section was code was moved here in BookMacster 1.20.1, and
+        // further, qualified to only execute prior to Mac OS X 10.9.
+        if (NSAppKitVersionNumber < 1200) {
+            /*SSYDBL*/ NSLog(@"Activating another app (NSAppKitVersion = %f", NSAppKitVersionNumber) ;
+            /*
+             Prior to Mac OS X 10.9, transforming a process' type to
+             LSIUElement, by itself, does not cause the main menu bar to assume
+             a different app.  Neither does this…
+             [NSApp hide:self] ;
+             So I use the following kludge, which will probably work 98% of the time.
+             In my testing, it always worked.  But even if it does not work, it's not
+             too bad; just a little head-scratching by the user. */
+            NSString* ourBundleIdentifier = [[NSBundle mainBundle] bundleIdentifier] ;
+            
+            /* Officially, the order of apps in -[NSWorkspaces runningApplicatons]
+             return value is unspecified.  In practice, I find that the order is roughly
+             the order in which apps were launched (starting with the loginWindow and
+             other system apps we don't want to re-activate), and the last activated.
+             Therefore, we want something from the *end* of the array.  Hence we use
+             a reverse enumerator… */
+            for (NSRunningApplication* otherApp in [[[NSWorkspace sharedWorkspace] runningApplications] reverseObjectEnumerator]) {
+                
+                if (![[otherApp bundleIdentifier] isEqualToString:ourBundleIdentifier]) {
+                    // The next if() is also kind of a heuristic.
+                    if (![otherApp isHidden]) {
+                        /* otherApp may in fact be a faceless app, in particular,
+                         Sheep-Sys-UrlHandler.  But it seems that if we get one of those,
+                         and tell it to "launch", some other, more appropriate app
+                         will get ownership of the menu bar.  That's what we want. */
+                        NSString* otherAppName = [otherApp localizedName] ;
+                        /*SSYDBL*/ NSLog(@"Activating %@", otherAppName) ;
+                        BOOL didActivateSomeOtherApp = [[NSWorkspace sharedWorkspace] launchApplication:otherAppName] ;
+                        if (didActivateSomeOtherApp) {
+                            break ;
+                        }
+                    }
+                }
+            }
         }
     }
     

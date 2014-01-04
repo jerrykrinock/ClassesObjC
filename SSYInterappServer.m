@@ -173,7 +173,21 @@ CFDataRef SSYInterappServerCallBackCreateData(
 				[static_portsInUse addObject:[NSValue valueWithPointer:m_port]] ;
 			}
 			else {
-				errorCode = 287101 ;
+				/* This means that CFMessagePortCreateLocal returned NULL
+                 five times in 5 seconds.  Possibly the answer is in the
+                 source code…
+                 http://www.opensource.apple.com/source/CF/CF-855.11/CFMessagePort.c
+                 where you can see that some NULL returns are preceded by a 
+                 CFLog().  You should ask the user to run Trouble Zipper
+                 and send logs.  Here is what I have so far
+                 * Original code only tried once
+                 * 20131007  User Thomas L., OS X 10.9.  I did not ask for console logs.
+                 * 20131224  User Maarten K., OS X 10.9.  Asked for and received console logs.  They showed no entries.
+                 If this happens again, in BookMacster 1.20 or later, I should
+                 maybe submit a DTS Incident.  Could be a bug in 10.9 because
+                 this code has been used for years with no prior such errors.
+                 */
+                errorCode = 287101 ;
 			}
 		}
 	}

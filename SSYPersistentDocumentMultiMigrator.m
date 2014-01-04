@@ -60,13 +60,27 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 	
 	NSURL* destempUrl = nil ; 	// destemp means "destination/temporary"
 	
-	// Get store metadata for the document to be opened.
-    // If the file indicated at url will not load, Core Data will log an
-    // "error" here.  I @tryed to @catch exceptions, but got nothing.
-    // Oh well, just ignore it.
-	NSDictionary *storeMetadata = [NSPersistentStoreCoordinator metadataForPersistentStoreOfType:nil
-																							 URL:url 
-																						   error:&underlyingError] ;  
+	NSDictionary *storeMetadata = nil ;
+    if ([[NSFileManager defaultManager] fileExistsAtPath:[url path]]) {
+        @try {
+            // Get store metadata for the document to be opened.
+            // If the file indicated at url will not load, Core Data will log an
+            // "error" here.  As you can see I've even @tryed to @catch
+            // exceptions, but that never works.
+            // Oh well, just ignore it.
+            storeMetadata = [NSPersistentStoreCoordinator metadataForPersistentStoreOfType:nil
+                                                                                       URL:url
+                                                                                     error:&underlyingError] ;
+        }
+        @catch (NSException* exception) {
+            // This never happens :(
+            NSLog(@"Warning 514-0011 for %@ : %@", url, exception) ;
+        }
+    }
+    else {
+        NSLog(@"Warning 514-1100 Not Found : %@", url) ;
+    }
+    
 	if (!storeMetadata) {
 		// Besides being invoked when opening an existing document,
 		// -[NSPersistentDocument configurePersistentStoreCoordinatorForURL:ofType:modelConfiguration:storeOptions:error:]

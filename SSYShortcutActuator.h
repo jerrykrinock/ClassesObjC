@@ -37,6 +37,15 @@ extern NSString* const SSYShortcutActuatorDidChangeShortcutsNotification ;
 	BOOL m_isHandlerInstalled ;
 }
 
+/*
+ @brief    Returns a key path in the application's shared user defaults
+ controller in which the key binding for a given selector name is stored.
+ 
+ @details  This is useful if you want to observe changes in key bindings
+ with key value observing.
+ */
++ (NSString*)userDefaultsKeyPathForSelectorName:(NSString*)selectorName ;
+
 /*!
  @brief    
 
