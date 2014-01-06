@@ -5,7 +5,8 @@
 /*!
  @brief    This class implements the delegate of SRRecorderControl,
  and works with SSYShortcutActuator to control global (cross-application)
- keyboard shortcuts.
+ keyboard shortcuts.  Typically, you instantiate it as a custom object in a
+ nib which contains an SRRecorderControl.
 */
 @interface SSYShortcutBackEnd : NSObject {
 	NSString* m_selectorName ;
