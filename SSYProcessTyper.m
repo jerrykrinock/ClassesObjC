@@ -190,7 +190,6 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
         // This section was code was moved here in BookMacster 1.20.1, and
         // further, qualified to only execute prior to Mac OS X 10.9.
         if (NSAppKitVersionNumber < 1200) {
-            /*SSYDBL*/ NSLog(@"Activating another app (NSAppKitVersion = %f", NSAppKitVersionNumber) ;
             /*
              Prior to Mac OS X 10.9, transforming a process' type to
              LSIUElement, by itself, does not cause the main menu bar to assume
@@ -217,7 +216,6 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
                          and tell it to "launch", some other, more appropriate app
                          will get ownership of the menu bar.  That's what we want. */
                         NSString* otherAppName = [otherApp localizedName] ;
-                        /*SSYDBL*/ NSLog(@"Activating %@", otherAppName) ;
                         BOOL didActivateSomeOtherApp = [[NSWorkspace sharedWorkspace] launchApplication:otherAppName] ;
                         if (didActivateSomeOtherApp) {
                             break ;

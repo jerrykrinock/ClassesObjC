@@ -136,15 +136,12 @@
             error = SSYMakeError(529484, @"Attempted Cross-Home in Firefox extension") ;
         }
         else {
-            /*SSYDBL*/ NSLog(@"Executing for NOT in Firefox") ;
             // OK, we're not in Firefox
             NSString* tempPath = [[NSFileManager defaultManager] temporaryFilePath] ;
 #if CPH_TASKMASTER_AVAILABLE
-            /*SSYDBL*/ NSLog(@"Doing TaskMaster!!") ;
             ok = [[CPHTaskmaster sharedTaskmaster] copyPath:filepathProfilesIni
                                                      toPath:tempPath
                                                     error_p:&error] ;
-            /*SSYDBL*/ NSLog(@"ok=%hhd, error : %@", ok, error) ;
 #else
             ok = [[NSFileManager defaultManager]  copyItemAtPath:filepathProfilesIni
                                                           toPath:tempPath
@@ -172,7 +169,6 @@
     
 end:
     if (error && error_p) {
-        /*SSYDBL*/ NSLog(@"25398 Returning error %@", error) ;
         *error_p = error ;
     }
     
@@ -322,7 +318,6 @@ end:;
         goto end ;
     }
 	
-    /*SSYDBL*/ NSLog(@"We have no error today") ;
 	if (profilesIniContents) {
 		NSScanner* scanner = [[NSScanner alloc] initWithString:profilesIniContents] ;
         [scanner setCharactersToBeSkipped:nil] ;
@@ -426,7 +421,6 @@ end:;
 		*error_p = error ;
 	}
 	
-    /*SSYDBL*/ NSLog(@"Returning profileName = %@", profileName) ;
     return profileName ;
 }
 
