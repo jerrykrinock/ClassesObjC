@@ -42,7 +42,7 @@
  + (NSString*)compactUuid {
 	CFUUIDRef cfUUID = CFUUIDCreate(kCFAllocatorDefault) ;
 	CFUUIDBytes uuidBytes = CFUUIDGetUUIDBytes(cfUUID) ;
-     CFRelease(cfUUID) ;
+    CFRelease(cfUUID) ;
 	NSData* data = [NSData dataWithBytes:(const void*)&uuidBytes
 								  length:16] ;
 	NSMutableString* s = [NSMutableString stringWithString:[data stringBase64Encoded]] ;

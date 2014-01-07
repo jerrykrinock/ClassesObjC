@@ -115,7 +115,7 @@
 	NSString* contents = [[NSString alloc] initWithContentsOfFile:filepathProfilesIni
                                                                 usedEncoding:NULL
                                                                        error:NULL] ;
-	if (!contents  && ![homePath isEqualToString:NSHomeDirectory()]) {
+    if (!contents  && ![homePath isEqualToString:NSHomeDirectory()]) {
         // That second qualification above was added in BookMacster 1.13.2,
         // so that we can handle having the profiles.ini file not exist at this
         // at this point, if we're talking about this user's home bookmarks.
@@ -124,37 +124,55 @@
 		// where we don't have read permission.
 		// Try copying the file to a temporary location using
 		// a privileged-if-necessary Helper tool
-		NSString* tempPath = [[NSFileManager defaultManager] temporaryFilePath] ;
+
+        // Make sure we're running in an app such as BookMacster which contains
+        // all of the code required to use CPHTaskmaster, and also contins its
+        // Helper Tool.  If we are in a Firefox extension, crashers are ahead,
+        // so we need to exit.
+        NSString* executablePath = [[NSBundle mainBundle] executablePath] ;
+        NSString* executableName = [executablePath lastPathComponent] ;
+        if ([[executableName lowercaseString] hasPrefix:@"firefox"]) {
+            NSLog(@"Internal Error 620-5951") ;
+            error = SSYMakeError(529484, @"Attempted Cross-Home in Firefox extension") ;
+        }
+        else {
+            /*SSYDBL*/ NSLog(@"Executing for NOT in Firefox") ;
+            // OK, we're not in Firefox
+            NSString* tempPath = [[NSFileManager defaultManager] temporaryFilePath] ;
 #if CPH_TASKMASTER_AVAILABLE
-		ok = [[CPHTaskmaster sharedTaskmaster] copyPath:filepathProfilesIni
-                                                 toPath:tempPath
-                                                error_p:&error] ;
+            /*SSYDBL*/ NSLog(@"Doing TaskMaster!!") ;
+            ok = [[CPHTaskmaster sharedTaskmaster] copyPath:filepathProfilesIni
+                                                     toPath:tempPath
+                                                    error_p:&error] ;
+            /*SSYDBL*/ NSLog(@"ok=%hhd, error : %@", ok, error) ;
 #else
-		ok = [[NSFileManager defaultManager]  copyItemAtPath:filepathProfilesIni
-													  toPath:tempPath
-													   error:&error] ;
+            ok = [[NSFileManager defaultManager]  copyItemAtPath:filepathProfilesIni
+                                                          toPath:tempPath
+                                                           error:&error] ;
 #endif
-		if (!ok) {
-			goto end ;
-		}
-		
-		// Now try reading the copied temporary file
-		contents = [[NSString alloc] initWithContentsOfFile:tempPath
-                                               usedEncoding:NULL
-                                                      error:NULL] ;
-		
-		// Delete the temporary file
-		BOOL trivialOk = [[NSFileManager defaultManager] removeItemAtPath:tempPath
-                                                                    error:&error] ;
-		if (!trivialOk) {
-			// Unable to delete temporary file.  Unimportant error.
-			// Do not display to user, just log it.
-			NSLog(@"Internal Error 635-8292 %@", [error longDescription]) ;
-		}
+            if (!ok) {
+                goto end ;
+            }
+            
+            // Now try reading the copied temporary file
+            contents = [[NSString alloc] initWithContentsOfFile:tempPath
+                                                   usedEncoding:NULL
+                                                          error:NULL] ;
+            
+            // Delete the temporary file
+            BOOL trivialOk = [[NSFileManager defaultManager] removeItemAtPath:tempPath
+                                                                        error:&error] ;
+            if (!trivialOk) {
+                // Unable to delete temporary file.  Unimportant error.
+                // Do not display to user, just log it.
+                NSLog(@"Internal Error 635-8292 %@", [error longDescription]) ;
+            }
+        }
 	}
     
 end:
     if (error && error_p) {
+        /*SSYDBL*/ NSLog(@"25398 Returning error %@", error) ;
         *error_p = error ;
     }
     
@@ -304,6 +322,7 @@ end:;
         goto end ;
     }
 	
+    /*SSYDBL*/ NSLog(@"We have no error today") ;
 	if (profilesIniContents) {
 		NSScanner* scanner = [[NSScanner alloc] initWithString:profilesIniContents] ;
         [scanner setCharactersToBeSkipped:nil] ;
@@ -369,8 +388,12 @@ end:;
                         NSLog(@"Internal Error 502-9595 for %@", filepathProfilesIni) ;
                     }
                     
-                    if (strcmp([thisFullPath fileSystemRepresentation], [path fileSystemRepresentation]) == 0) {
-                        profileName = thisProfileName ;
+                    const char* path1 = [thisFullPath fileSystemRepresentation] ;
+                    const char* path2 = [path fileSystemRepresentation] ;
+                    if (path1 && path2) {
+                        if (strcmp(path1, path2) == 0) {
+                            profileName = thisProfileName ;
+                        }
                     }
                 }
                 
@@ -403,8 +426,10 @@ end:;
 		*error_p = error ;
 	}
 	
-	return profileName ;
-    
+    /*SSYDBL*/ NSLog(@"Returning profileName = %@", profileName) ;
+    return profileName ;
+}
+
 #if 0
     // Old code which is 99% simpler but only works for 99+% of users
     /*
@@ -443,7 +468,6 @@ DEFUNCT CODE:
         return extractedProfileName ;
     }
 #endif
-}
 
 
 @end
