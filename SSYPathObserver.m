@@ -267,7 +267,7 @@ void handleUSR1(NSInteger signum) {
 							  [self kqueueFileDescriptor],  // Our kqueue
 							  &myEvent,                     // list of events we want to change, const struct kevent
 							  1,                            // number of items in the above list, int
-							  NULL,                         // list of events that he kqueue is reporting, struct kevent
+							  NULL,                         // list of events that the kqueue is reporting, struct kevent
 							  0,                            // We do not want any pending events
 							  NULL                          // timeout, const struct timespec
 							  ) ;

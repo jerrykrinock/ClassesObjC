@@ -61,12 +61,19 @@ NSString* const SSYDocFileObserverErrorDomain = @"SSYDocFileObserverErrorDomain"
 		
 		if ([[NSFileManager defaultManager] fileIsPermanentAtPath:path]) {		
 			NSError* underlyingError ;
-#if 0
-#warning Doc file is observer is being overly sensitive
-			NSInteger watchFlags = (SSYPathObserverChangeFlagsRename | SSYPathObserverChangeFlagsData | SSYPathObserverChangeFlagsAttributes) ;
-#else
-			NSInteger watchFlags = SSYPathObserverChangeFlagsRename ;
-#endif
+
+			/*
+             Test results on 2014-01-08
+             When file is updated by Dropbox, you only get one change flag,
+             *  SSYPathObserverChangeFlagsRename    = 0x20
+             When file is updated by ChronoSync, you get the sume of two change flags,
+             *  SSYPathObserverChangeFlagsDelete    = 0x01
+             *  SSYPathObserverChangeFlagsLinkCount = 0x10
+             The following was changed in BookMacster 1.20.2, to catch updates
+             by both Dropbox and ChronoSync.
+             */
+            NSInteger watchFlags = (SSYPathObserverChangeFlagsRename | SSYPathObserverChangeFlagsDelete) ;
+
 			ok = [[self pathObserver] addPath:path
 								   watchFlags:watchFlags
 								 notifyThread:nil
@@ -105,14 +112,14 @@ end:
 }
 
 - (oneway void)release {
-	// Make sure that our being self-retained does not keep us from
-	// being deallocced.  The default behavior or -release is to
-	// invoke -dealloc at this point if retainCount==1.  But if we're
-	// self-retained by a timer, we should invoke dealloc at this point
-	// when retainCount==2.
-	if (([self retainCount] == 2) && m_retainedByTimer) {
+	// Make sure that our being self-retained does not keep us from being
+	// deallocced.  Below, -[super release] will invoke -dealloc if
+	// retainCount==1.  But we don't want our being self-retained by a timer
+	// to affect that retain count for purposes of dealloc.  So if we're in
+    // that dealloc situation, we need to cancel the performSelector.
+	if (([self retainCount] == 2) && m_retainedByPerformSelector) {
 		// 
-		m_retainedByTimer = NO ;
+		m_retainedByPerformSelector = NO ;
         // The following line has a bug fixed in BookMacster 1.17.  Prior to
         // that, @selector(analyzePathChange:) was lacking the colon!
 		[NSObject cancelPreviousPerformRequestsWithTarget:self
@@ -121,7 +128,7 @@ end:
 		// But we don't invoke -dealloc directly.  The above cancellation
 		// will send us a -release (since the timer retains us) which
 		// will cause this method to be re-entered.  Upon re-entry,
-		// m_retainedByTimer will be NO, so this branch will not execute,
+		// m_retainedByPerformSelector will be NO, so this branch will not execute,
 		// but super will be invoked, with a retainCount of 2, which will
 		// reduce the retain count to 1.  When super returns, we will execute
 		// from this comment, invoking super a second time, which, because
@@ -143,7 +150,7 @@ end:
 - (void)pathChangedNote:(NSNotification*)note {
 	// No need to look at flags since we registered for only SSYPathObserverChangeFlagsRename.
 	
-#if 0
+#if 11
 #warning Debugging SSYDocFileObserver
 	NSLog(@"Received notification of filesystem change:\n"
 		  "   Path:           %@\n"
@@ -156,7 +163,7 @@ end:
 		  [[note userInfo] objectForKey:SSYPathObserverUserInfoKey]) ;
 #endif
 	
-	m_retainedByTimer = YES ;
+	m_retainedByPerformSelector = YES ;
 	
 	[self performSelector:@selector(analyzePathChange:)
 			   withObject:[note userInfo]
@@ -164,7 +171,7 @@ end:
 }
 
 - (void)analyzePathChange:(NSDictionary*)userInfoFromPathObserver {
-	m_retainedByTimer = NO ;
+	m_retainedByPerformSelector = NO ;
 	
 	NSMutableDictionary* userInfo = [[NSMutableDictionary alloc] initWithObjectsAndKeys:
 									 [self originalURL], SSYDocFileOriginalURLKey,

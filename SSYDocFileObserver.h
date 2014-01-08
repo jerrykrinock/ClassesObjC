@@ -73,12 +73,21 @@ extern NSString* const SSYDocFileObserverErrorDomain ;
  for an addition, using either kqueue or FSEvents, but it seems that a signal
  or status output from the Dropbox client app saying "I'm done now and my
  queue is empty" would be a much nicer solution.
+ 
+ * * *
+ 
+ This class was changed in BookMacster 1.20.2, by adding a new kqueue flag,
+ SSYPathObserverChangeFlagsDelete (NOTE_DELETE) to the existing kqueue flag
+ SSYPathObserverChangeFlagsRename (NOTE_RENAME) as the change criteria which
+ are watched for.  This makes the change detection more sensitive.  In
+ particular, it now detects file updates by ChronoSync in addition to file
+ updates by Dropbox.
  */
 @interface SSYDocFileObserver : NSObject {
 	NSDocument* m_document ; // weak reference
 	SSYPathObserver* m_pathObserver ;
 	NSURL* m_originalURL ;
-	BOOL m_retainedByTimer ;
+	BOOL m_retainedByPerformSelector ;
 }
 
 /*!
