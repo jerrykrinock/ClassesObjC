@@ -150,7 +150,7 @@ end:
 - (void)pathChangedNote:(NSNotification*)note {
 	// No need to look at flags since we registered for only SSYPathObserverChangeFlagsRename.
 	
-#if 11
+#if 0
 #warning Debugging SSYDocFileObserver
 	NSLog(@"Received notification of filesystem change:\n"
 		  "   Path:           %@\n"
