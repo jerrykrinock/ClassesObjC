@@ -55,8 +55,11 @@ extern NSString* const constKeyActionValue ;
  worry about slowing your process down due to too much drawing.
  (Run such a loop, then redefine PROGRESS_UPDATE_PERIOD to a
  few microseconds, retest and you'll see what I mean.)
- Why doesn't Apple build such a throttle into
- NSProgressIndicator?
+ 
+ SET MAX VALUE FIRST, THEN DOUBLE VALUE
+ 
+ Setting or re-setting the maxValue of an SSYProgressView may cause the
+ progress bar to disappear until the doubleValue is set or re-set.
 */
 @interface SSYProgressView : NSControl {
 	NSProgressIndicator* _progBar ;
