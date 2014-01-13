@@ -61,6 +61,9 @@ NSString* const constKeyRating = @"rating" ;
     return self;
 }
 
+#if (__ppc__)
+#define NO_ARC 1
+#else
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1060
 #define NO_ARC 1
 #else
@@ -68,6 +71,7 @@ NSString* const constKeyRating = @"rating" ;
 #define NO_ARC 0
 #else
 #define NO_ARC 1
+#endif
 #endif
 #endif
 
@@ -207,7 +211,7 @@ NSString* const constKeyRating = @"rating" ;
 		BOOL hasRemoveXButton = (removeXImageWidth > 0 ) ;
 		if (hasRemoveXButton) {
 			[self addToolTipRect:NSMakeRect(0.0, 0.0, removeXImageWidth, [self bounds].size.height)
-						   owner:@"Reset to 'Unrated'"
+						   owner:@"Reset to 'Unrated'"  // We can get away with not retaining this because it is a constant string.
 						userData:nil] ;
 		}
 	}
