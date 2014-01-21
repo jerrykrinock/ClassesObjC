@@ -97,8 +97,7 @@
 	for( x = 0; x < itemCount; x++ ) {
 		NSTabViewItem*		theItem = [ibOutlet_tabView tabViewItemAtIndex:x];
 		NSString*			theIdentifier = [theItem identifier];
-		NSString*			theLabel = [self localizeString:[theItem label]] ;
-		
+        NSString*			theLabel = [self localizeString:[theItem label]] ;
 		[itemsList setObject:theLabel forKey:theIdentifier];
 		
 		// Select the first tab view item which is a "real" item

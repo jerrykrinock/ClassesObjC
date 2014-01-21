@@ -220,7 +220,8 @@ static SSYMOCManager* sharedMOCManager = nil ;
                }
 		   }
 		   
-		   if (ok) {
+            // Here is where option journal_mode gets used
+            if (ok) {
                // Add persistent store to it
 			   persistentStore = [newPSC addPersistentStoreWithType:NSSQLiteStoreType
 													  configuration:nil
