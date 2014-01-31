@@ -625,12 +625,15 @@ end:;
 								   stderrData_p:&stderrData
 										timeout:3.0
 										error_p:&error] ;
-	// We allowed 3.0 seconds because it is important to unload jobs before removing their
-	// plist files.  Otherwise you can't unload it due to "no such file or directory".
+	// We allowed 3.0 seconds because it is important to unload jobs before
+    // removing their plist files.  Otherwise you can't unload it due to
+	// "no such file or directory".
 
 	// If there were no loaded jobs matching the given glob, then at this
-	// point we will have result=0, error=nil, and
-	// stderr=launchctl: Couldn't stat("/path/to/*whatever*.plist"): No such file or directory
+	// point we will have result=1 (OS X 10.9) or result=0 (earlier OS X
+    // versions??), error=nil, and stderr will be
+	//   launchctl: Couldn't stat("/path/to/*whatever*.plist"):
+    //              No such file or directory
 
 	// Uninstall (Remove .plist file)
 	if (result == 0) {

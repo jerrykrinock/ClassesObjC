@@ -7,6 +7,7 @@
 //
 
 #import "GCUndoManager.h"
+#import <objc/runtime.h>
 
 // this proxy object is returned by -prepareWithInvocationTarget: if GCUM_USE_PROXY is 1. This provides a similar behaviour to NSUndoManager
 // on 10.6 so that a wider range of methods can be submitted as undo tasks. Unlike 10.6 however, it does not bypass um's -forwardInvocation:
@@ -610,7 +611,17 @@
 
 #pragma mark -
 #pragma mark - private NSUndoManager API
+#if 11
+#warning Fixing Graham's Private Stuff
+void doNothingIMP(id self, SEL _cmd, NSNotification* note) {
+	NSLog(@"Nothing doing!");
+}
 
++ (void)load {
+    SEL aSEL = NSSelectorFromString(@"_processEndOfEventNotification:") ;
+    class_addMethod(self, aSEL, (IMP) doNothingIMP, "v@:@");
+}
+#else
 - (void)				_processEndOfEventNotification:(NSNotification*) note
 {
 #pragma unused(note)
@@ -618,7 +629,7 @@
 	// private API invoked by NSDocument before a document is saved. Does nothing, but required for NSDocument compatibility.
 	//NSLog(@"_processEndOfEventNotification: %@", note );
 }
-
+#endif
 
 
 #pragma mark -

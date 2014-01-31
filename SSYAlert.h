@@ -774,6 +774,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 				   message:(NSString*)msg
 			  buttonsArray:(NSArray*)buttonsArray ;
 
+
 #pragma mark * Public Methods For Setting Views
 
 /*!

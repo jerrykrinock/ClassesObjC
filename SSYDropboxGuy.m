@@ -255,7 +255,7 @@ NSString* const constFileExtension = @"db" ;
 		// on my old 32-bit Mac Mini, path will at this point be instead
 		// /Users/jk/Cloud/dropbox/dropbox/DeleteTest.bkmslf.  The same 
 		// thing happens in BookMacster-Worker, where the path is obtained
-		// from -[BkmxDocumentController pathOfDocumentWithUuid:::], which
+		// from -[BkmxDocumentController pathOfDocumentWithUuid::::], which
 		// gets it from a stored alias record.
 		// So if that didn't work, we morph and retest it.
 		NSMutableString* morphedPath = [path mutableCopy] ;
