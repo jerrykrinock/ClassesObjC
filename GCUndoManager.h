@@ -145,7 +145,7 @@ GCUndoTaskCoalescingKind;
 
 // private NSUndoManager API for compatibility
 
-- (void)				_processEndOfEventNotification:(NSNotification*) note;
+// Removed by Jerry - (void)				_processEndOfEventNotification:(NSNotification*) note;
 
 #pragma mark -
 // additional API
