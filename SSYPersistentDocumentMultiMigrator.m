@@ -7,7 +7,7 @@
 #import "NSError+Recovery.h"
 #import "NSBundle+MainApp.h"
 #import "NSDocument+SSYAutosaveBetter.h"
-
+#import "NSPersistentDocument+SSYMetadata.h"
 
 NSString* const SSYPersistentDocumentMultiMigratorErrorDomain = @"SSYPersistentDocumentMultiMigratorErrorDomain" ;
 NSString* const SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification = @"SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification" ;
@@ -68,7 +68,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
             // "error" here.  As you can see I've even @tryed to @catch
             // exceptions, but that never works.
             // Oh well, just ignore it.
-            storeMetadata = [NSPersistentStoreCoordinator metadataForPersistentStoreOfType:nil
+            storeMetadata = [NSPersistentStoreCoordinator metadataForPersistentStoreOfType:NSSQLiteStoreType
                                                                                        URL:url
                                                                                      error:&underlyingError] ;
         }
@@ -77,8 +77,10 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
             NSLog(@"Warning 514-0011 for %@ : %@", url, exception) ;
         }
     }
-    else {
-        NSLog(@"Warning 514-1100 Not Found : %@", url) ;
+    
+	if (!storeMetadata) {
+        // Correct method failed.  Try our cheating method.
+        storeMetadata = [NSPersistentDocument metadataAtPath:[url path]] ;
     }
     
 	if (!storeMetadata) {
@@ -89,7 +91,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 		// in this case, and therefore we no-op.
 		goto end ;
 	}
-	
+    
 	// Read the "VersionInfo" plist.
 	NSString* momdPath = [[NSBundle mainAppBundle] pathForResource:momdName
 														 ofType:@"momd"] ;

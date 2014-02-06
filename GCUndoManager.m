@@ -614,7 +614,6 @@
 #if 11
 #warning Fixing Graham's Private Stuff
 void doNothingIMP(id self, SEL _cmd, NSNotification* note) {
-	NSLog(@"Nothing doing!");
 }
 
 + (void)load {

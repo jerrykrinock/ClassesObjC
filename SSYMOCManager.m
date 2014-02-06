@@ -13,6 +13,7 @@
 #import "NSBundle+SSYMotherApp.h"
 #import "NSBundle+MainApp.h"
 #import "NSDictionary+SimpleMutations.h"
+#import "NSPersistentStoreCoordinator+RollbackJournaling.h"
 
 
 NSString* const constKeyMOC = @"moc" ;
@@ -483,12 +484,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
     NSDictionary* options = nil ;
     if ([type isEqualToString:NSSQLiteStoreType]) {
         if (useLegacyRollbackJournaling) {
-            NSDictionary* sqlitePragmas = [NSDictionary dictionaryWithObjectsAndKeys:
-                                           @"DELETE", @"journal_mode",
-                                           nil] ;
-            options = [NSDictionary dictionaryWithObjectsAndKeys:
-                       sqlitePragmas, NSSQLitePragmasOption,
-                       nil] ;
+            options = [NSPersistentStoreCoordinator dictionaryByAddingSqliteRollbackToDictionary:nil] ;
         }
     }
 
