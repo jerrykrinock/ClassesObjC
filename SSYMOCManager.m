@@ -13,7 +13,7 @@
 #import "NSBundle+SSYMotherApp.h"
 #import "NSBundle+MainApp.h"
 #import "NSDictionary+SimpleMutations.h"
-#import "NSPersistentStoreCoordinator+RollbackJournaling.h"
+#import "NSPersistentStoreCoordinator+PatchRollback.h"
 
 
 NSString* const constKeyMOC = @"moc" ;
