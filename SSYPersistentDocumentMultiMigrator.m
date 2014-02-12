@@ -63,11 +63,22 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 	NSDictionary *storeMetadata = nil ;
     if ([[NSFileManager defaultManager] fileExistsAtPath:[url path]]) {
         @try {
-            // Get store metadata for the document to be opened.
-            // If the file indicated at url will not load, Core Data will log an
-            // "error" here.  As you can see I've even @tryed to @catch
-            // exceptions, but that never works.
-            // Oh well, just ignore it.
+            /* Get store metadata for the document to be opened.
+             If the file indicated at url will not load, Core Data will log an
+             "error" here.  As you can see I've even @tryed to @catch
+             exceptions, but that never works.  Instead, objc_exception_throw
+             is invoked on a stack like this…
+             #0	in objc_exception_throw ()
+             #1	in -[NSSQLiteConnection prepareSQLStatement:] ()
+             #2	in -[NSSQLConnection fetchMetadata] ()
+             #3	in -[NSSQLCore _loadAndSetMetadata] ()
+             #4	in -[NSSQLCore loadMetadata:] ()
+             #5	in +[NSSQLCore metadataForPersistentStoreWithURL:error:] ()
+             #6	in +[NSPersistentStoreCoordinator metadataForPersistentStoreOfType:URL:error:] ()
+             #7	in +[SSYPersistentDocumentMultiMigrator migrateIfNeededStoreAtUrl:storeOptions:storeType:momdName:document:error_p:] at /Users/jk/Documents/Programming/ClassesObjC/SSYPersistentDocumentMultiMigrator.m:71
+             and something like the following gets logged to the console:
+             2014-02-11 14:33:55.030 MyApp[39446:303] CoreData: error: (14) I/O error for database at /Users/jk/Library/Application Support/BookMacster/Bookmarkshelf Documents/jk-01.bkmslf.  SQLite error code:14, 'unable to open database file'
+             */
             storeMetadata = [NSPersistentStoreCoordinator metadataForPersistentStoreOfType:NSSQLiteStoreType
                                                                                        URL:url
                                                                                      error:&underlyingError] ;
@@ -80,9 +91,17 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
     
 	if (!storeMetadata) {
         // Correct method failed.  Try our cheating method.
+        // TODO: Maybe we should try this method first, because it is more
+        // likely to work, and does not log crap to the console if it does
+        // not work.
         storeMetadata = [NSPersistentDocument metadataAtPath:[url path]] ;
+#if DEBUG
+        if (storeMetadata) {
+            NSLog(@"Succeeded where -[NSPersistentStore metadataForPersistentStoreOfType:URL:error:] failed.  Got: %@", storeMetadata) ;
+        }
+#endif
     }
-    
+
 	if (!storeMetadata) {
 		// Besides being invoked when opening an existing document,
 		// -[NSPersistentDocument configurePersistentStoreCoordinatorForURL:ofType:modelConfiguration:storeOptions:error:]
