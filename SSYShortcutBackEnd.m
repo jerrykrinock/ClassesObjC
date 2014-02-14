@@ -6,7 +6,6 @@
 @implementation SSYShortcutBackEnd
 
 @synthesize selectorName = m_selectorName ;
-@synthesize ignoreThisAppValidation = m_ignoreThisAppValidation ;
 
 - (void)dealloc {
 	[m_selectorName release] ;
@@ -14,23 +13,14 @@
 	[super dealloc] ;
 }
 
-- (void)awakeFromNib {
-	// Safely invoke super
-	[self safelySendSuperSelector:_cmd
-                   prettyFunction:__PRETTY_FUNCTION__
-						arguments:nil] ;
-	
-	// Do this with a delay, in case we get -awakeFromNib before the
-	// window containing the SRRecorderControl.  In that case, assuming
-	// that -setIgnoreThisAppValidation is set in the window controller's
-	// -awakeFromNib, our -ignoreThisAppValidation has not been set yet.
-	[self performSelector:@selector(propagateIgnoreThisAppValidation)
-			   withObject:nil
-			   afterDelay:0.0] ;
+- (BOOL)ignoreThisAppValidation {
+    return m_ignoreThisAppValidation ;
 }
 
-- (void)propagateIgnoreThisAppValidation {
-	[recorderControl setIgnoreThisValidation:[self ignoreThisAppValidation]] ;
+- (void)setIgnoreThisAppValidation:(BOOL)yn {
+    m_ignoreThisAppValidation = yn ;
+    /*SSYDBL*/ NSLog(@"Setting itav to %hhd in %@", yn, recorderControl) ;
+	[recorderControl setIgnoreThisValidation:yn] ;
 }
 
 - (void)awakeWithSelectorName:(NSString*)selectorName {
