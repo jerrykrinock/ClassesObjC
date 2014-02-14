@@ -19,7 +19,6 @@
 
 - (void)setIgnoreThisAppValidation:(BOOL)yn {
     m_ignoreThisAppValidation = yn ;
-    /*SSYDBL*/ NSLog(@"Setting itav to %hhd in %@", yn, recorderControl) ;
 	[recorderControl setIgnoreThisValidation:yn] ;
 }
 
