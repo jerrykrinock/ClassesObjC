@@ -97,7 +97,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
         storeMetadata = [NSPersistentDocument metadataAtPath:[url path]] ;
 #if DEBUG
         if (storeMetadata) {
-            NSLog(@"Succeeded where -[NSPersistentStore metadataForPersistentStoreOfType:URL:error:] failed.  Got: %@", storeMetadata) ;
+            NSLog(@"Succeeded after -[NSPersistentStore metadataForPersistentStoreOfType:URL:error:] failed.  Got: %@", storeMetadata) ;
         }
 #endif
     }

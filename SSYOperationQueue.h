@@ -82,6 +82,8 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
 + (BOOL)operationGroupsSameInfo:(NSDictionary*)info
 					  otherInfo:(NSDictionary*)otherInfo ;
 
+- (NSError*)error ;
+
 /*!
  @brief    Any error encountered during linked operations.
  
@@ -101,11 +103,14 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  scriptError, if any, the scriptError's scriptErrorNumber and scriptErrorString
  will be set to, respectively, this error's code and its localizedDescription.
  */
-- (NSError*)error ;
-
 - (void)setError:(NSError*)error
   operationGroup:(NSString*)operationGroup ;
 
+/*
+ @brief    Invokes -setError:operationGroup:, passing as operationGroup the
+ operationGroup of a given operation
+ @details  Just a different way of invoking -setError:operationGroup:. 
+ */
 - (void)setError:(NSError*)error
 	   operation:(SSYOperation*)operation ;
 	
@@ -206,7 +211,7 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  @param    info  A mutable dictionary which the method selectors may access
  to get arguments and return values.  If an error occurs during execution of
  any of your method selectors, the error registered by your method selector
- will be returned as the value of the key constKeyLinkedOperationError in 
+ will be returned as the value of the key constKeySSYOperationQueueError in
  this dictionary.
  @param    block  YES if you would like this method to block until all
  operations have been completed.  NO if you would like it to return
