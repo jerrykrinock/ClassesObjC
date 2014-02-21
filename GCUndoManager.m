@@ -628,7 +628,6 @@ void doNothingIMP(id self, SEL _cmd, NSNotification* note) {
     NSString* suffix = @"EndOfEventNotification:" ;
     NSString* selectorName = [prefix stringByAppendingString:suffix] ;
     SEL aSEL = NSSelectorFromString(selectorName) ;
-    /*SSYDBL*/ NSLog(@"Added selector: %@", NSStringFromSelector(aSEL)) ;
     class_addMethod(self, aSEL, (IMP) doNothingIMP, "v@:@");
 }
 
