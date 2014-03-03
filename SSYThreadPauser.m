@@ -1,5 +1,6 @@
 #import "SSYThreadPauser.h"
 #import "NSInvocation+Quick.h"
+#import "SSY_ARC_OR_NO_ARC.h"
 
 NSString* const SSYThreadPauserKeyLock = @"SSYThreadPauserKeyLock" ;
 NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
@@ -11,7 +12,9 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
 @implementation SSYThreadPauser
 
 - (void)beginWorkWithInfo:(NSDictionary*)info {
+#if NO_ARC
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
+#endif
 	NSConditionLock* lock = [info objectForKey:SSYThreadPauserKeyLock] ;
  	[lock lock] ;
  	NSInvocation* invocation = [info objectForKey:SSYThreadPauserKeyInvocation] ;
@@ -20,7 +23,9 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
 	[invocation invoke] ;
 	
 	[lock unlockWithCondition:WORK_IS_DONE] ;
+#if NO_ARC
 	[pool drain] ;
+#endif
 }
 
 
@@ -70,10 +75,13 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
 	}
 	else {
 		// Default if no workerThread given is to create one
-		workerThread = [[[NSThread alloc] initWithTarget:instance
-												selector:@selector(beginWorkWithInfo:)
-												  object:info] autorelease] ;
-		// Name the thread, to help in debugging.
+		workerThread = [[NSThread alloc] initWithTarget:instance
+                                               selector:@selector(beginWorkWithInfo:)
+                                                 object:info] ;
+#if NO_ARC
+		[workerThread autorelease] ;
+#endif
+        // Name the thread, to help in debugging.
 		[workerThread setName:@"Worker created by SSYThreadPauser"] ;
 		[workerThread start] ;
 	}
@@ -86,9 +94,11 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
 	}
 	[workerThread cancel] ;
 	
+#if NO_ARC
 	[instance release] ;
 	[lock release] ;
-	
+#endif
+    
 	return (workFinishedInTime) ;
 }
 

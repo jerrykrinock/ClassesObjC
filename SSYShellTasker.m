@@ -2,6 +2,7 @@
 #import "NSError+InfoAccess.h"
 #import "SSYThreadPauser.h"
 #import "SSYRunLoopTickler.h"
+#import "SSY_ARC_OR_NO_ARC.h"
 
 NSInteger const SSYShellTaskerErrorFailedLaunch = 90551 ;
 NSInteger const SSYShellTaskerErrorTimedOut = 90552  ;
@@ -38,8 +39,9 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 	// To conserve system resources, therefore, we use a local pool here.
 	// For more info, 
 	//	  http://www.cocoabuilder.com/archive/message/cocoa/2002/11/30/51122
+#if NO_ARC
 	NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init] ;
-
+#endif
 	NSString* command = [info objectForKey:constKeySSYShellTaskerCommand] ;
 	NSArray* arguments = [info objectForKey:constKeySSYShellTaskerArguments] ;
 	NSString* inDirectory = [info objectForKey:constKeySSYShellTaskerInDirectory] ;
@@ -77,7 +79,9 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
             }
         }
         [task setEnvironment:taskEnvironment] ;
-        [taskEnvironment release] ;
+#if NO_ARC
+       [taskEnvironment release] ;
+#endif
     }
 	
     if (inDirectory) {
@@ -190,15 +194,18 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 			 forKey:constKeySSYShellTaskerNSError] ;
 	}
 	
+#if NO_ARC
 	[pipeStdin release] ;
 	[pipeStdout release] ;
 	[pipeStderr release] ;
+#endif
 	[[NSNotificationCenter defaultCenter] removeObserver:self
 													name:NSTaskDidTerminateNotification
 												  object:task] ;	
+#if NO_ARC
     [task release] ;
-	
 	[pool release] ;
+#endif
 }
 
 + (NSInteger)doShellTaskCommand:(NSString*)command
@@ -266,8 +273,10 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 		
 	result = [[info objectForKey:constKeySSYShellTaskerResult] integerValue] ;
 
+#if NO_ARC
 	[tasker release] ;
-		
+#endif
+    
 	return result ;
 }
 

@@ -94,7 +94,7 @@ __attribute__((visibility("default"))) @interface SSYShellTasker : NSObject {
  
  
  @param    command  The command, not including its arguments.  A full path to the desired tool
- is recommended.  Example: @"/bin/launchctl"
+ is recommended.  Example: @"/bin/launchctl".  Do *not* quote the path.
  @param    arguments  The array of arguments which should be passed with the command.  Each element
  of the array should be an NSString, one of the space-separated "words" that you would type on the
  command line if you were performing this task via Terminal.app.  For example, to perform the task
