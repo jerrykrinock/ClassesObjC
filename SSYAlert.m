@@ -686,14 +686,14 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			NSString* text = [NSString stringWithFormat:
 							  @"%@ %@.\n\n%@\n%@\n%@\n\n%@",
 							  @"*** Note to user***  It is possible that this file may have some of your private "
-							  @"information in it, bookmarks in particular.  Please skim through it before sending.  "
-							  @"Delete anything which is too private, add a little note in its place, then save this file.\n\n"
+							  @"information in it.  Please skim through it before sending.  "
+							  @"Replace any text you don't want to send with the word 'REDACTED', then save this file.\n\n"
 							  @"To zip this file, select it in Finder, then execute a secondary click.  (A secondary click "
 							  @"means to click it while holding down the 'control' key, or to tap with two fingers if you "
                               @"have a trackpad, or to use the secondary button if you have a multi-button mouse.)  "
 							  @"From the contextual menu which appears, click 'Compress...' "
 							  @"A new file with a name ending in .zip will appear.\n\n"
-							  @"Please send the .zip file to our support crew, and thank you for helping us to support",
+							  @"Please send the .zip file to our support team.  Thank you for helping us to support",
 							  appName,
 							  appVersion,
 							  appVersionString,
