@@ -131,7 +131,6 @@ static SSYSheetManager* sharedSheetManager = nil ;
 
 - (void)tryToDequeueWindow:(NSWindow*)window {
     if ([window attachedSheet] == nil) {
-        /*SSYDBL*/ NSLog(@"Clear!!") ;
         NSInteger windowNumber = [window windowNumber] ;
         NSNumber* windowNumberObject = [NSNumber numberWithInteger:windowNumber] ;
         NSMutableArray* queue = [[self queues] objectForKey:windowNumberObject] ;
@@ -153,9 +152,6 @@ static SSYSheetManager* sharedSheetManager = nil ;
             
             [invocation invoke] ;
         }
-    }
-    else {
-        /*SSYDBL*/ NSLog(@"Whoops, sheet still attached") ;
     }
 }
 
@@ -200,7 +196,6 @@ static SSYSheetManager* sharedSheetManager = nil ;
 	
 	if ([documentWindow attachedSheet] == nil) {
 		// No sheet currently on window.  Begin immediately.
-        /*SSYDBL*/ NSLog(@"Running immediately") ;
 		[NSApp beginSheet:sheet
 		   modalForWindow:documentWindow
 			modalDelegate:modalDelegate
@@ -216,7 +211,6 @@ static SSYSheetManager* sharedSheetManager = nil ;
 		SSYSheetManager* sharedSheetManager = [self sharedSheetManager] ;
 		NSMutableArray* queue = [sharedSheetManager queueForWindow:documentWindow] ;
 		[queue addObject:invocation] ;
-        /*SSYDBL*/ NSLog(@"Added invocation %p to queue, which now has %ld sheets", invocation, (long)[queue count]) ;
 	}
 }
 
