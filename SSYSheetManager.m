@@ -113,37 +113,50 @@ static SSYSheetManager* sharedSheetManager = nil ;
 
 - (void)windowDidEndSheet:(NSNotification*)note {
 	NSWindow* window = [note object] ;
-	NSInteger windowNumber = [window windowNumber] ;
-	NSNumber* windowNumberObject = [NSNumber numberWithInteger:windowNumber] ;
-	NSMutableArray* queue = [[self queues] objectForKey:windowNumberObject] ;
-	if ([queue count] > 0) {
-		NSWindow* sheet = nil ;
-		NSInvocation* invocation = nil ;
-		while ((sheet == nil) && ([queue count] > 0)) {
-			invocation = [[[queue objectAtIndex:0] retain] autorelease] ;
-            // The -retain, -autorelease is so that invocation doesn't get
-            // deallocced when we remove it from queue, 2 lines below…
-			sheet = [self sheetInInvocation:invocation] ;
-			[queue removeObjectAtIndex:0] ;
-		}
+    /* Just hang on here.  It is possible that another sheet, not being managed
+     by us, will try and grab the window to present itself before we do.  One
+     culprit in particular is
+     -[NSSavePanel beginSheetModalForWindow:completionHandler:].  In a conflict
+     between one of our those and one of ours, we will lose.  Our sheet will
+     never be presented, and the user will hear an NSBeep().  ARGHHHH!!!
+     So, starting with BookMacster 1.20.7, we wait here for a 0 second delay,
+     and THEN invoke tryToDequeueWindow: which will only do so if there is not
+     THEN an attached sheet on our window.  If there is, that method will
+     no-op, and then this method will be reinvoked when that other sheet ends,
+     and THEN we'll try this again, and succeed. */
+    [self performSelector:@selector(tryToDequeueWindow:)
+               withObject:window
+               afterDelay:0.0] ;
+}
 
-		if (!sheet) {
-			// The queue does not have any sheets of nonzero size.
-			return ;
-		}
-		
-		// When I first tested this method, the following line began the sheet:
-		//    [invocation invoke]
-		// But in subsequent testing I found that it did not.  So I thought
-		// that, even though this method is triggered by an NSWindowDidEndSheetNotification,
-		// maybe there was still some vestige of the sheet hanging around that
-		// inhibited another sheet from beginning.  So, I changed it to
-		// perform after a delay of 0.0 and that fixed the problem....
-		
-		[invocation performSelector:@selector(invoke)
-						 withObject:nil
-						 afterDelay:0.0] ;
-	}
+- (void)tryToDequeueWindow:(NSWindow*)window {
+    if ([window attachedSheet] == nil) {
+        /*SSYDBL*/ NSLog(@"Clear!!") ;
+        NSInteger windowNumber = [window windowNumber] ;
+        NSNumber* windowNumberObject = [NSNumber numberWithInteger:windowNumber] ;
+        NSMutableArray* queue = [[self queues] objectForKey:windowNumberObject] ;
+        if ([queue count] > 0) {
+            NSWindow* sheet = nil ;
+            NSInvocation* invocation = nil ;
+            while ((sheet == nil) && ([queue count] > 0)) {
+                invocation = [[[queue objectAtIndex:0] retain] autorelease] ;
+                // The -retain, -autorelease is so that invocation doesn't get
+                // deallocced when we remove it from queue, 2 lines below…
+                sheet = [self sheetInInvocation:invocation] ;
+                [queue removeObjectAtIndex:0] ;
+            }
+            
+            if (!sheet) {
+                // The queue does not have any sheets of nonzero size.
+                return ;
+            }
+            
+            [invocation invoke] ;
+        }
+    }
+    else {
+        /*SSYDBL*/ NSLog(@"Whoops, sheet still attached") ;
+    }
 }
 
 - (NSMutableArray*)queueForWindow:(NSWindow*)window {
@@ -187,6 +200,7 @@ static SSYSheetManager* sharedSheetManager = nil ;
 	
 	if ([documentWindow attachedSheet] == nil) {
 		// No sheet currently on window.  Begin immediately.
+        /*SSYDBL*/ NSLog(@"Running immediately") ;
 		[NSApp beginSheet:sheet
 		   modalForWindow:documentWindow
 			modalDelegate:modalDelegate
@@ -202,6 +216,7 @@ static SSYSheetManager* sharedSheetManager = nil ;
 		SSYSheetManager* sharedSheetManager = [self sharedSheetManager] ;
 		NSMutableArray* queue = [sharedSheetManager queueForWindow:documentWindow] ;
 		[queue addObject:invocation] ;
+        /*SSYDBL*/ NSLog(@"Added invocation %p to queue, which now has %ld sheets", invocation, (long)[queue count]) ;
 	}
 }
 

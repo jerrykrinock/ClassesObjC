@@ -1267,9 +1267,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (void)runModalSheetOnWindow:(NSWindow*)documentWindow_
-		   modalDelegate:(id)modalDelegate
-		  didEndSelector:(SEL)didEndSelector
-			 contextInfo:(void*)contextInfo {
+                modalDelegate:(id)modalDelegate
+               didEndSelector:(SEL)didEndSelector
+                  contextInfo:(void*)contextInfo {
 	if (documentWindow_) {
 		[self setButton1IfNeeded] ;
 		
