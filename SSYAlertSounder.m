@@ -72,6 +72,10 @@ static SSYAlertSounder* static_sharedSounder = nil ;
 
 
 - (void)playAlertSoundNamed:(NSString*)name {
+    if (!name) {
+        return ;
+    }
+    
 	// First, see if we've got this sound cached
 	SystemSoundID soundId = [[[self soundIds] objectForKey:name] longValue] ;
 	// Used -longValue because SystemSoundID is a UInt32

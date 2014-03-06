@@ -27,7 +27,8 @@ __attribute__((visibility("default"))) @interface SSYAlertSounder : NSObject {
  @brief    Plays a desired sound
 
  @details  
- @param    name  The name of a sound file, not including the .aiff extension.
+ @param    name  The name of a sound file, not including the .aiff extension,
+ or nil to no-op
 */
 - (void)playAlertSoundNamed:(NSString*)name ;
 
