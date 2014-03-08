@@ -252,6 +252,9 @@ extern NSString* const constKeyActionValue ;
  completion, without adding any new completion, by sending this
  message with both arguments nil.
  
+ If another item with the given verb (-isEqualToString:) already exists in the
+ receiver's list of completions, that prior item will be removed.
+ 
  @param    verb  A localized verb, the task that was completed,
  or nil (see Details).
  @param    result  Additional description of what was done,
