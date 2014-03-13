@@ -58,7 +58,7 @@
 - (NSArray*)weblocFilenamesAndUrlsInPaths:(NSArray*)paths {
 	OSErr err ;
 	FSRef fsRef ;
-	NSInteger fileRef ;
+	ResFileRefNum fileRef ;
 	NSMutableArray* filenamesAndURLs = [NSMutableArray array] ;
 	
 	for (NSString* path in paths) {

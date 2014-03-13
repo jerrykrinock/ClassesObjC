@@ -54,7 +54,6 @@ static NSString* const constKeyMaxWidth = @"MaxWidth" ;
 }
 
 // You could change these if you wanted a different size checkbox
-NSControlSize static const constCheckboxSize = NSSmallControlSize ;
 CGFloat static const constCheckboxWidth = 18.0 ;
 CGFloat static const constCheckboxHeight = 18.0 ;
 // It is possible that I should define only one of the following

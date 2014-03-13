@@ -212,7 +212,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 			NSScriptCommand* scriptCommand = [self scriptCommand] ;
 			NSError* error = [self error] ;
 			if (error) {
-				[scriptCommand setScriptErrorNumber:[error code]] ;
+				[scriptCommand setScriptErrorNumber:(int)[error code]] ;
 				[scriptCommand setScriptErrorString:[error localizedDescription]] ;
 			}		
 			[self setError:nil

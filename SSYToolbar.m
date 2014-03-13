@@ -3,9 +3,6 @@
 NSString* const constBindingToolbarDisplayStyle = @"displayStyle" ;
 static BOOL static_alreadyEntered = NO ;
 
-// Superclass (NSToolbar) properties
-static NSString* const constKeyDisplayMode = @"displayMode" ;
-static NSString* const constKeySizeMode = @"sizeMode" ;
 
 @implementation SSYToolbar
 
@@ -29,16 +26,6 @@ static NSString* const constKeySizeMode = @"sizeMode" ;
 	return ([self sizeMode] == NSToolbarSizeModeSmall) ? SSYToolbarDisplayStyleTextAndSmallIcons : SSYToolbarDisplayStyleTextAndRegularIcons ;
 }
 
-
-#if 0
-//This is not needed?
-+ (NSSet*)keyPathsForValuesAffectingDisplayStyle {
-	return [NSSet setWithObjects:
-			constKeyDisplayMode,
-			constKeySizeMode,
-			nil] ;
-}
-#endif
 
 /*
  The following override is a kludge is to fix a very strange bug:

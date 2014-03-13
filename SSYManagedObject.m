@@ -393,7 +393,7 @@ end:;
 
 - (uint32_t)valuesHash {
 	NSArray* attributeKeys = [[[self entity] attributesByName] allKeys] ;
-	unsigned long valuesHash = 0 ;
+	uint32_t valuesHash = 0 ;
 	for (NSString* key in attributeKeys) {
 #ifdef __LP64__
 		uint32_t aHash = [[self valueForKey:key] hash] & 0x00000000ffffffff ;

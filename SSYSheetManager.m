@@ -119,7 +119,7 @@ static SSYSheetManager* sharedSheetManager = nil ;
      -[NSSavePanel beginSheetModalForWindow:completionHandler:].  In a conflict
      between one of our those and one of ours, we will lose.  Our sheet will
      never be presented, and the user will hear an NSBeep().  ARGHHHH!!!
-     So, starting with BookMacster 1.20.7, we wait here for a 0 second delay,
+     So, starting with BookMacster 1.21, we wait here for a 0 second delay,
      and THEN invoke tryToDequeueWindow: which will only do so if there is not
      THEN an attached sheet on our window.  If there is, that method will
      no-op, and then this method will be reinvoked when that other sheet ends,

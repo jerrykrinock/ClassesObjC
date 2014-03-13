@@ -22,7 +22,7 @@ static SSYAlertSounder* static_sharedSounder = nil ;
 
 - (void)dealloc {
 	for (NSNumber* soundId in [m_soundIds allValues]) {
-		AudioServicesDisposeSystemSoundID([soundId longValue]) ;
+		AudioServicesDisposeSystemSoundID((unsigned int)[soundId longValue]) ;
 	}
 	
 	[m_soundIds release] ;
@@ -77,7 +77,7 @@ static SSYAlertSounder* static_sharedSounder = nil ;
     }
     
 	// First, see if we've got this sound cached
-	SystemSoundID soundId = [[[self soundIds] objectForKey:name] longValue] ;
+	SystemSoundID soundId = (SystemSoundID)[[[self soundIds] objectForKey:name] longValue] ;
 	// Used -longValue because SystemSoundID is a UInt32
 	
 	NSString* path ;

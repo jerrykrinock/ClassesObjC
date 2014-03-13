@@ -231,7 +231,7 @@ end:
 						 @"%@() returned underlying error",
 						 failedFunction] ;
 		*error_p = SSYMakeError(errCode, msg) ;
-		NSError* error_ = [NSError errorWithMacErrorCode:errCode_] ;
+		NSError* error_ = [NSError errorWithMacErrorCode:(OSStatus)errCode_] ;
 		*error_p = [*error_p errorByAddingUnderlyingError:error_] ;
 	}
 	

@@ -127,7 +127,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 - (void)configureForSSYAlertUsage {
 	[self setEditable:NO] ;
 	[self setDrawsBackground:NO] ;
-	[self setSelectable:NO] ;
+    // Changed in BookMacster 1.21.  Why not allow text to be copied?
+	[self setSelectable:YES] ;
 
 	// The next two lines are very important.  Took me many months to learn that,
 	// by default, NSTextViews will resize themselves automatically to accomodate

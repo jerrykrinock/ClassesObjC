@@ -72,7 +72,7 @@ NSString* const SSYDocFileObserverErrorDomain = @"SSYDocFileObserverErrorDomain"
              The following was changed in BookMacster 1.20.2, to catch updates
              by both Dropbox and ChronoSync.
              */
-            NSInteger watchFlags = (SSYPathObserverChangeFlagsRename | SSYPathObserverChangeFlagsDelete) ;
+            uint32_t watchFlags = (SSYPathObserverChangeFlagsRename | SSYPathObserverChangeFlagsDelete) ;
 
 			ok = [[self pathObserver] addPath:path
 								   watchFlags:watchFlags

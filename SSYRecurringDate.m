@@ -52,7 +52,8 @@ NSString* const constKeyMinute = @"minute" ;
 		case SSRecurringDateWildcard:
 			key = @"everyDay" ;
 			break ;
-		default:
+		case 0:
+        default:
 			day = @"Sun" ;
 			break;
 	}

@@ -120,7 +120,9 @@ OSStatus SSYShortcutActuate(
 		UniChar unicodeString[maxStringLength] ;
 		
 		OSStatus status = UCKeyTranslate(keyboardLayout,
-										 keyCode, kUCKeyActionDown, modifierFlags,
+										 keyCode,
+                                         kUCKeyActionDown,
+                                         (unsigned int)modifierFlags,
 										 LMGetKbdType(), 0,
 										 &deadKeyState,
 										 maxStringLength,
@@ -356,9 +358,9 @@ OSStatus SSYShortcutActuate(
         return nil ;
     }
 	
-	int32_t keyCode = [[info objectForKey:constKeyKeyCode] longValue] ;
-	uint32_t modifiers = [[info objectForKey:constKeyModifierFlags] unsignedLongValue] ;
-    modifiers = SRCocoaToCarbonFlags(modifiers) ;
+	int32_t keyCode = (int32_t)[[info objectForKey:constKeyKeyCode] longValue] ;
+	uint32_t modifiers = (uint32_t)[[info objectForKey:constKeyModifierFlags] unsignedLongValue] ;
+    modifiers = (uint32_t)SRCocoaToCarbonFlags(modifiers) ;
 	
 	EventHotKeyID hotKeyID ;
 	EventTypeSpec eventType ;
@@ -366,7 +368,7 @@ OSStatus SSYShortcutActuate(
 	eventType.eventKind = kEventHotKeyPressed ;
 	EventHandlerUPP handler = &SSYShortcutActuate ;
 	
-	hotKeyID.id = ++m_shortcutSerialNumber ;
+	hotKeyID.id = (UInt32)(++m_shortcutSerialNumber) ;
 	EventTargetRef thisAppEventTarget = GetApplicationEventTarget() ;
 	EventHotKeyRef hotKeyRef = NULL ;
 	EventHandlerRef handlerRef = NULL ;

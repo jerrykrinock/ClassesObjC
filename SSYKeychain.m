@@ -133,7 +133,7 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 		struct SecKeychainAttribute attribute ;
 		attribute.tag = kSecServiceItemAttr ;
 		// Being careful here because strlen(0) causes a crash
-		attribute.length = serviceNameC ? strlen(serviceNameC) : 0 ;
+		attribute.length = serviceNameC ? (UInt32)strlen(serviceNameC) : 0 ;
 		attribute.data = (void*)serviceNameC ;
 		
 		struct SecKeychainAttributeList attributeList ;
@@ -179,7 +179,7 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 	struct SecKeychainAttribute attribute ;
 	attribute.tag = kSecServerItemAttr ;
 	// Being careful here because strlen(0) causes a crash
-	attribute.length = hostC ? strlen(hostC) : 0 ;
+	attribute.length = hostC ? (UInt32)strlen(hostC) : 0 ;
 	attribute.data = (void*)hostC ;
 	
 	struct SecKeychainAttributeList attributeList ;
@@ -277,18 +277,18 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 			}
 			
 			const char *hostC = [hostWithSub UTF8String] ;
-			attribute.length = strlen(hostC) ;
+			attribute.length = (UInt32)strlen(hostC) ;
 			attribute.data = (void*)hostC ;
 			// strlen(0) causes a crash but we've already checked that [host length] > 0
 			NSInteger lengthHost = hostC ? strlen(hostC) : 0 ;
 			
 			OSStatus findResult = SecKeychainFindInternetPassword (
 				NULL, // default keychain
-				lengthHost, // server name length
+				(UInt32)lengthHost, // server name length
 				hostC, // server name
-				lengthDomain, // security domain length
+				(UInt32)lengthDomain, // security domain length
 				dom, // security domain
-				lengthUser, // account name length
+				(UInt32)lengthUser, // account name length
 				user, // account name
 				0, // path length
 				NULL, // path
@@ -366,18 +366,18 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 			NSInteger lengthNewPassword = pass ? strlen(pass) : 0 ;
 			OSStatus addResult = SecKeychainAddInternetPassword (
 																 NULL, // default keychain
-																 lengthHost, // server name length
+																 (UInt32)lengthHost, // server name length
 																 host, // server name
-																 lengthDomain, // security domain length
+																 (UInt32)lengthDomain, // security domain length
 																 dom, // security domain
-																 lengthUser, // account name length
+																 (UInt32)lengthUser, // account name length
 																 user, // account name
 																 0, // path length
 																 NULL, // path
 																 port, // port
 																 kSecProtocolTypeHTTP, // protocol
 																 kSecAuthenticationTypeHTTPBasic, // authentication type
-																 lengthNewPassword, // password length
+																 (UInt32)lengthNewPassword, // password length
 																 pass, // password
 																 NULL // item ref
 																 ) ;
@@ -414,15 +414,15 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 		NSInteger accountNameLength = strlen(accountNameC) ;
 		
 		const char* serviceNameC = [serviceName UTF8String] ;
-		attribute.length = strlen(serviceNameC) ;
+		attribute.length = (UInt32)strlen(serviceNameC) ;
 		attribute.data = (void*)serviceNameC ;
 		NSInteger serviceNameLength = serviceNameC ? strlen(serviceNameC) : 0 ;
 		
 		OSStatus findResult = SecKeychainFindGenericPassword (
 															  NULL, // default keychain
-															  serviceNameLength, // server name length
+															  (UInt32)serviceNameLength, // server name length
 															  serviceNameC, // service name
-															  accountNameLength, // account name length
+															  (UInt32)accountNameLength, // account name length
 															  accountNameC, // account name
 															  &passwordLength, // password length
 															  &passwordC, // password
@@ -472,11 +472,11 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 			NSInteger passwordLength = passwordC ? strlen(passwordC) : 0 ;
 			OSStatus addResult = SecKeychainAddGenericPassword (
 																NULL, // default keychain
-																serviceNameLength,
+																(UInt32)serviceNameLength,
 																serviceNameC,
-																accountNameLength,
+																(UInt32)accountNameLength,
 																accountNameC,
-																passwordLength,
+																(UInt32)passwordLength,
 																passwordC,
 																NULL
 																);
@@ -493,7 +493,7 @@ NSString* const SSYKeychainItemRef = @"SSYKeychainItemRef" ;
 	
 	if (password && itemRef) {
 		const char *pass = [password UTF8String] ;
-		OSErr status = SecKeychainItemModifyContent(itemRef, nil, strlen(pass), pass) ;
+		OSErr status = SecKeychainItemModifyContent(itemRef, nil, (UInt32)strlen(pass), pass) ;
 		success = (status == noErr)  ;
 	}
 	

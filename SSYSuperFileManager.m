@@ -293,7 +293,7 @@ BOOL canX = NO ;
 		}
 		else {
 			// See if given groupID can execute it as group
-			uint32_t owningGroupID = [[attributes objectForKey:NSFileGroupOwnerAccountID] unsignedIntegerValue] ;
+			uint32_t owningGroupID = (uint32_t)[[attributes objectForKey:NSFileGroupOwnerAccountID] unsignedIntegerValue] ;
 			if ( (owningGroupID==groupID) && ((posixPermissions & S_IXGRP) != 0) ) {
 				canX = YES ;
 			}

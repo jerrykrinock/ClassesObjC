@@ -860,7 +860,7 @@ end:
 		row = [[NSMutableDictionary alloc] init] ;
 	}
 		
-	NSInteger iColumn  ;
+	int iColumn  ;
 	for (iColumn= 0; iColumn<nColumns; iColumn++) {
 		NSInteger type = sqlite3_column_type(preparedStatement, iColumn) ;
 		// The sqlite3_column_type() routine returns datatype code for the initial data type of the result column.
@@ -1340,7 +1340,7 @@ end:
 	
 	if (result == SQLITE_OK) {
 		// bind attribute object
-		result = sqlite3_bind_blob(preparedStatement, 1, [blobData bytes], [blobData length], SQLITE_TRANSIENT) ;
+		result = sqlite3_bind_blob(preparedStatement, 1, [blobData bytes], (int)[blobData length], SQLITE_TRANSIENT) ;
 		if (result != SQLITE_OK) {
 			error = [self makeErrorWithAppCode:453043
 									sqliteCode:result
@@ -1482,7 +1482,7 @@ end:
 														errorDescription:&errorStr];
 		
 		// bind attribute object
-		result = sqlite3_bind_blob(preparedStatement, 1, [data bytes], [data length], SQLITE_TRANSIENT) ;
+		result = sqlite3_bind_blob(preparedStatement, 1, [data bytes], (int)[data length], SQLITE_TRANSIENT) ;
 		if (result != SQLITE_OK) {  
 			error = [self makeErrorWithAppCode:453013
 									sqliteCode:result
@@ -1678,7 +1678,7 @@ end:
 			NSInteger nBytes = 0;
 
 			NSMutableArray* rowColumns = [[NSMutableArray alloc] init] ;
-			NSInteger iColumn ;
+			int iColumn ;
 			for (iColumn=0; iColumn<numberOfColumns; iColumn++) {
 				pFirstByte = sqlite3_column_blob(preparedStatement, iColumn) ;
 				nBytes = sqlite3_column_bytes(preparedStatement, iColumn);	
@@ -1796,7 +1796,7 @@ end:
 	{
 		if (result == SQLITE_OK) {
 			// Now, another loop to bind each parameter value to its question mark
-			NSInteger i ;
+			int i ;
 			for (i=0; i<nAttributes; i++) {
 				NSString *errorStr = nil ;
 				NSData* data = [NSPropertyListSerialization dataFromPropertyList:[valuesArray objectAtIndex:i]
@@ -1804,7 +1804,7 @@ end:
 																errorDescription:&errorStr];
 				
 				// i+1 in next line is because the question marks in sqlite are indexed starting with 1, not 0
-				result = sqlite3_bind_blob(preparedStatement, i+1, [data bytes], [data length], SQLITE_TRANSIENT) ;
+				result = sqlite3_bind_blob(preparedStatement, i+1, [data bytes], (int)[data length], SQLITE_TRANSIENT) ;
 				if (result != SQLITE_OK) {  
 					error = [self makeErrorWithAppCode:453022
 											sqliteCode:result
@@ -1938,7 +1938,7 @@ end:
 		sprintf(sample.c, "sample %ld %f", (long)(sample.a), sample.b );
 		
 		// bind parameter values
-		sqlite3_bind_int(insert, 1, sample.a);
+		sqlite3_bind_int(insert, 1, (int)(sample.a));
 		sqlite3_bind_double(insert, 2, sample.b);
 		sqlite3_bind_text(insert, 3, sample.c, -1, SQLITE_STATIC);
 		
