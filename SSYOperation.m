@@ -6,9 +6,9 @@
 #import "Client.h"
 
 #if DEBUG
-// Do not ship with this because method names will be logged so crackers can see.
+// Do not ship with this, in particular because it exposes secret method names.
 #if 0
-#warning Logging SSYOperationLinker Operations (a cracking risk)
+#warning Logging SSYOperationLinker Operations.  DO NOT SHIP THIS!
 #define LOGGING_SSYOPERATIONLINKER_OPERATIONS 1
 #endif	
 #endif
