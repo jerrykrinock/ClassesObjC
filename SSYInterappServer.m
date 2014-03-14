@@ -186,6 +186,12 @@ CFDataRef SSYInterappServerCallBackCreateData(
                  If this happens again, in BookMacster 1.20 or later, I should
                  maybe submit a DTS Incident.  Could be a bug in 10.9 because
                  this code has been used for years with no prior such errors.
+                 
+                 One time I saw this happen when another running instance of
+                 BookMacster, which had hung, already had open the port by the
+                 same name.  Killing that hung instance fixed it.  It printed
+                 this misleading message to the console:
+                 *** CFMessagePort: bootstrap_register(): failed 1100 (0x44c) 'Permission denied', port = 0x12e33, name = 'com.sheepsystems.BookMacster.ExtoreFirefox.FromClient'
                  */
                 errorCode = 287101 ;
 			}
@@ -201,11 +207,16 @@ CFDataRef SSYInterappServerCallBackCreateData(
 		self = nil ;
 		
 		if (error_p) {
+            NSString* localizedFailureReason = nil ;
+            if (errorCode == 287101) {
+                localizedFailureReason = @"This can happen if your program tries to open a port which it has already opened by that name, or if another running instance of your program already has such a port open." ;
+            }
 			*error_p = [NSError errorWithDomain:SSYInterappServerErrorDomain
 										   code:errorCode
 									   userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
 												 @"Mac OS X failed to create a local message port.", NSLocalizedDescriptionKey,
 												 portName, @"Port Name",
+                                                 localizedFailureReason, NSLocalizedDescriptionKey, // may be nil
 												 nil]] ;
 		}
 	}
