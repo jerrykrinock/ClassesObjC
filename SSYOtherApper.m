@@ -349,7 +349,7 @@ end:;
 		NSScanner* scanner = nil ;
 		for (NSString* processInfoString in processInfoStrings) {
 			NSInteger pid ;
-			NSString* user ;
+			NSString* user = nil ;
 			NSString* command ;
 			BOOL ok ;
 			

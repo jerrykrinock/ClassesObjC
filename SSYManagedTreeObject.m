@@ -234,18 +234,41 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 
 
 /* Performance of this method is not good; it takes too long when invoked by
- [Stark mergeFoldersWithInfo:].  I tried to make it better by using
- -[Stark sortedChildren] instead of iterating through -[Stark children].
- But that made it about 8x slower. */
+ [Stark mergeFoldersWithInfo:].
+ 
+ • I tried to make it better by using -[Stark sortedChildren] instead of
+   iterating through -[Stark children]. But that made it about 8x slower.
+ 
+ • On 20140317, I tried to make it better by using a fetch request if 
+   the number of children was greater than, say, 100 or 10000, but in all 
+   cases, even 50,000 children, performance was again 5 to 10 times worse.
+   Here is the slow code I tried:
+ NSPredicate* predicate = [NSPredicate predicateWithFormat:@"parent == %@ AND index == %d", self, index] ;
+ NSFetchRequest* fetchRequest = [[NSFetchRequest alloc] initWithEntityName:[[self entity] name]] ;
+ [fetchRequest setPredicate:predicate] ;
+ NSError* error = nil ;
+ NSArray* results = [[self managedObjectContext] executeFetchRequest:fetchRequest
+ error:&error] ;
+ if (error) {
+ NSLog(@"Internal Error 502-9332 %@", [[fetchRequest predicate] predicateFormat]) ;
+ }
+ if ([results count] > 0) {
+ iteratedChild = [results objectAtIndex:0] ;
+ }
+ else if ([results count] > 1) {
+ NSLog(@"Internal Error 502-0284 %@", [[fetchRequest predicate] predicateFormat]) ;
+ }
+ [predicate release] ;
+ */
 - (SSYManagedTreeObject*)childAtIndex:(NSInteger)index {
     SSYManagedTreeObject* iteratedChild = nil ;
     for (SSYManagedTreeObject* aChild in [self children]) {
-		if ([aChild indexValue] == index) {
-			iteratedChild = aChild ;
-			break ;
-		}
-	}
-    
+        if ([aChild indexValue] == index) {
+            iteratedChild = aChild ;
+            break ;
+        }
+    }
+
     return iteratedChild ;
 }
 
