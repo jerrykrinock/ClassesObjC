@@ -39,7 +39,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 						 momdName:(NSString*)momdName
 						 document:(NSDocument*)document
 						  error_p:(NSError**)error_p {
-	// Create newStoreOptions, which is old storeOptions with NSMigratePersistentStoresAutomaticallyOption added.
+    // Create newStoreOptions, which is old storeOptions with NSMigratePersistentStoresAutomaticallyOption added.
 	NSMutableDictionary *newStoreOptions ;
 	if (storeOptions == nil) {
 		newStoreOptions = [NSMutableDictionary dictionary];
@@ -292,38 +292,99 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 			goto end ;
 		}
 		
-        // Fix in BookMacster 1.18.1, for Mac OS X 10.6
         BOOL isInViewingMode = NO ;
         if ([document respondsToSelector:@selector(isInViewingMode)]) {
             isInViewingMode = [document ssy_isInViewingMode] ;
         }
-#if 0
-        // Fix 20130610 - Does not work.
         BOOL isWritable = [[NSFileManager defaultManager] isWritableFileAtPath:[url absoluteString]] ;
-        if (isInViewingMode) {
+        if (!isWritable && isInViewingMode) {
+            // User is in Versions browser, and has selected a document which
+            // must be migrated from an older Core Data model version.
+#if 0
+
+            // Fix 20130610 - Does not work.  After working on this on and off
+            // for two days, I gave up.  I don't know why it doesn't work.
+            // The idea is that it copies the unwritable document, which is in
+            // presumably somewhere in /.DocumentRevisions-V100, to a temporary
+            // location, makes it writable, and then makes this clearly writable
+            // document the one to be migrated.
             NSString* fileNameExtension = [[url absoluteString] pathExtension] ;
             NSString* writablePath = [[[NSFileManager defaultManager] temporaryFilePath] stringByAppendingPathExtension:fileNameExtension] ;
-            ok = [[NSFileManager defaultManager] copyItemAtPath:[url absoluteString]
+            //NSString* writablePath = [[[NSHomeDirectory() stringByAppendingPathComponent:@"Desktop"] stringByAppendingPathComponent:@"Restored"] stringByAppendingPathExtension:fileNameExtension] ;
+            NSString* unwritablePath = [url path] ;
+            ok = [[NSFileManager defaultManager] copyItemAtPath:unwritablePath
                                                          toPath:writablePath
                                                           error:&underlyingError] ;
             if (!ok) {
                 errorCode = SSYPersistentDocumentMultiMigratorErrorCodeCouldNotCopyUnwriteableFile ;
                 [errorInfo setValue:writablePath
                              forKey:@"Writable Path"] ;
-                [errorInfo setValue:[url absoluteString]
+                [errorInfo setValue:unwritablePath
                              forKey:@"Source Path"] ;
+                goto end ;
+            }
+            NSNumber* octal644 = [NSNumber numberWithUnsignedLong:0644] ;
+            // Note that, in 0755, the 0 is a prefix which says to interpret the
+            // remainder of the digits as octal, just as 0x is a prefix which
+            // says to interpret the remainder of the digits as hexidecimal.
+            // It's in the C language standard!
+            NSDictionary* attrs = [NSDictionary dictionaryWithObjectsAndKeys:
+                                   octal644, NSFilePosixPermissions,
+                                   nil] ;
+            [[NSFileManager defaultManager] setAttributes:attrs
+                                             ofItemAtPath:writablePath
+                                                    error:&underlyingError] ;
+            if (!ok) {
+                errorCode = SSYPersistentDocumentMultiMigratorErrorCodeCouldNotRepermitUnwriteableFile ;
+                [errorInfo setValue:writablePath
+                             forKey:@"Writable Path"] ;
+                [errorInfo setValue:unwritablePath
+                             forKey:@"Sourcy Path"] ;
                 goto end ;
             }
             
             url = [NSURL fileURLWithPath:writablePath] ;
             [document setFileURL:url] ;
-        }
+            documentPath = writablePath ;
+            destempUrl = [NSURL fileURLWithPath:[documentPath stringByAppendingPathExtension:@"temp"]] ;
+            destempPath = [destempUrl path] ;
+
+#else
+
+            // The following code does not give a very good user experience,
+            // but at least it allows documents which must be migrated to be
+            // restored from Versions Browser, albeit sight unseen.
+            NSString* msg1 = @"The version you have selected is probably available, but must be converted and cannot be immediately displayed." ;
+            NSString* msg2 = @"If you 'Select Anyhow', the document you will see on the right is *not* what you will get.  Ignore it.  To see the document, you must actually restore by then clicking 'Restore'.  If it turns out to not be the one you want, you may click File > Revert to > Browse All Versions again, and select a different version, including the version which is now current." ;
+            NSAlert* alert = [NSAlert alertWithMessageText:msg1
+                                             defaultButton:@"Select Anyhow"
+                                           alternateButton:@"Cancel"
+                                               otherButton:nil
+                                 informativeTextWithFormat:@"%@", msg2] ;
+            NSInteger alertReturn = [alert runModal] ;
+            if (alertReturn == NSAlertAlternateReturn) {
+                // 'Cancel'
+                underlyingError = [NSError errorWithDomain:SSYPersistentDocumentMultiMigratorErrorDomain
+                                                      code:SSYPersistentDocumentMultiMigratorErrorCodeUserCancelledUndisplayableRestore
+                                                  userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                            @"User cancelled", NSLocalizedDescriptionKey,
+                                                            nil]] ;
+                ok = NO ;
+                goto end ;
+            }
+
 #endif
+        }
+
 #if MAC_OS_X_VERSION_MAX_ALLOWED > 1060
+#if 0
+#warning Removing readonly
+#else
         if (isInViewingMode) {
             [newStoreOptions setObject:[NSNumber numberWithBool:YES]
                                 forKey:NSReadOnlyPersistentStoreOption] ;
         }
+#endif
 #endif
              
         // Do the migration, creating a new file at destempUrl.
@@ -332,7 +393,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 		// could be a lot, we use a local autorelease pool, transferring any
 		// underlyingError into the regular pool before releasing the local pool.
 		NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
-		ok = [migrationManager migrateStoreFromURL:url
+        ok = [migrationManager migrateStoreFromURL:url
 											  type:storeType
 										   options:newStoreOptions
 								  withMappingModel:mappingModel
@@ -340,6 +401,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 								   destinationType:storeType
 								destinationOptions:newStoreOptions
 											 error:&underlyingError] ;
+
 		[underlyingError retain] ;
 		[pool release] ;
 		[underlyingError autorelease] ;
