@@ -952,7 +952,6 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 
 - (void)incrementDoubleValueBy:(double)delta {
 	double newProgressValue = [self progressValue] + delta ;
-	[self setProgressValue:newProgressValue] ;
 	[self setDoubleValue:newProgressValue] ;
 }	
 
