@@ -40,7 +40,7 @@ static NSMutableSet* static_hangout = nil ;
      controllers would be deallocated immediately.  Originally, I thought that
      it was good defensive programming, but in fact there is no need for it,
      and the delayed deallocation can cause, for example, observers to hang
-     on longer than necessary, causing trouble when things are town down.
+     on longer than necessary, causing trouble when things are torn down.
      */
     //[[self retain] autorelease] ;
 

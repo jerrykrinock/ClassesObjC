@@ -418,6 +418,106 @@ end:;
 }
 
 #if 0
+#warning Testing snapshot events
+
++ (NSCountedSet*)awakenedObjects {
+    NSCountedSet* awakenedObjects = ssyDebugGlobalObject ;
+    if (!awakenedObjects) {
+        awakenedObjects = [[NSCountedSet alloc] init] ;
+        ssyDebugGlobalObject = awakenedObjects ;
+        NSLog(@"awakenedObjects = %p", awakenedObjects) ;
+    }
+    
+    return awakenedObjects ;
+}
+
+- (void)addAwakenedObject:(SSYManagedObject*)object {
+    [[[self class] awakenedObjects] addObject:object] ;
+}
+
+- (void)removeAwakenedObject:(SSYManagedObject*)object {
+    [[[self class] awakenedObjects] removeObject:object] ;
+}
+
++ (void)logAwakenedObjects {
+    NSCountedSet* awakenedObjects = [self awakenedObjects] ;
+    for (id object in awakenedObjects) {
+        printf("cnt=%02ld flt=%hhd del=%hhd rc=%ld %p %s\n",
+               (long)[awakenedObjects countForObject:object],
+               [object isFault],
+               [object isDeleted],
+               [object retainCount],
+               object,
+               [[object className] UTF8String]) ;
+    }
+}
+
+- (void)awakeFromInsert {
+    [self addAwakenedObject:self] ;
+	[super awakeFromInsert] ;
+}
+
+- (void)awakeFromFetch {
+    [self addAwakenedObject:self] ;
+	[super awakeFromFetch];
+}
+
+- (void)willTurnIntoFault {
+    [self removeAwakenedObject:self] ;
+	[super willTurnIntoFault];
+}
+
+- (NSString*)eventDescriptionForFlags:(NSSnapshotEventType)flags {
+    NSMutableString* eventsString = [[NSMutableString alloc] init] ;
+    if ((flags & NSSnapshotEventUndoInsertion) != 0) {
+        [eventsString appendString:@"+UndoInsert"] ;
+    }
+    if ((flags & NSSnapshotEventUndoDeletion) != 0) {
+        [eventsString appendString:@"+UndoDelete"] ;
+    }
+    if ((flags & NSSnapshotEventUndoUpdate) != 0) {
+        [eventsString appendString:@"+UndoUpdate"] ;
+    }
+    if ((flags & NSSnapshotEventRollback) != 0) {
+        [eventsString appendString:@"+Rollback"] ;
+    }
+    if ((flags & NSSnapshotEventRefresh) != 0) {
+        [eventsString appendString:@"+Refresh"] ;
+    }
+    if ((flags & NSSnapshotEventMergePolicy) != 0) {
+        [eventsString appendString:@"+MergePolicy"] ;
+    }
+    
+    NSEntityDescription* entityDescription = [[self class] entityDescription] ;
+    NSArray* attributeKeys = [[entityDescription attributesByName] allKeys] ;
+    
+    NSInteger nonNils = 0 ;
+    for (NSString* key in attributeKeys) {
+        if ([self valueForKeyPath:key]) {
+            nonNils++ ;
+        }
+    }
+    
+    NSString* answer = [[NSString alloc] initWithFormat:
+                        @"%@ %ld/%ld values/keys %@",
+                        [self className],
+                        (long)nonNils,
+                        (long)[attributeKeys count],
+                        eventsString] ;
+    [eventsString release] ;
+    
+    return [answer autorelease] ;
+}
+
+- (void)awakeFromSnapshotEvents:(NSSnapshotEventType)flags {
+    NSLog(@"awakeSshot %p %@ %@", self, [self className], [self eventDescriptionForFlags:flags]) ;
+    [super awakeFromSnapshotEvents:flags ] ;
+}
+
+#endif
+
+
+#if 0
 #warning Overrode SSYManagedObject -dealloc and -didTurnIntoFault for debug logging
 - (void)dealloc {
 	NSLog(@"dealloc %@ %p", [self className], self) ;
