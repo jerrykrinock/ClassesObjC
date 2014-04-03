@@ -42,5 +42,6 @@
  */
 -(NSString*)toolTipForIdentifier:(NSString*)identifier ;
 
+- (BOOL)revealTabViewIdentifier:(NSString*)identifier ;
 
 @end

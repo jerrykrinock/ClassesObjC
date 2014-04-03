@@ -224,14 +224,10 @@ Subclasses should over-ride this to provide tooltips for each toobar item
 		automagically select the appropriate item when it is clicked.
    -------------------------------------------------------------------------- */
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1030
-
 -(NSArray*) toolbarSelectableItemIdentifiers: (NSToolbar*)toolbar
 {
 	return [itemsList allKeys];
 }
-
-#endif
 
 
 /* -----------------------------------------------------------------------------
@@ -241,17 +237,20 @@ Subclasses should over-ride this to provide tooltips for each toobar item
 		a click.
    -------------------------------------------------------------------------- */
 
--(IBAction)	changePanes: (id)sender
-{
-	NSString*		key;
+- (void)selectTabViewItemWithTag:(NSInteger)tag
+                           label:(NSString*)label {
+    [ibOutlet_tabView selectTabViewItemAtIndex:tag] ;
+	[[ibOutlet_tabView window] setTitle: [baseWindowName stringByAppendingString:label]];
 	
-	[ibOutlet_tabView selectTabViewItemAtIndex: [sender tag]];
-	[[ibOutlet_tabView window] setTitle: [baseWindowName stringByAppendingString: [sender label]]];
-	
-	key = [NSString stringWithFormat: @"%@.prefspanel.recentpage", autosaveName];
-	[[NSUserDefaults standardUserDefaults] setInteger:[sender tag] forKey:key];
+	NSString* key = [NSString stringWithFormat: @"%@.prefspanel.recentpage", autosaveName];
+	[[NSUserDefaults standardUserDefaults] setInteger:tag forKey:key];
 }
 
+- (IBAction)	changePanes: (id)sender
+{
+    [self selectTabViewItemWithTag:[sender tag]
+                             label:[sender label]] ;
+}
 
 /* -----------------------------------------------------------------------------
 	toolbarDefaultItemIdentifiers:
@@ -275,6 +274,35 @@ Subclasses should over-ride this to provide tooltips for each toobar item
 	}
 	
 	return defaultItems;
+}
+
+- (BOOL)revealTabViewIdentifier:(NSString*)identifier {
+    BOOL didDo = NO ;
+    NSInteger i = 0 ;
+    for (NSTabViewItem* item in [ibOutlet_tabView tabViewItems]) {
+        // item i=0 is the flexible space item
+        if ([[item identifier] isEqualToString:identifier]) {
+            NSToolbar *toolbar =[[ibOutlet_tabView window] toolbar] ;
+            [toolbar setSelectedItemIdentifier:identifier] ;
+            NSToolbarItem* toolbarItem = nil ;
+            if (i < [[toolbar items] count]) {
+                toolbarItem = [[toolbar items] objectAtIndex:i] ;
+            }
+            NSString* label = [toolbarItem label] ;
+            if (label) {
+                [self selectTabViewItemWithTag:i
+                                         label:label] ;
+                didDo = YES ;
+            }
+            else {
+                NSLog(@"Internal Error 624-0202 %@", [item identifier]) ;
+            }
+            break ;
+        }
+        i++ ;
+    }
+    
+    return didDo ;
 }
 
 
