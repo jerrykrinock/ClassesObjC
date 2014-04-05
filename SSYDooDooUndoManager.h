@@ -3,6 +3,7 @@
 
 extern NSString* const SSYUndoManagerWillEndUndoGroupNotification ;
 extern NSString* const SSYUndoManagerDocumentWillCloseNotification ;
+extern NSString* const SSYUndoManagerDocumentDidOpenNotification ;
 
 /*!
  @brief    Self-explanatory from the name

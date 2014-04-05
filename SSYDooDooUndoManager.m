@@ -3,6 +3,7 @@
 
 NSString* const SSYUndoManagerWillEndUndoGroupNotification = @"SSYUndoManagerWillEndUndoGroupNotification" ;
 NSString* const SSYUndoManagerDocumentWillSaveNotification = @"SSYUndoManagerDocumentWillSaveNotification" ;
+NSString* const SSYUndoManagerDocumentDidOpenNotification = @"SSYUndoManagerDocumentDidOpenNotification" ;
 NSString* const SSYUndoManagerDocumentWillCloseNotification = @"SSYUndoManagerDocumentWillCloseNotification" ;
 NSString* const SSYUndoManagerDidCloseUndoGroupNotification = @"SSYUndoManagerDidCloseUndoGroupNotification" ;
 
