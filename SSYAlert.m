@@ -2077,7 +2077,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (SSYAlertRecovery)alertError:(NSError*)error {
-	if (!error) {
+    if (!error) {
 		return SSYAlertRecoveryThereWasNoError ;
 	}
 	
