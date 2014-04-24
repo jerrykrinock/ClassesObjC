@@ -201,6 +201,7 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 			 error_p:(NSError**)error_p {
 	NSError* error = nil ;
     BOOL ok = YES ;
+    NSMutableArray* fixPermissionsErrors = [[NSMutableArray alloc] init] ;
 	
 	// Create data
 	NSString* errorDescription = nil ;
@@ -255,7 +256,6 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
              one of those errors, let's just ignore it and try to fix
              permissions in any case.  It shouldn't do any harm, and what
              else could happen besides bad permissions anyhow? */
-            NSMutableArray* fixPermissionsErrors = [[NSMutableArray alloc] init] ;
             NSError* fixPermissionsError = nil ;
             switch (fixedPermissionsState) {
                 case 0:
@@ -287,6 +287,8 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
         error = [error errorByAddingLocalizedDescription:@"Could not write launchd plist file"] ;
         error = [error errorByAddingUserInfoObject:url
                                             forKey:@"URL"] ;
+        error = [error errorByAddingUserInfoObject:fixPermissionsErrors
+                                            forKey:@"Fix Permissions Errors"] ;
 		goto end ;
 	}
 	
@@ -324,6 +326,8 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 	}
 	
 end:;
+    [fixPermissionsErrors release] ;
+    
     if (error_p) {
         *error_p = error ;
     }
