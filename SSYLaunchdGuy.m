@@ -9,6 +9,7 @@
 #import "SSYPathWaiter.h"
 #import "SSYLaunchdBasics.h"
 #import "NSError+DecodeCodes.h"
+#import "NSFileManager+SSYFixPermissions.h"
 
 NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 
@@ -208,8 +209,12 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 													errorDescription:&errorDescription] ;
 	if (!data) {
 		NSString* msg = [NSString stringWithFormat:
-						 @"Could not load agent because %@",
+						 @"Could not make agent data because %@",
 						 errorDescription] ;
+        error = [NSError errorWithDomain:SSYLaunchdGuyErrorDomain
+                                    code:483760
+                                userInfo:nil] ;
+        error = [error errorByAddingLocalizedDescription:msg] ;
 		error = SSYMakeError(48376, msg) ;
 		error = [error errorByAddingUserInfoObject:dic
 												  forKey:@"Dictionary"] ;
@@ -220,9 +225,12 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 	// Generate file URL
 	NSString* filename = [dic objectForKey:@"Label"] ;
 	if (!filename) {
-		error = SSYMakeError(483276, @"No label") ;
+        error = [NSError errorWithDomain:SSYLaunchdGuyErrorDomain
+                                    code:483276
+                                userInfo:nil] ;
+        error = [error errorByAddingLocalizedDescription:@"Could not make agent because no label"] ;
 		error = [error errorByAddingUserInfoObject:dic
-												  forKey:@"Dic"] ;
+                                            forKey:@"Dic"] ;
 		error = [error errorByAddingBacktrace] ;
 		ok = NO ;
 		goto end ;
@@ -232,10 +240,53 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 	NSURL* url = [NSURL fileURLWithPath:path] ;
 	
 	// Write data to file URL
+    NSInteger fixedPermissionsState = 0 ;
+    do {
 	ok = [data writeToURL:url
 				  options:NSAtomicWrite
 					error:&error] ;
+        if (!ok) {
+            /* If writing fails because of bad permissions on
+             ~/Library/LaunchAgents, we will have error=
+             *  {code=513, domain=NSCocoaErrorDomain, underlyingError=
+             *      {code=13, domain=NSPOSIXErrorDomain}}
+             and I thought about testing for that here before trying to fix
+             permissions, but then thought what the hell in case Apple changes
+             one of those errors, let's just ignore it and try to fix
+             permissions in any case.  It shouldn't do any harm, and what
+             else could happen besides bad permissions anyhow? */
+            NSMutableArray* fixPermissionsErrors = [[NSMutableArray alloc] init] ;
+            NSError* fixPermissionsError = nil ;
+            switch (fixedPermissionsState) {
+                case 0:
+                    [[NSFileManager defaultManager] fixPermissionsOfLaunchAgentsFolder:&fixPermissionsError] ;
+                    NSLog(@"Warning 193-0397  Tried fix ~/Library/LaunchAgents perms, got error %@", fixPermissionsError) ;
+                    break ;
+                case 1:
+                    [[NSFileManager defaultManager] fixPermissionsOfLibraryFolder:&fixPermissionsError] ;
+                    NSLog(@"Warning 193-0398  Tried fix ~/Library perms, got error %@", fixPermissionsError) ;
+                    break ;
+                case 2:
+                    [[NSFileManager defaultManager] fixPermissionsOfHomeFolder:&fixPermissionsError] ;
+                    NSLog(@"Warning 193-0399  Tried fix ~ perms, got error %@", fixPermissionsError) ;
+                    break ;
+                default:
+                    break ;
+            }
+            if (fixPermissionsError) {
+                [fixPermissionsErrors addObject:fixPermissionsError] ;
+            }
+            fixedPermissionsState++ ;
+        }
+    } while (!ok && (fixedPermissionsState < 3)) ;
+
 	if (!ok) {
+        error = [[NSError errorWithDomain:SSYLaunchdGuyErrorDomain
+                                    code:483277
+                                 userInfo:nil] errorByAddingUnderlyingError:error] ;
+        error = [error errorByAddingLocalizedDescription:@"Could not write launchd plist file"] ;
+        error = [error errorByAddingUserInfoObject:url
+                                            forKey:@"URL"] ;
 		goto end ;
 	}
 	
