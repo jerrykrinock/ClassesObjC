@@ -18,8 +18,7 @@
 			nil] ;
 }
 
--(id)init
-{
+-(id)init {
 	if ((self = [super initWithWindowNibName:@"PrefsWindow"])) {
 		itemsList = [[NSMutableDictionary alloc] init];
 		baseWindowName = [@"" retain];
@@ -30,8 +29,7 @@
 }
 
 
--(void)	dealloc
-{
+-(void)	dealloc {
 	[itemsList release];
 	[baseWindowName release];
 	[autosaveName release];
