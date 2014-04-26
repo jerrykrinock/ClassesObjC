@@ -13,10 +13,7 @@ NSString* const SSYSynchronousHttpRequestTimeoutErrorKey = @"Request's Timeout (
 NSString* const SSYSynchronousHttpReceivedDataErrorKey = @"Received Data" ;
 NSString* const SSYSynchronousHttpReceivedStringErrorKey = @"Received Data, UTF8 Decoded" ;
 
-#if USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS
-#else
 NSString* const constRunLoopModeSSYSynchronousHttp = @"com.sheepsystems.SSYSynchronousHttpRunLoopMode" ;
-#endif
 
 enum {
 	constEnumSynchronousHttpBlocked,
@@ -28,9 +25,6 @@ enum {
 
 @property (copy) NSString* username ;
 @property (copy) NSString* password ;
-#if USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS
-@property (retain) NSConditionLock* lock ;
-#endif
 @property (retain) NSHTTPURLResponse* response ;
 @property (retain) NSMutableData* responseData ;
 @property (retain) NSError* underlyingError ;
@@ -43,9 +37,6 @@ enum {
 
 @synthesize username = m_username ;
 @synthesize password = m_password ;
-#if USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS
-@synthesize lock = m_lock ;
-#endif
 @synthesize response = m_response ;
 @synthesize responseData = m_responseData ;
 @synthesize underlyingError = m_underlyingError ;
@@ -54,9 +45,6 @@ enum {
 - (void)dealloc {
 	[m_username release] ;
 	[m_password release] ;
-#if USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS
-	[m_lock release] ;
-#endif
 	[m_response release] ;
 	[m_responseData release] ;
 	[m_underlyingError release] ;
@@ -111,6 +99,12 @@ enum {
 	}
 	
 	[self endConnection:connection] ;
+}
+
+// Added in BookMacster 1.22.2 to eliminate spurious logging in OS X 10.9.3.
+// See Apple Bug ID 16728139.
+- (BOOL)connectionShouldUseCredentialStorage:(NSURLConnection*)connection {
+    return NO ;
 }
 
 -(NSURLRequest *)connection:(NSURLConnection *)connection
@@ -173,58 +167,6 @@ enum {
 				 willCacheResponse:(NSCachedURLResponse *)cachedResponse {
 	return cachedResponse ;
 }
-
-#if USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS
-
-/*!
- @details  Method which makes the connection in a secondary thread
-*/
-- (void)connectWithRequest:(NSURLRequest*)request {
-	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ; 
-	
-	[[self lock] lock] ;
-
-	// Initialize a place for received data
-	[self setResponseData:[NSMutableData data]] ;
-	
-	// So our run loop will not exit immediately,
-	[self setConnectionState:SSYSynchronousHttpStateWaiting] ;
-
-	// Make the connection
-	NSURLConnection* connection = [NSURLConnection connectionWithRequest:request
-																delegate:self] ;
-	if (!connection) {
-		[self setConnectionState:SSYSynchronousHttpStateCouldNotCreateConnectionObject] ;
-		goto end ;
-	}
-	
-	NSRunLoop* runLoop = [NSRunLoop currentRunLoop] ;
-	
-	while (
-		   ([self connectionState] == SSYSynchronousHttpStateWaiting)
-		   &&
-		   [runLoop runMode:NSDefaultRunLoopMode      
-				 beforeDate:[NSDate distantFuture]]
-		) {
-	}
-	/* Although the above is fairly well recommended in the Threading Programming Guide
-	 in the section on Run Loops, there is a contrary opinion:
-	 On 2009 Oct 06, at 01:55, Keith Duncan wrote to macnetworkprog@lists.apple.com:
-	 
-	 That's not the best way to solve this, pulsing the run loop won't let the thread go to sleep
-	 and will burn CPU depending on how granular your interval. It's better to run the loop
-	 unconditionally, then stop it explicitly when you want to exit the loop, I use CFRunLoop for
-	 this as it has a stop function.
-	 
-	 Run the current loop using CFRunLoopRun(), then stop it using CFRunLoopStop(). This will guarantee that the loop exits.
-	 */
-	
-	[[self lock] unlockWithCondition:constEnumSynchronousHttpDone] ;
-	
-end:	
-	[pool release] ;
-}	
-#endif
 
 + (BOOL)SSYSynchronousHttpUrl:(NSString*)urlString
 				   httpMethod:(NSString*)httpMethod
@@ -310,20 +252,6 @@ end:
 	[instance setUsername:username] ;
 	[instance setPassword:password] ;
 	
-#if USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS
-#warning SSYSynchronousHttp is using my old code
-	NSConditionLock* lock = [[NSConditionLock alloc] initWithCondition:constEnumSynchronousHttpBlocked] ;
-	[instance setLock:lock] ;
-	[lock release] ;
-
-	[NSThread detachNewThreadSelector:@selector(connectWithRequest:)
-							 toTarget:instance
-						   withObject:mutableRequest] ;
-	
-	// Will block here:
-	[lock lockWhenCondition:constEnumSynchronousHttpDone] ;
-	[lock unlock] ;
-#else
 	// Using Quinn "The Eskimo"'s "Synthetic Synchronous" technique…
 	
 	// Initialize a place for received data
@@ -355,7 +283,6 @@ end:
 	}
 	
 	[connection release] ;
-#endif
 	
 	// Set output variables and exit
 	if (response_p) {

@@ -1,7 +1,5 @@
 #import <Cocoa/Cocoa.h>
 
-#define USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS 0
-
 extern NSString* const SSYSynchronousHttpErrorDomain ;
 
 extern NSString* const SSYSynchronousHttpRequestUrlErrorKey ;
@@ -38,9 +36,6 @@ enum SSYSynchronousHttpErrorDomainErrorCodes {
 @interface SSYSynchronousHttp : NSObject {
 	NSString* m_username ;
 	NSString* m_password ;
-#if USE_MY_OLD_CODE_INSTEAD_OF_QUINNS_SYNTHETIC_SYNCHRONOUS
-	NSConditionLock* m_lock ;
-#endif
 	NSHTTPURLResponse* m_response ;
 	NSMutableData* m_responseData ;
 	NSError* m_underlyingError ;
