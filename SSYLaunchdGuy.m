@@ -10,6 +10,7 @@
 #import "SSYLaunchdBasics.h"
 #import "NSError+DecodeCodes.h"
 #import "NSFileManager+SSYFixPermissions.h"
+#import "NSFileManager+SSYAcls.h"
 
 NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 
@@ -257,18 +258,37 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
              permissions in any case.  It shouldn't do any harm, and what
              else could happen besides bad permissions anyhow? */
             NSError* fixPermissionsError = nil ;
+            NSString* fixAclPath ;
             switch (fixedPermissionsState) {
                 case 0:
                     [[NSFileManager defaultManager] fixPermissionsOfLaunchAgentsFolder:&fixPermissionsError] ;
-                    NSLog(@"Warning 193-0397  Tried fix ~/Library/LaunchAgents perms, got error %@", fixPermissionsError) ;
+                    NSLog(@"Warning 193-0390  Tried fix ~/Library/LaunchAgents perms, got error %@", fixPermissionsError) ;
                     break ;
                 case 1:
                     [[NSFileManager defaultManager] fixPermissionsOfLibraryFolder:&fixPermissionsError] ;
-                    NSLog(@"Warning 193-0398  Tried fix ~/Library perms, got error %@", fixPermissionsError) ;
+                    NSLog(@"Warning 193-0391  Tried fix ~/Library perms, got error %@", fixPermissionsError) ;
                     break ;
                 case 2:
                     [[NSFileManager defaultManager] fixPermissionsOfHomeFolder:&fixPermissionsError] ;
-                    NSLog(@"Warning 193-0399  Tried fix ~ perms, got error %@", fixPermissionsError) ;
+                    NSLog(@"Warning 193-0392  Tried fix ~ perms, got error %@", fixPermissionsError) ;
+                    break ;
+                case 3:
+                    fixAclPath = @"~/Library/LaunchAgents" ;
+                    [[NSFileManager defaultManager] removeAclsFromPath:fixAclPath
+                                                               error_p:&fixPermissionsError] ;
+                    NSLog(@"Warning 193-0393  Tried fix %@ ACLs, got error %@", fixAclPath, fixPermissionsError) ;
+                    break ;
+                case 4:
+                    fixAclPath = @"~/Library" ;
+                    [[NSFileManager defaultManager] removeAclsFromPath:fixAclPath
+                                                               error_p:&fixPermissionsError] ;
+                    NSLog(@"Warning 193-0394  Tried fix %@ ACLs, got error %@", fixAclPath, fixPermissionsError) ;
+                    break ;
+                case 5:
+                    fixAclPath = @"~" ;
+                    [[NSFileManager defaultManager] removeAclsFromPath:fixAclPath
+                                                               error_p:&fixPermissionsError] ;
+                    NSLog(@"Warning 193-0395  Tried fix %@ ACLs, got error %@", fixAclPath, fixPermissionsError) ;
                     break ;
                 default:
                     break ;
@@ -278,7 +298,7 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
             }
             fixedPermissionsState++ ;
         }
-    } while (!ok && (fixedPermissionsState < 3)) ;
+    } while (!ok && (fixedPermissionsState < 6)) ;
 
 	if (!ok) {
         error = [[NSError errorWithDomain:SSYLaunchdGuyErrorDomain
