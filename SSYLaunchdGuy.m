@@ -202,7 +202,7 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 			 error_p:(NSError**)error_p {
 	NSError* error = nil ;
     BOOL ok = YES ;
-    NSMutableArray* fixPermissionsErrors = [[NSMutableArray alloc] init] ;
+    NSMutableArray* fixPermissionsResults = [[NSMutableArray alloc] init] ;
 	
 	// Create data
 	NSString* errorDescription = nil ;
@@ -243,10 +243,11 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 	
 	// Write data to file URL
     NSInteger fixedPermissionsState = 0 ;
+    SSYFixResult fixResultCode ;
     do {
-	ok = [data writeToURL:url
-				  options:NSAtomicWrite
-					error:&error] ;
+        ok = [data writeToURL:url
+                      options:NSAtomicWrite
+                        error:&error] ;
         if (!ok) {
             /* If writing fails because of bad permissions on
              ~/Library/LaunchAgents, we will have error=
@@ -259,47 +260,48 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
              else could happen besides bad permissions anyhow? */
             NSError* fixPermissionsError = nil ;
             NSString* fixAclPath ;
+            BOOL fixedOk ;
             switch (fixedPermissionsState) {
                 case 0:
-                    [[NSFileManager defaultManager] fixPermissionsOfLaunchAgentsFolder:&fixPermissionsError] ;
-                    NSLog(@"Warning 193-0390  Tried fix ~/Library/LaunchAgents perms, got error %@", fixPermissionsError) ;
+                    fixResultCode = [[NSFileManager defaultManager] fixPermissionsOfLaunchAgentsFolder:&fixPermissionsError] ;
                     break ;
                 case 1:
-                    [[NSFileManager defaultManager] fixPermissionsOfLibraryFolder:&fixPermissionsError] ;
-                    NSLog(@"Warning 193-0391  Tried fix ~/Library perms, got error %@", fixPermissionsError) ;
+                    fixResultCode = [[NSFileManager defaultManager] fixPermissionsOfLibraryFolder:&fixPermissionsError] ;
                     break ;
                 case 2:
-                    [[NSFileManager defaultManager] fixPermissionsOfHomeFolder:&fixPermissionsError] ;
-                    NSLog(@"Warning 193-0392  Tried fix ~ perms, got error %@", fixPermissionsError) ;
+                    fixResultCode = [[NSFileManager defaultManager] fixPermissionsOfHomeFolder:&fixPermissionsError] ;
                     break ;
                 case 3:
                     fixAclPath = @"~/Library/LaunchAgents" ;
-                    [[NSFileManager defaultManager] removeAclsFromPath:fixAclPath
+                    fixedOk = [[NSFileManager defaultManager] removeAclsFromPath:fixAclPath
                                                                error_p:&fixPermissionsError] ;
-                    NSLog(@"Warning 193-0393  Tried fix %@ ACLs, got error %@", fixAclPath, fixPermissionsError) ;
+                    fixResultCode = fixedOk ? SSYFixResultIgnoredInitialFixSucceeded : SSYFixResultIgnoredInitialFixFailed ;
                     break ;
                 case 4:
                     fixAclPath = @"~/Library" ;
-                    [[NSFileManager defaultManager] removeAclsFromPath:fixAclPath
+                    fixedOk = [[NSFileManager defaultManager] removeAclsFromPath:fixAclPath
                                                                error_p:&fixPermissionsError] ;
-                    NSLog(@"Warning 193-0394  Tried fix %@ ACLs, got error %@", fixAclPath, fixPermissionsError) ;
+                    fixResultCode = fixedOk ? SSYFixResultIgnoredInitialFixSucceeded : SSYFixResultIgnoredInitialFixFailed ;
                     break ;
                 case 5:
                     fixAclPath = @"~" ;
-                    [[NSFileManager defaultManager] removeAclsFromPath:fixAclPath
+                    fixedOk = [[NSFileManager defaultManager] removeAclsFromPath:fixAclPath
                                                                error_p:&fixPermissionsError] ;
-                    NSLog(@"Warning 193-0395  Tried fix %@ ACLs, got error %@", fixAclPath, fixPermissionsError) ;
+                    fixResultCode = fixedOk ? SSYFixResultIgnoredInitialFixSucceeded : SSYFixResultIgnoredInitialFixFailed ;
                     break ;
                 default:
+                    fixResultCode = SSYFixResultDidNotTry ;
                     break ;
             }
-            if (fixPermissionsError) {
-                [fixPermissionsErrors addObject:fixPermissionsError] ;
-            }
+            NSDictionary* result = [NSDictionary dictionaryWithObjectsAndKeys:
+                                    [NSNumber numberWithInteger:fixResultCode], @"Fix Result Code",
+                                    fixPermissionsError, @"Fix Permissions Error", // may be nil
+                                    nil] ;
+            [fixPermissionsResults addObject:result] ;
             fixedPermissionsState++ ;
         }
     } while (!ok && (fixedPermissionsState < 6)) ;
-
+    
 	if (!ok) {
         error = [[NSError errorWithDomain:SSYLaunchdGuyErrorDomain
                                     code:483277
@@ -307,8 +309,8 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
         error = [error errorByAddingLocalizedDescription:@"Could not write launchd plist file"] ;
         error = [error errorByAddingUserInfoObject:url
                                             forKey:@"URL"] ;
-        error = [error errorByAddingUserInfoObject:fixPermissionsErrors
-                                            forKey:@"Fix Permissions Errors"] ;
+        error = [error errorByAddingUserInfoObject:fixPermissionsResults
+                                            forKey:@"Fix Permissions Results"] ;
 		goto end ;
 	}
 	
@@ -346,7 +348,7 @@ NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 	}
 	
 end:;
-    [fixPermissionsErrors release] ;
+    [fixPermissionsResults release] ;
     
     if (error_p) {
         *error_p = error ;

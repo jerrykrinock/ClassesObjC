@@ -125,6 +125,10 @@ NSString* const constKeyObserverContext = @"context" ;
 	return [NSStringFromClass(class) stringByAppendingString:@"_entity"] ;
 }
 
+#if 0
+#define TEST_STACK_OVERFLOW_QUESTION_19626858 1
+#endif
+
 + (NSEntityDescription*)entityDescription {
     // This method was rewritten for BookMacster 1.19.2, to work around a
     // bug in Mac OS X 10.9.  See
@@ -133,8 +137,27 @@ NSString* const constKeyObserverContext = @"context" ;
 	NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainAppBundle]] ;
 	NSManagedObjectModel* mom = [NSManagedObjectModel mergedModelFromBundles:bundles] ;
     NSString* entityName = [self entityNameForClass:self] ;
+
+#if TEST_STACK_OVERFLOW_QUESTION_19626858
+    NSPersistentStoreCoordinator* psc = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:mom] ;
+	NSManagedObjectContext* moc = [[NSManagedObjectContext alloc] init] ;
+	[moc setPersistentStoreCoordinator:psc] ;
+	[psc release] ;
+	NSEntityDescription* old1EntityDescription = [NSEntityDescription entityForName:[self entityNameForClass:self]
+														 inManagedObjectContext:moc] ;
+    NSDictionary* entitiesByName = [mom entitiesByName] ;
+    NSEntityDescription* old2EntityDescription = [entitiesByName objectForKey:entityName] ;
+    NSLog(@"ebn returns a %@", [entitiesByName className]) ;
+    NSLog(@"oldEntityDesc1 = %p for %@", old1EntityDescription, entityName) ;
+    NSLog(@"oldEntityDesc2 = %p for %@", old2EntityDescription, entityName) ;
+	[moc release] ;
+#endif
+    
     NSDictionary* entities = [[NSDictionary alloc] initWithDictionary:[mom entitiesByName]] ;
     NSEntityDescription* entityDescription = [entities objectForKey:entityName] ;
+#if TEST_STACK_OVERFLOW_QUESTION_19626858
+    NSLog(@"new EntityDesc = %p for %@", entityDescription, [self entityNameForClass:self]) ;
+#endif
     if (!entityDescription) {
         NSLog(@"Internal Error 561-3831 for %@", entityName) ;
     }
