@@ -254,7 +254,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     }
     
     if (!didFindCheckbox) {
-        NSLog(@"Internal Error 624-9382 %@ %@", [self title], [[self contentView] subviews]) ;
+        // Until BookMacster 1.22.4, logged Internal Error 624-9382
+        state = NSOffState ;
     }
     
     return state ;
