@@ -233,8 +233,23 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 }
 
 
-/* Performance of this method is not good; it takes too long when invoked by
- [Stark mergeFoldersWithInfo:].
+/* 
+ PROBLEM STATEMENT
+ 
+ Performance of this method is not good; it is painfully slow when:
+ • when invoked by [Stark mergeFoldersWithInfo:].
+
+ • Open a test file of 50,000 bookmarks, such as Test-50K.bkmslf and select all.
+ It beachballs for about 20 minutes, stacking up like this.
+ #0	0x000000010022a6b2 in -[SSYManagedTreeObject childAtIndex:] at /Users/jk/Documents/Programming/ClassesObjC/SSYManagedTreeObject.m:265
+ #1	0x00000001000f8ce3 in -[Stark childAtIndex:] at /Users/jk/Documents/Programming/Projects/BkmkMgrs/Stark.m:3526
+ #2	0x000000010004f2e9 in -[ContentDataSource outlineView:child:ofItem:] at /Users/jk/Documents/Programming/Projects/BkmkMgrs/ContentDataSource.m:301
+ #3	0x00007fff8f1d1550 in loadItemEntryLazyInfoIfNecessary ()
+ #4	0x00007fff8f1d143d in -[NSOutlineView itemAtRow:] ()
+ #5	0x0000000100034d2f in -[BkmxOutlineView objectsAtRowIndexes:] at /Users/jk/Documents/Programming/Projects/BkmkMgrs/BkmxOutlineView.m:82
+ #6	0x00000001002e1b96 in -[BkmxDocTabViewController outlineViewSelectionDidChange:] at /Users/jk/Documents/Programming/Projects/BkmkMgrs/BkmxDocTabViewController.m:97
+
+ TRIED SOLUTIONS
  
  • I tried to make it better by using -[Stark sortedChildren] instead of
    iterating through -[Stark children]. But that made it about 8x slower.
