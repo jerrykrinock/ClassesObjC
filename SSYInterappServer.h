@@ -21,7 +21,7 @@ extern NSString* const SSYInterappServerErrorDomain ;
 */
 @interface SSYInterappServer : NSObject {
 	CFMessagePortRef m_port ;
-	NSObject <SSYInterappServerDelegate> * m_delegate ;
+	NSObject <SSYInterappServerDelegate> * __unsafe_unretained m_delegate ;
 	void* m_contextInfo ;
 }
 

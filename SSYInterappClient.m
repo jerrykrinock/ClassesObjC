@@ -1,5 +1,15 @@
 #import "SSYInterappClient.h"
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+#warning HELLO-01
+#else
+#if __has_feature(objc_arc)
+#define NO_ARC 0
+#else
+#define NO_ARC 1
+#endif
+#endif
+
 NSString* const SSYInterappClientErrorDomain = @"SSYInterappClientErrorDomain" ;
 
 @implementation SSYInterappClient
@@ -21,7 +31,7 @@ NSString* const SSYInterappClientErrorDomain = @"SSYInterappClientErrorDomain" ;
 	do {
         remotePort = CFMessagePortCreateRemote(
                                                NULL,
-                                               (CFStringRef)portName
+                                               (__bridge CFStringRef)portName
                                                ) ;
         txTimeSpent = [NSDate timeIntervalSinceReferenceDate] - txStartTime ;
         if (txTimeSpent > txTimeout) {
@@ -35,60 +45,64 @@ NSString* const SSYInterappClientErrorDomain = @"SSYInterappClientErrorDomain" ;
 	if (!remotePort) {
 		ok = NO ;
 		result = SSYInterappClientErrorCantFindReceiver ;
-		goto end ;
 	}
-	
-	NSMutableData* aggrTxData = [[NSMutableData alloc] init] ;
-	if (txHeaderByte) {
-		[aggrTxData appendBytes:(const void*)&txHeaderByte
-						 length:1] ;
-	}
-	if (txHeaderByte) {
-		[aggrTxData appendData:txPayload] ;
-	}
-	NSData* aggrRxData = nil ;
-	CFStringRef replyMode = wait ? kCFRunLoopDefaultMode : NULL ;
-    NSTimeInterval txTimeoutUsedUp = [NSDate timeIntervalSinceReferenceDate] - txStartTime ;
-    txTimeout -= txTimeoutUsedUp ;
-	result = CFMessagePortSendRequest(
-									  remotePort,
-									  0, 
-									  (CFDataRef)aggrTxData,
-									  txTimeout,
-									  rxTimeout,
-									  replyMode,
-									  (CFDataRef*)&aggrRxData
-									  ) ;
-	
-	// As always, we are careful not to CFRelease(NULL) ;
-	CFRelease(remotePort) ;
-	[aggrTxData release] ;
-	
-	ok = (result == kCFMessagePortSuccess) ;
-	
-	if (ok) {
-		if (rxHeaderByte_p) {
-			if ([aggrRxData length] > 0) {
-				[aggrRxData getBytes:rxHeaderByte_p
-							   range:NSMakeRange(0,1)] ;
-			}
-			else {
-				*rxHeaderByte_p = 0 ;
-			}
-		}
-		if (rxPayload_p) {
-			if ([aggrRxData length] > 1) {
-				*rxPayload_p = [aggrRxData subdataWithRange:NSMakeRange(1,[aggrRxData length] - 1)] ;
-			}
-			else {
-				*rxPayload_p = 0 ;
-			}
-		}
-	}
+    else {
+        NSMutableData* aggrTxData = [[NSMutableData alloc] init] ;
+        if (txHeaderByte) {
+            [aggrTxData appendBytes:(const void*)&txHeaderByte
+                             length:1] ;
+        }
+        if (txHeaderByte) {
+            [aggrTxData appendData:txPayload] ;
+        }
+        NSData* aggrRxData = nil ;
+        CFStringRef replyMode = wait ? kCFRunLoopDefaultMode : NULL ;
+        NSTimeInterval txTimeoutUsedUp = [NSDate timeIntervalSinceReferenceDate] - txStartTime ;
+        txTimeout -= txTimeoutUsedUp ;
+        CFDataRef cfData= NULL ;
+        result = CFMessagePortSendRequest(
+                                          remotePort,
+                                          0,
+                                          (__bridge CFDataRef)aggrTxData,
+                                          txTimeout,
+                                          rxTimeout,
+                                          replyMode,
+                                          &cfData
+                                          ) ;
+        aggrRxData = (__bridge NSData*)cfData ;
+        // As always, we are careful not to CFRelease(NULL) ;
+        CFRelease(remotePort) ;
+#if NO_ARC
+        [aggrTxData release] ;
+#endif
+        
+        ok = (result == kCFMessagePortSuccess) ;
+        
+        if (ok) {
+            if (rxHeaderByte_p) {
+                if ([aggrRxData length] > 0) {
+                    [aggrRxData getBytes:rxHeaderByte_p
+                                   range:NSMakeRange(0,1)] ;
+                }
+                else {
+                    *rxHeaderByte_p = 0 ;
+                }
+            }
+            if (rxPayload_p) {
+                if ([aggrRxData length] > 1) {
+                    *rxPayload_p = [aggrRxData subdataWithRange:NSMakeRange(1,[aggrRxData length] - 1)] ;
+                }
+                else {
+                    *rxPayload_p = 0 ;
+                }
+            }
+        }
+        
+#if NO_ARC
+        [aggrRxData release] ;
+#endif
+    }
     
-    [aggrRxData release] ;
-	
-end:
 	if (!ok && error_p) {
 		NSString* errorDetail ;
 		switch (result) {
@@ -122,9 +136,18 @@ end:
 		NSString* errorDescription = [NSString stringWithFormat:
 									  @"Interapp messaging error : %@",
 									  errorDetail] ;
-		NSString* txHeaderString = txHeaderByte ? [[[NSString alloc] initWithBytes:&txHeaderByte
-																			length:1
-																		  encoding:NSUTF8StringEncoding] autorelease] : @"No header byte" ;
+        NSString* txHeaderString ;
+        if (txHeaderByte) {
+            txHeaderString = [[NSString alloc] initWithBytes:&txHeaderByte
+                                                       length:1
+                                                     encoding:NSUTF8StringEncoding] ;
+#if NO_ARC
+            [txHeaderString autorelease] ;
+#endif
+        }
+        else {
+            txHeaderString = @"No header byte" ;
+        }
 		NSNumber* txPayloadLength = [NSNumber numberWithInteger:[txPayload length]] ;
 		NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
 								  errorDescription, NSLocalizedDescriptionKey,

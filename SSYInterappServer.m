@@ -1,5 +1,15 @@
 #import "SSYInterappServer.h"
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+#define NO_ARC 1
+#else
+#if __has_feature(objc_arc)
+#define NO_ARC 0
+#else
+#define NO_ARC 1
+#endif
+#endif
+
 /*!
  @brief    
 
@@ -45,16 +55,16 @@ CFDataRef SSYInterappServerCallBackCreateData(
 									void* info) {
 	// Unpack the data and send to delegate
 	char headerByte = 0 ;
-	if ([(NSData*)data length] > 0) {
-		[(NSData*)data getBytes:&headerByte
+	if ([(__bridge NSData*)data length] > 0) {
+		[(__bridge NSData*)data getBytes:&headerByte
 						 length:1] ;
 	}
 	NSData* rxPayload = nil ;
-	if ([(NSData*)data length] > 1) {
-		rxPayload = [(NSData*)data subdataWithRange:NSMakeRange(1, [(NSData*)data length] - 1)] ;
+	if ([(__bridge NSData*)data length] > 1) {
+		rxPayload = [(__bridge NSData*)data subdataWithRange:NSMakeRange(1, [(__bridge NSData*)data length] - 1)] ;
 	}
 	
-	SSYInterappServer* server = (SSYInterappServer*)info ;
+	SSYInterappServer* server = (__bridge SSYInterappServer*)info ;
 	
 	NSObject <SSYInterappServerDelegate> * delegate = [server delegate] ;
 	[delegate interappServer:server
@@ -75,7 +85,13 @@ CFDataRef SSYInterappServerCallBackCreateData(
 	// From CFMessagePortCallBack documentation, we return the
 	// "data to send back to the sender of the message.  The system
 	// releases the returned CFData object."
-	return (CFDataRef)responseData ;
+    
+    CFDataRef outputData = CFDataCreateCopy(kCFAllocatorDefault, (CFDataRef)responseData) ;
+#if NO_ARC
+    [responseData release] ;
+#endif
+    
+	return outputData ;
 }
 
 
@@ -108,7 +124,9 @@ CFDataRef SSYInterappServerCallBackCreateData(
 		m_port = NULL ;
 	}
 	
+#if NO_ARC
 	[super dealloc] ;
+#endif
 }
 
 - (id)initWithPortName:(NSString*)portName
@@ -124,7 +142,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
 		
 		for (NSValue* portPointer in static_portsInUse) {
 			CFMessagePortRef aPort = [portPointer pointerValue] ;
-			if ([portName isEqualToString:(NSString*)CFMessagePortGetName(aPort)]) {
+			if ([portName isEqualToString:(__bridge NSString*)CFMessagePortGetName(aPort)]) {
 				m_port = aPort ;
 				CFRetain(aPort) ;
 			}
@@ -133,7 +151,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
 		if (!m_port) {
 			CFMessagePortContext context ;
 			context.version = 0 ;
-			context.info = self ;
+			context.info = (__bridge void *)(self) ;
 			context.retain = NULL ;
 			context.release = NULL ;
 			context.copyDescription = NULL ;
@@ -144,7 +162,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
             do {
                 m_port = CFMessagePortCreateLocal(
                                                   NULL,
-                                                  (CFStringRef)portName,
+                                                  (__bridge CFStringRef)portName,
                                                   SSYInterappServerCallBackCreateData,
                                                   &context,
                                                   NULL) ;
@@ -203,7 +221,9 @@ CFDataRef SSYInterappServerCallBackCreateData(
 	
 	if (errorCode != 0) {
 		// See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
+#if NO_ARC
 		[super dealloc] ;
+#endif
 		self = nil ;
 		
 		if (error_p) {
@@ -225,7 +245,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
 }
 
 - (NSString*)portName {
-	return (NSString*)CFMessagePortGetName([self port]) ;
+	return (__bridge NSString*)CFMessagePortGetName([self port]) ;
 }
 
 + (SSYInterappServer*)leaseServerWithPortName:(NSString*)portName
@@ -263,7 +283,9 @@ CFDataRef SSYInterappServerCallBackCreateData(
             // Internal Error 713-0192 here, but it was not providing any
             // useful information not already in the error.
 		}
+#if NO_ARC
 		[server release] ;
+#endif
 	}
 	
 	[server setDelegate:delegate] ;

@@ -1,5 +1,15 @@
 #import "SSYLaunchdBasics.h"
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+#define NO_ARC 1
+#else
+#if __has_feature(objc_arc)
+#define NO_ARC 0
+#else
+#define NO_ARC 1
+#endif
+#endif
+
 
 @implementation SSYLaunchdBasics
 
@@ -32,8 +42,12 @@
 	}
 	
 	NSSet* answer = [targetAgentNames copy] ;
+#if NO_ARC
 	[targetAgentNames release] ;
-	return [answer autorelease] ;
+	[answer autorelease] ;
+#endif
+
+    return answer ;
 }
 
 + (NSDictionary*)installedLaunchdAgentsWithPrefix:(NSString*)prefix {
@@ -52,8 +66,12 @@
 	}
 	
 	NSDictionary* answer = [agents copy] ;
+#if NO_ARC
 	[agents release] ;
-	return [answer autorelease] ;
+	[answer autorelease] ;
+#endif
+
+    return answer ;
 }
 
 @end
