@@ -397,6 +397,9 @@ static NSInteger SSAppSQLiteCallback(void* NotUsed, NSInteger nColumns, char **c
 	
 	error = [error errorByAddingUserInfoObject:query
 										forKey:@"Query"] ;
+    
+    error = [error errorByAddingUserInfoObject:[self path]
+                                        forKey:@"Database path"] ;
 	
 	if (prettyFunction != NULL) {
 		error = [error errorByOverwritingUserInfoObject:[NSString stringWithCString:prettyFunction
