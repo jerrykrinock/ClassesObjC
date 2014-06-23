@@ -1,4 +1,5 @@
 #import "SSYInterappServer.h"
+#import "SSYInterappClient.h"
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
 #define NO_ARC 1
@@ -166,7 +167,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
                                                   SSYInterappServerCallBackCreateData,
                                                   &context,
                                                   NULL) ;
-               if (m_port) {
+                if (m_port) {
                     break ;
                 }
                 if ([endDate timeIntervalSinceNow] < 0.0) {
@@ -227,8 +228,20 @@ CFDataRef SSYInterappServerCallBackCreateData(
 		self = nil ;
 		
 		if (error_p) {
+            // Added in BookMacster 1.22.8.
+            // See if the port with our target portName is already in use by
+            // seeing if sending a message to it succeeds.
+            BOOL portAppearsToBeInUse = [SSYInterappClient sendHeaderByte:'t'
+                                                                txPayload:nil
+                                                                 portName:portName
+                                                                     wait:YES
+                                                           rxHeaderByte_p:NULL
+                                                              rxPayload_p:NULL
+                                                                txTimeout:1.0
+                                                                rxTimeout:1.0
+                                                                  error_p:NULL] ;
             NSString* localizedFailureReason = nil ;
-            if (errorCode == 287101) {
+            if ((errorCode == 287101) && portAppearsToBeInUse) {
                 localizedFailureReason = @"This can happen if your program tries to open a port which it has already opened by that name, or if another running instance of your program already has such a port open." ;
             }
 			*error_p = [NSError errorWithDomain:SSYInterappServerErrorDomain
@@ -236,6 +249,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
 									   userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
 												 @"Mac OS X failed to create a local message port.", NSLocalizedDescriptionKey,
 												 portName, @"Port Name",
+                                                 portAppearsToBeInUse ? @"Si" : @"No", @"Port appears to be already in use?",
                                                  localizedFailureReason, NSLocalizedDescriptionKey, // may be nil
 												 nil]] ;
 		}

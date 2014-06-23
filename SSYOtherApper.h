@@ -4,6 +4,7 @@ extern NSString* const SSYOtherApperErrorDomain ;
 
 extern NSString* const SSYOtherApperKeyPid ;
 extern NSString* const SSYOtherApperKeyUser ;
+extern NSString* const SSYOtherApperKeyEtime ;
 extern NSString* const SSYOtherApperKeyExecutable ;
 
 /*!
@@ -123,7 +124,8 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  @brief    Returns the major version which is believed to be the version of the
  package at a given bundle path, or 0 if no such version could be found
  
- @result   First, tries to parse the answer from CFBundleShortVersionString of the given
+ @result   First, tries to parse the answer from 
+ of the given
  bundlePath, and if that fails tries CFBundleVersion.  Usually the former is the one
  you want.  For example, today I find…
  
@@ -154,7 +156,7 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  
  @param   user  The short name, that is, the Home directory name, of the user
  whose process we want the pid of.  Pass NSUserName() for the current user.
- Do not pass nil.
+ Pass nil for any user.
  */
 + (pid_t)pidOfProcessNamed:(NSString*)processName
 					  user:(NSString*)user ;
@@ -182,12 +184,33 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  for a certain user.
  @param    fullExecutablePath  YES to return the full path to each executable as the
  value of the "command" key.  NO to return only the executable name (last path component).
- @result   The array of dictionaries.  Each dictionary contains three keys:
+ @result   The array of dictionaries.  Each dictionary contains four keys:
  *  SSYOtherApperKeyPid, whose value is an NSNumber
  *  SSYOtherApperKeyUser, whose value is an NSString, the short name of the user
+ *  SSYOtherApperKeyEtime, whose value is an NSString, the "elapsed running
+ time" of the process; see etime in man ps(1).  Unfortunately, the format
+ is not specified.  It seems to be DD-HH:MM:SS, where the DD- is: omitted for
+ processes which have been running less than 24 hours, "0N-" for processes
+ running 1-10 days, presumably "NN-" for process running 10-100 days, presumably
+ "NNN-" for processes running 100-1000 days.
  *  SSYOtherApperKeyExecutable, whose value is an NSString, either an executable name or a full path
 */
 + (NSArray*)pidsExecutablesFull:(BOOL)fullExecutablePath ;
+
+/*!
+ @brief    Returns an array with one element for each running executable whose
+ process path contains one or more given strings, and optionally whose user
+ is a given user
+ @param    processNames  The set of strings, one of which a process' path must
+ contain for it to be included in the results
+ @param    user  The short name, that is, the Home directory name, of the user
+ whose processes we want to be in results.  Pass NSUserName() for the current
+ user.  Pass nil for any user.
+ @result   Same as for +pidsExecutablesFull:
+ */
+
++ (NSSet*)infosOfProcessesNamed:(NSSet*)processNames
+                           user:(NSString*)user ;
 
 + (struct ProcessSerialNumber)processSerialNumberForAppWithBundleIdentifier:(NSString*)bundleIdentifier ;
 

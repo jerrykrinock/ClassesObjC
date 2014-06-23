@@ -31,6 +31,7 @@ typedef NSUInteger NSPropertyListReadOptions ;
 NSString* const SSYOtherApperErrorDomain = @"SSYOtherApperErrorDomain" ;
 NSString* const SSYOtherApperKeyPid = @"pid" ;
 NSString* const SSYOtherApperKeyUser = @"user" ;
+NSString* const SSYOtherApperKeyEtime = @"etime" ;
 NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 
 @implementation SSYOtherApper
@@ -308,7 +309,7 @@ end:;
 	// -ww is required for long command path strings!!
 	NSData* stdoutData ;
 	NSString* options = fullExecutablePath ? @"-xaww" : @"-xacww" ;
-	NSArray* args = [[NSArray alloc] initWithObjects:options, @"-o", @"pid=", @"-o", @"user=", @"-o", @"comm=", nil] ;
+	NSArray* args = [[NSArray alloc] initWithObjects:options, @"-o", @"pid=", @"-o", @"etime=", @"-o", @"user=", @"-o", @"comm=", nil] ;
 	// In args, the "=" say to omit the column headers
 	[SSYShellTasker doShellTaskCommand:@"/bin/ps"
 							 arguments:args
@@ -350,6 +351,7 @@ end:;
 		for (NSString* processInfoString in processInfoStrings) {
 			NSInteger pid ;
 			NSString* user = nil ;
+            NSString* etimeString = nil ;
 			NSString* command ;
 			BOOL ok ;
 			
@@ -367,7 +369,7 @@ end:;
 				continue ;
 			}
 			
-			// Scan whitespace between pid and user
+			// Scan whitespace between pid and etime
 			ok = [scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
 								intoString:NULL] ;
 			if (!ok) {
@@ -375,6 +377,23 @@ end:;
 				continue ;
 			}
 
+			/*
+             Scan process elapsed time.  I would have preferred to get the
+             start time using lstart or start rather than etime, but after a
+             half hour of research, decided that their formats were too
+             unpredictable to be parseable.
+             */
+			[scanner scanCharactersFromSet:[[NSCharacterSet whitespaceCharacterSet] invertedSet]
+								intoString:&etimeString] ;
+			
+			// Scan whitespace between etime and user
+			ok = [scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
+									 intoString:NULL] ;
+			if (!ok) {
+                [scanner release] ;
+				continue ;
+			}
+			
 			// Scan user.  Fortunately, short user names in Mac OS X cannot contain whitespace
 			[scanner scanCharactersFromSet:[[NSCharacterSet whitespaceCharacterSet] invertedSet]
 								intoString:&user] ;
@@ -395,6 +414,7 @@ end:;
 			NSDictionary* processInfoDic = [NSDictionary dictionaryWithObjectsAndKeys:
 											[NSNumber numberWithInteger:pid], SSYOtherApperKeyPid,
 											user, SSYOtherApperKeyUser,
+                                            etimeString, SSYOtherApperKeyEtime,
 											command, SSYOtherApperKeyExecutable,
 											nil ] ;
 			[processInfoDics addObject:processInfoDic] ;
@@ -658,16 +678,55 @@ end:;
 					  user:(NSString*)user {
 	NSArray* infos = [self pidsExecutablesFull:NO] ;
 	pid_t pid = 0 ;
+    BOOL foundIt = NO ;
 	for (NSDictionary* info in infos) {
-		NSString* aUser = [info objectForKey:SSYOtherApperKeyUser] ;
 		NSString* aPath = [info objectForKey:SSYOtherApperKeyExecutable] ;
-		if ([aUser isEqualToString:user] && [aPath isEqualToString:processName]) {
-			pid = (pid_t)[[info objectForKey:SSYOtherApperKeyPid] integerValue] ;
-			break ;
+		if ([aPath isEqualToString:processName]) {
+            if (user) {
+                NSString* aUser = [info objectForKey:SSYOtherApperKeyUser] ;
+                if ([aUser isEqualToString:user] ) {
+                    foundIt = YES ;
+                    break ;
+                }
+            }
+            else {
+                foundIt = YES ;
+            }
+            
+            if (foundIt) {
+                pid = (pid_t)[[info objectForKey:SSYOtherApperKeyPid] integerValue] ;
+                break ;
+            }
 		}
 	}
 		
 	return pid ;
+}
+
++ (NSSet*)infosOfProcessesNamed:(NSSet*)processNames
+                          user:(NSString*)user {
+	NSArray* infos = [self pidsExecutablesFull:YES] ;
+    NSMutableSet* results = [[NSMutableSet alloc] init] ;
+	for (NSString* processName in processNames) {
+        for (NSDictionary* info in infos) {
+            NSString* aPath = [info objectForKey:SSYOtherApperKeyExecutable] ;
+            if ([aPath rangeOfString:processName].location != NSNotFound) {
+                if (user) {
+                    NSString* aUser = [info objectForKey:SSYOtherApperKeyUser] ;
+                    if ([aUser isEqualToString:user] ) {
+                        [results addObject:info] ;
+                    }
+                }
+                else {
+                    [results addObject:info] ;
+                }
+            }
+        }
+    }
+    
+    NSSet* answer = [results copy] ;
+    [answer autorelease] ;
+	return answer ;
 }
 
 + (NSString*)processBundlePathWithProcessSerialNumber:(struct ProcessSerialNumber)psn {
