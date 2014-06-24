@@ -686,7 +686,6 @@ end:;
                 NSString* aUser = [info objectForKey:SSYOtherApperKeyUser] ;
                 if ([aUser isEqualToString:user] ) {
                     foundIt = YES ;
-                    break ;
                 }
             }
             else {
@@ -725,6 +724,7 @@ end:;
     }
     
     NSSet* answer = [results copy] ;
+    [results release] ;
     [answer autorelease] ;
 	return answer ;
 }
