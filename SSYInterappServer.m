@@ -161,6 +161,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
 #define MESSAGE_PORT_CREATE_LOCAL_TIMEOUT 5.0
             NSDate* endDate = [NSDate dateWithTimeIntervalSinceNow:MESSAGE_PORT_CREATE_LOCAL_TIMEOUT] ;
             do {
+                /*SSYDBL*/ NSLog(@"Creating CFMessagePort named %@", portName) ;
                 m_port = CFMessagePortCreateLocal(
                                                   NULL,
                                                   (__bridge CFStringRef)portName,
@@ -280,11 +281,13 @@ CFDataRef SSYInterappServerCallBackCreateData(
 		}
 	}
 	
+    /*SSYDBL*/ NSLog(@"Will lease server for %@", portName) ;
 	if (server) {
 		// Increase the retain count of server in the static counted set
 		[static_serversInUse addObject:server] ;
 	}
 	else {
+        /*SSYDBL*/ NSLog(@"Will init server for %@", portName) ;
 		server = [[self alloc] initWithPortName:portName
 									   delegate:delegate
 										error_p:&error] ;
