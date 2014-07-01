@@ -13,6 +13,8 @@
 #import "NSFileManager+SSYAcls.h"
 
 NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
+NSString* const SSYLaunchdGuyErrorKeyNSTaskError = @"NSTask Error" ;
+NSString* const SSYLaunchdGuyErrorKeyCommandStderr = @"Command Stderr" ;
 
 @interface SSYLaunchdGuy ()
 @end
@@ -751,9 +753,9 @@ end:;
 		
 	if ((result != 0) && error_p) {
 		*error_p = [*error_p errorByAddingUserInfoObject:error
-												  forKey:@"NSTask Error"] ;
+												  forKey:SSYLaunchdGuyErrorKeyNSTaskError] ;
 		*error_p = [*error_p errorByAddingUserInfoObject:[NSString stringWithDataUTF8:stderrData]
-												  forKey:@"Command Stderr"] ;
+												  forKey:SSYLaunchdGuyErrorKeyCommandStderr] ;
 	}
 	
 	return (result == 0) ;

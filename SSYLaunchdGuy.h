@@ -1,6 +1,8 @@
 #import <Cocoa/Cocoa.h>
 
 extern NSString* const SSYLaunchdGuyErrorDomain ;
+extern NSString* const SSYLaunchdGuyErrorKeyNSTaskError ;
+extern NSString* const SSYLaunchdGuyErrorKeyCommandStderr ;
 
 /*!
  @brief    A class for manipulating launchd agents.  All methods in this
