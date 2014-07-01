@@ -73,21 +73,33 @@ CFDataRef SSYInterappServerCallBackCreateData(
 						data:rxPayload] ;
 
 	// Get response from delegate and return to Client
-	NSMutableData* responseData = [[NSMutableData alloc] init];
+	NSMutableData* responseData ;
 	char responseHeaderByte = [delegate responseHeaderByte] ;
-	[responseData appendBytes:(const void*)&responseHeaderByte
-					   length:1] ;
-
 	NSData* responsePayload = [delegate responsePayload] ;
-	if (responsePayload) {
-		[responseData appendData:responsePayload] ;
-	}
-	
+    if (responseHeaderByte || responsePayload) {
+        responseData = [[NSMutableData alloc] init] ;
+        if (responseHeaderByte != 0) {
+            [responseData appendBytes:(const void*)&responseHeaderByte
+                               length:1] ;
+        }
+        if (responsePayload) {
+            [responseData appendData:responsePayload] ;
+        }
+    }
+    else {
+        responseData = NULL ;
+    }
+    
 	// From CFMessagePortCallBack documentation, we return the
 	// "data to send back to the sender of the message.  The system
 	// releases the returned CFData object."
-    
-    CFDataRef outputData = CFDataCreateCopy(kCFAllocatorDefault, (CFDataRef)responseData) ;
+    CFDataRef outputData ;
+    if (responseData) {
+        outputData = CFDataCreateCopy(kCFAllocatorDefault, (CFDataRef)responseData) ;
+    }
+    else {
+        outputData = NULL ;
+    }
 #if NO_ARC
     [responseData release] ;
 #endif
@@ -161,7 +173,6 @@ CFDataRef SSYInterappServerCallBackCreateData(
 #define MESSAGE_PORT_CREATE_LOCAL_TIMEOUT 5.0
             NSDate* endDate = [NSDate dateWithTimeIntervalSinceNow:MESSAGE_PORT_CREATE_LOCAL_TIMEOUT] ;
             do {
-                /*SSYDBL*/ NSLog(@"Creating CFMessagePort named %@", portName) ;
                 m_port = CFMessagePortCreateLocal(
                                                   NULL,
                                                   (__bridge CFStringRef)portName,
@@ -281,13 +292,11 @@ CFDataRef SSYInterappServerCallBackCreateData(
 		}
 	}
 	
-    /*SSYDBL*/ NSLog(@"Will lease server for %@", portName) ;
 	if (server) {
 		// Increase the retain count of server in the static counted set
 		[static_serversInUse addObject:server] ;
 	}
 	else {
-        /*SSYDBL*/ NSLog(@"Will init server for %@", portName) ;
 		server = [[self alloc] initWithPortName:portName
 									   delegate:delegate
 										error_p:&error] ;
