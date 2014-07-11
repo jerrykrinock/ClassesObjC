@@ -8,6 +8,13 @@ enum {
 	SSYAlertIconInformational   /*!<  Alert will have "informational" (yellow) icon */
 } ;
 
+enum SSYAlertMode_enum {
+    SSYAlertModeNonBlocking,
+    SSYAlertModeModalSession,
+    SSYAlertModeModalDialog
+};
+typedef enum SSYAlertMode_enum SSYAlertMode ;
+
 /*!
  @brief    This is an addition to Apple's anonymous enumeration containing
  NSAlertDefaultReturn, NSAlertAlternateReturn, NSAlertOtherReturn and NSAlertErrorReturn.

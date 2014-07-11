@@ -1,5 +1,4 @@
 #import "SSYListPicker.h"
-#import "SSYAlert.h"
 #import "SSYLabelledList.h"
 #import "NSString+LocalizeSSY.h"
 #import "NS(Attributed)String+Geometrics.h"
@@ -40,7 +39,7 @@ NSString* constKeyDidCancelInvocation = @"didCancelInvocation" ;
 			initialPicks:(NSIndexSet*)initialPicks
 			 windowTitle:(NSString*)windowTitle
 				   alert:(SSYAlert*)alert
-				runModal:(BOOL)runModal
+                    mode:(SSYAlertMode)mode
 			didEndTarget:(id)didEndTarget
 		  didEndSelector:(SEL)didEndSelector
 		  didEndUserInfo:(id)didEndUserInfo
@@ -109,8 +108,15 @@ NSString* constKeyDidCancelInvocation = @"didCancelInvocation" ;
 				  forKey:constKeyDidCancelInvocation] ;
 	[alert setClickObject:didEndInfo] ;
 	[alert display] ;
-	if (runModal) {
-		[alert runModalSession] ;
+    switch (mode) {
+        case SSYAlertModeNonBlocking:
+            break ;
+        case SSYAlertModeModalSession:
+            [alert runModalSession] ;
+            break ;
+        case SSYAlertModeModalDialog:
+            [alert runModalDialog] ;
+            break ;
 	}
 }
 

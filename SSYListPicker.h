@@ -1,6 +1,6 @@
 #import <Cocoa/Cocoa.h>
 
-@class SSYAlert ;
+#import "SSYAlert.h"
 
 @interface SSYListPicker : NSObject {
 	SSYAlert* m_alert ;
@@ -67,7 +67,7 @@
 			initialPicks:(NSIndexSet*)initialPicks
 			 windowTitle:(NSString*)windowTitle
 				   alert:(SSYAlert*)alert
-				runModal:(BOOL)runModal
+                    mode:(SSYAlertMode)mode
 			didEndTarget:(id)didEndTarget
 		  didEndSelector:(SEL)didEndSelector
 		  didEndUserInfo:(id)didEndUserInfo
