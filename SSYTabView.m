@@ -5,6 +5,51 @@ static NSString* SSYTabViewObservedKeyPath = @"selectedTabIndex" ;
 
 @implementation SSYTabView
 
+#if 11
+#warning Logging SSYTabView Memory Managment
+
+#if 11
+- (id)initWithCoder:(NSCoder *)aDecoder {
+    self = [super initWithCoder:aDecoder] ;
+	NSString* line = [NSString stringWithFormat:@"%p initted %03ld %@", self, (long)[self retainCount], SSYDebugCaller()] ;
+    printf("%s\n", [line UTF8String]) ;
+    
+    return self ;
+}
+
+- (id)retain {
+	id x = [super retain] ;
+	NSString* line = [NSString stringWithFormat:@"retain  %03ld %@", (long)[self retainCount], SSYDebugCaller()] ;
+    printf("%s\n", [line UTF8String]) ;
+	return x ;
+}
+
+- (id)autorelease {
+	NSString* line = [NSString stringWithFormat:@"autorelease %@", SSYDebugCaller()] ;
+    printf("%s\n", [line UTF8String]) ;
+	id x = [super autorelease] ;
+	return x ;
+}
+
+- (oneway void)release {
+	NSInteger rc = [self retainCount] ;
+	NSString* line = [NSString stringWithFormat:@"release %03ld %@", (long)rc-1, SSYDebugCaller()] ;
+    printf("%s\n", [line UTF8String]) ;
+	[super release] ;
+	return ;
+}
+#endif
+
+- (void)dealloc {
+	NSInteger rc = [self retainCount] ;
+	NSString* line = [NSString stringWithFormat:@"deallocc %03ld %@", (long)rc-1, SSYDebugCaller()] ;
+    printf("%s\n", [line UTF8String]) ;
+//    NSLog(@"Deallocced SSYTabView") ;
+
+    [super dealloc] ;
+}
+#endif
+
 + (void)initialize {
 	if (self == [SSYTabView class] ) {
 		[self exposeBinding:SSYTabViewObservedKeyPath] ;
