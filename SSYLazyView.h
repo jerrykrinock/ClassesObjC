@@ -42,7 +42,7 @@ extern NSString* SSYLazyViewDidLoadPayloadNotification;
 
 /*
  @brief    View which, upon being moved to a window for the first time, or
- upon demand (-load), removes all of its original subviews
+ upon demand (-loadWithOwner:), removes all of its original subviews
  ("placeholders") and adds a in their place a single "payload" view which it
  loads from a designated nib
  
@@ -59,7 +59,7 @@ extern NSString* SSYLazyViewDidLoadPayloadNotification;
  will be removed when the new view is placed in.
 
  If an error occurs when attempting to load the payload, in either case (when
- receiver is moved to a window or upon -load), an error dialog
+ receiver is moved to a window or upon -loadWithOwner:), an error dialog
  suggesting that the user reinstall the application is displayed.  We did this
  because these errors should occur very rarely, and in the first case, there
  is no message for us to return an error in.  Yeah, we could have used a 
@@ -90,7 +90,10 @@ extern NSString* SSYLazyViewDidLoadPayloadNotification;
  
  @details  This method is used to "manually" load the payload, before the
  receiver is moved to a window.
+ 
+ @param    owner  The object which to assign as the File's Owner when the 
+ nib is loaded.
  */
-- (void)load ;
+- (void)loadWithOwner:(id)owner ;
 
 @end
