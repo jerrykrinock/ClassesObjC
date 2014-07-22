@@ -3,6 +3,7 @@
 #warning Fix this pollution
 #import "BkmxDocTabViewController.h"
 
+
 NSString* SSYLazyViewErrorDomain = @"SSYLazyViewErrorDomain" ;
 
 
@@ -87,10 +88,8 @@ NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNot
                                                                                  bundle:nil] ;
     BkmxDocWinCon* windowController = [[self window] windowController] ;
 #warning.  Try to get rid of InitialDummy tab view item.
-#warning.  This ain't gonna work for other tabs
-    if (windowController) {
-        [windowController setContentViewController:viewController] ;
-        [viewController release] ;
+    if ([windowController conformsToProtocol:@protocol(SSYLazyViewWindowController)]) {
+        [windowController setAViewController:viewController] ;
         
         if (isMacOSX10_8orLater) {
 #pragma deploymate push "ignored-api-availability" // Skip it until next "pop"
@@ -220,6 +219,7 @@ NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNot
     else {
         NSLog(@"Internal Error 101-3849 loading %@", [[self class] lazyNibName]) ;
     }
+    [viewController release] ;
 }
 
 - (void)viewDidMoveToWindow {

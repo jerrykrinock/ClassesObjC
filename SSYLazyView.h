@@ -2,6 +2,13 @@
 
 extern NSString* SSYLazyViewErrorDomain ;
 
+@protocol SSYLazyViewWindowController
+
+- (void)setAViewController:(NSViewController*)aViewController ;
+
+@end
+
+
 #define SSY_LAZY_VIEW_ERROR_CODE_COULD_NOT_LOAD_NIB        992611
 #define SSY_LAZY_VIEW_ERROR_CODE_LEGACY_COULD_NOT_LOAD_NIB 992613
 #define SSY_LAZY_VIEW_ERROR_CODE_LEGACY_COULD_NOT_FIND_NIB 992614
