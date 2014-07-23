@@ -5,10 +5,14 @@ static NSString* SSYTabViewObservedKeyPath = @"selectedTabIndex" ;
 
 @implementation SSYTabView
 
-#if 11
+#if 0
 #warning Logging SSYTabView Memory Managment
+#define LOG_SSYTABVIEW_MEMORY_MANAGEMENT 1
+#else
+#warning Not logging SSYTabView Memory Managment
+#endif
 
-#if 11
+#if LOG_SSYTABVIEW_MEMORY_MANAGEMENT
 - (id)initWithCoder:(NSCoder *)aDecoder {
     self = [super initWithCoder:aDecoder] ;
 	NSString* line = [NSString stringWithFormat:@"%p initted %03ld %@", self, (long)[self retainCount], SSYDebugCaller()] ;
@@ -38,7 +42,7 @@ static NSString* SSYTabViewObservedKeyPath = @"selectedTabIndex" ;
 	[super release] ;
 	return ;
 }
-#endif
+
 
 - (void)dealloc {
 	NSInteger rc = [self retainCount] ;

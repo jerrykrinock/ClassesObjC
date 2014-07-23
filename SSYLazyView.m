@@ -60,8 +60,6 @@ NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNot
 }
 
 - (void)load {
-    NSLog(@"May load %@ due to:\n%@", [[self class] lazyNibName], SSYDebugBacktrace()) ;
-
     // Only do this once
     if ([self isPayloaded]) {
         /*SSYDBL*/ NSLog(@"Whoops already payloaded") ;
@@ -97,7 +95,7 @@ NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNot
             ok = [bundle loadNibNamed:nibName
                                 owner:viewController
                       topLevelObjects:&topLevelObjects] ;
-            /*SSYDBL*/ NSLog(@"Did load nib name %@ with owner %@, got tlo:\n%@", nibName, viewController, topLevelObjects) ;
+            ///*SSYDBL*/ NSLog(@"Did load nib name %@ with owner %@, got tlo:\n%@", nibName, viewController, topLevelObjects) ;
 #pragma deploymate pop
             if (ok) {
                 // See details of doc for -loadNibNamed:owner:topLevelObjects:,
