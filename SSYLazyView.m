@@ -62,10 +62,11 @@ NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNot
 - (void)load {
     // Only do this once
     if ([self isPayloaded]) {
-        /*SSYDBL*/ NSLog(@"Whoops already payloaded") ;
+        /*SSYDBL*/ NSLog(@"Whoops %@ already payloaded", self) ;
 		return ;
 	}
-	
+    /*SSYDBL*/ NSLog(@"Loading %@", self) ;
+
     [[NSNotificationCenter defaultCenter] postNotificationName:SSYLazyViewWillLoadPayloadNotification
                                                         object:[self window]
                                                       userInfo:nil] ;
@@ -91,7 +92,7 @@ NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNot
         
         if (isMacOSX10_8orLater) {
 #pragma deploymate push "ignored-api-availability" // Skip it until next "pop"
-            /*SSYDBL*/ NSLog(@"Will load nib name %@ with owner %@", nibName, viewController) ;
+            ///*SSYDBL*/ NSLog(@"Will load nib name %@ with owner %@", nibName, viewController) ;
             ok = [bundle loadNibNamed:nibName
                                 owner:viewController
                       topLevelObjects:&topLevelObjects] ;
@@ -221,7 +222,7 @@ NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNot
 }
 
 - (void)viewDidMoveToWindow {
-	[super viewDidMoveToWindow] ;
+    /*SSYDBL*/ NSLog(@"%@ did move to %@", self, [self window]) ;
     [self load] ;
 }
 
