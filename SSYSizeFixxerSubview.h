@@ -22,7 +22,7 @@
  given subviews contains only one element, which responds to -suviews, searches
  its subviews and returns the size of the first one.  The latter condition is
  to support configurations where a view may be the only view embedded in
- another view, as will occur with, for example, SSYLazyView.
+ another view, as will occur with, for example, BkmxLazyView.
 
  @param    defaultSize  This is typically used as a debugging aid, or for
  defensive programming.

@@ -19,7 +19,7 @@
 
 - (void)setIgnoreThisAppValidation:(BOOL)yn {
     m_ignoreThisAppValidation = yn ;
-	[recorderControl setIgnoreThisAppValidation:yn] ;
+    [recorderControl setIgnoreThisAppValidation:yn] ;
 }
 
 - (void)awakeWithSelectorName:(NSString*)selectorName {
