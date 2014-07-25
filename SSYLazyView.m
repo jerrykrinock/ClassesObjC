@@ -62,10 +62,8 @@ NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNot
 - (void)load {
     // Only do this once
     if ([self isPayloaded]) {
-        /*SSYDBL*/ NSLog(@"Whoops %@ already payloaded", self) ;
 		return ;
 	}
-    /*SSYDBL*/ NSLog(@"Loading %@", self) ;
 
     [[NSNotificationCenter defaultCenter] postNotificationName:SSYLazyViewWillLoadPayloadNotification
                                                         object:[self window]
@@ -79,7 +77,6 @@ NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNot
     NSArray* topLevelObjects = nil ;
     BOOL isMacOSX10_8orLater = [bundle respondsToSelector:@selector(loadNibNamed:owner:topLevelObjects:)] ;
 
-    /*SSYDBL*/ NSLog(@"isMacOSX10_8orLater = %hhd", isMacOSX10_8orLater) ;
     Class controllerClass = [[self class] lazyViewControllerClass] ;
     NSString* nibName = [[self class] lazyNibName] ;
     BkmxDocTabViewController* viewController = [[controllerClass alloc] initWithNibName:nibName
@@ -92,11 +89,9 @@ NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNot
         
         if (isMacOSX10_8orLater) {
 #pragma deploymate push "ignored-api-availability" // Skip it until next "pop"
-            ///*SSYDBL*/ NSLog(@"Will load nib name %@ with owner %@", nibName, viewController) ;
             ok = [bundle loadNibNamed:nibName
                                 owner:viewController
                       topLevelObjects:&topLevelObjects] ;
-            ///*SSYDBL*/ NSLog(@"Did load nib name %@ with owner %@, got tlo:\n%@", nibName, viewController, topLevelObjects) ;
 #pragma deploymate pop
             if (ok) {
                 // See details of doc for -loadNibNamed:owner:topLevelObjects:,
@@ -222,7 +217,6 @@ NSString* SSYLazyViewDidLoadPayloadNotification = @"SSYLazyViewDidLoadPayloadNot
 }
 
 - (void)viewDidMoveToWindow {
-    /*SSYDBL*/ NSLog(@"%@ did move to %@", self, [self window]) ;
     [self load] ;
 }
 
