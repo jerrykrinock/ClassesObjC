@@ -9,7 +9,6 @@ static NSString* SSYTabViewObservedKeyPath = @"selectedTabIndex" ;
 #warning Logging SSYTabView Memory Managment
 #define LOG_SSYTABVIEW_MEMORY_MANAGEMENT 1
 #else
-#warning Not logging SSYTabView Memory Managment
 #endif
 
 #if LOG_SSYTABVIEW_MEMORY_MANAGEMENT
@@ -39,16 +38,21 @@ static NSString* SSYTabViewObservedKeyPath = @"selectedTabIndex" ;
 	NSInteger rc = [self retainCount] ;
 	NSString* line = [NSString stringWithFormat:@"release %03ld %@", (long)rc-1, SSYDebugCaller()] ;
     printf("%s\n", [line UTF8String]) ;
+#if 0
+    if (rc == 1) {
+        [self retain] ;
+        [self autorelease] ;
+    }
+#endif
+    
 	[super release] ;
 	return ;
 }
 
-
 - (void)dealloc {
 	NSInteger rc = [self retainCount] ;
-	NSString* line = [NSString stringWithFormat:@"deallocc %03ld %@", (long)rc-1, SSYDebugCaller()] ;
+	NSString* line = [NSString stringWithFormat:@"deallocc %03ld %p %@", (long)rc-1, self, SSYDebugCaller()] ;
     printf("%s\n", [line UTF8String]) ;
-//    NSLog(@"Deallocced SSYTabView") ;
 
     [super dealloc] ;
 }
