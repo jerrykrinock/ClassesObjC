@@ -3,7 +3,6 @@
 #import "NSError+InfoAccess.h"
 #import "NSDate+NiceFormats.h"
 #import "NSError+MyDomain.h"
-#import "Client.h"
 
 #if DEBUG
 // Do not ship with this, in particular because it exposes secret method names.
