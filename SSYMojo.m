@@ -166,9 +166,6 @@
                                                          error:&error] ;
         if (error) {
             NSLog(@"Internal Error 915-1874 %@", [error localizedDescription]) ;
-            if (error_p) {
-                *error_p = error ;
-            }
         }
     }
     else {
@@ -178,13 +175,17 @@
         // due to nil entity in fetch request.
         NSString* errorDesc = [NSString stringWithFormat:@"No entity for %@", [self entityName]] ;
         NSLog(@"Internal Error 915-0893 %@", errorDesc) ;
-        if (error_p) {
-            *error_p = SSYMakeError(262049, errorDesc) ;
-        }
+        error = SSYMakeError(262049, errorDesc) ;
+        error = [error errorByAddingInfoToExplainMissingAppResource] ;
+
         allObjects = nil ;
     }
 	[fetchRequest release] ;
 	
+    if (error && error_p) {
+        *error_p = error ;
+    }
+
 	return allObjects ;
 }
 
