@@ -622,13 +622,17 @@ void doNothingIMP(id self, SEL _cmd, NSNotification* note) {
 // Store reviewers who might misunderstand and think that we are *invoking* a
 // non-public API.  Such stealthiness is definitely overkill, but is warranted
 // due to the high cost of spurious App Store rejections.
+// The autorelease pool was added by Jerry on 2014-Aug-07 to fix sixteen
+// 
 + (void)				load
 {
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
     NSString* prefix = @"_process" ;
     NSString* suffix = @"EndOfEventNotification:" ;
     NSString* selectorName = [prefix stringByAppendingString:suffix] ;
     SEL aSEL = NSSelectorFromString(selectorName) ;
-    class_addMethod(self, aSEL, (IMP) doNothingIMP, "v@:@");
+    class_addMethod(self, aSEL, (IMP) doNothingIMP, "v@:@") ;
+    [pool release] ;
 }
 
 
