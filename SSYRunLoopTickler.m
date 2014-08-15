@@ -1,4 +1,5 @@
 #import "SSYRunLoopTickler.h"
+#import "SSY_ARC_OR_NO_ARC.h"
 
 @implementation SSYRunLoopTickler
 
