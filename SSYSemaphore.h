@@ -1,5 +1,7 @@
 #import <Cocoa/Cocoa.h>
 
+extern __attribute__((visibility("default"))) NSString* SSYSemaphoreErrorDomain ;
+
 __attribute__((visibility("default"))) @interface SSYSemaphorePidKey : NSObject {
     pid_t m_pid ;
     NSString* m_key ;
@@ -31,15 +33,17 @@ __attribute__((visibility("default"))) @interface SSYSemaphorePidKey : NSObject 
  SSYSemaphore features a time limit (timeLimit) to mitigate this
  danger.
  
- SSYSemaphore is implemented by writing a .SSYSemaphore file to
- the application's Application Support folder.  Thinking about this,
- here on 20120302, I wonder why I didn't write (and synchronize)
- a key into BookMacster's User Defaults instead.  It doesn't
- really matter, though.  Actually, it may be fewer lines of code
- this way because writing a file is only one line of code but
- writing and synchronizing user defaults is two lines of code.
- Also, a file is more visible for debugging than a user default.
- Most of the code in this implementation is for checking timeouts.
+ SSYSemaphore is implemented by writing a process identifier (pidd) and an
+ arbitrary user-defined key into an "info file".
+ 
+ Simultaneous access to the info file is limited to one contending process
+ by a "lock file", as described in these links…
+ • http://stackoverflow.com/questions/2053679/how-do-i-recover-a-semaphore-when-the-process-that-decremented-it-to-zero-crashe
+ •  http://charette.no-ip.com:81/programming/2010-01-13_PosixSemaphores/index.html
+ Those links also explain why I use the "lock file" idea instead of named
+ POSIX semaphores.  (Briefly, named POSIX semaphores are not cleaned up by
+ OS X if their owning processes crash, which causes a logjam until the
+ user logs out and back in.
  
  When using this class, [NSApp delegate] must conform to protocol
  SSYAppSupporter.
@@ -57,12 +61,18 @@ __attribute__((visibility("default"))) @interface SSYSemaphore : NSObject {
  Begins by setting the receiver's current backoff, a private attribute, to its
  initial backoff.  Then begins attempts...
  
- If the receiver's system semaphore cannot be obtained because it already exists
- exclusively on the system, sleeps for the receiver's current backoff,
- multiplies the backoff by the backoff factor, limits the backoff to the max
- backoff, and repeats this until either the semaphore is obtained or the
- receiver's timeout is exceeded.
+ If the receiver's system semaphore cannot be obtained, sleeps for the
+ receiver's current backoff, multiplies the backoff by the backoff factor,
+ limits the backoff to the max backoff, and repeats this until either the
+ semaphore is obtained or the receiver's timeout is exceeded.
  
+ @param    forPid  A process identifier of the process which will be registered
+ in the semaphore if it is acquired, and which will result in success in
+ acquiring the semaphore if the semaphore is currently registered with this 
+ identifier.  You can think of this as the "leasee" of the semaphore.  This
+ method will succeed in obtaining the semaphore not only if the semaphore is
+ currently vacant, but also if the requesting would-be leasee is already the
+ leasee.
  @param    timeout  The time interval after which lockError_p will give up and
  return NO if it cannot acquire its receiver's system semaphore.
  @param    timeLimit  The period of time which the previous
@@ -120,8 +130,8 @@ __attribute__((visibility("default"))) @interface SSYSemaphore : NSObject {
 + (SSYSemaphorePidKey*)currentPidKeyEnforcingTimeLimit:(NSTimeInterval)timeLimit ;
 
 /*!
- @brief    Returns the path in the filesystem to a file whose
- data is the currently-active key, in UTF8 encoding
+ @brief    Returns the path in the filesystem to a file which will be touched
+ and whose data is the currently-active key, in UTF8 encoding
 
  @details  This is handy if you want to, for example, monitor
  semaphore activity with a kqueue.
@@ -131,123 +141,169 @@ __attribute__((visibility("default"))) @interface SSYSemaphore : NSObject {
  not move.  If the semaphore is currently inactive, the returned
  path is that of a file which does not exist.
 */
-+ (NSString*)path ;
++ (NSString*)infoPath ;
 
 @end
 
 
-/* TEST CODE FOR THIS CLASS
+#if 0
 
- // Build one of these tools, then doubleclick it three times.  Position the 
- // three Terminal windows to see all, then watch and listen to them
- // compete for the semaphore.
- 
- #import "SSYSemaphore.h"
- #import <Carbon/Carbon.h>
- #import <unistd.h>
- 
- void seedRandomNumberGenerator() {
- double fseed = [[NSDate date] timeIntervalSinceReferenceDate] ;
- //    Remove integer part to base it on the current fraction of a second
- fseed -= (int)fseed ;
- //    0 <= fseed < 1.0
- fseed *= 0x7fffffff ;
- int seed = (int)fseed ;
- //    0 <= seed <= 2^31-1
- srandom(seed) ;
- }	
- 
- float randomPeriod(float min, float max) {
- float intervalMilliseconds = (max - min)*1000 ;
- int randomMilliseconds = random() % (int)intervalMilliseconds ;
- return min + randomMilliseconds/1000.0 ;
- }	
- 
- @interface Doer : NSObject {
- int nWorks ;
- NSString* m_key ;
- }
- 
- @property (retain) NSString* key ;
- 
- @end
- 
- 
- @implementation Doer
- 
- @synthesize key = m_key ;
- 
- - (void)dealloc {
- [m_key release] ;
- 
- [super dealloc] ;
- }
- 
- - (void)doWork {
- NSError* error = nil  ;
- 
- BOOL ok = [SSYSemaphore acquireWithKey:[self key]
- setKey:[self key]
- initialBackoff:1.0
- backoffFactor:1.35
- maxBackoff:10.0
- timeout:15.0
- timeLimit:30.0
- error_p:&error] ;
- if (ok) {
- [[NSSound soundNamed:@"Tink"] play] ;  // beginning work
- NSLog(@"Got semaphore.  Starting work.") ;
- 
- sleep(randomPeriod(3, 7)) ; // Time required to do work
- nWorks++ ;
- 
- NSLog(@"Work done.  Clearing semaphore.") ;
- [[NSSound soundNamed:@"Pop"] play] ;  // ending work
- [SSYSemaphore clearError_p:NULL] ;		
- }
- else {
- if ([error code] == ETIME) {
- // Timed out
- NSLog(@"Retries timed out.  Do some recovery??") ;
- }
- else {
- // Some unexpected error
- NSLog(@"%@", [error description]) ;
- }
- [[NSSound soundNamed:@"Basso"] play] ;
- }
- 
- // Wait a random time and then try more work
- [NSTimer scheduledTimerWithTimeInterval:randomPeriod(5, 7)
- target:self
- selector:@selector(doWork)
- userInfo:nil
- repeats:NO] ;
- }
- 
- @end
- 
- 
- int main(int argc, const char *argv[]) {
- NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
- seedRandomNumberGenerator() ;
- Doer* doer = [[Doer alloc] init] ;
- int bytes = random() ;
- NSData* data = [NSData dataWithBytes:&bytes
- length:sizeof(int)] ;
- NSString* key = [[NSString alloc] initWithData:data
- encoding:NSASCIIStringEncoding] ;
- NSLog(@"Key for this tool: %@", key) ;
- [doer setKey:key] ;
- [key release] ;
- [doer doWork] ;
- 
- [[NSRunLoop currentRunLoop] run] ;
- 
- [pool release] ;
- return 0 ;
- }
- 
- 
- 
- */
+/*
+TEST CODE FOR THIS CLASS
+
+ Build one of these tools, then doubleclick it two or more times.  Each time
+ it will open a Terminal window and launch a process.  Position the Terminal
+ windows to see all, then watch and listen to them contend for the semaphore.
+*/
+
+#import "SSYSemaphore.h"
+#import <Carbon/Carbon.h>
+#import <unistd.h>
+
+void seedRandomNumberGenerator() {
+    double fseed = [[NSDate date] timeIntervalSinceReferenceDate] ;
+    //    Remove integer part to base it on the current fraction of a second
+    fseed -= (int)fseed ;
+    //    0 <= fseed < 1.0
+    fseed *= 0x7fffffff ;
+    int seed = (int)fseed ;
+    //    0 <= seed <= 2^31-1
+    srandom(seed) ;
+}
+
+float randomPeriod(float min, float max) {
+    float intervalMilliseconds = (max - min)*1000 ;
+    int randomMilliseconds = random() % (int)intervalMilliseconds ;
+    return min + randomMilliseconds/1000.0 ;
+}
+
+@interface Doer : NSObject {
+    int nWorks ;
+    NSString* m_key ;
+}
+
+@property (retain) NSString* key ;
+
+@end
+
+
+@implementation Doer
+
+@synthesize key = m_key ;
+
++ (NSString*)sharedTextFilePath {
+    NSString* path = NSHomeDirectory() ;
+    path = [path stringByAppendingPathComponent:@"Desktop"] ;
+    path = [path stringByAppendingPathComponent:@"SemaphoreTestFile.txt"] ;
+    return path ;
+}
+
+- (void)dealloc {
+    [m_key release] ;
+    
+    [super dealloc] ;
+}
+
+- (void)doWork {
+    NSError* error = nil  ;
+    
+    BOOL ok = [SSYSemaphore acquireWithKey:[self key]
+                                    setKey:[self key]
+                                    forPid:[[NSProcessInfo processInfo] processIdentifier]
+                            initialBackoff:1.0
+                             backoffFactor:1.35
+                                maxBackoff:10.0
+                                   timeout:15.0
+                                 timeLimit:30.0
+                                   error_p:&error] ;
+    if (ok) {
+        [[NSSound soundNamed:@"Tink"] play] ;  // beginning work
+        NSLog(@"Got semaphore, working for %@", [self key]) ;
+        ok = [[self key] writeToFile:[[self class] sharedTextFilePath]
+                          atomically:YES
+                            encoding:NSUTF8StringEncoding
+                               error:&error] ;
+        
+        if (!ok) {
+            NSLog(@"Error 182-9282: %@", error) ;
+        }
+        
+        sleep(randomPeriod(1.0, 2.0)) ; // Time required to do work
+        nWorks++ ;
+        
+        error = nil ;
+        NSString* readKey = [[NSString alloc] initWithContentsOfFile:[[self class] sharedTextFilePath]
+                                                            encoding:NSUTF8StringEncoding
+                                                               error:&error] ;
+        
+        if (![readKey isEqualToString:[self key]]) {
+            // Another process must have written to the shared text file path
+            // while we were holding the semaphore.  If this ever happens,
+            // there is a BUG in SSYSemaphore.  The whole idea of SSYSemaphore
+            // is to prevent such collisions!
+            NSLog(@"COLLISION!!  Expected:%@  Read:%@", [self key], readKey) ;
+            [[NSSound soundNamed:@"Submarine"] play] ;
+        }
+        
+        [readKey release] ;
+        
+        if (error) {
+            NSLog(@"Error 183-9383: %@", error) ;
+        }
+        
+        
+        NSLog(@"Work done.  Clearing semaphore.") ;
+        [[NSSound soundNamed:@"Pop"] play] ;  // ending work
+        [SSYSemaphore clearError_p:NULL] ;
+        sleep(randomPeriod(0.2, 2.0)) ; // Rest after work, give other processes a chance
+    }
+    else {
+        if ([error code] == ETIME) {
+            // Timed out
+            NSLog(@"Retries timed out.  Do some recovery??") ;
+        }
+        else if (error) {
+            // Some unexpected error
+            NSLog(@"Error 184-9484: %@", [error description]) ;
+        }
+        [[NSSound soundNamed:@"Basso"] play] ;
+    }
+    
+    // Wait a random time and then try more work
+    [NSTimer scheduledTimerWithTimeInterval:randomPeriod(2, 5)
+                                     target:self
+                                   selector:@selector(doWork)
+                                   userInfo:nil
+                                    repeats:NO] ;
+}
+
+@end
+
+
+int main(int argc, const char *argv[]) {
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
+    seedRandomNumberGenerator() ;
+    Doer* doer = [[Doer alloc] init] ;
+    int bytes = 0 ;
+    for (int i=0; i<4; i++) {
+        int byte = (int)random() ;
+        // For readability, use only lowercase ASCII characters a-z:
+        byte = (byte % 26) + 97 ;
+        bytes += (byte << 8*i) ;
+    }
+    NSData* data = [NSData dataWithBytes:&bytes
+                                  length:sizeof(int)] ;
+    NSString* key = [[NSString alloc] initWithData:data
+                                          encoding:NSASCIIStringEncoding] ;
+    NSLog(@"Key for this tool: %@", key) ;
+    [doer setKey:key] ;
+    [key release] ;
+    [doer doWork] ;
+    
+    [[NSRunLoop currentRunLoop] run] ;
+    
+    [pool release] ;
+    return 0 ;
+}
+
+#endif

@@ -1,9 +1,11 @@
 #import "SSYSemaphore.h"
 #import "NSFileManager+SomeMore.h"
 #import "SSYOtherApper.h"
-#import "BkmxBasis.h"
 #import "NSBundle+SSYMotherApp.h"
 #import "NSBundle+MainApp.h"
+#import <fcntl.h>
+
+NSString* SSYSemaphoreErrorDomain = @"SSYSemaphoreErrorDomain" ;
 
 @implementation SSYSemaphorePidKey
 
@@ -99,8 +101,76 @@
 
 @implementation SSYSemaphore
 
-+ (NSString*)path {
-	return [[[NSBundle mainAppBundle] applicationSupportPathForMotherApp] stringByAppendingPathComponent:@".SSYSemaphore"] ;
++ (NSString*)semaphoreName {
+    return @"SSYSemaphore" ;
+}
+
++ (NSString*)semaphoreBasePath {
+    NSString* path ;
+    path = [[NSBundle mainAppBundle] applicationSupportPathForMotherApp] ;
+    if (!path) {
+        path = NSHomeDirectory() ;
+    }
+    path = [path stringByAppendingPathComponent:[@"." stringByAppendingString:[self semaphoreName]]] ;
+	return path ;
+}
+
++ (NSString*)infoPath {
+    NSString* path = [self semaphoreBasePath] ;
+    path = [path stringByAppendingString:@"-Info"] ;
+	return path ;
+}
+
++ (NSString*)lockPath {
+    NSString* path = [self semaphoreBasePath] ;
+    path = [path stringByAppendingString:@"-Lock"] ;
+	return path ;
+}
+
++ (int)lockMomentaryLock {
+    const char* path = [[self lockPath] fileSystemRepresentation] ;
+#if 0
+    // Using code by Stéphane from this blog post
+    // http://charette.no-ip.com:81/programming/2010-01-13_PosixSemaphores/index.html
+    // This code has an issue.  Running the test code for a half hour or so,
+    // the result with this code is: 2198 unique acquisitions, 26 dual
+    // acqusitions (meaning that two contending processes request
+    // -acquireWithKey:::::::: and both get returned YES.)  These "collisions"
+    // typically occur when these requests occur within 10 milliseconds of each
+    // other.
+    int fileDescriptor = open(path,
+                              O_RDWR      |   // open the file for both read and write access
+                              O_CREAT     |   // create file if it does not already exist
+                              O_CLOEXEC   ,   // close on execute
+                              S_IRUSR     |   // user permission: read
+                              S_IWUSR     );  // user permission: write
+    
+    lockf( fileDescriptor, F_TLOCK, 0 ) ; // lock the "semaphore"
+#else
+    // Using code by in answer by Raffi Khatchadourian in this thread:
+    // http://stackoverflow.com/questions/2053679/how-do-i-recover-a-semaphore-when-the-process-that-decremented-it-to-zero-crashe
+    // This code is good.  Running the test code for a couple hours,
+    // the result with this code is: 5512 unique acquisitions, 0 dual
+    // acquisitions.
+    int fileDescriptor = open(
+                              path,
+                              O_CREAT | //create the file if it's not present.
+                              O_WRONLY | //only need write access for the internal locking semantics.
+                              O_EXLOCK, //use an exclusive lock when opening the file.
+                              S_IRUSR | S_IWUSR) ; //permissions on the file, 600 here.
+#endif
+    return fileDescriptor ;
+}
+
++ (void)relinquishMomentaryLock:(int)fileDescriptor {
+    if (close(fileDescriptor) != 0) {
+        NSLog(@"Internal Error 593-2101 %ld", (long)errno) ;
+    }
+    
+    return ;
+    /*
+     
+     */
 }
 
 + (SSYSemaphorePidKey*)currentPidKeyEnforcingTimeLimit:(NSTimeInterval)timeLimit  {
@@ -110,7 +180,7 @@
 		overlimit = NO ;
 	}
 	else {
-		NSTimeInterval timeSinceFileModified = -[[[NSFileManager defaultManager] modificationDateForPath:[self path]] timeIntervalSinceNow] ;
+		NSTimeInterval timeSinceFileModified = -[[[NSFileManager defaultManager] modificationDateForPath:[self infoPath]] timeIntervalSinceNow] ;
         overlimit = (timeSinceFileModified > timeLimit) ;
 	}
 	
@@ -120,7 +190,7 @@
 	}
 	else {
 		// Current leasee has not timed out
-		currentPidKeyString = [NSString stringWithContentsOfURL:[NSURL fileURLWithPath:[self path]]
+		currentPidKeyString = [NSString stringWithContentsOfURL:[NSURL fileURLWithPath:[self infoPath]]
                                                    usedEncoding:NULL
                                                           error:NULL] ;
 	}
@@ -147,44 +217,52 @@
 			   error_p:(NSError**)error_p {
 	NSTimeInterval backoff = initialBackoff ;
 	NSDate* deadline = [NSDate dateWithTimeIntervalSinceNow:timeout] ;
-	NSString* path = [self path] ;
+	NSString* path = [self infoPath] ;
     SSYSemaphorePidKey* acquirePidKey = [SSYSemaphorePidKey pidKeyWithPid:forPid
-                                              key:newKey] ;
+                                                                      key:newKey] ;
     SSYSemaphorePidKey* currentPidKey = nil ;
 	while ([(NSDate*)[NSDate date] compare:deadline] == NSOrderedAscending) {
-		currentPidKey = [self currentPidKeyEnforcingTimeLimit:timeLimit] ;
-        pid_t currentPid = [currentPidKey pid] ;
-        SSYOtherApperProcessState currentProcessState = [SSYOtherApper stateOfPid:currentPid] ;
-		BOOL requestorIsCurrentOwner = ((currentPid == forPid) && ([acquirePidKey isEqual:currentPidKey])) ;
-		if (
-			(!currentPidKey)
-			// semaphore is not in use or its time limit has expired
-            ||
-			(requestorIsCurrentOwner)
-			||
-            (currentProcessState == SSYOtherApperProcessDoesNotExist)
-			||
-            (currentProcessState == SSYOtherApperProcessStateZombie)
-			||
-            (currentProcessState == SSYOtherApperProcessUnknown)
-			) {
-			// semaphore is available
-			if (!requestorIsCurrentOwner) {
-                NSString* newString = [acquirePidKey string] ;
-				[newString writeToFile:path
-                            atomically:YES
-                              encoding:NSUTF8StringEncoding
-                                 error:NULL] ;
-			}
-
-			return YES ;
-		}
-		else {
-			// semaphore is not available
-			usleep( 1000000 * backoff ) ;
-			backoff = backoff * backoffFactor ;
-			backoff = MIN(backoff, maxBackoff) ;
-		}
+        int momentaryLockFileDescriptor = [self lockMomentaryLock] ;
+        if (momentaryLockFileDescriptor >= 0) {
+            currentPidKey = [self currentPidKeyEnforcingTimeLimit:timeLimit] ;
+            pid_t currentPid = [currentPidKey pid] ;
+            SSYOtherApperProcessState currentProcessState = [SSYOtherApper stateOfPid:currentPid] ;
+            BOOL requestorIsCurrentOwner = ((currentPid == forPid) && ([acquirePidKey isEqual:currentPidKey])) ;
+            BOOL gotIt = NO ;
+            if (
+                (BOOL)(currentPidKey == nil)
+                // semaphore is not in use or its time limit has expired
+                ||
+                (requestorIsCurrentOwner)
+                ||
+                (BOOL)(currentProcessState == SSYOtherApperProcessDoesNotExist)
+                ||
+                (BOOL)(currentProcessState == SSYOtherApperProcessStateZombie)
+                ||
+                (BOOL)(currentProcessState == SSYOtherApperProcessUnknown)
+                ) {
+                // semaphore is available
+                if (!requestorIsCurrentOwner) {
+                    NSString* newString = [acquirePidKey string] ;
+                    [newString writeToFile:path
+                                atomically:YES
+                                  encoding:NSUTF8StringEncoding
+                                     error:NULL] ;
+                }
+                
+                gotIt = YES ;
+            }
+            
+            [self relinquishMomentaryLock:momentaryLockFileDescriptor] ;
+            if (gotIt) {
+                return YES ;
+            }
+        }
+        
+        // semaphore is not available
+        usleep( 1000000 * backoff ) ;
+        backoff = backoff * backoffFactor ;
+        backoff = MIN(backoff, maxBackoff) ;
 	}
 	
 	// Timeout
@@ -207,7 +285,7 @@
 
 + (BOOL)clearError_p:(NSError**)error_p {
 	NSError* error = nil  ;
-	BOOL ok = [[NSFileManager defaultManager] removeItemAtPath:[self path]
+	BOOL ok = [[NSFileManager defaultManager] removeItemAtPath:[self infoPath]
 														 error:&error] ;
     
     // The following false-alarm fix was added in BookMacster 1.12.6
