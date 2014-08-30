@@ -77,10 +77,22 @@
 		}
 		
 		
-#warning Should catch exceptions here too
-		fetches = [managedObjectContext executeFetchRequest:fetchRequest
-													  error:&error] ;
+        @try {
+            fetches = [managedObjectContext executeFetchRequest:fetchRequest
+                                                          error:&error] ;
+        }
+        @catch (NSException *exception) {
+            if (!error) {
+                error = SSYMakeError(149045, @"Exception fetching with subpredicates") ;
+            }
+            error = [error errorByAddingUnderlyingException:exception] ;
+        }
+		
 		if (error) {
+            error = [error errorByAddingUserInfoObject:compoundPredicate
+                                                forKey:@"Predicate"] ;
+            error = [error errorByAddingUserInfoObject:entityName
+                                                forKey:@"Entity Name"] ;
 			NSLog(@"Internal Error 487-2762: %@", [error longDescription]) ;
 			if (error_p) {
 				*error_p = error ;
@@ -162,11 +174,22 @@
     NSArray* allObjects ;
     if (entity) {
         [fetchRequest setEntity:entity] ;
+
         // Since we didn't set a predicate in fetchRequest, we get all objects
-#warning  Should catch exceptions here
+        @try {
         allObjects = [managedObjectContext executeFetchRequest:fetchRequest
                                                          error:&error] ;
+        }
+        @catch (NSException *exception) {
+            if (!error) {
+                error = SSYMakeError(149046, @"Exception fetching all objects") ;
+            }
+            error = [error errorByAddingUnderlyingException:exception] ;
+        }
+
         if (error) {
+            error = [error errorByAddingUserInfoObject:entityName
+                                                forKey:@"Entity Name"] ;
             NSLog(@"Internal Error 915-1874 %@", [error localizedDescription]) ;
         }
     }
