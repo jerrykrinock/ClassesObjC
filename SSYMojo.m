@@ -77,6 +77,7 @@
 		}
 		
 		
+#warning Should catch exceptions here too
 		fetches = [managedObjectContext executeFetchRequest:fetchRequest
 													  error:&error] ;
 		if (error) {
@@ -162,6 +163,7 @@
     if (entity) {
         [fetchRequest setEntity:entity] ;
         // Since we didn't set a predicate in fetchRequest, we get all objects
+#warning  Should catch exceptions here
         allObjects = [managedObjectContext executeFetchRequest:fetchRequest
                                                          error:&error] ;
         if (error) {
