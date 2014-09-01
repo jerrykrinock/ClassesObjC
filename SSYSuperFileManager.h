@@ -6,13 +6,26 @@
  which can present an authentication dialog and perform some actions with
  elevated permissions if necessary.
 
- @details  This class requires CPHTaskMaster, which in turn requires
+ @details  THIS CLASS IS NOT RECOMMENDED FOR NEW DESIGNS.  See below.
+ 
+ This class requires CPHTaskMaster, which in turn requires
  Mac OS X 10.6, to do anything useful.  If the deployment target
  (MAC_OS_X_VERSION_MIN_REQUIRED) is Mac OS X 10.5 or less,
  methods in this class will return an error if called upon to do
  anything that NSFileManager can't do.  The idea is that you
  can still use it in targets compiled with low deployment
- targets
+ targets.
+ 
+ However, CPHTaskManager has been giving me trouble in recent verions
+ of OS X, in particular I've been getting CPHTaskmasterBlessingFailed errors
+ when attempting to install the helper tool.  Because I deemed the feature
+ using this class to be not worth fixing, I've stopped using it.  If you want
+ to use this class, you'll need to study Apple's latest security model and
+ the current requirements of SMJobBless.  I also remember seeing that there is
+ now a successor to BetterAuthorizationSample, but can't find it now.  I think
+ that Apple needs to update TN2095.  -- JK, 2014 09 01
+ 
+
 */
 @interface SSYSuperFileManager : NSFileManager {
 }
