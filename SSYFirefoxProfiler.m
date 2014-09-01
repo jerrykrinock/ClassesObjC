@@ -125,9 +125,7 @@
 		// Try copying the file to a temporary location using
 		// a privileged-if-necessary Helper tool
 
-        // Make sure we're running in an app such as BookMacster which contains
-        // all of the code required to use CPHTaskmaster, and also contins its
-        // Helper Tool.  If we are in a Firefox extension, crashers are ahead,
+        // If we are in a Firefox extension, crashers are ahead,
         // so we need to exit.
         NSString* executablePath = [[NSBundle mainBundle] executablePath] ;
         NSString* executableName = [executablePath lastPathComponent] ;
@@ -138,15 +136,9 @@
         else {
             // OK, we're not in Firefox
             NSString* tempPath = [[NSFileManager defaultManager] temporaryFilePath] ;
-#if CPH_TASKMASTER_AVAILABLE
-            ok = [[CPHTaskmaster sharedTaskmaster] copyPath:filepathProfilesIni
-                                                     toPath:tempPath
-                                                    error_p:&error] ;
-#else
             ok = [[NSFileManager defaultManager]  copyItemAtPath:filepathProfilesIni
                                                           toPath:tempPath
                                                            error:&error] ;
-#endif
             if (!ok) {
                 goto end ;
             }
