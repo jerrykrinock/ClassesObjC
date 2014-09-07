@@ -234,6 +234,8 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 
 
 /* 
+ Bug 20140904 - SERIOUS PERFORMANCE ISSUE
+ 
  PROBLEM STATEMENT
  
  Performance of this method is not good; it is painfully slow when:
@@ -249,6 +251,23 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
  #5	0x0000000100034d2f in -[BkmxOutlineView objectsAtRowIndexes:] at /Users/jk/Documents/Programming/Projects/BkmkMgrs/BkmxOutlineView.m:82
  #6	0x00000001002e1b96 in -[BkmxDocTabViewController outlineViewSelectionDidChange:] at /Users/jk/Documents/Programming/Projects/BkmkMgrs/BkmxDocTabViewController.m:97
 
+ STEPS TO REPRODUCE
+ 
+ Expected Results are in Yosemite DP7.
+ 
+ * First Indication:  Open Slow.bkmslf.
+ 
+ Expected result:  Open in 7 seconds (MacMini2 - OS X 10.9)
+ Actual Result: Open in 45 seconds.
+ 
+ * Second Indication: Edit a bookmark name in Saul.bkmslf, hit 'return'
+ Expected result: less than 1 second (MacMini2 - OS X 10.9)
+ Actual result: 18 seconds.
+ 
+ * Third indication.  Export Saul's bookmrks to Firefox, then change a bookmark title in Bkmx, then import from Firefox
+ Expected result: Something reasonable
+ Actual result: 45 minutes, mostly in Finding Parents (4/7)  (MacMini2 - OS X 10.9)
+ 
  TRIED SOLUTIONS
  
  • I tried to make it better by using -[Stark sortedChildren] instead of
