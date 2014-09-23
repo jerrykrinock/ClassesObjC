@@ -175,8 +175,9 @@ which would be returned by -managedObjectContextType:::::, from the
  identifier, without regard to whethe or not it exists in
  the filesystem.
 
- @details  An internal method, exposed here because it is
- sometimes useful for troubleshooting.
+ @details  An internal method, exposed here because it is sometimes useful for
+ troubleshooting, or if you want to use concurrency by creating another Core
+ Data stack based on the same store.
 */
 + (NSURL*)sqliteStoreURLWithIdentifier:(NSString*)identifier ;
 

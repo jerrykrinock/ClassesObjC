@@ -18,6 +18,10 @@
 	NSString* entityName ;
 }
 
++ (NSArray*)allObjectsForEntityName:(NSString*)entityName
+               managedObjectContext:(NSManagedObjectContext*)managedObjectContext
+                            error_p:(NSError**)error_p ;
+
 /*!
  @brief    ￼The built-in managed object context which the receiver will use.
  */

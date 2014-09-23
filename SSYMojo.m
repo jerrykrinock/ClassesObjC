@@ -157,19 +157,20 @@
 							 error_p:error_p] ;
 }
 
-- (NSArray*)allObjectsError_p:(NSError**)error_p {
++ (NSArray*)allObjectsForEntityName:(NSString*)entityName
+               managedObjectContext:(NSManagedObjectContext*)managedObjectContext
+                            error_p:(NSError**)error_p {
 	NSError* error = nil ;
 	
 	NSFetchRequest* fetchRequest ;
 	fetchRequest = [[NSFetchRequest alloc] init] ;
-	NSManagedObjectContext* managedObjectContext = [self managedObjectContext] ;
 	// The following was an interesting experiment.  In BookMacster 1.11, it caused
 	// a "serious Core Data error" and also an error what looked like trying to bind
 	// the Sync Log popup menu to a deallocated object in -[SSYArrayController selectFirstArrangedObject],
 	// when it invoked -[NSArrayController removeSelectionIndexes:[self selectionIndexes]] ;
 	// [managedObjectContext processPendingChanges] ;  // Do not do this
 	
-	NSEntityDescription* entity = [NSEntityDescription SSY_entityForName:[self entityName]
+	NSEntityDescription* entity = [NSEntityDescription SSY_entityForName:entityName
                                                   inManagedObjectContext:managedObjectContext] ;
     NSArray* allObjects ;
     if (entity) {
@@ -191,6 +192,7 @@
             error = [error errorByAddingUserInfoObject:entityName
                                                 forKey:@"Entity Name"] ;
             NSLog(@"Internal Error 915-1874 %@", [error localizedDescription]) ;
+            allObjects = nil ;
         }
     }
     else {
@@ -198,7 +200,7 @@
         // is not available, entity will be nil and if we didn't test for that,
         // -[NSManagedObjectContext executeFetchRequest:error] would crash
         // due to nil entity in fetch request.
-        NSString* errorDesc = [NSString stringWithFormat:@"No entity for %@", [self entityName]] ;
+        NSString* errorDesc = [NSString stringWithFormat:@"No entity for %@", entityName] ;
         NSLog(@"Internal Error 915-0893 %@", errorDesc) ;
         error = SSYMakeError(262049, errorDesc) ;
         error = [error errorByAddingInfoToExplainMissingAppResource] ;
@@ -212,6 +214,12 @@
     }
 
 	return allObjects ;
+}
+
+- (NSArray*)allObjectsError_p:(NSError**)error_p {
+    return [[self class] allObjectsForEntityName:[self entityName]
+                            managedObjectContext:[self managedObjectContext]
+                                         error_p:error_p] ;
 }
 
 - (NSArray*)allObjects {
