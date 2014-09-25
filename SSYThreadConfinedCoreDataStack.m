@@ -69,11 +69,17 @@
 }
 
 - (id)initWithStoreUrl:(NSURL*)url {
-    self = [super init] ;
-    if (self) {
-        [self setStoreUrl:url] ;
+    if (url) {
+        self = [super init] ;
+        if (self) {
+            [self setStoreUrl:url] ;
+        }
     }
-    
+    else {
+        [self release] ;
+        self = nil ;
+    }
+
     return self ;
 }
 
