@@ -146,7 +146,7 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 		[tableView_ setDelegate:self] ;
         CGFloat iThinkAppleLeavesTooMuchSpaceFactor ;
 #if (MAC_OS_X_VERSION_MAX_ALLOWED < 101000)
-        10.9 or earlier
+        // 10.9 or earlier
         iThinkAppleLeavesTooMuchSpaceFactor = 0.75 ;
 #else
         // 10.10 or later
