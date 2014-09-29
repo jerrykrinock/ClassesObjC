@@ -51,7 +51,6 @@
 				cellFrame:(NSRect)cellFrame
 			  controlView:(NSView*)controlView {
 	if (image != nil) {
-        [image setScalesWhenResized:YES] ;
 
 		CGFloat imageDimension = (1-MARGIN_FACTOR) * cellFrame.size.height ;
         NSSize	imageSize ;

@@ -1078,18 +1078,6 @@ end:;
                 goto end ;
             }
 		}
-		
-		// Sometimes Firefox doesn't "get" it.  Send the AppleScript 'quit' again,
-		// ignoring any error
-#if 0
-#warning Feigning Quitting 2
-#else
-		[self quitThisUsersAppWithBundlePath:bundlePath
-                                closeWindows:closeWindows
-								wasRunning_p:NULL  // We want the original wasRunning state, not now's
-									 error_p:NULL] ;
-#endif
-        nTries++ ;
 	}
 
 end:
