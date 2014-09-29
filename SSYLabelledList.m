@@ -144,8 +144,15 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 		// Todo: The following should be parameterized
 		[tableView_ setHeaderView:nil] ;
 		[tableView_ setDelegate:self] ;
-		// The factor 0.7 is because the height given by boundingRectForFont is ridiculously large.
-		[tableView_ setRowHeight:0.7*[[SSYLabelledList tableFont] boundingRectForFont].size.height] ;
+        CGFloat iThinkAppleLeavesTooMuchSpaceFactor ;
+#if (MAC_OS_X_VERSION_MAX_ALLOWED < 101000)
+        10.9 or earlier
+        iThinkAppleLeavesTooMuchSpaceFactor = 0.75 ;
+#else
+        // 10.10 or later
+        iThinkAppleLeavesTooMuchSpaceFactor = 0.95 ;
+#endif
+        [tableView_ setRowHeight:iThinkAppleLeavesTooMuchSpaceFactor*[[SSYLabelledList tableFont] boundingRectForFont].size.height] ;
 		
 		NSTableColumn *column = [[SSYLabelledListTableColumn alloc] initWithIdentifier:@"choices"];        
 		// Todo: The following should be parameterized
