@@ -249,7 +249,7 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
  #3	0x00007fff8f1d1550 in loadItemEntryLazyInfoIfNecessary ()
  #4	0x00007fff8f1d143d in -[NSOutlineView itemAtRow:] ()
  #5	0x0000000100034d2f in -[BkmxOutlineView objectsAtRowIndexes:] at /Users/jk/Documents/Programming/Projects/BkmkMgrs/BkmxOutlineView.m:82
- #6	0x00000001002e1b96 in -[BkmxDocTabViewController outlineViewSelectionDidChange:] at /Users/jk/Documents/Programming/Projects/BkmkMgrs/BkmxDocTabViewController.m:97
+ #6	0x00000001002e1b96 in -[BkmxDocViewController outlineViewSelectionDidChange:] at /Users/jk/Documents/Programming/Projects/BkmkMgrs/BkmxDocViewController.m:97
 
  STEPS TO REPRODUCE
  
