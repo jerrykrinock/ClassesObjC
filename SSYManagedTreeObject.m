@@ -5,6 +5,10 @@
 
 NSString* const constKeyChildren = @"children" ;
 NSString* const constKeyParent = @"parent" ;
+
+NSString* const SSYManagedTreeObjectKey = @"SSYManagedTreeObjectKey" ;
+NSString* const SSYManagedTreeChildrenChangedNotification = @"SSYManagedTreeChildrenChangedNotification" ;
+
 /*
  See note on DropboxFalseStart below
  // NodeId was going to be needed because, when adding a new bookmark
@@ -113,7 +117,7 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 /* Testing indicates that this method can be invoked, and children can by
  mutated, without invoking -setChildren: or any other setter.  In other words,
  this method seems to be an independent value-changer.  Therefore, the following
- override is necessary.  It was added in BookMacster 1.12.7. */
+ override *is* necessary.  It was added in BookMacster 1.12.7. */
 - (NSMutableSet*)mutableSetValueForKey:(NSString *)key {
     if ([key isEqualToString:constKeyChildren]) {
         [self forgetCachedChildrenOrdered];
@@ -184,16 +188,25 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 	// In order to avoid registering undo and unnecessarily dirtying the dot,
 	// we only do the overwrite if there was a substantive change.
 	// (Note that current or new value can be nil.)
-	if ([NSObject isEqualHandlesNilObject1:[self index]
+	if (![NSObject isEqualHandlesNilObject1:[self index]
 									object2:newValue]) {
-		return ;
-	}
+        [self postWillSetNewValue:newValue
+                           forKey:constKeyIndex] ;
+        [self willChangeValueForKey:constKeyIndex] ;
+        [self setPrimitiveIndex:newValue] ;
+        [self didChangeValueForKey:constKeyIndex] ;
 
-	[self postWillSetNewValue:newValue
-					   forKey:constKeyIndex] ;
-	[self willChangeValueForKey:constKeyIndex] ;
-    [self setPrimitiveIndex:newValue] ;
-    [self didChangeValueForKey:constKeyIndex] ;
+        SSYManagedTreeObject* parent = [self parent] ;
+        if (parent) {
+            // The order of the following two statements must be as is:
+            [[self parent] forgetCachedChildrenOrdered] ;
+            [[NSNotificationCenter defaultCenter] postNotificationName:SSYManagedTreeChildrenChangedNotification
+                                                                object:[self owner]
+                                                              userInfo:[NSDictionary dictionaryWithObject:[self parent]
+                                                                                                   forKey:SSYManagedTreeObjectKey]] ;
+        }
+    }
+
 }
 
 - (NSInteger)indexValue {
@@ -221,7 +234,7 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
     if (!m_cachedChildrenOrdered) {
         m_cachedChildrenOrdered = [[[self children] arraySortedByKeyPath:constKeyIndex] retain] ;
     }
-    
+
     // arrayWithArray was added in BookMacster 1.12.8 to fix crashes which
     // were occuring in various methods when m_cachedChildrenOrdered was
     // changed.  I also removed -arrayWithArray in several methods where the
@@ -313,13 +326,25 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 }
 
 // This is required to trigger -[BkmxDoc objectWillChangeNote:]
-- (void)setParent:(SSYManagedTreeObject*)newValue  {
-	[self postWillSetNewValue:newValue
-					   forKey:constKeyParent] ;
-	[self willChangeValueForKey:constKeyParent] ;
-    [self setPrimitiveParent:newValue] ;
-    [self didChangeValueForKey:constKeyParent] ;
-	
+- (void)setParent:(SSYManagedTreeObject*)newParent  {
+    if (![NSObject isEqualHandlesNilObject1:[self index]
+                                    object2:newParent]) {
+        [self postWillSetNewValue:newParent
+                           forKey:constKeyParent] ;
+
+        [self willChangeValueForKey:constKeyParent] ;
+        [self setPrimitiveParent:newParent] ;
+        [self didChangeValueForKey:constKeyParent] ;
+        
+        if (newParent) {
+            // The order of the following two statements must be as is:
+            [newParent forgetCachedChildrenOrdered] ;
+            [[NSNotificationCenter defaultCenter] postNotificationName:SSYManagedTreeChildrenChangedNotification
+                                                                object:[self owner]
+                                                              userInfo:[NSDictionary dictionaryWithObject:newParent
+                                                                                                   forKey:SSYManagedTreeObjectKey]] ;
+        }
+    }
 }
 
 /*

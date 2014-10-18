@@ -5,6 +5,9 @@
 extern NSString* const constKeyChildren ;
 extern NSString* const constKeyParent ;
 
+extern NSString* const SSYManagedTreeObjectKey ;
+extern NSString* const SSYManagedTreeChildrenChangedNotification ;
+
 /*!
  @brief    A subclass of SSYManagedObject which has 'parent'
  'children' and 'index' properties, so that it can be used as
