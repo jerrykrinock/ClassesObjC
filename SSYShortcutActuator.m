@@ -568,7 +568,6 @@ OSStatus SSYShortcutActuate(
 	}
 }
 
-
 - (id)init {	
 	self = [super init] ;
 	
@@ -579,7 +578,7 @@ OSStatus SSYShortcutActuate(
 	
 	[self postDidNonemptyIfNeeded] ;
 	
-	return self ;
+    return self ;
 }
 
 - (void)setKeyCode:(NSInteger)keyCode
