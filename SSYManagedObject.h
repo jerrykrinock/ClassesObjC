@@ -1,7 +1,7 @@
 #import <Cocoa/Cocoa.h>
 
 // Public Notifications
-extern NSString* const constNoteWillUpdateObject ;
+extern NSString* const SSYManagedObjectWillUpdateNotification ;
 extern NSString* const SSYManagedObjectWillFaultNotification ;
 
 // Keys inside Notification UserInfo Dictionaries
@@ -183,7 +183,7 @@ extern NSString* const constKeyNewValue ;
 					 forSetKey:(NSString*)setKey ;
 
 /*!
- @brief    Posts a constNoteWillUpdateObject notification.
+ @brief    Posts a SSYManagedObjectWillUpdateNotification notification.
 
  @details  This is a workaround for Apple Bug 6624874, using Solution 2.
  

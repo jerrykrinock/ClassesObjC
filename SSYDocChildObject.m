@@ -19,7 +19,7 @@
 }
 
 - (id)initWithDocument:(BkmxDoc*)document_ {
-	self = [super init];
+	self = [super init] ;
 
 	if (self != 0)  {		
 		[self setDocument:document_] ;

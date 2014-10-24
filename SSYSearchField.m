@@ -51,6 +51,14 @@ NSString* const SSYSearchFieldDidCancelNotification = @"SSYSearchFieldDidCancelN
 
         if (![[self recentSearches] isEqualToArray:recentSearches]) {
             [self setRecentSearches:recentSearches] ;
+            /* I have twice seen a crash here, when the above method attempts
+             to post a notification.  Could not reproduce after that.  Crash
+             occurs when framework method attempts to post a notification.
+             But I could not identify the notification because Xcode gives
+             me the "couldn't materialize struct" crap when I ask for values
+             in registers $rdi $rdx $rsi.  I looked through my code, Apple
+             documentation and have no idea what notification would be posted.
+             */
         }
         
         [recentSearches release] ;

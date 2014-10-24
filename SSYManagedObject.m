@@ -9,7 +9,7 @@
 #import "NSEntityDescription+SSYMavericksBugFix.h"
 
 // Public Notifications
-NSString* const constNoteWillUpdateObject = @"willUpdateObject" ;
+NSString* const SSYManagedObjectWillUpdateNotification = @"SSYManagedObjectWillUpdateNotification" ;
 NSString* const SSYManagedObjectWillFaultNotification = @"SSYManagedObjectWillFaultNotification" ;
 
 // Keys inside Notification UserInfo Dictionaries
@@ -347,16 +347,16 @@ end:;
 #if 0
 #warning Logging postWillSetNewValue:forKey:
 	NSLog(@"7120: Posting %@ with object: %@\nwith oldValue: %@\nwith info:\n%@",
-		  constNoteWillUpdateObject,
+		  SSYManagedObjectWillUpdateNotification,
 		  [self shortDescription],
 		  [[self valueForKeyPath:key] shortDescription],
 		  [info shortDescription]) ;
 #endif
-    [[NSNotificationCenter defaultCenter] postNotificationName:constNoteWillUpdateObject
+    [[NSNotificationCenter defaultCenter] postNotificationName:SSYManagedObjectWillUpdateNotification
                                                         object:self
                                                       userInfo:info] ;
 	/* In BookMacster version 1.3.19, I tried changing the above line to this…
-	 NSNotification* notification = [NSNotification notificationWithName:constNoteWillUpdateObject
+	 NSNotification* notification = [NSNotification notificationWithName:SSYManagedObjectWillUpdateNotification
 	 object:self
 	 userInfo:info] ;
 	 [[NSNotificationQueue defaultQueue] enqueueNotification:notification
