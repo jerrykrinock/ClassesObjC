@@ -54,12 +54,7 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 	[super setAction:@selector(doDaClick:)] ;
 	
 	// In BookMacster, we use the conventional target/action and not
-	// the binding.  So we could actually dispense with the
-	// externalTarget and externalAction thing.  The reason we use
-	// conventional is because there are possibly multiple "Show Inspector"
-	// SSYToolbarButtons (one in each Bookmarkshelf) but only one
-	// observer ('inspectorNowShowing' in BkmxAppDel), and an
-	// observer can only be bound to one bound-to object at a time.
+	// the binding.
 }
 
 - (void)setTarget:(id)target {
