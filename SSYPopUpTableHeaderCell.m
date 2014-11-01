@@ -36,13 +36,9 @@
 	// "This method draws the cell in the currently focused view,
 	// which can be different from the controlView passed in. Taking advantage
 	// of this behavior is not recommended, however.
-	// So, in order to not "take advantage" of this, I lockFocus on the
-	// controlView which was passed in.
-	[controlView lockFocus] ;
-	// Let's make sure it worked
+	// So, in order to not "take advantage" of this,
 	if ([NSView focusView] != controlView) {
-		NSLog(@"Internal Error 040-9481 in %s", __PRETTY_FUNCTION__) ;
-		// Just continue since I'm not sure what the bad effect would be!
+        return ;
 	}
 	
 	// First we draw the bezel and whatever background gradient there might be.
@@ -103,8 +99,6 @@
 	// This will draw the title of the currently-selected item.
 	[self drawInteriorWithFrame:cellFrame
 						 inView:controlView] ;
-	
-	[controlView unlockFocus] ;
 }
 
 @end
