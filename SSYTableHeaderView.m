@@ -22,4 +22,12 @@
 	}
 }
 
+#if 0
+- (NSRect)frame {
+    NSRect frame = [super frame] ;
+    frame.size.height = 100.0 ;
+    return frame ;
+}
+#endif
+
 @end
