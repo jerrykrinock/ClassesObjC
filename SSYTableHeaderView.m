@@ -23,6 +23,7 @@
 }
 
 #if 0
+#warning Super Sized Header
 - (NSRect)frame {
     NSRect frame = [super frame] ;
     frame.size.height = 100.0 ;
