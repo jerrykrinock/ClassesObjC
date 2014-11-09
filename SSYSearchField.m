@@ -80,6 +80,28 @@ NSString* const SSYSearchFieldDidCancelNotification = @"SSYSearchFieldDidCancelN
              #13	0x00000001002feea0 in -[CntntViewController search:] at /Users/jk/Documents/Programming/Projects/BkmkMgrs/CntntViewController.m:351
              #14	0x0000000100110b24 in -[BkmxDocWinCon search:] at /Users/jk/Documents/Programming/Projects/BkmkMgrs/BkmxDocWinCon.m:2907
              #15	0x000000010023b2cd in -[SSYToolbarButton doDaClick:] at /Users/jk/Documents/Programming/ClassesObjC/SSYToolbarButton.m:115
+
+             
+             
+             On 2014 Nov 07, at 16:02, Greg Parker <gparker@apple.com> wrote:
+             
+             You may have better luck tracing it from the other side. Run to that line in appendToRecentSearches:, set a breakpoint on -[NSNotificationCenter postNotificationName:object:userInfo:], and step over your line. At those breakpoints you should be able to see the notification parameters in the parameter registers, assuming the notification is sent every time that line runs.
+             
+             Great idea, Greg.  It worked.
+             
+             It told me that that setting recent searches in this menu posts 122 notifications, 120 of which are due to building the search field’s popup menu.
+             
+             • 40 NSMenuDidAddItemNotification, one for each item in the search field’s popup menu
+             • 20 NSMenuDidChangeItemNotification, which are mixed in with the above, for items that changed.
+             • 1 NSUserDefaultsDidChangeNotification.
+             • 1 NSAutosavedRecentsChangedNotification
+             • 40 NSMenuDidAddItemNotification, same as before.
+             • 20 NSMenuDidChangeItemNotification, same as before
+             
+             However, nowhere in *my* code do I directly create an observer of any of those four notification names.  So I’m still head-scratching.
+             
+             If anyone has any idea what disappearing objects in AppKit might be observing these notifications, let us know.
+             
              */
         }
         
