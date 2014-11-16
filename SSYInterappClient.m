@@ -41,7 +41,7 @@ NSString* const SSYInterappClientErrorDomain = @"SSYInterappClientErrorDomain" ;
             usleep(100000) ;
         }
     } while (!remotePort) ;
-    
+
 	if (!remotePort) {
 		ok = NO ;
 		result = SSYInterappClientErrorCantFindReceiver ;

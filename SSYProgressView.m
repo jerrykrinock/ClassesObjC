@@ -16,8 +16,31 @@ NSString* const constKeyHyperText = @"hyperText" ;
 NSString* const constKeyTarget = @"target" ;
 NSString* const constKeyActionValue = @"actionValue" ;
 			  
-@interface SSYRolloverButton : NSButton {
+#if 0
+/* I can't figure out why the left edge of the progress indicator's rect is
+ sometimes, in Yosemite, a thin black line.  I know it is part of the
+ NSProgressIndicator, because it I set the 'hidden' attribute of _progBar to
+ YES, the thin black line disappears (along with the progress indicator).
+ The following code, which attempts to thin black line with a thicker red line,
+ makes a thick red line only when the thin black line is not there.   To use
+ this code, in -rejuvenateProgressBar, instantiate one of these instead
+ of an NSProgressIndicator: */
+@interface SSYPatchedProgressIndicator : NSProgressIndicator
+@end
+@implementation SSYPatchedProgressIndicator
+- (void)drawRect:(NSRect)dirtyRect {
+    [super drawRect:dirtyRect] ;
+    [[NSGraphicsContext currentContext] saveGraphicsState] ;
+    [[NSColor redColor] set] ;
+    NSRect patchRect = [self frame] ;
+    patchRect.size.width = 3.0 ;
+    [NSBezierPath fillRect: patchRect] ;
+    [[NSGraphicsContext currentContext] restoreGraphicsState] ;
 }
+@end
+#endif
+
+@interface SSYRolloverButton : NSButton
 @end
 
 @implementation SSYRolloverButton
@@ -172,7 +195,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 }
 
 - (void)rejuvenateProgressBar {
-	NSRect frame ;
+    NSRect frame ;
 	if (_progBar != nil) {
 		frame = [_progBar frame] ;
 		[_progBar removeFromSuperviewWithoutNeedingDisplay] ;
@@ -181,7 +204,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 		frame = NSMakeRect(0,1.0,100,[self frame].size.height - 3.0) ;
 		// The y=1.0, h-=3.0 makes it line up with the text nicer.
 	}
-	_progBar = [[NSProgressIndicator alloc] initWithFrame:frame] ;
+    _progBar = [[NSProgressIndicator alloc] initWithFrame:frame] ;
 	[self addSubview:_progBar] ;
 	[_progBar release] ;
 	[_progBar setStyle:NSProgressIndicatorBarStyle] ;
