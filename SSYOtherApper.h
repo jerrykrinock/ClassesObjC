@@ -34,24 +34,68 @@ typedef enum SSYOtherApperProcessState_enum SSYOtherApperProcessState ;
 */
 __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 
+
 /*!
- @brief    Launches an application specified by its bundle path (i.e. 
- /path/to/SomeApp.app) and optionally activates it (brings to to the 
+ @brief    Launches an application specified by its bundle path (i.e.
+ /path/to/SomeApp.app) and optionally activates it (brings to to the
  front)
 
+ @details  The newer method
+ +launchAsHiddenAppPath:launchTimeout:hideGuardTime:error_p: is recommended
+ instead of this one when activate = NO because it more reliably launches
+ the app to be completely hidden (no windows open), not even for milliseconds.
+
+ TODO:  Combine that method into this one, and use it to launch both Firefox
+ and Chromy.  I have not done that yet because (a) for Firefox, I could only
+ use it for the 99% of users who have only one Firefox profile and thus do not
+ need a -profile command-line argument passed to Firefox, and (b) it will not
+ work for Chrome anyhow because Chrome always opens a window even if you
+ launch it as "hidden", for example with this Applescript that is supposed to 
+ open apps hidden:
+ . with timeout of 8.0 seconds
+ . try
+ .  tell application "/Applications/Google Chrome.app"
+ .   set x to frontmost
+ .    do shell script "x > /dev/null"
+ .   end tell
+ . 	end try
+ . end timeout
+ 
  @param    activate  If the specified application is not already
  launched, the newly-launched application is activated if YES, and
  if NO is not activated.  If the specified application is already
- launched, this parameter will activate or deactivate it if this code is 
- compiled with the Mac OS X 10.6 or later, or else do nothing.
+ launched, this parameter will activate or deactivate it.
+ @param    hideGuardTime  I have seen apps show windows after they have been
+ launched as hidden.  I think this may be due to windows being restored in
+ OS X 10.7+.  If hideGuardTime is > 0 and activate is NO, after the target
+ app launches, this method will repeatedly send its NSRunningApplication a
+ -hide message for an additional hideGuardTime seconds.  If activate is YES,
+ hideGuardTime is ignored.
  @param    error_p  If not NULL and if an error occurs, upon return,
            will point to an error object encapsulating the error.
  @result   YES if the method completed successfully, otherwise NO
 */
 + (BOOL)launchApplicationPath:(NSString*)path
 					 activate:(BOOL)activate
+                hideGuardTime:(NSTimeInterval)hideGuardTime
 					  error_p:(NSError**)error_p ;
-	
+
+/*!
+ @brief    Launches an app hidden, showing no windows, and blocks until after
+ the app is running, and possibly for an additional "guard" time after that,
+ during which it ensures that the launched app stays hidden
+ 
+ @details  Most reliably launches an app as hidden, without any windows
+ showing even for milliseconds, because it launches the app with the only
+ known technique for launching and hiding: AppleScript 'tell application'.
+ */
++ (BOOL)launchAsHiddenAppPath:(NSString*)path
+                launchTimeout:(NSTimeInterval)launchTimeout
+                hideGuardTime:(NSTimeInterval)hideGuardTime
+                      error_p:(NSError**)error_p ;
+
+
+
 + (NSImage*)iconForAppWithBundleIdentifier:(NSString*)bundleIdentifier ;
 
 /*!

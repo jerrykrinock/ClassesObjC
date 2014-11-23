@@ -3,30 +3,8 @@
 #import "NSError+LowLevel.h"
 #import "NSString+SSYExtraUtils.h"
 #import "NSFileManager+SomeMore.h"
-
-
-#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1060)
-
-/*!
-@brief    Declares stuff which is defined in the 10.6 SDK,
-to eliminate compiler warnings.
-
-@details  Be careful to only invoke super on these methods after
-you've checked that you are running under Mac OS X 10.6.
-*/
-
-typedef NSUInteger NSPropertyListReadOptions ;
-
-@interface NSPropertyListSerialization (DefinedInMac_OS_X_10_6)
-
-+ (id)propertyListWithData:(NSData*)data
-				   options:(NSPropertyListReadOptions)opt
-					format:(NSPropertyListFormat*)format
-					 error:(NSError**)error ;
-
-@end
-
-#endif
+#import "NSRunningApplication+SSYHideReliably.h"
+#import "NSError+InfoAccess.h"
 
 NSString* const SSYOtherApperErrorDomain = @"SSYOtherApperErrorDomain" ;
 NSString* const SSYOtherApperKeyPid = @"pid" ;
@@ -36,13 +14,10 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 
 @implementation SSYOtherApper
 
-
-
 + (pid_t)pidOfThisUsersAppWithBundleIdentifier:(NSString*)bundleIdentifier {
 	pid_t pid = 0 ; // not found
 	
 	if (bundleIdentifier) {
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060		
         // Running the main run loop is necessary for -runningApplications to
         // update.  The next line is actually necessary in tools which may be lacking
         // a running run loop, and it actually works.
@@ -54,20 +29,6 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 				break ;
 			}
 		}
-#else
-		NSArray* appDicts = [[NSWorkspace sharedWorkspace] launchedApplications] ;
-		// Note that the above method returns only applications launched by the
-		// current user, not other users.  (Not documented, determined by experiment
-		// in Mac OS 10.5.5).  Also it returns only "applications", defined as
-		// "things which can appear in the Dock that are not documents and are launched by the Finder or Dock"
-		// (See documentation of ProcessSerialNumber).  Therefore, it does not return Bookwatchdog 
-		for (NSDictionary* appDict in [appDicts objectEnumerator]) {
-			if ([[appDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:bundleIdentifier]) {
-				pid = [[appDict objectForKey:@"NSApplicationProcessIdentifier"] integerValue] ;
-				break ;
-			}
-		}
-#endif
 	}
 	
 	return pid ;
@@ -77,7 +38,6 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	pid_t pid = 0 ; // not found
 
     if (bundlePath) {
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060		
         // Running the main run loop is necessary for -runningApplications to
         // update.  The next line is actually necessary in tools which may be lacking
         // a running run loop, and it actually works.
@@ -91,16 +51,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
                 break ;
             }
         }
-#else
-        for (NSDictionary* appDic in [[NSWorkspace sharedWorkspace] launchedApplications]) {
-            NSString* path = [appDic objectForKey:@"NSApplicationPath"] ;
-            if ([path isEqualToString:bundlePath]) {
-                pid = [[appDic objectForKey:@"NSApplicationProcessIdentifier"] integerValue] ;
-                break ;
-            }
-        }
-#endif
-    }    
+    }
 
     return pid ;
 }
@@ -110,7 +61,6 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	NSString* path = nil ;
     
 	if (bundleIdentifier) {
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060		
         // Running the main run loop is necessary for -runningApplications to
         // update.  To my amazement, the next line is actually necessary, and
         // it actually works.
@@ -122,20 +72,6 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 				break ;
 			}
 		}
-#else
-		NSArray* appDics = [[NSWorkspace sharedWorkspace] launchedApplications] ;
-		// Note that the above method returns only applications launched by the
-		// current user, not other users.  (Not documented, determined by experiment
-		// in Mac OS 10.5.5).  Also it returns only "applications", defined as
-		// "things which can appear in the Dock that are not documents and are launched by the Finder or Dock"
-		// (See documentation of ProcessSerialNumber).  Therefore, it does not return Bookwatchdog 
-		for (NSDictionary* appDic in [appDics objectEnumerator]) {
-			if ([[appDic objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:bundleIdentifier]) {
-				path = [appDic objectForKey:@"NSApplicationPath"] ;
-				break ;
-			}
-		}
-#endif
 	}
     
 	return path ;
@@ -143,12 +79,12 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 
 + (BOOL)launchApplicationPath:(NSString*)path
 					 activate:(BOOL)activate
+                hideGuardTime:(NSTimeInterval)hideGuardTime
 					  error_p:(NSError**)error_p {
     BOOL ok = YES ;
     NSInteger errorCode = 0 ;
 	NSError* underlyingError = nil ;
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
     NSBundle* bundle = [NSBundle bundleWithPath:path] ;
     NSString* bundleIdentifier = [bundle bundleIdentifier] ;
     NSArray* apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleIdentifier] ;
@@ -156,50 +92,29 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
     NSString* runningBundlePath = [[currentlyRunningApp bundleURL] path] ;
     BOOL currentlyRunning = ([path isEqualToString:runningBundlePath]) ;
     BOOL currentlyActive = currentlyRunning ? [currentlyRunningApp isActive] : NO ;
-#else
-    BOOL currentlyRunning = NO ;
-    NSArray* appDics = [[NSWorkspace sharedWorkspace] launchedApplications] ;
-    // Note that the above method returns only applications launched by the
-    // current user, not other users.  (Not documented, determined by experiment
-    // in Mac OS 10.5.5).  Also it returns only "applications", defined as
-    // "things which can appear in the Dock that are not documents and are launched by the Finder or Dock"
-    // (See documentation of ProcessSerialNumber).  Therefore, it does not return Bookwatchdog
-    for (NSDictionary* appDic in [appDics objectEnumerator]) {
-        if ([[appDic objectForKey:@"NSApplicationPath"] isEqualToString:path]) {
-            currentlyRunning = YES ;
-            break ;
-        }
-    }
-    BOOL currentlyActive = NO ;
-    NSString* activeAppPath = [[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationPath"] ;
-    if ([activeAppPath isEqualToString:path]) {
-        currentlyActive = YES ;
-    }
-#endif
 
+    FSRef fsRef ;
     if (currentlyRunning) {
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
         if (currentlyActive != activate) {
             if (activate) {
                 [currentlyRunningApp unhide] ;
             }
             else {
-                [currentlyRunningApp hide] ;
+                [currentlyRunningApp hideReliably] ;
             }
         }
-#endif
     }
     else {
-        FSRef fsRef ;
         NSURL* url = [NSURL fileURLWithPath:path] ;
         ok = [[NSFileManager defaultManager] getFromUrl:url
                                                 fsRef_p:&fsRef
                                                 error_p:&underlyingError] ;
         if (!ok) {
             errorCode = 494985 ;
-            goto end ;
         }
-        
+    }
+    
+    if (ok) {
         LSApplicationParameters parms ;
         parms.version = 0 ;
         parms.flags = activate ? 0 : kLSLaunchAndHide ;
@@ -215,55 +130,21 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
             errorCode = 494986 ;
             underlyingError = [NSError errorWithMacErrorCode:err] ;
         }
-        
-        /*
-         The following section was added in BookMacster 1.13.6, when I found
-         that some apps, whose bundle identifiers are listed below as
-         'troublemakers', will maybe re-activate themselves sometimes, or all of
-         the times, rendering kLSLaunchAndHide ineffective.  Probably this is
-         related to window restoration in Mac OS X 10.7+.  Maybe all apps are
-         "troublemakers" under some conditions, but until I verify that, I don't
-         want to do the following nonsense unnecessarily, so it is only done for
-         'troublemaker' apps.  Unfortunately, a window will usually flash on the
-         screen momentarily, but I can't find any way to prevent that.  Reducing
-         the POLL_TIME below 100,000 microseconds does not make that any better.
-         
-         Oh, I made the mistake of trying to use the 'active' property of
-         NSRunningApplication to start and terminate the following poll, but that
-         doesn't work because, as noted in the NSRunningApplication class
-         documentation, "Properties … persist until the next turn of the main
-         run loop in a common mode."
-         */
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
-        if (ok && !activate) {
-            NSBundle* bundle = [NSBundle bundleWithPath:path] ;
-            NSString* bundleIdentifier = [bundle bundleIdentifier] ;
-            NSSet* troublemakers = [NSSet setWithObjects:
-                                    @"com.google.Chrome",
-                                    @"com.google.Chrome.canary",
-                                    @"org.chromium.Chromium",
-                                    @"com.apple.TextEdit",
-                                    nil] ;
-            
-            if ([troublemakers member:bundleIdentifier]) {
-#define WAIT_IN_CASE_APP_ACTIVATES 2.0
-                NSTimeInterval doneTime = [NSDate timeIntervalSinceReferenceDate] + WAIT_IN_CASE_APP_ACTIVATES ;
-                do {
-                    NSArray* apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleIdentifier] ;
-                    NSRunningApplication* app = [apps lastObject] ;
-                    if ([app isActive]) {
-                        [app hide] ;
-                        break ;
-                    }
-#define POLL_TIME 100000
-                    usleep(POLL_TIME) ;
-                } while ([NSDate timeIntervalSinceReferenceDate] < doneTime) ;
-            }
-        }
-#endif
     }
-    
-end:;
+
+    if (ok && !activate && hideGuardTime > 0) {
+        NSBundle* bundle = [NSBundle bundleWithPath:path] ;
+        NSString* bundleIdentifier = [bundle bundleIdentifier] ;
+        
+        NSTimeInterval doneTime = [NSDate timeIntervalSinceReferenceDate] + hideGuardTime ;
+        do {
+            NSArray* apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleIdentifier] ;
+            NSRunningApplication* app = [apps lastObject] ;
+            [app hide] ;
+            usleep(100000) ;
+        } while ([NSDate timeIntervalSinceReferenceDate] < doneTime) ;
+    }
+
 	if (!ok && error_p) {
 		NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
 								  @"Could not launch app", NSLocalizedDescriptionKey,
@@ -277,6 +158,109 @@ end:;
 	}
 	
 	return ok ;
+}
+
++ (BOOL)launchAsHiddenAppPath:(NSString*)path
+                launchTimeout:(NSTimeInterval)launchTimeout
+                hideGuardTime:(NSTimeInterval)hideGuardTime
+                      error_p:(NSError**)error_p {
+    NSError* error = nil ;
+    BOOL ok = YES ;
+    if (!path) {
+        error = [NSError errorWithDomain:SSYOtherApperErrorDomain
+                                    code:494089
+                                userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+                                          @"App path cannot be nil", NSLocalizedDescriptionKey,
+                                          nil]] ;
+        ok = NO ;
+    }
+    
+    NSBundle* bundle = [NSBundle bundleWithPath:path] ;
+    
+    if (ok) {
+        if (!bundle) {
+            error = [NSError errorWithDomain:SSYOtherApperErrorDomain
+                                        code:494090
+                                    userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+                                              @"No bundle found at path", NSLocalizedDescriptionKey,
+                                              path, @"Path",
+                                              nil]] ;
+            ok = NO ;
+        }
+    }
+    
+    NSString* bundleIdentifier = [bundle bundleIdentifier] ;
+    
+    if (ok) {
+        NSString* source = [NSString stringWithFormat:
+                            @" try\n"
+                            @"  tell application \"%@\"\n"
+                            @"  end tell\n"
+                            @" end try\n",
+                            path] ;
+        dispatch_queue_t aSerialQueue = dispatch_queue_create("com.sheepsystems.SSYOtherApper.launchAsHidden", DISPATCH_QUEUE_SERIAL) ;
+        dispatch_async(aSerialQueue, ^{
+            NSAppleScript* script = [[NSAppleScript alloc] initWithSource:source] ;
+            [script executeAndReturnError:NULL] ;
+            /* The above method will return and allow this secondary thread to
+             exit when
+             a)  The launched app activates, or,
+             b)  The launched app quits, or,
+             c)  The built-in NSAppleScript timeout of 120 seconds,
+             whichever comes first.  According to this answer:
+             http://stackoverflow.com/questions/22932419/timeout-has-no-effect-in-nsapplescript
+             We could get it to exit fast if we wrapped the script source
+             with a 'with timeout 0.1 seconds' block *and* wrote it to a
+             temporary file and then executed the script from the file.
+             Then, we wouldn't need to do wrap it in a dispatch_async() to
+             avoid blocking for up to 120 seconds.  But this is good enough. */
+            [script release] ;
+        }) ;
+    }
+    
+    if (ok && (launchTimeout > 0.0)) {
+        NSTimeInterval doneTime = [NSDate timeIntervalSinceReferenceDate] + launchTimeout ;
+        // Wait for app to launch
+        BOOL isLaunched = NO ;
+        do {
+            NSArray* apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleIdentifier] ;
+            NSRunningApplication* app = [apps lastObject] ;
+            if (app) {
+                isLaunched = YES ;
+                break ;
+            }
+            usleep(1000000) ;
+        } while ([NSDate timeIntervalSinceReferenceDate] < doneTime) ;
+        if (!isLaunched) {
+            error = [NSError errorWithDomain:SSYOtherApperErrorDomain
+                                        code:494091
+                                    userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+                                              @"App failed to launch in timeout", NSLocalizedDescriptionKey,
+                                              path, @"Path",
+                                              [NSNumber numberWithDouble:launchTimeout], @"Launch Timeout",
+                                              nil]] ;
+            ok = NO ;
+        }
+    }
+    
+    if (ok && (hideGuardTime > 0.0)) {
+        NSTimeInterval doneTime = [NSDate timeIntervalSinceReferenceDate] + hideGuardTime ;
+        do {
+            NSArray* apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleIdentifier] ;
+            NSRunningApplication* app = [apps lastObject] ;
+            if ([app isActive]) {
+                [app hideReliably] ;
+                break ;
+            }
+            usleep(100000) ;
+        } while ([NSDate timeIntervalSinceReferenceDate] < doneTime) ;
+    }
+    
+    if (error_p && error) {
+        *error_p = error ;
+    }
+    
+    return ok ;
 }
 
 + (NSImage*)iconForAppWithBundleIdentifier:(NSString*)bundleIdentifier {
@@ -1354,7 +1338,6 @@ end:
 	
 	return seconds ;
 }
-
 
 @end
 

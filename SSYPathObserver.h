@@ -88,7 +88,10 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  */
 #define SSYPathObserverChangeFlagsDelete     NOTE_DELETE
 /*!
- @brief    Contents of file's data fork changed
+ @brief    For regular files, the contents of file's data fork changed; for
+ directories, the contents of the directory has changed, meaning that one of
+ the files it contains has been added, deleted, renamed or had its data
+ modified
  @details  For debugging only, the value of this constant, compiled
  with the Mac OS X 10.6 SDK, 32-bit i386, is: 2
  */

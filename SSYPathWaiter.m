@@ -122,8 +122,9 @@ NSString* const constKeySSYPathWaiterTimeout = @"tmot" ;
                        paths:(NSSet*)paths
 					 timeout:(NSTimeInterval)timeout {
 	BOOL ok = YES ;
-	// There may be a possibility of a race condition here.  I'm not sure if this fixes it.
-    
+
+    // As always when dealing with files, there is a possibility of a race
+    // condition here.  But we check anyhow.
     NSMutableSet* pathsExisting = [[NSMutableSet alloc] init] ;
     for (NSString* path in paths) {
         if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
@@ -131,7 +132,7 @@ NSString* const constKeySSYPathWaiterTimeout = @"tmot" ;
         }
     }
     
-    if ([paths count] > 0) {
+    if ([pathsExisting count] > 0) {
 		SSYBlocker* blocker = [[SSYBlocker alloc] init] ;
 		
 		NSDictionary* info = [NSDictionary dictionaryWithObjectsAndKeys:
@@ -157,6 +158,9 @@ NSString* const constKeySSYPathWaiterTimeout = @"tmot" ;
 
 		[blocker release] ;
 	}
+    else {
+        ok = NO ;
+    }
 
     [pathsExisting release] ;
     

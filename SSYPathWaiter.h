@@ -20,8 +20,8 @@
  SSYPathObserverChangeFlags defined in SSYPathObserverChangeFlags.h,
  which specify the type(s) of changes to be considered
 
- @result   YES if the path does not exist already, or if it was deleted
- before the timeout expired.
+ @result   YES if one of the prescribed changes occurs to the file at the
+ given path before the timeout occurs, otherwise NO
  */
 - (BOOL)blockUntilWatchFlags:(uint32_t)watchFlags
 						path:(NSString*)path
@@ -29,13 +29,14 @@
 
 /*!
  @brief    Blocks until any one in a given set paths in the filesystem is
- changed in a given way, or a given timeout, whichever comes first
+ changed in a given way, or a given timeout, whichever comes first, unless no
+ file exists at any of the given paths
  
  @details  This method behaves the same as blockUntilWatchFlags:path:timeout:
  except it watches multiple paths.
  
- @result   YES if the path does not exist already, or if it was deleted
- before the timeout expired.
+ @result   YES if one of the prescribed changes occurs to the file at one of
+ the given path before the timeout occurs, otherwise NO
  */
 - (BOOL)blockUntilWatchFlags:(uint32_t)watchFlags
                        paths:(NSSet*)paths
