@@ -191,6 +191,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
     
     NSString* bundleIdentifier = [bundle bundleIdentifier] ;
     
+    /*  I wish we could use /usr/bin/open for this.  See Apple Bug 19070101. */
     if (ok) {
         NSString* source = [NSString stringWithFormat:
                             @" try\n"

@@ -229,6 +229,51 @@ void handleUSR1(NSInteger signum) {
 	return self ;
 }
 
+#if 0
+#define DEBUG_LOG_KQUEUE_SETTINGS 1
+#endif
+
+#if DEBUG_LOG_KQUEUE_SETTINGS
+- (NSString*)readableStringForFlags:(u_short)flags {
+    NSMutableString* s = [[NSMutableString alloc] init] ;
+    if ((flags & NOTE_DELETE) != 0) {
+        [s appendString:@", Delete-Remove"] ;
+    }
+    if ((flags & NOTE_WRITE) != 0) {
+        [s appendString:@", Write-Change"] ;
+    }
+    if ((flags & NOTE_EXTEND) != 0) {
+        [s appendString:@", Extend-Bigger"] ;
+    }
+    if ((flags & NOTE_ATTRIB) != 0) {
+        [s appendString:@", Change-Attribs"] ;
+    }
+    if ((flags & NOTE_LINK) != 0) {
+        [s appendString:@", Change-Link-Count"] ;
+    }
+    if ((flags & NOTE_RENAME) != 0) {
+        [s appendString:@", Rename-File"] ;
+    }
+    if ((flags & NOTE_REVOKE) != 0) {
+        [s appendString:@", Revoke-Access"] ;
+    }
+    if ((flags & NOTE_NONE) != 0) {
+        [s appendString:@", None-Test"] ;
+    }
+    
+    if ([s length] > 2) {
+        // Remove leading @", "
+        [s deleteCharactersInRange:NSMakeRange(0,2)] ;
+    }
+    
+    NSString* answer = [s copy] ;
+    [s release] ;
+    [answer autorelease] ;
+    
+    return answer ;
+}
+#endif
+
 /*!
  @param    pathWatch  Not nil
  @param    doAdd  YES to add, NO to remove
@@ -263,6 +308,11 @@ void handleUSR1(NSInteger signum) {
             pathWatch                       // udata, user data, aka "context info"
 			) ;
 	
+#if DEBUG_LOG_KQUEUE_SETTINGS
+    NSLog(@"%@ kqueue on %@\nfilters: %@", doAdd?@"Added":@"Removed",
+          [pathWatch path],
+          [self readableStringForFlags:fflags]) ;
+#endif
  	NSInteger result = kevent(
 							  [self kqueueFileDescriptor],  // Our kqueue
 							  &myEvent,                     // list of events we want to change, const struct kevent
