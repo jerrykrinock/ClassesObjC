@@ -1,5 +1,7 @@
+#import "SSYDebug.h"
 #import <execinfo.h>
 #import <mach-o/dyld.h>
+#import "SSY_ARC_OR_NO_ARC.h"
 
 id ssyDebugGlobalObject = nil ;
 double ssyDebugGlobalDouble = 0.0 ;
