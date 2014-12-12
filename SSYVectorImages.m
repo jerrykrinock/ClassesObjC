@@ -27,20 +27,21 @@
 	switch (style) {
 		case SSYVectorImageStylePlus:
 		case SSYVectorImageStyleMinus:;
-			CGFloat adjustedRadius = radius - textDrawingLineWidth/2 ;
-			CGFloat adjustedDiameter = diameter - textDrawingLineWidth/2 ;
-			
 			[path setLineWidth:textDrawingLineWidth] ;
 
+            // We also use textDrawingLineWidth as a margin
+            CGFloat halfX = radius ;
+            CGFloat halfY = radius - textDrawingLineWidth/4 ;
+            
 			// Draw the horizontal line
-			[path moveToPoint:NSMakePoint(0, adjustedRadius)] ;
-			[path lineToPoint:NSMakePoint(diameter, adjustedRadius)] ;
+			[path moveToPoint:NSMakePoint(textDrawingLineWidth, halfY)] ;
+			[path lineToPoint:NSMakePoint(diameter-textDrawingLineWidth, halfY)] ;
 			[path stroke] ;
 			
 			if (style == SSYVectorImageStylePlus) {
 				// Draw the vertical line
-				[path moveToPoint:NSMakePoint(radius, 0 - textDrawingLineWidth/2)] ; // Below zero!
-				[path lineToPoint:NSMakePoint(radius, adjustedDiameter - textDrawingLineWidth/2)] ;
+				[path moveToPoint:NSMakePoint(halfX, textDrawingLineWidth/2)] ;
+				[path lineToPoint:NSMakePoint(halfX, diameter-textDrawingLineWidth)] ;
 				[path stroke] ;
 			}
 			break ;

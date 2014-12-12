@@ -26,7 +26,7 @@ typedef enum SSYVectorImageStyles_enum SSYVectorImageStyle ;
 }
 
 /*
-@param    Measure by which the result should be rotated clockwise
+@param    rotateDegrees  Measure by which the result should be rotated clockwise
  */
 + (NSImage*)imageStyle:(SSYVectorImageStyle)style
 			  diameter:(CGFloat)diameter
