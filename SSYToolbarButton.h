@@ -4,7 +4,8 @@
 /*!
  @brief    A toolbar item which has a tristate 'value' attribute,
  and three each additional images, labels and tooltips which 
- replace super's image, label and tooltip when the value is changed
+ replace super's image, label and tooltip when the value is changed,
+ and/or may be configured to flash when clicked.
 
  @details  
 */
@@ -13,6 +14,7 @@
 	NSImage* m_onImage ;
 	NSImage* m_offImage ;
 	NSImage* m_disImage ;
+    NSImage* m_originalImage ;
 	NSString* m_onLabel ;
 	NSString* m_offLabel ;
 	NSString* m_disLabel ;
@@ -21,6 +23,8 @@
 	NSString* m_disToolTip ;
 	id m_externalTarget ;
 	SEL m_externalAction ;
+    NSTimeInterval m_flashDuration ;
+    NSTimer* m_flashTimer ;
 }
 
 /*!
@@ -104,5 +108,11 @@
  for a fixed, constant toolTip, use super's -setToolTip: 
  */
 @property (retain) NSString* disToolTip ;
+
+/*!
+ @brief    Duration for which the receiver shall flash when it is clicked
+ @details  The default value is 0 (no flash)
+ */
+@property (assign) NSTimeInterval flashDuration ;
 
 @end

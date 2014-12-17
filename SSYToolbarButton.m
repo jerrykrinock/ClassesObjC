@@ -1,7 +1,9 @@
 #import "SSYToolbarButton.h"
+#import "NSImage+Transform.h"
 
 static NSString* const constKeyValue = @"value" ;
 static NSString* const constKeyToolTip = @"toolTip" ;
+
 
 @interface SSYToolbarButton ()
 
@@ -10,6 +12,8 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 // and it does not increase the retain count of aTarg.)
 @property (assign) id externalTarget ;
 @property (assign) SEL externalAction ;
+@property (retain) NSImage* originalImage ;
+@property (assign) NSTimer* flashTimer ;  // NSTimer retains itself, so 'assign'
 
 @end
 
@@ -37,6 +41,7 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 @synthesize onImage = m_onImage ;
 @synthesize offImage = m_offImage ;
 @synthesize disImage = m_disImage ;
+@synthesize originalImage = m_originalImage ;
 @synthesize onLabel = m_onLabel ;
 @synthesize offLabel = m_offLabel ;
 @synthesize disLabel = m_disLabel ;
@@ -44,7 +49,8 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 @synthesize offToolTip = m_offToolTip ;
 @synthesize disToolTip = m_disToolTip ;
 @synthesize externalTarget = m_externalTarget ;
-@synthesize externalAction = m_externalAction ; 
+@synthesize externalAction = m_externalAction ;
+@synthesize flashDuration = m_flashDuration ;
 
 - (void)awakeFromNib {
 	// The following is to support some other object binding to the
@@ -108,18 +114,44 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 	if (toolTip) {
 		[self setToolTip:toolTip] ;
 	}
-}	
+}
+
+- (void)restoreOriginalImage:(NSTimer*)timer {
+    [self setImage:[self originalImage]] ;
+    [self setOriginalImage:nil] ;
+}
 
 - (IBAction)doDaClick:(id)sender {
+    if ([self flashDuration] > 0.0) {
+        NSImage* image = [self image] ;
+        [self setOriginalImage:image] ;
+        NSImage* darkerImage = [image copy] ;
+        [darkerImage darken] ;
+        [self setImage:darkerImage] ;
+        [darkerImage release] ;
+        NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:[self flashDuration]
+                                                          target:self
+                                                        selector:@selector(restoreOriginalImage:)
+                                                        userInfo:nil
+                                                         repeats:NO] ;
+        // Stash the timer so that we can invalidate it during -dealloc, in case
+        // we are deallocced (window closes, for example) before the timer
+        // fires.  Otherwise there would be a crash.
+        [self setFlashTimer:timer] ;
+    }
+    
 	//[self setValue:([self value] == NSOnState) ? NSOffState : NSOnState] ;
 	[[self externalTarget] performSelector:[self externalAction]
 								withObject:self] ;
 }
 
 - (void)dealloc {
+    [m_flashTimer invalidate] ;
+    
 	[m_onImage release] ;
 	[m_offImage release] ;
 	[m_disImage release] ;
+    [m_originalImage release] ;
 	[m_onLabel release] ;
 	[m_offLabel release] ;
 	[m_disLabel release] ;
