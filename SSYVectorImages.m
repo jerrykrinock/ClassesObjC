@@ -40,7 +40,7 @@
 
 + (void)checkmarkOnPath:(NSBezierPath*)path
                       x:(CGFloat)x {
-    [path setLineWidth:7] ;
+    [path setLineWidth:8] ;
     [path moveToPoint:NSMakePoint(x,42)] ;
     [path lineToPoint:NSMakePoint(x+17,21)] ;
     [path curveToPoint:NSMakePoint(x+49, 79)
@@ -354,67 +354,24 @@
             
             break ;
         case SSYVectorImageStyleTag:;
-#define LINE_WIDTH 3.0
-#define LEFT_MARGIN 9
-#define TAG_WIDTH 67
-#define TAG_HEIGHT 42
-#define HOLE_FOR_STRING_RADIUS 6
-#define HOLE_OFFSET 5
-#define STRING_INSET 2
-#define TAG_ROTATION 30
+#define LINE_WIDTH 7.0
+#define TAG_HEIGHT 54
+#define TAG_INSET 22
+#define TAG_HOLE_RADIUS 4
             CGFloat bottomMargin = (100.0-TAG_HEIGHT)/2 ;
-            NSRect tagRect = NSMakeRect(LEFT_MARGIN, bottomMargin, TAG_WIDTH, TAG_HEIGHT) ;
-            
-            path = [NSBezierPath bezierPathWithRect:tagRect] ;
-            
-            [path setLineWidth:LINE_WIDTH] ;
-            
-            /* Punch a round hole near the left side of the tag body
-             This is done by with a separate bezier path which we first
-             *reverse* and then *append* to the bookmark bezier path. */
-            NSBezierPath* stringHolePath = [NSBezierPath bezierPath] ;
-            NSRect stringHoleRect = NSMakeRect(
-                                               (LEFT_MARGIN + HOLE_OFFSET),
-                                               (50.0 - HOLE_FOR_STRING_RADIUS),
-                                               2*HOLE_FOR_STRING_RADIUS,
-                                               2*HOLE_FOR_STRING_RADIUS
-                                               ) ;
-            [stringHolePath appendBezierPathWithOvalInRect:stringHoleRect] ;
-            stringHolePath = [stringHolePath bezierPathByReversingPath] ;
-            [path appendBezierPath:stringHolePath] ;
-            
-            NSBezierPath* stringPath = [NSBezierPath bezierPath] ;
-            NSPoint stringStart = NSMakePoint(LEFT_MARGIN + HOLE_OFFSET + STRING_INSET, (50.0)) ;
-            [stringPath moveToPoint:stringStart] ;
-            [stringPath relativeCurveToPoint:NSMakePoint(-30, -30)
-                               controlPoint1:NSMakePoint(-15, 5)
-                               controlPoint2:NSMakePoint(-25,-15)] ;
-            [stringPath setLineWidth:LINE_WIDTH] ;
-            [stringPath setLineCapStyle:NSRoundLineCapStyle] ;
-            
-            // Now move the origin to the center of the eye and rotate it
-            NSAffineTransform* centerRotateTransform = [NSAffineTransform transform] ;
-            [centerRotateTransform translateXBy:(50.0)
-                                            yBy:(50.0)];
-            [centerRotateTransform rotateByDegrees:TAG_ROTATION];
-            [centerRotateTransform translateXBy:-(50.0)
-                                            yBy:-(50.0)];
-            [centerRotateTransform translateXBy:7
-                                            yBy:0];
-            [centerRotateTransform concat];
-            
-            [[NSColor whiteColor] set] ;
-            [path fill] ;
-            
+            [path setLineWidth:4.0] ;
+            [path moveToPoint:NSMakePoint(0, 50)] ;
+            [path lineToPoint:NSMakePoint(TAG_INSET, bottomMargin)] ;
+            [path lineToPoint:NSMakePoint(100, bottomMargin)] ;
+            [path lineToPoint:NSMakePoint(100, 100 - bottomMargin)] ;
+            [path lineToPoint:NSMakePoint(TAG_INSET, 100 - bottomMargin)] ;
+            [path closePath] ;
+            [path appendBezierPathWithArcWithCenter:NSMakePoint(TAG_INSET, 50)
+                                             radius:TAG_HOLE_RADIUS
+                                         startAngle:0.0
+                                           endAngle:360.0] ;
             [[NSColor blackColor] set] ;
             [path stroke] ;
-            
-            [[NSColor blackColor] set] ;
-            [stringPath stroke] ;
-            
-            // Clean up the coordinate system - although not technically necessary because we're all done
-            [centerRotateTransform invert] ;
-            [centerRotateTransform concat] ;
             
             break ;
         case SSYVectorImageStyleCheck1:;
@@ -562,9 +519,80 @@
         [image release] ;
     }
     
+    [rotatedImage setTemplate:YES] ;
+    
 	return rotatedImage ;	
 }
 
 
 @end
 
+#if 0
+/* The following code, which shows how to draw a fancy tag that is filled except
+ for an unfilled hole, and rotated 30 degrees, is no longer used, but I'm
+ keeping it as sample code in case the fashion designers at Apple someday
+ decide that flat is out and fancy is in.
+ */
+#define LINE_WIDTH 3.0
+#define LEFT_MARGIN 9
+#define TAG_WIDTH 67
+#define TAG_HEIGHT 42
+#define HOLE_FOR_STRING_RADIUS 6
+#define HOLE_OFFSET 5
+#define STRING_INSET 2
+#define TAG_ROTATION 30
+CGFloat bottomMargin = (100.0-TAG_HEIGHT)/2 ;
+NSRect tagRect = NSMakeRect(LEFT_MARGIN, bottomMargin, TAG_WIDTH, TAG_HEIGHT) ;
+
+path = [NSBezierPath bezierPathWithRect:tagRect] ;
+
+[path setLineWidth:LINE_WIDTH] ;
+
+/* Punch a round hole near the left side of the tag body
+ This is done by with a separate bezier path which we first
+ *reverse* and then *append* to the bookmark bezier path. */
+NSBezierPath* stringHolePath = [NSBezierPath bezierPath] ;
+NSRect stringHoleRect = NSMakeRect(
+                                   (LEFT_MARGIN + HOLE_OFFSET),
+                                   (50.0 - HOLE_FOR_STRING_RADIUS),
+                                   2*HOLE_FOR_STRING_RADIUS,
+                                   2*HOLE_FOR_STRING_RADIUS
+                                   ) ;
+[stringHolePath appendBezierPathWithOvalInRect:stringHoleRect] ;
+stringHolePath = [stringHolePath bezierPathByReversingPath] ;
+[path appendBezierPath:stringHolePath] ;
+
+NSBezierPath* stringPath = [NSBezierPath bezierPath] ;
+NSPoint stringStart = NSMakePoint(LEFT_MARGIN + HOLE_OFFSET + STRING_INSET, (50.0)) ;
+[stringPath moveToPoint:stringStart] ;
+[stringPath relativeCurveToPoint:NSMakePoint(-30, -30)
+                   controlPoint1:NSMakePoint(-15, 5)
+                   controlPoint2:NSMakePoint(-25,-15)] ;
+[stringPath setLineWidth:LINE_WIDTH] ;
+[stringPath setLineCapStyle:NSRoundLineCapStyle] ;
+
+// Now move the origin to the center of the eye and rotate it
+NSAffineTransform* centerRotateTransform = [NSAffineTransform transform] ;
+[centerRotateTransform translateXBy:(50.0)
+                                yBy:(50.0)];
+[centerRotateTransform rotateByDegrees:TAG_ROTATION];
+[centerRotateTransform translateXBy:-(50.0)
+                                yBy:-(50.0)];
+[centerRotateTransform translateXBy:7
+                                yBy:0];
+[centerRotateTransform concat];
+
+[[NSColor whiteColor] set] ;
+[path fill] ;
+
+[[NSColor blackColor] set] ;
+[path stroke] ;
+
+[[NSColor blackColor] set] ;
+[stringPath stroke] ;
+
+// Clean up the coordinate system - although not technically necessary because we're all done
+[centerRotateTransform invert] ;
+[centerRotateTransform concat] ;
+
+#endif

@@ -27,18 +27,18 @@
  @details  In the cocoa-dev@lists.apple.com archives I've seen where
  others have wanted an NSTokenField in an NSScrollView, and have been
  stymied by the lack of access to the layout mechanism in
- NSTokenField.&nbsp;   So I worked around this by adding tags one at
- a time, emulating the layout that NSTokenField must be doing.&nbsp; 
+ NSTokenField.   So I worked around this by adding tags one at
+ a time, emulating the layout that NSTokenField must be doing.
  It's tedious, but works and doesn't hack into any Apple private
  methods.
  
  Sizing is based on an interrow spacing of 2.0 which was
  determined empirically since NSTokenField, unlike NSTableView, does
  not make its interrow spacing accessible, and also the fact that
- the interrow spacing seems to be independent of font size.&nbsp;
+ the interrow spacing seems to be independent of font size.
  This has been tested with the token field's font size set to
- -[NSFont systemFontOfSize:11.0] and -[NSFont systemFontOfSize:21.0].&nbsp;
- The code may need to be tweaked if Apple ever changes the layout 
+ -[NSFont systemFontOfSize:11.0] and -[NSFont systemFontOfSize:21.0].
+ The code may need to be tweaked if Apple ever changes the layout
  algorithm of NSTokenField.
  */
 - (void)sizeHeightToFit ;
