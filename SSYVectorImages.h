@@ -3,34 +3,21 @@
 
 enum SSYVectorImageStyles_enum
 {
-	SSYVectorImageStylePlus,
-	SSYVectorImageStyleMinus,
-    /* Dash is narrower and thinner than Minus */
-    SSYVectorImageStyleDash,
+    SSYVectorImageStylePlus,
+    SSYVectorImageStyleMinus,
     /* Triangle, horizonal baseline, pointing up, with top vertex 90 degrees.
-     This one is shorter and fatter than Triangle53.  */
-	SSYVectorImageStyleTriangle90,
+     This one is shorter and fatter.  */
+    SSYVectorImageStyleTriangle90,
     /* Triangle, horizonal baseline, pointing up, with top vertex 2*arctan(.5)
-     = 53.2 degrees.  This one is a taller and thinner than Triangle90. */
-	SSYVectorImageStyleTriangle53,
-	SSYVectorImageStyleInfoOff,
-    SSYVectorImageStyleInfoOn,
-    SSYVectorImageStyleHelp,
-	/* Five-pointed star used in SSYStarRatingView */
+     = 53.2 degrees.  This one is a taller and thinner. */
+    SSYVectorImageStyleTriangle53,
+    SSYVectorImageStyleInfo,
+    /* Five-pointed star used in SSYStarRatingView */
     SSYVectorImageStyleStar,
     /* White "X" inside a gray circle, used in SSYStarRatingView */
-	SSYVectorImageStyleRemoveX,
-    /* "Bookmark", solid black except for a white hole near the top */
-    SSYVectorImageStyleBookmark,
-    SSYVectorImageStyleHierarchy,
-    SSYVectorImageStyleFlat,
-    SSYVectorImageStyleLineage,
-    SSYVectorImageStyleTag,
-    SSYVectorImageStyleCheck1,
-    SSYVectorImageStyleCheck2,
-    SSYVectorImageStyleBookmarksInFolder,
-    SSYVectorImageStyleSettings,
-    SSYVectorImageStyleReports
+    SSYVectorImageStyleRemoveX,
+    /* "Bookmark", solid color except for a white hole near the top */
+    SSYVectorImageStyleBookmark
 } ;
 typedef enum SSYVectorImageStyles_enum SSYVectorImageStyle ;
 
@@ -39,11 +26,11 @@ typedef enum SSYVectorImageStyles_enum SSYVectorImageStyle ;
 }
 
 /*
-@param    rotateDegrees  Measure by which the result should be rotated clockwise
+ @param    rotateDegrees  Measure by which the result should be rotated clockwise
  */
 + (NSImage*)imageStyle:(SSYVectorImageStyle)style
-                length:(CGFloat)length
-				 color:(NSColor*)color
-		 rotateDegrees:(CGFloat)rotateDegrees ;
+              diameter:(CGFloat)diameter
+                 color:(NSColor*)color
+         rotateDegrees:(CGFloat)rotateDegrees ;
 
 @end
