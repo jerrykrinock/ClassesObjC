@@ -34,6 +34,7 @@
         [bezier fill] ;
     }
     [image unlockFocus] ;
+    [image autorelease] ;
     
     return image ;
 }
@@ -77,9 +78,6 @@
     aPath = [NSBezierPath bezierPathWithRoundedRect:rect
                                             xRadius:(GROOVE_WIDTH/2)
                                             yRadius:(GROOVE_WIDTH/2)] ;
-    [path appendBezierPath:aPath] ;
-    rect = NSMakeRect(midX-(GROOVE_WIDTH/2), GROOVE_BOTTOM, GROOVE_WIDTH, GROOVE_TOP - GROOVE_BOTTOM) ;
-
     [path appendBezierPath:aPath] ;
 }
 

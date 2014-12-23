@@ -14,7 +14,7 @@
         
         /*
          The following line was added in BookMacster 1.12.7, to alphabetize
-         tags in Detail View (littleCloud) and Inspector.  However, it also
+         tags in Tags Popover and Inspector.  However, it also
          cast 'value' to an NSCountedSet and re-invoked -allObjects on it.
          This *worked* in Mac OS X 10.7 and later, because, strangely, NSArray
          *does* respond to -allObjects in these systems, returns a copy of self.
