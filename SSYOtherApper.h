@@ -308,7 +308,8 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 
 /*!
  @brief    Returns a string consisting of the command followed by the
- arguments of a process identified by a given pid
+ arguments of a process identified by a given pid, then its start time,
+ then its elapsed time, and finally its percent of CPU usage.
 
  @details  You must use your knowledge of the expected result in order
  to parse out individual arguments, because command paths or arguments
@@ -317,7 +318,7 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  @result   The expected string, or nil if the given pid is not
  that of a running process
 */
-+ (NSString*)commandAndArgumentsOfPid:(pid_t)pid ;
++ (NSString*)descriptionOfPid:(pid_t)pid ;
 
 /*!
  @brief    Returns whether or not this user has an *app* running

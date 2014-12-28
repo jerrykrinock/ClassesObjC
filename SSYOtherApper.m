@@ -875,16 +875,30 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 }
 #endif
 
-+ (NSString*)commandAndArgumentsOfPid:(pid_t)pid {
++ (NSString*)descriptionOfPid:(pid_t)pid {
 	NSArray* args = [NSArray arrayWithObjects:
 					 @"-www",      // Allow 4x the normal column width.  Should be enough!!
-					 @"-o",        // Print the following column(s)
-					 @"command=",  // = means to suppress header line
-					 @"-p",        // subject pid follows
+
+                     @"-o",        // Print the following column (= means to suppress header line)
+					 @"command=",  // command and arguments
+                     @"-o",        // Print the following column (= means to suppress header line)
+                     @"stime=",    // time started
+                     @"-o",        // Print the following column (= means to suppress header line)
+                     @"etime=",    // elapsed running time
+                     @"-o",        // Print the following column (= means to suppress header line)
+                     @"uid=",      // effective user id
+                     @"-o",        // Print the following column (= means to suppress header line)
+                     @"user=",     // user name (from UID)
+                     @"-o",        // Print the following column (= means to suppress header line)
+                     @"ruid=",     // real user id
+                     @"-o",        // Print the following column (= means to suppress header line)
+                     @"%cpu=",     // percentage of CPU usage
+
+                     @"-p",        // subject pid follows
 					 [NSString stringWithFormat:@"%ld", (long)pid],
 					 nil] ;
 	
-	NSString* commandAndArguments = nil ;
+	NSString* answer = nil ;
 	NSData* stdoutData ;
 	[SSYShellTasker doShellTaskCommand:@"/bin/ps"
 							 arguments:args
@@ -895,16 +909,18 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 							   timeout:5.0
 							   error_p:NULL] ;
 	if (stdoutData) {
-		commandAndArguments = [[NSString alloc] initWithData:stdoutData
-															  encoding:NSUTF8StringEncoding] ;
-		[commandAndArguments autorelease] ;
+		answer = [[NSString alloc] initWithData:stdoutData
+                                       encoding:NSUTF8StringEncoding] ;
+		[answer autorelease] ;
 	}
 	
-	if ([commandAndArguments length] == 0) {
-		commandAndArguments = nil ;
+	if ([answer length] == 0) {
+		answer = nil ;
 	}
+    
+    answer = [answer stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] ;
 
-	return commandAndArguments ;
+	return answer ;
 }
 
 + (BOOL)isProcessRunningPid:(pid_t)pid
