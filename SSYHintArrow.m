@@ -36,7 +36,13 @@ static SSYHintArrow* static_helpArrow = nil ;
     contentRect.size.width += scaledArrowHeight ;
     
     // Position frame origin appropriately, accounting for arrow-inset.
-    contentRect.origin = (m_window) ? [m_window convertBaseToScreen:m_point] : m_point ;
+    if (m_window) {
+        NSRect screenRect = [m_window convertRectToScreen:NSMakeRect(m_point.x, m_point.y, 0, 0)] ;
+        contentRect.origin = screenRect.origin ;
+    }
+    else {
+        contentRect.origin = m_point ;
+    }
     CGFloat halfHeight = contentRect.size.height / 2.0 ;
     contentRect.origin.y -= halfHeight ;
     
