@@ -35,7 +35,7 @@ static SSMoveableToolTip	*sharedToolTip = nil;
         
         [_window setOpaque:NO];
         [_window setAlphaValue:0.80];
-        [_window setBackgroundColor:[NSColor colorWithDeviceRed:1.0 green:0.96 blue:0.76 alpha:1.0]];
+        [_window setBackgroundColor:[NSColor colorWithDeviceRed:0.953 green:0.953 blue:0.953 alpha:1.0]];
         [_window setHasShadow:YES];
         [_window setLevel:NSStatusWindowLevel];
         [_window setReleasedWhenClosed:YES];
@@ -91,11 +91,8 @@ static SSMoveableToolTip	*sharedToolTip = nil;
                                    size.height + 1
                                    ) ;
 	
-    NSPoint cursorScreenPosition = [hostWindow convertBaseToScreen:origin];
-
-    // On 2013-12-04, removed hard-coded offsets in here which were for my app.
-    // Any offset you need should be passed in the 'origin' parameter!
-	[_window setFrameTopLeftPoint:NSMakePoint(cursorScreenPosition.x, cursorScreenPosition.y)];
+    NSRect cursorRect = [hostWindow convertRectToScreen:NSMakeRect(origin.x,origin.y,0,0)] ;
+	[_window setFrameTopLeftPoint:NSMakePoint(cursorRect.origin.x, cursorRect.origin.y)] ;
     [_window setContentSize:windowSize] ;
 }
 
