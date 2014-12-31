@@ -125,10 +125,8 @@ static NSString* const constKeyToolTip = @"toolTip" ;
     if ([self flashDuration] > 0.0) {
         NSImage* image = [self image] ;
         [self setOriginalImage:image] ;
-        NSImage* darkerImage = [image copy] ;
-        [darkerImage darken] ;
+        NSImage* darkerImage = [image darkenedImage] ;
         [self setImage:darkerImage] ;
-        [darkerImage release] ;
         NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:[self flashDuration]
                                                           target:self
                                                         selector:@selector(restoreOriginalImage:)

@@ -108,31 +108,30 @@ static SSYHintArrow* static_helpArrow = nil ;
 }
 
 - (NSColor *)backgroundColorPatternImage {
-    NSImage* bg = [[NSImage alloc] initWithSize:[self frame].size] ;
-    NSRect bgRect = NSZeroRect ;
-    bgRect.size = [bg size] ;
-    
-    [bg lockFocus] ;
-    NSBezierPath* bgPath = [self backgroundPath] ;
-    [NSGraphicsContext saveGraphicsState] ;
-    [bgPath addClip] ;
-    
-    // Draw background gradient.
-	[m_gradient drawInBezierPath:bgPath
-									  angle:270.0] ;
-    
-    // Draw border if appropriate.
-    if (m_borderWidth > 0) {
-        // Double the borderWidth since we're drawing inside the path.
-        [bgPath setLineWidth:(m_borderWidth * 2.0) * SSYHINTARROW_SCALE_FACTOR] ;
-        [m_borderColor set] ;
-        [bgPath stroke] ;
-    }
-    
-    [NSGraphicsContext restoreGraphicsState] ;
-    [bg unlockFocus] ;
-    
-    return [NSColor colorWithPatternImage:[bg autorelease]] ;
+    NSImage* bg = [NSImage imageWithSize:[self frame].size
+                                 flipped:NO
+                          drawingHandler:^(NSRect dstRect) {
+                              NSBezierPath* bgPath = [self backgroundPath] ;
+                              [NSGraphicsContext saveGraphicsState] ;
+                              [bgPath addClip] ;
+                              
+                              // Draw background gradient.
+                              [m_gradient drawInBezierPath:bgPath
+                                                     angle:270.0] ;
+                              
+                              // Draw border if appropriate.
+                              if (m_borderWidth > 0) {
+                                  // Double the borderWidth since we're drawing inside the path.
+                                  [bgPath setLineWidth:(m_borderWidth * 2.0) * SSYHINTARROW_SCALE_FACTOR] ;
+                                  [m_borderColor set] ;
+                                  [bgPath stroke] ;
+                              }
+                              [NSGraphicsContext restoreGraphicsState] ;
+
+                              return YES ;
+                          }] ;
+
+    return [NSColor colorWithPatternImage:bg] ;
 }
 
 - (void)updateBackground {
@@ -298,9 +297,8 @@ static SSYHintArrow* static_helpArrow = nil ;
 + (void)showHelpArrowAtPoint:(NSPoint)point
 					inWindow:(NSWindow*)window {
 	if (static_helpArrow) {
-		// Only one SSYHintArrow at a time!!
-		NSLog(@"Internal Error 892-8178  Intercepted call to display > 1 SSYHintArrow") ;
-		return ;
+		// Only one SSYHintArrow at a time!  Destroy the prior one.
+        [static_helpArrow endWithNote:nil] ;
 	}
 
 	static_helpArrow = [[SSYHintArrow alloc] initAttachedToPoint:point 

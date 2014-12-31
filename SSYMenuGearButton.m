@@ -6,8 +6,6 @@
 - (void)drawRect:(NSRect)dirtyRect {
 	[super drawRect:dirtyRect] ;
 	
-	[self lockFocus] ;
-	
 	// Draw the Gear
 	NSImage* image = [NSImage imageNamed:@"NSActionTemplate"] ;
 	[image drawInRect:NSMakeRect(3,
@@ -25,8 +23,6 @@
 	[path relativeLineToPoint:NSMakePoint(-4, 4)] ;
 	[path closePath] ;
 	[path fill] ;
-	
-	[self unlockFocus] ;
 }
 
  @end

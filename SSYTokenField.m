@@ -15,11 +15,9 @@
 	[bp relativeLineToPoint:NSMakePoint(frame.size.width, frame.size.height)] ;
 	[bp moveToPoint:NSMakePoint(frame.origin.x, frame.origin.y+frame.size.height)] ;
 	[bp relativeLineToPoint:NSMakePoint(frame.size.width, -frame.size.height)] ;
-	[self lockFocus] ;
 	[bp setLineWidth:4.0] ;
 	[[NSColor redColor] set] ;
 	[bp stroke] ;
-	[self unlockFocus] ;
 	[super drawRect:rect] ;
 }
 @end

@@ -16,12 +16,9 @@
                              inFont:font] ;
 }
 
-+ (NSImage*)imageWithGlyphName:(NSString*)glyphName
-                      fattenBy:(CGFloat)fattenBy
-                          fill:(BOOL)fill {
-    NSSize size = NSMakeSize(100/fattenBy, 100) ;
-    NSImage* image = [[NSImage alloc] initWithSize:size] ;
-    [image lockFocus] ;
++ (void)drawGlyphName:(NSString*)glyphName
+                 size:(NSSize)size
+                 fill:(BOOL)fill {
     NSBezierPath* bezier = [NSBezierPath bezierPath] ;
     [self glyphOnPath:bezier
                  name:glyphName
@@ -33,8 +30,33 @@
         [[NSColor blackColor] setFill] ;
         [bezier fill] ;
     }
-    [image unlockFocus] ;
-    [image autorelease] ;
+}
+
++ (NSImage*)imageWithGlyphName:(NSString*)glyphName
+                      fattenBy:(CGFloat)fattenBy
+                          fill:(BOOL)fill {
+    NSSize size = NSMakeSize(100/fattenBy, 100) ;
+    NSImage* image ;
+    if ([NSImage respondsToSelector:@selector(imageWithSize:flipped:drawingHandler:)]) {
+        // We must be in OS X 10.8 or later
+        image = [NSImage imageWithSize:size
+                               flipped:NO
+                        drawingHandler:^(NSRect dstRect) {
+                            [self drawGlyphName:glyphName
+                                           size:size
+                                           fill:fill] ;
+                            return YES ;
+                        }] ;
+    }
+    else {
+        image = [[NSImage alloc] initWithSize:size] ;
+        [image lockFocus] ;
+        [self drawGlyphName:glyphName
+                       size:size
+                       fill:fill] ;
+        [image unlockFocus] ;
+        [image autorelease] ;
+    }
     
     return image ;
 }
@@ -496,6 +518,7 @@
     NSImage* rotatedImage ;
 
     if ([NSImage respondsToSelector:@selector(imageWithSize:flipped:drawingHandler:)]) {
+        // We must be in OS X 10.8 or later
         image = [NSImage imageWithSize:size
                                flipped:NO
                         drawingHandler:^(NSRect dstRect) {

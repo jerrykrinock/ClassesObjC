@@ -13,9 +13,6 @@
     
 - (void)drawRect:(NSRect)dirtyRect {
 	[super drawRect:dirtyRect] ;
-	
-	[self lockFocus] ;
-	
 	NSGradient* gradient = [[NSGradient alloc] initWithStartingColor:[NSColor colorWithCalibratedWhite:[self topWhite]
                                                                                                  alpha:1.0]
 														 endingColor:[NSColor colorWithCalibratedWhite:[self bottomWhite]
@@ -30,7 +27,6 @@
     frame.size.height = [self frame].size.height ;
 	[gradient drawInRect:frame
 				   angle:270.0] ;
-	[self unlockFocus] ;
 	[gradient release] ;
 }
 

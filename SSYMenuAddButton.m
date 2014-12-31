@@ -7,8 +7,6 @@
 - (void)drawRect:(NSRect)dirtyRect {
 	[super drawRect:dirtyRect] ;
 	
-	[self lockFocus] ;
-	
     // Draw the "+"
     // The y-axis seems to be flipped in here.
     NSImage* image = [NSImage imageNamed:@"NSAddTemplate"] ;
@@ -28,8 +26,6 @@
 	[path relativeLineToPoint:NSMakePoint(-4, 4)] ;
 	[path closePath] ;
 	[path fill] ;
-	
-	[self unlockFocus] ;
 }
 
  @end
