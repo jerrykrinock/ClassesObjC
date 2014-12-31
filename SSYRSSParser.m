@@ -11,13 +11,13 @@ NSString* const SSYRSSParserErrorDomain = @"SSYRSSParserErrorDomain" ;
 
 @interface SSYRSSParser ()
 
-@property NSData* data ;
-@property NSError* error ;
-@property NSDictionary* headerItems ;
-@property NSMutableArray* newsItems ;
-@property NSString* version ;
+@property (retain) NSData* data ;
+@property (retain) NSError* error ;
+@property (retain) NSDictionary* headerItems ;
+@property (retain) NSMutableArray* newsItems ;
+@property (retain) NSString* version ;
 @property NSStringEncoding encoding ;
-
+@property (retain) NSMutableArray* currentElementLineage ;
 @end
 
 
@@ -37,6 +37,10 @@ NSString* const SSYRSSParserErrorDomain = @"SSYRSSParserErrorDomain" ;
         
         if (self) {
             [self setData:data] ;
+
+            NSMutableArray* array = [[NSMutableArray alloc] init] ;
+            [self setCurrentElementLineage:array] ;
+            [array release] ;
             
             NSXMLParser* parser = [[NSXMLParser alloc] initWithData:data] ;
             [parser setDelegate:self] ;
@@ -80,6 +84,46 @@ NSString* const SSYRSSParserErrorDomain = @"SSYRSSParserErrorDomain" ;
     /*SSYDBL*/ NSLog(@"   namespaceURI: %@", namespaceURI) ;
     /*SSYDBL*/ NSLog(@"  qualifiedName: %@", qualifiedName) ;
     /*SSYDBL*/ NSLog(@"     attributes: %@", attributes) ;
+    [[self currentElementLineage] addObject:elementName] ;
+    if ([[self currentElementLineage] isEqualToArray:@[@"rss"]]) {
+        [self setVersion:[attributes objectForKey:@"version"]] ;
+    }
+}
+
+- (void)parser:(NSXMLParser *)parser
+ didEndElement:(NSString *)elementName
+  namespaceURI:(NSString *)namespaceURI
+ qualifiedName:(NSString *)qualifiedName {
+    /*SSYDBL*/ NSLog(@"didEnd") ;
+    /*SSYDBL*/ NSLog(@"    elementName: %@", elementName) ;
+    /*SSYDBL*/ NSLog(@"   namespaceURI: %@", namespaceURI) ;
+    /*SSYDBL*/ NSLog(@"  qualifiedName: %@", qualifiedName) ;
+    if ([elementName isEqualToString:[[self currentElementLineage] lastObject]]) {
+        [[self currentElementLineage] removeLastObject] ;
+    }
+    else {
+        [self setError:[NSError errorWithDomain:SSYRSSParserErrorDomain
+                                           code:672902
+                                       userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                 @"Element start/end mismatch", NSLocalizedDescriptionKey,
+                                                 [[self currentElementLineage] lastObject], @"Start",
+                                                 elementName, @"End",
+                                                 nil]]] ;
+        [parser abortParsing] ;
+    }
+}
+
+- (void)  parser:(NSXMLParser*)parser
+ foundCharacters:(NSString*)string {
+    /*SSYDBL*/ NSLog(@"foundChars: %@", string) ;
+#if 0
+    if (m_accumulatingUrl) {
+        // If the current element is one whose content we care about, append 'string'
+        // to the property that holds the content of the current element.
+        //
+        [[self xmlString] appendString:string] ;
+    }
+#endif
 }
 
 - (NSData*)         parser:(NSXMLParser*)parser
