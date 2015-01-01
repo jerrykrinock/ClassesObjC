@@ -29,8 +29,7 @@ NSString* const SSYRSSParserErrorDomain = @"SSYRSSParserErrorDomain" ;
 @synthesize currentElementValue = m_currentElementValue ;
 @synthesize currentItem = m_currentItem ;
 
-- (SSYRSSParser*)initWithData:(NSData*)data
-                      error_p:(NSError**)error_p {
+- (SSYRSSParser*)initWithData:(NSData*)data {
     if (data) {
         self = [super init] ;
         
@@ -58,24 +57,28 @@ NSString* const SSYRSSParserErrorDomain = @"SSYRSSParserErrorDomain" ;
             object = [[NSMutableDictionary alloc] init] ;
             [self setCurrentItem:object] ;
             [object release] ;
-            
-            NSXMLParser* parser = [[NSXMLParser alloc] initWithData:data] ;
-            [parser setDelegate:self] ;
-            [parser setShouldResolveExternalEntities:YES] ;
-            [parser parse] ;
-            [parser release] ;
-            
-            if ([self error]) {
-                [self release] ;
-                self = nil ;
-                if (error_p) {
-                    *error_p = [self error] ;
-                }
-            }
         }
     }
     
     return self ;
+}
+
+- (BOOL)parseError_p:(NSError**)error_p {
+    BOOL ok = YES ;
+    NSXMLParser* parser = [[NSXMLParser alloc] initWithData:[self data]] ;
+    [parser setDelegate:self] ;
+    [parser setShouldResolveExternalEntities:YES] ;
+    [parser parse] ;
+    [parser release] ;
+    
+    if ([self error]) {
+        ok = NO ;
+        if (error_p) {
+            *error_p = [self error] ;
+        }
+    }
+    
+    return ok ;
 }
 
 - (void) dealloc {
