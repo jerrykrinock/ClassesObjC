@@ -59,7 +59,7 @@ extern NSString* const SSYRSSParserErrorDomain ;
 @end
 
 
-#if 11
+#if 0
 @interface SSYRSSParser (Testing)
 + (void)test ;
 @end
