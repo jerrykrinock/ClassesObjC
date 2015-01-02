@@ -26,7 +26,7 @@
 #include <IOKit/network/IOEthernetInterface.h>
 #include <IOKit/network/IONetworkInterface.h>
 #include <IOKit/network/IOEthernetController.h>
-#import "NSData_AMDigest.h"
+#import "NSData+SSYCryptoDigest.h"
 
 static kern_return_t FindEthernetInterfaces(io_iterator_t *matchingServices);
 CFDataRef CreateMACAddress(io_iterator_t intfIterator);
