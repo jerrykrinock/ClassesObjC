@@ -12,8 +12,9 @@
 + (NSData*)uuidData ;
 
 /*!
- @brief    Returns a new UUID string of hex digits and dashes.
-*/
+ @brief    Returns a new UUID string of uppercase hex digits and dashes,
+ for example: "EB66EB83-3B04-42F8-B1E0-E542ACA2655C"
+ */
 + (NSString*)uuid ;
 
 /*!
