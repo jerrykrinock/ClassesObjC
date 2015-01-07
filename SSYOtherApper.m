@@ -1141,33 +1141,22 @@ end:
 }
 
 + (NSString*)applicationPathForUrl:(NSURL*)url {
-  OSStatus oss ;
-    FSRef appRef ;
-	
-	oss = LSGetApplicationForURL(
-								 (CFURLRef)url,
-								 kLSRolesViewer,
-								 &appRef,
-								 NULL
-								 ) ;
-
-	
-	char fullPath[1024];
-  	if (oss == noErr) {
-		oss = FSRefMakePath (
-							 &appRef,
-							 (UInt8*)fullPath,
-							 sizeof(fullPath)
-							 ) ;
-	}
-	
-	NSString* path = nil ;
-	if (oss == noErr) {		
-		path = [NSString stringWithCString:fullPath
-								  encoding:NSUTF8StringEncoding] ;
-	}
-	
-	return path ;
+    OSStatus oss ;
+    CFURLRef appUrl ;
+    oss = LSGetApplicationForURL(
+                                 (CFURLRef)url,
+                                 kLSRolesViewer,
+                                 NULL,
+                                 &appUrl
+                                 ) ;
+    
+    
+    NSString* path = nil ;
+    if (oss == noErr) {		
+        path = [(NSURL*)appUrl path] ;
+    }
+    
+    return path ;
 }
 
 + (NSString*)nameOfDefaultWebBrowser {
