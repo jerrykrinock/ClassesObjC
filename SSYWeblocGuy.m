@@ -1,13 +1,13 @@
-#import "SSYResourceForks.h"
+#import "SSYWeblocGuy.h"
 
-@interface SSYResourceForks ()
+@interface SSYWeblocGuy ()
 
 @property (retain) NSMutableString* xmlString ;
 
 @end
 
 
-@implementation SSYResourceForks
+@implementation SSYWeblocGuy
 
 @synthesize xmlString = m_xmlString ;
 
@@ -56,68 +56,29 @@
 #endif
 
 - (NSArray*)weblocFilenamesAndUrlsInPaths:(NSArray*)paths {
-	OSErr err ;
-	FSRef fsRef ;
-	ResFileRefNum fileRef ;
 	NSMutableArray* filenamesAndURLs = [NSMutableArray array] ;
 	
 	for (NSString* path in paths) {
 		NSString* url = nil ;
         
-        err = !noErr ;
-		
-		 // Try and open resource fork for path
-		if( [[NSFileManager defaultManager] fileExistsAtPath:path] )
-		{
-			const unsigned char* pathU = (const unsigned char*) [path UTF8String] ;
-			err = FSPathMakeRef(pathU, &fsRef, NULL ) ;
-		}
-		if (err == noErr) {
-			fileRef = FSOpenResFile ( &fsRef, fsRdPerm );
-			err = fileRef > 0 ? ResError( ) : !noErr;
-		}
-		
-		if (err == noErr) {
-			UseResFile(fileRef) ;
-			Handle aResHandle = NULL ;
-			aResHandle = Get1Resource( 'TEXT', 256) ;
-			NSData* theData = nil;
-			if( aResHandle )
-			{
-				HLock(aResHandle);
-				theData = [NSData dataWithBytes:*aResHandle length:GetHandleSize( aResHandle )];
-				HUnlock(aResHandle);
-				ReleaseResource(aResHandle );
-			}
+        NSData* data = [NSData dataWithContentsOfFile:path] ;
+        if (data) {
+            NSXMLParser* parser = [[NSXMLParser alloc] initWithData:data] ;
+            [parser setDelegate:self] ;
+            NSMutableString* xmlString = [[NSMutableString alloc] init] ;
+            [self setXmlString:xmlString] ;
+            [xmlString release] ;
             
-            // Added in BookMacster 1.12
-            CloseResFile(fileRef) ;
-			
-			// theData is the 'TEXT' resource data
-			url = [[[NSString alloc] initWithData:theData
-                                         encoding:NSUTF8StringEncoding] autorelease] ;
-		}
-		else {
-			//NSLog(@"Reading resource fork failed with OSErr %ld", (long)err) ;
-            NSData* data = [NSData dataWithContentsOfFile:path] ;
-            if (data) {
-                NSXMLParser* parser = [[NSXMLParser alloc] initWithData:data] ;
-                [parser setDelegate:self] ;
-                NSMutableString* xmlString = [[NSMutableString alloc] init] ;
-                [self setXmlString:xmlString] ;
-                [xmlString release] ;
-                
-                [parser parse] ;
-                // Note that -parse is synchronous and will not return until the parsing
-                // is done or aborted.
-                [parser release] ;
-                
-                url = [self xmlString] ;
-
-                // Not really necessary, but for resource usage efficiency we
-                // release xmlString here instead of in -dealloc…
-                [self setXmlString:nil] ;
-            }
+            [parser parse] ;
+            // Note that -parse is synchronous and will not return until the parsing
+            // is done or aborted.
+            [parser release] ;
+            
+            url = [self xmlString] ;
+            
+            // Not really necessary, but for resource usage efficiency we
+            // release xmlString here instead of in -dealloc…
+            [self setXmlString:nil] ;
         }
         
         if (url) {
@@ -139,7 +100,7 @@
 }
 
 + (NSArray*)weblocFilenamesAndUrlsInPaths:(NSArray*)paths {
-    SSYResourceForks* instance = [[SSYResourceForks alloc] init] ;
+    SSYWeblocGuy* instance = [[SSYWeblocGuy alloc] init] ;
     NSArray* answer = [instance weblocFilenamesAndUrlsInPaths:paths] ;
     [instance release] ;
     
