@@ -4,7 +4,7 @@ extern NSString* const SSYAboutPanelHelpAnchorAcknowledgements ;
 
 @class ScrollingTextView;
 
-@interface SSYAboutPanelController : NSObject 
+@interface SSYAboutPanelController : NSWindowController
 #if (MAC_OS_X_VERSION_MAX_ALLOWED >= 1060)
 	<NSWindowDelegate>
 #endif

@@ -227,19 +227,15 @@
 
 #pragma mark * PUBLIC CLASS METHODS
 
-+ (SSYAboutPanelController *) sharedInstance
-{
-    static SSYAboutPanelController	*sharedInstance = nil;
-
-
-    if (sharedInstance == nil)
-    {
-        sharedInstance = [[self alloc] init];
-       [NSBundle loadNibNamed: @"SSYAboutPanel.nib"
-						owner: sharedInstance] ;
++ (SSYAboutPanelController*) sharedInstance {
+    static SSYAboutPanelController* sharedInstance = nil;
+    
+    if (sharedInstance == nil) {
+        sharedInstance = [[self alloc] initWithWindowNibName:@"SSYAboutPanel"] ;
     }
-
-    return sharedInstance;
+    
+    [sharedInstance showWindow:self] ;
+    return sharedInstance ;
 }
 
 
