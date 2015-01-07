@@ -78,31 +78,17 @@
 	OSStatus err ;
 	
 	// Get browser's FSRef
-	FSRef fsRef  ;
+    CFURLRef browserUrl ;
 	err = LSGetApplicationForURL(
 								 [self sampleHttpUrl],
 								 kLSRolesViewer,
-								 &fsRef,
-								 NULL) ;
-	
-	// Get pathC (path C string)
-	char pathC[2048] ;
-	if (err == noErr) {
-		err = FSRefMakePath(&fsRef, (UInt8*)pathC, 2048) ;
-	}
-	else {
-		NSLog(@"Internal Error 324-2398.  Could not get URL for default web browser.") ;
-		strcpy(pathC, "") ;
-	}
+								 NULL,
+								 &browserUrl) ;
 	
 	// Get path (NSString*)
-	NSString* path = nil ;
-	if (err == noErr) {
-		path = [NSString stringWithCString:pathC
-								  encoding:NSUTF8StringEncoding] ;
-	}
-	else {
-		NSLog(@"Internal Error 324-5847.  Could not get pathC for default web browser") ;
+    NSString* path = [(NSURL*)browserUrl path] ;
+	if (!path) {
+		NSLog(@"Internal Error 324-5847.  Could not get path for default web browser") ;
 	}
 	
 	// Get bundle
@@ -111,7 +97,7 @@
 		bundle = [NSBundle bundleWithPath:(NSString*)path] ;
 	}
 	else {
-		NSLog(@"Internal Error 324-8547.  Could not path for default web browser %s", pathC) ;
+		NSLog(@"Internal Error 324-8547.  Could not path for default web browser %@", path) ;
 	}
 	
 	// Get bundleIdentifier
@@ -127,7 +113,7 @@
 		NSLog(@"Internal Error 324-4785.  Could not get bundleIdentifier for default web browser %@", bundle) ;
 		bundleIdentifier = @"" ;
 	}
-	
+
 	return bundleIdentifier ;
 }
 
