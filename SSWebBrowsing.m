@@ -88,16 +88,13 @@
 	// Get path (NSString*)
     NSString* path = [(NSURL*)browserUrl path] ;
 	if (!path) {
-		NSLog(@"Internal Error 324-5847.  Could not get path for default web browser") ;
+		NSLog(@"Internal Error 324-5847.  OSStatus=%ld", (long)err) ;
 	}
 	
 	// Get bundle
 	NSBundle* bundle = nil ;
 	if (path) {
 		bundle = [NSBundle bundleWithPath:(NSString*)path] ;
-	}
-	else {
-		NSLog(@"Internal Error 324-8547.  Could not path for default web browser %@", path) ;
 	}
 	
 	// Get bundleIdentifier
@@ -106,11 +103,11 @@
 		bundleIdentifier = [bundle bundleIdentifier] ;
 	}
 	else {
-		NSLog(@"Internal Error 324-2563.  Could not get bundle for default web browser %@", path) ;
+		NSLog(@"Internal Error 324-2563.  %@", path) ;
 	}
 	
 	if (!bundleIdentifier) {
-		NSLog(@"Internal Error 324-4785.  Could not get bundleIdentifier for default web browser %@", bundle) ;
+		NSLog(@"Internal Error 324-4785.  %@", bundle) ;
 		bundleIdentifier = @"" ;
 	}
 
