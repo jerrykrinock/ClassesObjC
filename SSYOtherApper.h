@@ -88,6 +88,16 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  @details  Most reliably launches an app as hidden, without any windows
  showing even for milliseconds, because it launches the app with the only
  known technique for launching and hiding: AppleScript 'tell application'.
+ Unfortunately, this does not work for Google Chrome because Chrome always
+ throws up a window even if you launch it as hidden with this AppleScript:
+ . with timeout of 8.0 seconds
+ . try
+ .  tell application "/Applications/Google Chrome.app"
+ .   set x to frontmost
+ .    do shell script "x > /dev/null"
+ .   end tell
+ . 	end try
+ . end timeout
  */
 + (BOOL)launchAsHiddenAppPath:(NSString*)path
                 launchTimeout:(NSTimeInterval)launchTimeout

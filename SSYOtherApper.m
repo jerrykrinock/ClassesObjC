@@ -93,7 +93,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
     BOOL currentlyRunning = ([path isEqualToString:runningBundlePath]) ;
     BOOL currentlyActive = currentlyRunning ? [currentlyRunningApp isActive] : NO ;
 
-    FSRef fsRef ;
+    NSURL* url = nil ;
     if (currentlyRunning) {
         if (currentlyActive != activate) {
             if (activate) {
@@ -105,25 +105,26 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
         }
     }
     else {
-        NSURL* url = [NSURL fileURLWithPath:path] ;
-        ok = [[NSFileManager defaultManager] getFromUrl:url
-                                                fsRef_p:&fsRef
-                                                error_p:&underlyingError] ;
-        if (!ok) {
-            errorCode = 494985 ;
-        }
+        url = [NSURL fileURLWithPath:path] ;
     }
     
-    if (ok) {
-        LSApplicationParameters parms ;
-        parms.version = 0 ;
-        parms.flags = activate ? 0 : kLSLaunchAndHide ;
-        parms.application = &fsRef ;
-        parms.asyncLaunchRefCon = NULL ;
-        parms.environment = NULL ;
-        parms.argv = NULL ;
-        parms.initialEvent = NULL ;
-        OSStatus err = LSOpenApplication(&parms, NULL) ;
+    if (url) {
+        LSLaunchFlags launchFlags = 0 ;
+        if (!activate) {
+            launchFlags += kLSLaunchDontSwitch ;
+            launchFlags += kLSLaunchAndHide ;
+        }
+        LSLaunchURLSpec launchSpec ;
+        launchSpec.appURL = (CFURLRef)url ;
+        launchSpec.itemURLs = NULL ;
+        launchSpec.passThruParams = NULL ;
+        launchSpec.launchFlags = launchFlags ;
+        launchSpec.asyncRefCon = NULL ;
+        
+        OSStatus err = LSOpenFromURLSpec(
+                                         &launchSpec,
+                                         NULL
+                                         ) ;
 
 		if (err != noErr) {
             ok = NO ;
