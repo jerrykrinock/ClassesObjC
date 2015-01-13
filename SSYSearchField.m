@@ -51,8 +51,9 @@ NSString* const SSYSearchFieldDidCancelNotification = @"SSYSearchFieldDidCancelN
 
         if (![[self recentSearches] isEqualToArray:recentSearches]) {
             [self setRecentSearches:recentSearches] ;
-            /* I have thrice seen a crash here, most recently while developing
-             BkmkMgrs ver 1.22.23 in OS X 10.0, when the above method attempts
+            /* I have seen a crash here 4 times.  The first crash was recorded
+             on 2014-10-24.  It may have been earlier.  The most recent
+             was on 2015-01-10.  Crash occurs when the above method attempts
              to post a notification.  Could not reproduce after that.  Crash
              occurs when framework method attempts to post a notification.
              But I could not identify the notification because Xcode gives
