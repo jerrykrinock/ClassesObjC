@@ -223,7 +223,7 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
      The m_cachedChildrenOrdered ivar was added to improve performance in
      BookMacster 1.12.7, particularly when invoked by
      -[StarkContainersHierarchicalMenu menu:updateItem:atIndex:shouldCancel:]
-     to update the the Doxtus menu in the Dock menu or status menulet, when
+     to update the the Doxtus menu in the Dock menu or status item, when
      an open document contained a folder with thousands of children.  Note that,
      even if the preference "Show Status in Menu Bar" was switched off, the
      Dock menu would still be active, and the system would pre-populate this
