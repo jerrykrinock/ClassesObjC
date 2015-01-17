@@ -10,7 +10,7 @@
 #import "SSYLaunchdBasics.h"
 #import "NSError+DecodeCodes.h"
 #import "NSFileManager+SSYFixPermissions.h"
-#import "NSFileManager+SSYAcls.h"
+#import "NSFileManager+SSYObscureShackles.h"
 
 NSString* const SSYLaunchdGuyErrorDomain = @"SSYLaunchdGuyErrorDomain" ;
 NSString* const SSYLaunchdGuyErrorKeyNSTaskError = @"NSTask Error" ;
@@ -204,7 +204,7 @@ NSString* const SSYLaunchdGuyErrorKeyCommandStderr = @"Command Stderr" ;
 			 error_p:(NSError**)error_p {
 	NSError* error = nil ;
     BOOL ok = YES ;
-    NSMutableArray* fixPermissionsResults = [[NSMutableArray alloc] init] ;
+    NSMutableArray* fixResults = [[NSMutableArray alloc] init] ;
 	
 	// Create data
 	NSString* errorDescription = nil ;
@@ -244,7 +244,7 @@ NSString* const SSYLaunchdGuyErrorKeyCommandStderr = @"Command Stderr" ;
 	NSURL* url = [NSURL fileURLWithPath:path] ;
 	
 	// Write data to file URL
-    NSInteger fixedPermissionsState = 0 ;
+    NSInteger fixCaseIndex = 0 ;
     SSYFixResult fixResultCode ;
     do {
         ok = [data writeToURL:url
@@ -258,37 +258,36 @@ NSString* const SSYLaunchdGuyErrorKeyCommandStderr = @"Command Stderr" ;
              and I thought about testing for that here before trying to fix
              permissions, but then thought what the hell in case Apple changes
              one of those errors, let's just ignore it and try to fix
-             permissions in any case.  It shouldn't do any harm, and what
-             else could happen besides bad permissions anyhow? */
-            NSError* fixPermissionsError = nil ;
-            NSString* fixAclPath ;
+             permissions in any case.  It shouldn't do any harm. */
+            NSError* fixError = nil ;
+            NSString* fixOtherShacklesPath ;
             BOOL fixedOk ;
-            switch (fixedPermissionsState) {
+            switch (fixCaseIndex) {
                 case 0:
-                    fixResultCode = [[NSFileManager defaultManager] fixPermissionsOfLaunchAgentsFolder:&fixPermissionsError] ;
+                    fixResultCode = [[NSFileManager defaultManager] fixPermissionsOfLaunchAgentsFolder:&fixError] ;
                     break ;
                 case 1:
-                    fixResultCode = [[NSFileManager defaultManager] fixPermissionsOfLibraryFolder:&fixPermissionsError] ;
+                    fixResultCode = [[NSFileManager defaultManager] fixPermissionsOfLibraryFolder:&fixError] ;
                     break ;
                 case 2:
-                    fixResultCode = [[NSFileManager defaultManager] fixPermissionsOfHomeFolder:&fixPermissionsError] ;
+                    fixResultCode = [[NSFileManager defaultManager] fixPermissionsOfHomeFolder:&fixError] ;
                     break ;
                 case 3:
-                    fixAclPath = @"~/Library/LaunchAgents" ;
-                    fixedOk = [[NSFileManager defaultManager] removeAclsFromPath:fixAclPath
-                                                               error_p:&fixPermissionsError] ;
+                    fixOtherShacklesPath = @"~/Library/LaunchAgents" ;
+                    fixedOk = [[NSFileManager defaultManager] unshacklePath:fixOtherShacklesPath
+                                                                    error_p:&fixError] ;
                     fixResultCode = fixedOk ? SSYFixResultIgnoredInitialFixSucceeded : SSYFixResultIgnoredInitialFixFailed ;
                     break ;
                 case 4:
-                    fixAclPath = @"~/Library" ;
-                    fixedOk = [[NSFileManager defaultManager] removeAclsFromPath:fixAclPath
-                                                               error_p:&fixPermissionsError] ;
+                    fixOtherShacklesPath = @"~/Library" ;
+                    fixedOk = [[NSFileManager defaultManager] unshacklePath:fixOtherShacklesPath
+                                                                    error_p:&fixError] ;
                     fixResultCode = fixedOk ? SSYFixResultIgnoredInitialFixSucceeded : SSYFixResultIgnoredInitialFixFailed ;
                     break ;
                 case 5:
-                    fixAclPath = @"~" ;
-                    fixedOk = [[NSFileManager defaultManager] removeAclsFromPath:fixAclPath
-                                                               error_p:&fixPermissionsError] ;
+                    fixOtherShacklesPath = @"~" ;
+                    fixedOk = [[NSFileManager defaultManager] unshacklePath:fixOtherShacklesPath
+                                                                    error_p:&fixError] ;
                     fixResultCode = fixedOk ? SSYFixResultIgnoredInitialFixSucceeded : SSYFixResultIgnoredInitialFixFailed ;
                     break ;
                 default:
@@ -297,12 +296,13 @@ NSString* const SSYLaunchdGuyErrorKeyCommandStderr = @"Command Stderr" ;
             }
             NSDictionary* result = [NSDictionary dictionaryWithObjectsAndKeys:
                                     [NSNumber numberWithInteger:fixResultCode], @"Fix Result Code",
-                                    fixPermissionsError, @"Fix Permissions Error", // may be nil
+                                    [NSNumber numberWithInteger:fixCaseIndex], @"Fix Case Index",
+                                    fixError, @"Fix Error", // may be nil
                                     nil] ;
-            [fixPermissionsResults addObject:result] ;
-            fixedPermissionsState++ ;
+            [fixResults addObject:result] ;
+            fixCaseIndex++ ;
         }
-    } while (!ok && (fixedPermissionsState < 6)) ;
+    } while (!ok && (fixCaseIndex < 6)) ;
     
 	if (!ok) {
         error = [[NSError errorWithDomain:SSYLaunchdGuyErrorDomain
@@ -311,8 +311,8 @@ NSString* const SSYLaunchdGuyErrorKeyCommandStderr = @"Command Stderr" ;
         error = [error errorByAddingLocalizedDescription:@"Could not write launchd plist file"] ;
         error = [error errorByAddingUserInfoObject:url
                                             forKey:@"URL"] ;
-        error = [error errorByAddingUserInfoObject:fixPermissionsResults
-                                            forKey:@"Fix Permissions Results"] ;
+        error = [error errorByAddingUserInfoObject:fixResults
+                                            forKey:@"Fix Results"] ;
 		goto end ;
 	}
 	
@@ -350,7 +350,7 @@ NSString* const SSYLaunchdGuyErrorKeyCommandStderr = @"Command Stderr" ;
 	}
 	
 end:;
-    [fixPermissionsResults release] ;
+    [fixResults release] ;
     
     if (error_p) {
         *error_p = error ;
