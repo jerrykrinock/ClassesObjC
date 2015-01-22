@@ -216,6 +216,8 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
              Then, we wouldn't need to do wrap it in a dispatch_async() to
              avoid blocking for up to 120 seconds.  But this is good enough. */
             [script release] ;
+            /* Manjula says here I should put here: in order for this thread to exit faster. */
+            // dispatch_async(dispatch_get_main_queue(), ^{}) ;
         }) ;
     }
     
