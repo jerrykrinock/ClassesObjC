@@ -158,11 +158,19 @@
 	if (url) {
 		NSArray* urls = [NSArray arrayWithObject:url] ;
 		
-		[[NSWorkspace sharedWorkspace] openURLs:urls
-						withAppBundleIdentifier:browserBundleIdentifier
-										options:options
-				 additionalEventParamDescriptor:nil
-							  launchIdentifiers:NULL] ;
+        BOOL ok = [[NSWorkspace sharedWorkspace] openURLs:urls
+                                  withAppBundleIdentifier:browserBundleIdentifier
+                                                  options:options
+                           additionalEventParamDescriptor:nil
+                                        launchIdentifiers:NULL] ;
+        if (!ok) {
+            NSLog(
+                  @"%s: Failed to visit with %@ with options %ld : %@",
+                  __PRETTY_FUNCTION__,
+                  browserBundleIdentifier,
+                  (long)options,
+                  url) ;
+        }
 	}
 	else {
 		// Starting in BookMacster 1.15, we NSBeep() here instead of logging
