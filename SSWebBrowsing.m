@@ -148,7 +148,7 @@
                                         launchIdentifiers:NULL] ;
         if (!ok) {
             NSLog(
-                  @"      %s: Failed to visit with %@ with options %ld : %@",
+                  @"%s: Failed to visit with %@ with options %ld : %@",
                   __PRETTY_FUNCTION__,
                   browserBundleIdentifier,
                   (long)options,
