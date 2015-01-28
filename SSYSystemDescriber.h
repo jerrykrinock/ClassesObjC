@@ -9,8 +9,6 @@
 
 + (SSYVersionTriplet*)softwareVersionTriplet ;
 + (NSString*)softwareVersionString ;
-+ (NSString*)architectureString ;
-+ (NSString*)softwareVersionAndArchitecture ;
 
 /*!
  @brief    Returns system speed relative to a 2009 Mac Mini with 

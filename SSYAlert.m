@@ -666,7 +666,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// Note: If you'd prefer the app name to be localized, use "CFBundleName" instead.
 	NSString* appVersion = [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleVersion"] ;
 	NSString* appVersionString = [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"] ;
-	NSString* systemDescription = [SSYSystemDescriber softwareVersionAndArchitecture] ;
+	NSString* systemDescription = [SSYSystemDescriber softwareVersionString] ;
 	NSString* mailableDescription ;
 	if (
 		([error respondsToSelector:@selector(longDescription)])

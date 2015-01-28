@@ -36,6 +36,9 @@ typedef struct SSYVersionStruct_struct SSYVersionStruct ;
  describing the version of an application or other project
  @details  Methods for creating, including parsing from bundles,
  and comparing version numbers are provided.
+ 
+ Someday, when we can require OS X 10.10 or later, we can replace this object
+ with the NSOperatingSystemVersion struct which is essentially the same thing.
  */
 @interface SSYVersionTriplet : NSObject {
 	SSYVersionStruct versionStruct_ivar ;
