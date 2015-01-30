@@ -459,9 +459,10 @@ end:;
 
 - (BOOL)getPasswordFromKeychain {
 	BOOL ok = NO ;
-	NSString* password = [SSYKeychain genericPasswordServiceName:[self keychainServiceName]
-													 accountName:[[self accounter] accountName]
-												 keychainitemRef:NULL] ;
+	NSString* password = [SSYKeychain passwordForService:[self keychainServiceName]
+                                                account:[[self accounter] accountName]
+                                                  class:kSecClassGenericPassword
+                                                error_p:NULL] ;
 	if (password) {
 		// Since the password is accessible i.e. corruptible by the user
 		// and other apps, we try to handle anything without crashing.
@@ -527,9 +528,11 @@ end:;
 	//    (b) Due to registration of BookMacster as a "consumer" with Yahoo!,
 	//        it will not work with any other app.
 	//    (c) Pukka does it as a generic password.
-	[SSYKeychain addGenericPassword:password
-						serviceName:[self keychainServiceName]
-						accountName:[[self accounter] accountName]] ;
+    [SSYKeychain setPassword:password
+                 forService:[self keychainServiceName]
+                    account:[[self accounter] accountName]
+                      class:(NSString*)kSecClassGenericPassword
+                    error_p:NULL] ;
 }
 
 - (BOOL)requestCommand:(NSString*)command

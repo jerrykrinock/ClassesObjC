@@ -21,7 +21,6 @@ enum SSYSynchronousHttpErrorDomainErrorCodes {
     SSYSynchronousHttpStateRedirected = 23010, // Not used at this time because we follow redirects
     SSYSynchronousHttpStateNeedUsernamePasswordToMakeCredential = 23020,
     SSYSynchronousHttpStateCredentialNotAccepted = 23025,
-    SSYSynchronousHttpStateKeychainCredentialNotAccepted = 23027,
 	SSYSynchronousHttpStateResponseNotHTTP = 23030,
     SSYSynchronousHttpStateTimeout = 23040,
 	SSYSynchronousHttpStateCancelled = 23050,
