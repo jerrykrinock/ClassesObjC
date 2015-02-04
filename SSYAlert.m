@@ -1080,6 +1080,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 	[self setHelpAnchorString:anchor] ;
 }
+
+- (NSString*)helpAnchor {
+    return [self helpAnchorString] ;
+}
 	
 - (void)setButton1Enabled:(BOOL)enabled {
 	NSButton* button = [self button1] ;

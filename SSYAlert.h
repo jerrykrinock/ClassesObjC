@@ -929,6 +929,8 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 */
 - (void)setHelpAnchor:(NSString*)anchor ;
 
+- (NSString*)helpAnchor ;
+
 /*!
  @brief    Sets the title of the checkbox which will appear above the row of
  buttons at the bottom, in the right column of the receiver.
