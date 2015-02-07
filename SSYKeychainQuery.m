@@ -1,4 +1,5 @@
 #import "SSYKeychainQuery.h"
+#import "SSYKeychain.h"  // for error domain and error codes
 
 @implementation SSYKeychainQuery
 
@@ -44,73 +45,112 @@
 }
 #endif
 
-- (BOOL)save:(NSError *__autoreleasing *)error {
-    OSStatus status = SSYKeychainErrorBadArguments ;
-    if (![self service] || ![self account] || ![self passwordData]) {
-        if (error) {
-            *error = [[self class] errorWithCode:status] ;
+- (NSError*)errorForServiceServerAccount {
+    NSInteger errorCode = 0 ;
+    if (![self account]) {
+        errorCode = 197010 ;
+    }
+    else if ([[self itemClass] isEqualToString:(NSString*)kSecClassInternetPassword]) {
+        if (![self server]) {
+            errorCode = 197011 ;
         }
-        return NO ;
+    }
+    else if (![self service]) {
+        errorCode = 197012 ;
     }
     
-    [self deleteItem:nil] ;
+    return [[self class] errorWithCode:errorCode] ;
+}
+
+- (BOOL)save:(NSError *__autoreleasing *)error_p {
+    BOOL ok = YES ;
+    NSError* error = [self errorForServiceServerAccount] ;
+    if (error) {
+        ok = NO ;
+    }
     
-    NSMutableDictionary *query = [self query] ;
-    [query setObject:[self passwordData] forKey:(__bridge id)kSecValueData] ;
-    if ([self label]) {
-        [query setObject:[self label] forKey:(__bridge id)kSecAttrLabel] ;
-    }
-    if ([self server]) {
-        [query setObject:[self server] forKey:(__bridge id)kSecAttrServer] ;
-    }
+    if (ok) {
+        [self deleteItem:nil] ;
+        
+        NSMutableDictionary *query = [self query] ;
+        [query setObject:[self passwordData] forKey:(__bridge id)kSecValueData] ;
+        if ([self label]) {
+            [query setObject:[self label] forKey:(__bridge id)kSecAttrLabel] ;
+        }
+        if ([self server]) {
+            [query setObject:[self server] forKey:(__bridge id)kSecAttrServer] ;
+        }
 #if __IPHONE_4_0 && TARGET_OS_IPHONE
-    CFTypeRef accessibilityType = [SSYKeychain accessibilityType] ;
-    if (accessibilityType) {
-        [query setObject:(__bridge id)accessibilityType forKey:(__bridge id)kSecAttrAccessible] ;
-    }
-#endif
-    status = SecItemAdd((__bridge CFDictionaryRef)query, NULL) ;
-    
-    if (status != errSecSuccess && error != NULL) {
-        *error = [[self class] errorWithCode:status] ;
-    }
-    
-    return (status == errSecSuccess) ;
-}
-
-
-- (BOOL)deleteItem:(NSError *__autoreleasing *)error {
-    OSStatus status = SSYKeychainErrorBadArguments ;
-    if (![self service] || ![self account]) {
-        if (error) {
-            *error = [[self class] errorWithCode:status] ;
+        CFTypeRef accessibilityType = [SSYKeychain accessibilityType] ;
+        if (accessibilityType) {
+            [query setObject:(__bridge id)accessibilityType forKey:(__bridge id)kSecAttrAccessible] ;
         }
-        return NO ;
-    }
-    
-    NSMutableDictionary *query = [self query] ;
-#if TARGET_OS_IPHONE
-    status = SecItemDelete((__bridge CFDictionaryRef)query) ;
-#else
-    CFTypeRef result = NULL ;
-    [query setObject:@YES forKey:(__bridge id)kSecReturnRef] ;
-    status = SecItemCopyMatching((__bridge CFDictionaryRef)query, &result) ;
-    if (status == errSecSuccess) {
-        status = SecKeychainItemDelete((SecKeychainItemRef)result) ;
-        CFRelease(result) ;
-    }
 #endif
-    
-    if (status != errSecSuccess && error != NULL) {
-        *error = [[self class] errorWithCode:status] ;
+        OSStatus status = SecItemAdd((
+                                      __bridge CFDictionaryRef)query,
+                                     NULL) ;
+        if (status != errSecSuccess && error != NULL) {
+            error = [[self class] errorWithCode:status] ;
+        }
+        
+        ok = (status == errSecSuccess) ;
     }
     
-    return (status == errSecSuccess) ;
+    if (error_p && error) {
+        *error_p = error ;
+    }
+    
+    return ok ;
 }
 
 
-- (NSArray *)fetchAll:(NSError *__autoreleasing *)error {
-    OSStatus status = SSYKeychainErrorBadArguments ;
+- (BOOL)deleteItem:(NSError *__autoreleasing *)error_p {
+    BOOL ok = YES ;
+    NSError* error = [self errorForServiceServerAccount] ;
+    if (error) {
+        ok = NO ;
+    }
+    
+    if (ok) {
+        NSMutableDictionary *query = [self query] ;
+#if TARGET_OS_IPHONE
+        status = SecItemDelete((__bridge CFDictionaryRef)query) ;
+        if (status != errSecSuccess) {
+            error = [[self class] errorWithCode:status] ;
+        }
+#else
+        CFTypeRef result = NULL ;
+        [query setObject:@YES forKey:(__bridge id)kSecReturnRef] ;
+        OSStatus status = SecItemCopyMatching((
+                                               __bridge CFDictionaryRef)query,
+                                              &result) ;
+        if (status == errSecSuccess) {
+            status = SecKeychainItemDelete((SecKeychainItemRef)result) ;
+            CFRelease(result) ;
+            if (status != errSecSuccess) {
+                error = [[self class] errorWithCode:status] ;
+            }
+        }
+        else if (status == errSecItemNotFound) {
+            ok = YES ;
+        }
+        else {
+            error = [[self class] errorWithCode:status] ;
+        }
+#endif
+
+        ok = (status == errSecSuccess) ;
+    }
+    
+    if (error_p && error) {
+        *error_p = error ;
+    }
+    
+    return ok ;
+}
+
+
+- (NSArray*)fetchAll:(NSError *__autoreleasing *)error {
     NSMutableDictionary *query = [self query] ;
     [query setObject:@YES
               forKey:(__bridge id)kSecReturnAttributes] ;
@@ -118,42 +158,43 @@
               forKey:(__bridge id)kSecMatchLimit] ;
     
     CFTypeRef result = NULL ;
-    status = SecItemCopyMatching((__bridge CFDictionaryRef)query, &result) ;
+    OSStatus status = SecItemCopyMatching(
+                                          (__bridge CFDictionaryRef)query,
+                                          &result) ;
     if (status != errSecSuccess && error != NULL) {
         *error = [[self class] errorWithCode:status] ;
-        return nil ;
     }
     
 #if NO_ARC
     return [(NSArray*)result autorelease] ;
 #else
-    return (__bridge_transfer NSArray *)result ;
+    return (__bridge_transfer NSArray*)result ;
 #endif
 }
 
 
-- (BOOL)fetch:(NSError *__autoreleasing *)error {
-    OSStatus status = SSYKeychainErrorBadArguments ;
-    if (![self service] || ![self account]) {
-        if (error) {
-            *error = [[self class] errorWithCode:status] ;
-        }
-        return NO ;
+- (BOOL)fetch:(NSError *__autoreleasing *)error_p {
+    BOOL ok = YES ;
+    NSError* error = [self errorForServiceServerAccount] ;
+    if (error) {
+        ok = NO ;
     }
     
     CFTypeRef result = NULL ;
-    NSMutableDictionary *query = [self query] ;
-    [query setObject:@YES
-              forKey:(__bridge id)kSecReturnData] ;
-    [query setObject:(__bridge id)kSecMatchLimitOne
-              forKey:(__bridge id)kSecMatchLimit] ;
-    status = SecItemCopyMatching((__bridge CFDictionaryRef)query, &result) ;
-    
-    if (status != errSecSuccess) {
-        if (error) {
-            *error = [[self class] errorWithCode:status] ;
+    if (ok) {
+        NSMutableDictionary *query = [self query] ;
+        [query setObject:@YES
+                  forKey:(__bridge id)kSecReturnData] ;
+        [query setObject:(__bridge id)kSecMatchLimitOne
+                  forKey:(__bridge id)kSecMatchLimit] ;
+        OSStatus status = SecItemCopyMatching(
+                                              (__bridge CFDictionaryRef)query,
+                                              &result) ;
+        
+        ok = (status == errSecSuccess) ;
+        if (!ok) {
+            error = [[self class] errorWithCode:status] ;
         }
-        return NO ;
     }
     
 #if NO_ARC
@@ -162,7 +203,12 @@
 #else
     [self setPasswordData:(__bridge_transfer NSData*)result] ;
 #endif
-    return YES ;
+
+    if (error_p && error) {
+        *error_p = error ;
+    }
+    
+    return ok ;
 }
 
 
@@ -266,7 +312,7 @@
 }
 
 
-+ (NSError *)errorWithCode:(OSStatus) code {
++ (NSError *)errorWithCode:(NSInteger)code {
     NSString *message = nil ;
     switch (code) {
         case errSecSuccess: return nil ;
@@ -315,7 +361,7 @@
 #else
         default:
 #if NO_ARC
-            message = (NSString *)SecCopyErrorMessageString(code, NULL) ;
+            message = (NSString*)SecCopyErrorMessageString((OSStatus)code, NULL) ;
             [message autorelease] ;
 #else
             message = (__bridge_transfer NSString *)SecCopyErrorMessageString(code, NULL) ;

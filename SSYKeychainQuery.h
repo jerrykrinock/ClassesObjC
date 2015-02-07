@@ -86,7 +86,7 @@ typedef NS_ENUM(NSUInteger, SSYKeychainQuerySynchronizationMode) {
  
  @param error Populated should an error occur.
  
- @result `YES` if deleting was successful, `NO` otherwise.
+ @result `YES` if saving was successful, `NO` otherwise
  */
 - (BOOL)save:(NSError **)error ;
 
@@ -96,7 +96,8 @@ typedef NS_ENUM(NSUInteger, SSYKeychainQuerySynchronizationMode) {
  
  @param error Populated should an error occur.
  
- @result `YES` if saving was successful, `NO` otherwise.
+ @result `YES` if saving was successful or if no item matching the receiver's
+ properties was found ("nothing to do"), `NO` otherwise.
  */
 - (BOOL)deleteItem:(NSError **)error ;
 

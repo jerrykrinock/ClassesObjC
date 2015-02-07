@@ -20,18 +20,20 @@ extern NSString *const kSSYKeychainErrorDomain;
  
  @details  This class is a fork of SSKeychain by Sam Soffes,
  https://github.com/soffes/SSKeychain/tree/master/SSKeychain, which in turn
- was inspired by EMKeychain and SDKeychain (both of which are now gone).  Sam's
- SSKeychain is hard-wired to only support "generic" class keychain items.
+ was inspired by EMKeychain and SDKeychain (both of which are now gone).  Prior
+ to this version (2015 Jan), it was not a fork of SSKeychain, but was old and
+ used many deprecated and/or difficult SecKeychain functions.  I have now gutted
+ this class and replaced it with Sam's approach, based on his SSKeychainQuery,
+ which uses only a few, modern SecKeychainXxxxx functions.
+ 
+ Sam's SSKeychain is hard-wired to only support "generic" class keychain items.
  In this fork of SSKeychainQuery, I have
  
  • Added support for other classes of keychain items, Internet in particular.
- In doing so, I added much of my own code from my "version 1" SSYKeychain class,
- using Sam's code to replace the parts of my code which used older and now
- deprecated SecKeychainXxxxx functions
- • Made friendly to manual reference counting targets by supporting the NO_ARC
+ • Made friendly to manual reference counting targets by adopting the NO_ARC
  compiler directive
  • Added more documentation, particularly to fill some holes in Apple's
- documentation
+ documentation.  That documetation follows here:
  
  Item Classes
  
@@ -48,10 +50,42 @@ extern NSString *const kSSYKeychainErrorDomain;
  • iTunes Store password
  
  are in fact "generic" items, kSecClassGenericPassword.  Items whose "Kind"
- is "Internet password" are in fact kSecClassInternetPassword.
+ is one of these kinds: 
+ 
+ • Internet password
+ • Web form password
+ 
+ are in fact kSecClassInternetPassword.
  
  All queries require a class.  Passing itemClass = nil causes a default value,
  kSecClassGenericPassword, to be used.
+ 
+ User's Keychain
+ 
+ This class only recognizes the user's keychain, whose name is typically the
+ same as the user's unix short user name.  This is *not* the "Local Items"
+ keychain.
+ 
+ Access Control
+ 
+ If you are not getting the passwords or items that you expect, it may be that
+ the items do not allow your app to access.  Launch the Keychain Access app and
+ "Get Info" > "Access Control" on any troublesome items.
+ 
+ Name: Service vs. Host
+ 
+ Keychain items of the Internet class (kSecClassInternetPassword) have a host
+ name, but not a service name.  In contrast, keychain
+ items of the generic class (kSecClassGenericPassword) have a service name, but
+ not a host name.  A host name is, of course, for example google.com for
+ example.  A service name may be any arbitrary string created by the app which
+ stored it in the keychain, for its own purposes.
+ 
+ The Keychain Access app appears to take advantage of the fact that one is
+ nil by having only one column, 'Name", and using it for whichever is not nil,
+ depending on the class.  We do the same thing, with our 'servostName' 
+ parameter, which we interpret to be a host name when an item of Internet class
+ has been specified, and a service name otherwise.
  
  Item Attributes
  
@@ -124,32 +158,53 @@ extern NSString *const kSSYKeychainErrorDomain;
  */
 @interface SSYKeychain : NSObject
 
-#pragma mark - Classic methods
-
 /*!
  @brief    Returns a string containing the password for a given service name,
  account name, and item class, or `nil` if the Keychain doesn't have a password
  for the given parameters.
  
- @param class   The class of the target keychain item, any of the constant
+ @details  See "Name: Service vs. Host" in the class documentatotion.
+ 
+ @param    servostName  Either a service name or a host name.
+ 
+ @param    trySubhosts  An array of strings, each of which are possible
+ subdomains which will be prepended to the host with a "." when searching for
+ an internet password (class=kSecClassInternetPassword.  Ignored if class =
+ kSecClassGenericPassword.  For example, if you pass servost="google.com" and
+ trySubhosts=@[@"www", @"my"], there will be three hosts searched: google.com,
+ www.google.com and my.google.com.  Recommended subdomains are subdomains are
+ "www", "my", "login", "mobile", "account".  If nil, searches only the given
+ servost.
+
+ @param   class  The class of the target keychain item, any of the constant
  strings enumerated under SetItem.h > kSecClass.  If you pass nil, defaults to
- kSecClassGenericPassword.  Less commonly, use kSecClassInternetPassword.
+ kSecClassGenericPassword.
  */
-+ (NSString*)passwordForService:(NSString*)serviceName
++ (NSString*)passwordForServost:(NSString*)servostName
+                    trySubhosts:(NSArray*)trySubhosts
                         account:(NSString*)account
                           class:(NSString*)itemClass
                         error_p:(NSError*__autoreleasing*)error_p ;
 
 /*!
- @brief    Deletes from the user's keychain any password matching a given
+ @brief    Deletes from the user's keychain any item matching a given
  service name, account name and item class
  
- @param class   See class documentation.  If you pass nil, defaults to
- kSecClassGenericPassword.  Less commonly, use kSecClassInternetPassword.
+ @details  See "Name: Service vs. Host" in the class documentatotion.  This
+ parameter is  interpreted to specify a host name when the 'class' parameter is
+ kSecClassInternetPassword, and a service name otherwise.
+ 
+ A better name for this method might be deleteItemForServost…, since actually
+ it deletes a keychain *item*.  But since the nearby methods use 'password', and
+ since it is useless or maybe impossible to have a keychain item without a
+ password, I use 'password'.
+ 
+ @param    class  See "Item Class" in the class documentation.  There is no wild
+ card.  If you pass nil here, the class kSecClassGenericPassword is assumed.
  
  @result  YES if successful, otherwise NO
  */
-+ (BOOL)deletePasswordForService:(NSString*)serviceName
++ (BOOL)deletePasswordForServost:(NSString*)servostName
                          account:(NSString*)account
                            class:(NSString*)itemClass
                          error_p:(NSError*__autoreleasing*)error_p ;
@@ -158,10 +213,19 @@ extern NSString *const kSSYKeychainErrorDomain;
  @brief    Sets a password in the Keychain for a given service name, account
  name and item class
  
+ @details  See "Name: Service vs. Host" in the class documentatotion.  This
+ parameter is  interpreted to specify a host name when the 'class' parameter is
+ kSecClassInternetPassword, and a service name otherwise.
+ 
+ @param    class  See "Item Class" in the class documentation.  There is no wild
+ card.  If you pass nil here, the class kSecClassGenericPassword is assumed.
+ If the class is kSecClassGenericPassword, it will show up in the Keychain
+ Access app with kind = "application password"
+ 
  @result  YES if successful, otherwise NO
  */
 + (BOOL)setPassword:(NSString*)password
-         forService:(NSString*)serviceName
+         forServost:(NSString*)servostName
             account:(NSString*)account
               class:(NSString*)itemClass
             error_p:(NSError*__autoreleasing*)error_p ;
@@ -169,6 +233,8 @@ extern NSString *const kSSYKeychainErrorDomain;
 /*!
  @brief    Returns attributes of all items in the user's keychain, of a given
  single class
+ 
+ @details  See "Name: Service vs. Host" in the class documentatotion.
  
  @param    class  See "Item Class" in the class documentation.  There is no wild
  card.  If you pass nil here, the class kSecClassGenericPassword is assumed.
@@ -206,77 +272,22 @@ extern NSString *const kSSYKeychainErrorDomain;
 + (NSArray*)allGenericItemsForService:(NSString*)serviceName ;
 
 /*!
- @brief    Returns the array of account names which have internet passwords in
- the user's keychain for a given host.
+ @brief    Returns the array of keychain items which have internet passwords in
+ the user's keychain for a given class and service or host
  
- @details  If none found, returns an empty array.  If search fails to
- complete, returns nil.
- 
- @param    host  A hostname for which account names will be searched.
- Example: @"google.com".
- */
-+ (NSArray*)accountNamesForHost:(NSString*)host
-                        service:(NSString*)serviceName
-                          class:(NSString*)itemClass
-                        error_p:(NSError**)error_p ;
-
-/*!
- @brief    Same as accountNamesForHost:service:class:error_p:, except also
- searches for keychain items of the given host with given subdomains.
- 
- @details  The hosts searched will be the given host, plus the given host
- prefixed by each of the possible subdomains and ".".  For example, if you pass
- host="google.com" and possibleSubdomains=@[@"www", @"my"], there will be three
- hosts searched: google.com, www.google.com and my.google.com.  Recommended
- subdomains are subdomains are "www", "my", "login", "mobile".
- */
-+ (NSArray*)accountNamesForHost:(NSString*)host
-                        service:(NSString*)serviceName
-                          class:(NSString*)itemClass
-             possibleSubdomains:(NSArray*)possibleSubdomains
-                        error_p:(NSError**)error_p ;
-
-/*!
- @brief    Adds an internet password for a given username and
- host in a given domain.
- 
- @details  If password already exists for given username and host,
- overwrites it.
- @param    url  If given, will extract the host and port if any from this NSURL
- and will ignore the 'host' parameter.
- @param    host  If 'url' is not given, the host for which the password will
- be added.  Example: @"google.com".
- @param    domain  A string representing the security domain which will be
- passed to Apple's SecKeychainFindInternetPassword().  Hint:  Try nil ;)
- @result   YES if the password was added or already exists in the keychain
- as specified.  NO if an error occurred.
- */
-+ (BOOL)addInternetPassword:(NSString*)password
-                   username:(NSString*)username
-                        url:(NSURL*)url
-                     orHost:(NSString*)host
-                     domain:(NSString*)domain ;
-
-/*!
- @brief    Returns an internet password from the keychain for a given host, username
- and domain.
- 
- @details  If password for given username, host and domain is not found, will return nil.
- If either username or host are nil or empty strings, will return nil.
- @param    host  A hostname for which account names will be searched.
- Example: @"google.com".
- @param    possibleSubdomains  An array of strings, each of which are possible
+ @param    trySubhosts  An array of strings, each of which are possible
  subdomains which will be prepended to the host with a "." when searching for
- the password.  May be nil or empty to search only the given host.
- @param    domain  The "security domain" within the host.  Usually, this is nil.
- @param    keychainitemRef  Upon return, pointer to a SecKeychainItemRef if a
- password was found.  Pass NULL if you don't need this.
+ an internet password (class=kSecClassInternetPassword.  Ignored if class =
+ kSecClassGenericPassword.  For example, if you pass servost="google.com" and
+ trySubhosts=@[@"www", @"my"], there will be three hosts searched: google.com,
+ www.google.com and my.google.com.  Recommended subdomains are subdomains are
+ "www", "my", "login", "mobile", "account".  If nil, searches only the given
+ servost.
  */
-+ (NSString*)internetPasswordUsername:(NSString*)username
-                                 host:(NSString*)host
-                   possibleSubdomains:(NSArray*)possibleSubdomains
-                               domain:(NSString*)domain
-                      keychainitemRef:(SecKeychainItemRef*)itemRef ;
++ (NSArray*)accountNamesForServost:(NSString*)servostName
+                       trySubhosts:(NSArray*)trySubhosts
+                             class:(NSString*)itemClass
+                           error_p:(NSError**)error_p ;
 
 
 #pragma mark - Configuration
@@ -285,17 +296,18 @@ extern NSString *const kSSYKeychainErrorDomain;
 /*!
  Returns the accessibility type for all future passwords saved to the Keychain.
  
- @result Returns the accessibility type.
+ @result Returns the accessibility type
  
  The return value will be `NULL` or one of the "Keychain Item Accessibility
  Constants" used for determining when a keychain item should be readable.
  
  @see setAccessibilityType
  */
-+ (CFTypeRef)accessibilityType;
++ (CFTypeRef)accessibilityType ;
 
 /*!
- @brief    Sets the accessibility type for all future passwords saved to the Keychain.
+ @brief    Sets the accessibility type for all future passwords saved to the
+ user's Keychain.
  
  @param accessibilityType One of the "Keychain Item Accessibility Constants"
  used for determining when a keychain item should be readable.
@@ -304,7 +316,7 @@ extern NSString *const kSSYKeychainErrorDomain;
  
  @see accessibilityType
  */
-+ (void)setAccessibilityType:(CFTypeRef)accessibilityType;
++ (void)setAccessibilityType:(CFTypeRef)accessibilityType ;
 #endif
 
 @end

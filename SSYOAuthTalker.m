@@ -459,10 +459,11 @@ end:;
 
 - (BOOL)getPasswordFromKeychain {
 	BOOL ok = NO ;
-	NSString* password = [SSYKeychain passwordForService:[self keychainServiceName]
-                                                account:[[self accounter] accountName]
-                                                  class:kSecClassGenericPassword
-                                                error_p:NULL] ;
+    NSString* password = [SSYKeychain passwordForServost:[self keychainServiceName]
+                                             trySubhosts:nil
+                                                 account:[[self accounter] accountName]
+                                                   class:kSecClassGenericPassword
+                                                 error_p:NULL] ;
 	if (password) {
 		// Since the password is accessible i.e. corruptible by the user
 		// and other apps, we try to handle anything without crashing.
@@ -529,10 +530,10 @@ end:;
 	//        it will not work with any other app.
 	//    (c) Pukka does it as a generic password.
     [SSYKeychain setPassword:password
-                 forService:[self keychainServiceName]
-                    account:[[self accounter] accountName]
-                      class:(NSString*)kSecClassGenericPassword
-                    error_p:NULL] ;
+                  forServost:[self keychainServiceName]
+                     account:[[self accounter] accountName]
+                       class:kSecClassGenericPassword
+                     error_p:NULL] ;
 }
 
 - (BOOL)requestCommand:(NSString*)command
