@@ -68,9 +68,31 @@ CFDataRef SSYInterappServerCallBackCreateData(
 	SSYInterappServer* server = (__bridge SSYInterappServer*)info ;
 	
 	NSObject <SSYInterappServerDelegate> * delegate = [server delegate] ;
+    /*
+     If the following message to method
+     -[delegate interappServer:didReceiveHeaderByte:data:] results in an error,
+     both of our local variables 'server' and
+     'delegate' may be deallocated before that method returns.  To prevent that
+     from causing a crash, we protect each one…
+     
+     For 'server', we retain it through the method call (and balance with a
+     -release).
+     
+     For 'delegate', we send [server delegate] to get it again after the method
+     completes.  Assuming that the delegate was deallocated properly, it will
+     have unleased us, so that this second [server delegate] call will return a
+     harmless 'nil' instead of an explosive deallocated or unexpected object.
+     */
+#if NO_ARC
+    [server retain] ;
+#endif
 	[delegate interappServer:server
 		didReceiveHeaderByte:headerByte
 						data:rxPayload] ;
+    delegate = [server delegate] ;
+#if NO_ARC
+    [server release] ;
+#endif
 
 	// Get response from delegate and return to Client
 	NSMutableData* responseData ;
