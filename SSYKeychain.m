@@ -52,6 +52,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
     }
     
 #if NO_ARC
+    [subs release] ;
     [query release] ;
 #endif
     if (error && error_p) {

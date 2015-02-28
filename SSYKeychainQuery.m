@@ -131,15 +131,12 @@
                 error = [[self class] errorWithCode:status] ;
             }
         }
-        else if (status == errSecItemNotFound) {
-            ok = YES ;
-        }
-        else {
+        else if (status != errSecItemNotFound) {
             error = [[self class] errorWithCode:status] ;
         }
 #endif
 
-        ok = (status == errSecSuccess) ;
+        ok = ((status == errSecSuccess) || (status == errSecItemNotFound)) ;
     }
     
     if (error_p && error) {
