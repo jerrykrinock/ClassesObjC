@@ -61,3 +61,8 @@ typedef enum SSYDigesterAlgorithm_enum SSYDigesterAlgorithm ;
 - (NSData*)finalizeDigest ;
 
 @end
+
+void TestSSYDigester() {
+    SSYDigester* digester = [[SSYDigester alloc] init] ;
+    
+}
