@@ -1286,14 +1286,12 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			[[self button1] setTarget:self] ;
 #if DEBUG
 			NSLog(@"Internal Error 928-9983") ;
-			Debugger() ;
 #endif
 		}
 		if (([[self button1] action] == NULL) && !m_dontAddOkButton) {
 			[[self button1] setAction:@selector(clickedButton:)] ;
 #if DEBUG
 			NSLog(@"Internal Error 135-5614") ;
-			Debugger() ;
 #endif
 		}
 		

@@ -1,4 +1,4 @@
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 /*
  @brief    Provides a place for window controllers that control transient
