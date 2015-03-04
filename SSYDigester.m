@@ -1,5 +1,4 @@
 #import "SSYDigester.h"
-#include <openssl/err.h>
 
 NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
 
@@ -10,10 +9,12 @@ NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
 	if (self) {
 		switch (algorithm) {
 			case SSYDigesterAlgorithmMd5:
-				EVP_DigestInit(&m_context, EVP_md5()) ;
+                m_algorithm = SSYDigesterAlgorithmMd5 ;
+                CC_MD5_Init(&m_context_md5) ;
 				break;
-			case SSYDigesterAlgorithmSha1:
-				EVP_DigestInit(&m_context, EVP_sha1()) ;
+            case SSYDigesterAlgorithmSha1:;
+                m_algorithm = SSYDigesterAlgorithmSha1 ;
+                CC_SHA1_Init(&m_context_sha1) ;
 				break;
 		}
 	}
@@ -22,7 +23,14 @@ NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
 }
 
 - (void)updateWithData:(NSData*)data {
-	EVP_DigestUpdate(&m_context, [data bytes], [data length]) ;
+    switch (m_algorithm) {
+        case SSYDigesterAlgorithmMd5:
+            CC_MD5_Update(&m_context_md5, [data bytes], (CC_LONG)[data length]) ;
+            break ;
+        case SSYDigesterAlgorithmSha1:
+            CC_SHA1_Update(&m_context_sha1, [data bytes], (CC_LONG)[data length]) ;
+            break ;
+    }
 }
 
 
@@ -59,17 +67,24 @@ NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
 
 	NSData* data = [NSData dataWithBytes:cString
 								  length:length] ;
-	EVP_DigestUpdate(&m_context, [data bytes], [data length]) ;	
+    [self updateWithData:data] ;
 }
 
 - (NSData*)finalizeDigest {
-	unsigned int length ;
-	unsigned char value[EVP_MAX_MD_SIZE] ;
-
-	EVP_DigestFinal(&m_context, value, &length) ;
-	EVP_MD_CTX_cleanup(&m_context) ;
-	return [NSData dataWithBytes:value
-						  length:length];
+    NSMutableData* hash ;
+    switch (m_algorithm) {
+        case SSYDigesterAlgorithmMd5:;
+            hash = [[NSMutableData alloc] initWithLength:CC_MD5_DIGEST_LENGTH] ;
+            CC_MD5_Final([hash mutableBytes], &m_context_md5) ;
+            break ;
+        case SSYDigesterAlgorithmSha1:;
+            hash = [[NSMutableData alloc] initWithLength:CC_SHA1_DIGEST_LENGTH] ;
+            CC_SHA1_Final([hash mutableBytes], &m_context_sha1) ;
+            break ;
+    }
+	NSData* answer =  [NSData dataWithData:hash] ;
+    [hash release] ;
+    return answer ;
 }
 
 @end

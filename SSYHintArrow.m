@@ -9,13 +9,18 @@ NSString* const SSYHintArrowEventKey = @"SSYHintArrowEventKey" ;
 #define SSYHINTARROW_TOP_COLOR [NSColor colorWithCalibratedRed:(80.0/256.0) green:(111.0/256.0) blue:(246.0/256.0) alpha:1.0]
 #define SSYHINTARROW_BOTTOM_COLOR [NSColor colorWithCalibratedRed:(27.0/256.0) green:(68.0/256.0) blue:(243.0/256.0) alpha:1.0]
 #define SSYHINTARROW_BORDER_COLOR [NSColor whiteColor]
-#define SSYHINTARROW_SCALE_FACTOR [[NSScreen mainScreen] userSpaceScaleFactor]
 
 static SSYHintArrow* static_helpArrow = nil ;
 
 @implementation SSYHintArrow
 
 # pragma mark * Heavy Lifters
+
+- (CGFloat)scaleFactor {
+    // Was using deprecated [NSScreen mainScreen] userSpaceScaleFactor]
+    CGFloat factor = [[self contentView] backingScaleFactor] ;
+    return factor ;
+}
 
 - (void)updateGeometry {
     [m_view setFrame:NSMakeRect(0.0, 0.0, m_size.width, m_size.height)] ;
@@ -24,14 +29,14 @@ static SSYHintArrow* static_helpArrow = nil ;
     contentRect.size = [m_view frame].size ;
     
     // Account for viewMargin.
-    m_viewFrame = NSMakeRect(m_viewMargin * SSYHINTARROW_SCALE_FACTOR,
-                            m_viewMargin * SSYHINTARROW_SCALE_FACTOR,
+    m_viewFrame = NSMakeRect(m_viewMargin * [self scaleFactor],
+                            m_viewMargin * [self scaleFactor],
                             [m_view frame].size.width, [m_view frame].size.height) ;
     contentRect = NSInsetRect(contentRect, 
-                              -m_viewMargin * SSYHINTARROW_SCALE_FACTOR, 
-                              -m_viewMargin * SSYHINTARROW_SCALE_FACTOR) ;
+                              -m_viewMargin * [self scaleFactor], 
+                              -m_viewMargin * [self scaleFactor]) ;
     
-    CGFloat scaledArrowHeight = m_arrowHeight * SSYHINTARROW_SCALE_FACTOR ;
+    CGFloat scaledArrowHeight = m_arrowHeight * [self scaleFactor] ;
     m_viewFrame.origin.x += scaledArrowHeight ;
     contentRect.size.width += scaledArrowHeight ;
     
@@ -56,7 +61,7 @@ static SSYHintArrow* static_helpArrow = nil ;
 
 
 - (NSBezierPath *)backgroundPath {
-    CGFloat scaleFactor = SSYHINTARROW_SCALE_FACTOR ;
+    CGFloat scaleFactor = [self scaleFactor] ;
     CGFloat scaledRadius = m_cornerRadius * scaleFactor ;
     NSRect contentArea = NSInsetRect(m_viewFrame,
                                      -m_viewMargin * scaleFactor,
@@ -122,7 +127,7 @@ static SSYHintArrow* static_helpArrow = nil ;
                               // Draw border if appropriate.
                               if (m_borderWidth > 0) {
                                   // Double the borderWidth since we're drawing inside the path.
-                                  [bgPath setLineWidth:(m_borderWidth * 2.0) * SSYHINTARROW_SCALE_FACTOR] ;
+                                  [bgPath setLineWidth:(m_borderWidth * 2.0) * [self scaleFactor]] ;
                                   [m_borderColor set] ;
                                   [bgPath stroke] ;
                               }

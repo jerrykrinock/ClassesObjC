@@ -1,5 +1,5 @@
 #import <Cocoa/Cocoa.h>
-#include <openssl/evp.h>
+#import <CommonCrypto/CommonDigest.h>
 
 enum SSYDigesterAlgorithm_enum {
 	SSYDigesterAlgorithmMd5,
@@ -13,7 +13,9 @@ typedef enum SSYDigesterAlgorithm_enum SSYDigesterAlgorithm ;
  @details  
 */
 @interface SSYDigester : NSObject {
-	EVP_MD_CTX m_context ;
+    SSYDigesterAlgorithm m_algorithm ;
+    CC_MD5_CTX m_context_md5 ;
+	CC_SHA1_CTX m_context_sha1 ;
 }
 
 /*!
@@ -63,6 +65,9 @@ typedef enum SSYDigesterAlgorithm_enum SSYDigesterAlgorithm ;
 @end
 
 #if 0
+/* The following method was used to test this class on 20150304, when it was
+ converted to use CommonCrypto instead of openssl.  The "expected" results
+ were obtained using the old openssl code. */
 + (void)testSSYDigester {
     SSYDigester* digester ;
     NSData* data ;
@@ -140,7 +145,6 @@ typedef enum SSYDigesterAlgorithm_enum SSYDigesterAlgorithm ;
                                       length:20] ;
     NSLog(@"sha1 expect = %@", expected) ;
     NSLog(@"sha1 test %@", [data isEqual:expected] ? @"passed" : @"failed") ;
-    
 }
 
 #endif
