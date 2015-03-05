@@ -130,10 +130,8 @@ OSStatus SSYShortcutActuate(
 		
 		if(status != noErr) {
 			return [NSString stringWithFormat:
-					@"Error %ld %s : %s for key code '%ld'.",
+					@"Error: OSStatus %ld for key code '%ld'.",
 					(long)status,
-					GetMacOSStatusErrorString(status),
-					GetMacOSStatusCommentString(status),
 					(long)keyCode] ;
 		}
 		else if(actualStringLength > 0) {
