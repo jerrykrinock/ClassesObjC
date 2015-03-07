@@ -5,11 +5,22 @@
 
 @implementation SSYDragTableView
 
-- (NSDragOperation)draggingSourceOperationMaskForLocal:(BOOL)flag {
-	NSDragOperation dragOp = flag ? NSDragOperationMove : NSDragOperationNone ;
-	return dragOp ;
+- (NSDragOperation)        draggingSession:(NSDraggingSession *)session
+     sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
+    NSDragOperation answer ;
+    switch(context) {
+        case NSDraggingContextOutsideApplication:
+            answer = NSDragOperationCopy ;
+            break;
+            
+        case NSDraggingContextWithinApplication:
+        default:
+            answer = (NSDragOperationCopy | NSDragOperationMove) ;
+            break;
+    }
+    
+    return answer ;
 }
-
 
 - (void)keyDown:(NSEvent*)event {
 	NSString *s = [event charactersIgnoringModifiers] ;
