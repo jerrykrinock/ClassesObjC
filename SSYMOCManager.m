@@ -144,166 +144,169 @@ static SSYMOCManager* sharedMOCManager = nil ;
 													   momdName:(NSString*)momdName
                                                         options:(NSDictionary*)options
 														error_p:(NSError**)error_p {
-	NSPersistentStore* persistentStore = nil ;
-	
-	NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainAppBundle]] ;
-	NSManagedObjectModel* mergedMOM = [NSManagedObjectModel mergedModelFromBundles:bundles] ;
-	NSPersistentStoreCoordinator* newPSC = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:mergedMOM] ;
-
-	if ([storeType isEqualToString:NSSQLiteStoreType]) {
-		NSURL* url = [self sqliteStoreURLWithIdentifier:identifier] ;
-		// i.e file://localhost/Users/jk/Library/Application%20Support/BookMacster/BookMacster.sql
-		
-		NSFileManager* fm = [NSFileManager defaultManager] ;
-		BOOL ok = YES ;
-
-		// An undocumented fact about addPersistentStoreWithType:configuration:URL:options:error:
-		// is that if the parent folder does not exist, the method will fail to create a
-		// persistent store with no explanation.  So we make sure it exists
-		NSString* parentPath = [[url path] stringByDeletingLastPathComponent] ;
-
-        if (!parentPath) {
-            ok = NO ;
-        }
+    NSPersistentStoreCoordinator* newPSC = nil ;
+    NSPersistentStore* persistentStore = nil ;
+    NSBundle* bundle = [NSBundle mainAppBundle] ;
+    if (bundle) {
+        NSArray* bundles = [NSArray arrayWithObject:bundle] ;
+        NSManagedObjectModel* mergedMOM = [NSManagedObjectModel mergedModelFromBundles:bundles] ;
+        newPSC = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:mergedMOM] ;
         
-		BOOL isDirectory = NO ;
-		BOOL fileExists = NO ;
-        
-        if (ok) {
-            [fm fileExistsAtPath:parentPath isDirectory:&isDirectory] ;
-            if (fileExists && !isDirectory) {
-                // Someone put a file where our directory should be
-                ok = [fm removeItemAtPath:parentPath
-                                    error:error_p] ;
+        if ([storeType isEqualToString:NSSQLiteStoreType]) {
+            NSURL* url = [self sqliteStoreURLWithIdentifier:identifier] ;
+            // i.e file://localhost/Users/jk/Library/Application%20Support/BookMacster/BookMacster.sql
+            
+            NSFileManager* fm = [NSFileManager defaultManager] ;
+            BOOL ok = YES ;
+            
+            // An undocumented fact about addPersistentStoreWithType:configuration:URL:options:error:
+            // is that if the parent folder does not exist, the method will fail to create a
+            // persistent store with no explanation.  So we make sure it exists
+            NSString* parentPath = [[url path] stringByDeletingLastPathComponent] ;
+            
+            if (!parentPath) {
+                ok = NO ;
             }
-        }
-
-		NSError* error = nil ;
-		if (ok && ((fileExists && !isDirectory) || !fileExists)) {
-			// Create parent directory
-			ok = [fm createDirectoryAtPath:parentPath
-			   withIntermediateDirectories:YES
-								attributes:nil
-									 error:&error] ;
-		}
-	   
-		if (!ok) {
-			NSString* msg = [NSString stringWithFormat:
-							 @"Could not create directory at %@",
-							 parentPath] ;
-            error = [SSYMakeError(95745, msg) errorByAddingUnderlyingError:error] ;
-            NSLog(@"%@", error) ;
-			if (error_p) {
-				*error_p = error ;
-            }
-		}
-		
-		if (ok) {
-            if (momdName) {
-			   // Using Multi-Hop Migration
-			   ok = [SSYPersistentDocumentMultiMigrator migrateIfNeededStoreAtUrl:url
-																	 storeOptions:options
-																		storeType:NSSQLiteStoreType
-																		 momdName:momdName
-																		 document:nil
-																		  error_p:error_p] ;
-		   }
-		   else {
-			   // Using Core Data's built-in Single-Hop Migration only
-               NSDictionary* moreOption = [NSDictionary dictionaryWithObjectsAndKeys:
-                                           [NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption,
-                                           nil] ;
-               if (options) {
-                   options = [options dictionaryByAddingEntriesFromDictionary:moreOption] ;
-               }
-               else {
-                   options = moreOption ;
-               }
-		   }
-		   
-            // Here is where option journal_mode gets used
+            
+            BOOL isDirectory = NO ;
+            BOOL fileExists = NO ;
+            
             if (ok) {
-               // Add persistent store to it
-			   persistentStore = [newPSC addPersistentStoreWithType:NSSQLiteStoreType
-													  configuration:nil
-																URL:url
-															options:options
-															  error:error_p] ;
+                [fm fileExistsAtPath:parentPath isDirectory:&isDirectory] ;
+                if (fileExists && !isDirectory) {
+                    // Someone put a file where our directory should be
+                    ok = [fm removeItemAtPath:parentPath
+                                        error:error_p] ;
+                }
+            }
+            
+            NSError* error = nil ;
+            if (ok && ((fileExists && !isDirectory) || !fileExists)) {
+                // Create parent directory
+                ok = [fm createDirectoryAtPath:parentPath
+                   withIntermediateDirectories:YES
+                                    attributes:nil
+                                         error:&error] ;
+            }
+            
+            if (!ok) {
+                NSString* msg = [NSString stringWithFormat:
+                                 @"Could not create directory at %@",
+                                 parentPath] ;
+                error = [SSYMakeError(95745, msg) errorByAddingUnderlyingError:error] ;
+                NSLog(@"%@", error) ;
+                if (error_p) {
+                    *error_p = error ;
+                }
+            }
+            
+            if (ok) {
+                if (momdName) {
+                    // Using Multi-Hop Migration
+                    ok = [SSYPersistentDocumentMultiMigrator migrateIfNeededStoreAtUrl:url
+                                                                          storeOptions:options
+                                                                             storeType:NSSQLiteStoreType
+                                                                              momdName:momdName
+                                                                              document:nil
+                                                                               error_p:error_p] ;
+                }
+                else {
+                    // Using Core Data's built-in Single-Hop Migration only
+                    NSDictionary* moreOption = [NSDictionary dictionaryWithObjectsAndKeys:
+                                                [NSNumber numberWithBool:YES], NSMigratePersistentStoresAutomaticallyOption,
+                                                nil] ;
+                    if (options) {
+                        options = [options dictionaryByAddingEntriesFromDictionary:moreOption] ;
+                    }
+                    else {
+                        options = moreOption ;
+                    }
+                }
+                
+                // Here is where option journal_mode gets used
+                if (ok) {
+                    // Add persistent store to it
+                    persistentStore = [newPSC addPersistentStoreWithType:NSSQLiteStoreType
+                                                           configuration:nil
+                                                                     URL:url
+                                                                 options:options
+                                                                   error:error_p] ;
 #if 0
 #warning Simulating a bad store to test error handling
-			   persistentStore = nil ;
-			   *error_p = SSYMakeError(12345, @"Can't use this stinkin' store") ;
-			   NSLog(@"61745: Store set to nil for testing") ;
+                    persistentStore = nil ;
+                    *error_p = SSYMakeError(12345, @"Can't use this stinkin' store") ;
+                    NSLog(@"61745: Store set to nil for testing") ;
 #endif
-			   if (!persistentStore) {
-				   BOOL fileExists = [fm fileExistsAtPath:[url path]] ;
-				   if (fileExists) {
-					   // If we did not get a store but file exists, must be a corrupt file.
-					   NSString* msg = [NSString stringWithFormat:@"Click 'Move' to move the unreadable database\n%@\nto your desktop and start a new database.  The item properties in your old database will not be available to %@.",
-										[url path],
-										[[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"]] ;
-					   // We used CFBundleExecutable instead of CFBundleName to get an unlocalized app name.
-					   if (error_p) {
-						   *error_p = [*error_p errorByAddingLocalizedRecoverySuggestion:msg] ;
-						   NSArray* recoveryOptions = [NSArray arrayWithObjects:
-													   [NSString localize:@"move"], 
-													   [NSString localize:@"cancel"],
-													   nil] ;
-						   *error_p = [*error_p errorByAddingLocalizedRecoveryOptions:recoveryOptions] ;
-						   *error_p = [*error_p errorByAddingRecoveryAttempter:[self sharedMOCManager]] ;
-						   *error_p = [*error_p errorByAddingUserInfoObject:url
-																	 forKey:constKeyStoreUrl] ;
-					   }
-				   }
-				   else {
-					   NSString* msg = [NSString stringWithFormat:
-										@"Could not create persistent store file at path %@",
-										[url absoluteString]] ;
-					   NSLog(@"%@", msg) ;
-					   if (error_p) { 
-						   *error_p = SSYMakeError(51298, msg) ;
-					   }
-				   }
-			   }
-		   }
-		   else if ([*error_p involvesCode:SSYPersistentDocumentMultiMigratorErrorCodeNoSourceModel
-									domain:SSYPersistentDocumentMultiMigratorErrorDomain]) {
-			   NSString* originalPath = [url path] ;
-			   NSString* tildefiedPath = [originalPath tildefiedPath] ;
-			   BOOL movedOk = [[NSFileManager defaultManager] moveItemAtPath:originalPath
-																	  toPath:tildefiedPath
-																	   error:NULL] ;
-			   if (!movedOk) {
-				   // This may happen in two situations that I know of…
-				   // 1.  If the subject file is really bad, sometimes Core Data may have already
-				   //     moved subject file Foo.sql to Foo.unreadable.sql.  In this case,
-				   //     the error will be NSCocoaErrorDomain Code=4 "The file “Logs.sql” doesn’t exist."
-				   // 2.  If the subject file did not exist to begin with.
-				   // In either case, moveITemAtPath::: will return an error with
-				   // Domain=NSCocoaErrorDomain Code=4, containing an underlying error with
-				   // Error Domain=NSPOSIXErrorDomain Code=2.  We ignore it, don't even ask for it.
-			   }
-		   }
-	   }
-   }
-   else if ([storeType isEqualToString:NSInMemoryStoreType]) {
-	   persistentStore = [newPSC addPersistentStoreWithType:NSInMemoryStoreType
-											  configuration:nil
-														URL:nil
-													options:options
-													  error:error_p] ;
-	   
-	   if (!persistentStore) {
-		   NSLog(@"Internal Error 535-1498.  Failed to create inMemory persistent store") ;
-	   }
-   }
-	
-	if (!persistentStore) {
-		// If persistentStore could not be added, we don't want the
-		// newPSC to be returned because it won't work
-		[newPSC release] ;
-		newPSC = nil ;
-	}
+                    if (!persistentStore) {
+                        BOOL fileExists = [fm fileExistsAtPath:[url path]] ;
+                        if (fileExists) {
+                            // If we did not get a store but file exists, must be a corrupt file.
+                            NSString* msg = [NSString stringWithFormat:@"Click 'Move' to move the unreadable database\n%@\nto your desktop and start a new database.  The item properties in your old database will not be available to %@.",
+                                             [url path],
+                                             [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"]] ;
+                            // We used CFBundleExecutable instead of CFBundleName to get an unlocalized app name.
+                            if (error_p) {
+                                *error_p = [*error_p errorByAddingLocalizedRecoverySuggestion:msg] ;
+                                NSArray* recoveryOptions = [NSArray arrayWithObjects:
+                                                            [NSString localize:@"move"],
+                                                            [NSString localize:@"cancel"],
+                                                            nil] ;
+                                *error_p = [*error_p errorByAddingLocalizedRecoveryOptions:recoveryOptions] ;
+                                *error_p = [*error_p errorByAddingRecoveryAttempter:[self sharedMOCManager]] ;
+                                *error_p = [*error_p errorByAddingUserInfoObject:url
+                                                                          forKey:constKeyStoreUrl] ;
+                            }
+                        }
+                        else {
+                            NSString* msg = [NSString stringWithFormat:
+                                             @"Could not create persistent store file at path %@",
+                                             [url absoluteString]] ;
+                            NSLog(@"%@", msg) ;
+                            if (error_p) { 
+                                *error_p = SSYMakeError(51298, msg) ;
+                            }
+                        }
+                    }
+                }
+                else if ([*error_p involvesCode:SSYPersistentDocumentMultiMigratorErrorCodeNoSourceModel
+                                         domain:SSYPersistentDocumentMultiMigratorErrorDomain]) {
+                    NSString* originalPath = [url path] ;
+                    NSString* tildefiedPath = [originalPath tildefiedPath] ;
+                    BOOL movedOk = [[NSFileManager defaultManager] moveItemAtPath:originalPath
+                                                                           toPath:tildefiedPath
+                                                                            error:NULL] ;
+                    if (!movedOk) {
+                        // This may happen in two situations that I know of…
+                        // 1.  If the subject file is really bad, sometimes Core Data may have already
+                        //     moved subject file Foo.sql to Foo.unreadable.sql.  In this case,
+                        //     the error will be NSCocoaErrorDomain Code=4 "The file “Logs.sql” doesn’t exist."
+                        // 2.  If the subject file did not exist to begin with.
+                        // In either case, moveITemAtPath::: will return an error with
+                        // Domain=NSCocoaErrorDomain Code=4, containing an underlying error with
+                        // Error Domain=NSPOSIXErrorDomain Code=2.  We ignore it, don't even ask for it.
+                    }
+                }
+            }
+        }
+        else if ([storeType isEqualToString:NSInMemoryStoreType]) {
+            persistentStore = [newPSC addPersistentStoreWithType:NSInMemoryStoreType
+                                                   configuration:nil
+                                                             URL:nil
+                                                         options:options
+                                                           error:error_p] ;
+            
+            if (!persistentStore) {
+                NSLog(@"Internal Error 535-1498.  Failed to create inMemory persistent store") ;
+            }
+        }
+        
+        if (!persistentStore) {
+            // If persistentStore could not be added, we don't want the
+            // newPSC to be returned because it won't work
+            [newPSC release] ;
+            newPSC = nil ;
+        }
+    }
 	
 	return [newPSC autorelease] ;
 }
