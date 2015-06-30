@@ -206,10 +206,10 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	}
     _progBar = [[NSProgressIndicator alloc] initWithFrame:frame] ;
 	[self addSubview:_progBar] ;
-	[_progBar release] ;
 	[_progBar setStyle:NSProgressIndicatorBarStyle] ;
 	[_progBar setUsesThreadedAnimation:YES] ; // unreliable pre-Leopard
 	[_progBar setDisplayedWhenStopped:NO] ;
+    [_progBar release] ;
 }
 
 - (NSProgressIndicator*)progBar {

@@ -89,7 +89,7 @@
 		return [serverName autorelease] ;
 	}
 		
-	if ( FSGetVolumeMountInfoSize == NULL ) {
+	if ( &FSGetVolumeMountInfoSize == NULL ) {
 		return nil ;
 	}
 	
