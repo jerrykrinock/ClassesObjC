@@ -29,6 +29,51 @@
 	return [[self browserSupportPathForHomePath:homePath] stringByAppendingPathComponent:@"profiles.ini"] ;
 }
 
++ (NSArray*)profilePseudonymsForHomePath:(NSString*)homePath {
+    NSString* filepathProfilesIni = [self profilesFilePathForHomePath:homePath] ;
+    
+    NSString* profilesIniContents = [[NSString alloc] initWithContentsOfFile:filepathProfilesIni
+                                                                usedEncoding:NULL
+                                                                       error:NULL] ;
+    
+    NSArray* pseudonyms = nil ;
+    
+    if (profilesIniContents) {
+        // There is a profiles.ini file.  Parse it.
+        NSScanner* scanner = nil ;
+        NSMutableArray* outbasket = [[NSMutableArray alloc] init] ;
+        NSString* path ;
+        
+        if(profilesIniContents) {
+            scanner = [[NSScanner alloc] initWithString:profilesIniContents] ;
+            
+            while((![scanner isAtEnd])) {
+                [scanner scanUpToString:@"Path=" intoString:NULL] ;
+                if ([scanner scanString:@"Path=" intoString:NULL]) {
+                    // Without the "if" above, it will add the last name found to outbasket twice
+                    [scanner scanUpToString:@"\n" intoString:&path] ;
+                    NSString* dirName = [path lastPathComponent] ;
+                    NSScanner* innerScanner = [[NSScanner alloc] initWithString:dirName] ;
+                    [innerScanner scanUpToString:@"." intoString:NULL] ;
+                    NSInteger location = [innerScanner scanLocation] + 1 ;
+                    if (location < ([dirName length] - 1)) {
+                        NSString* pseudonym = [dirName substringFromIndex:location] ;
+                        [outbasket addObject:pseudonym] ;
+                    }
+                }
+            }
+        }
+        
+        pseudonyms = [NSArray arrayWithArray:outbasket] ;
+        [outbasket release] ;
+        [scanner release] ;
+    }
+    
+    [profilesIniContents release] ;
+    
+    return pseudonyms ;
+}
+
 + (NSArray*)profileNamesForHomePath:(NSString*)homePath {
 	NSString* filepathProfilesIni = [self profilesFilePathForHomePath:homePath] ;
 	

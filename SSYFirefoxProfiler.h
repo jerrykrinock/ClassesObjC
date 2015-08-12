@@ -4,6 +4,7 @@
 @interface SSYFirefoxProfiler : NSObject {
 }
 
++ (NSArray*)profilePseudonymsForHomePath:(NSString*)homePath ;
 
 + (NSArray*)profileNamesForHomePath:(NSString*)homePath ;
     
