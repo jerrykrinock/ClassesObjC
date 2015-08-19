@@ -4,9 +4,9 @@
 
 // Keys to instance variables
 
-NSString* const constKeyWeekday ;
-NSString* const constKeyHour ;
-NSString* const constKeyMinute ;
+extern NSString* const constKeyWeekday ;
+extern NSString* const constKeyHour ;
+extern NSString* const constKeyMinute ;
 
 /*!
  @brief    
