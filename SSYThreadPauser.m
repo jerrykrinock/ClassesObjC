@@ -77,7 +77,6 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
     [workerThread start] ;
 	
 	// Will block here until work is done, or timeout
-    /*SSYDBL*/ NSLog(@"Waiting for %@ when condition %ld", lock, (long)WORK_IS_DONE) ;
 	BOOL workFinishedInTime = [lock lockWhenCondition:WORK_IS_DONE
 										   beforeDate:timeoutDate] ;
 	if (workFinishedInTime) {
