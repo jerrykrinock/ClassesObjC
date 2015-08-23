@@ -254,7 +254,6 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 		[SSYThreadPauser blockUntilWorker:tasker
 								 selector:@selector(doWithInfo:)	
 								   object:info
-								   thread:nil // Run in a new thread
 								  timeout:CGFLOAT_MAX] ;
 		// In the above, we set timeout:FLT_MAX because timeout is in info,
 		// and we'll get a more descriptive NSError if doWithInfo: times out

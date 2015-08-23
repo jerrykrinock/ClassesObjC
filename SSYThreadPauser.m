@@ -32,7 +32,6 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
 + (BOOL)blockUntilWorker:(id)worker
 				selector:(SEL)selector	
 				  object:(id)object
-				  thread:(NSThread*)workerThread
 				 timeout:(NSTimeInterval)timeout {
     /*
      Here's a fun 64-bit quirk that set me back a couple hours.  If you ever
@@ -67,26 +66,18 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
 						  nil] ;
 	
 	// Begin Work
-	if (workerThread) {
-		[instance performSelector:@selector(beginWorkWithInfo:)
-						 onThread:workerThread
-					   withObject:info
-					waitUntilDone:NO] ;
-	}
-	else {
-		// Default if no workerThread given is to create one
-		workerThread = [[NSThread alloc] initWithTarget:instance
-                                               selector:@selector(beginWorkWithInfo:)
-                                                 object:info] ;
+    NSThread* workerThread = [[NSThread alloc] initWithTarget:instance
+                                                     selector:@selector(beginWorkWithInfo:)
+                                                       object:info] ;
 #if NO_ARC
-		[workerThread autorelease] ;
+    [workerThread autorelease] ;
 #endif
-        // Name the thread, to help in debugging.
-		[workerThread setName:@"Worker created by SSYThreadPauser"] ;
-		[workerThread start] ;
-	}
+    // Name the thread, to help in debugging.
+    [workerThread setName:@"Worker created by SSYThreadPauser"] ;
+    [workerThread start] ;
 	
 	// Will block here until work is done, or timeout
+    /*SSYDBL*/ NSLog(@"Waiting for %@ when condition %ld", lock, (long)WORK_IS_DONE) ;
 	BOOL workFinishedInTime = [lock lockWhenCondition:WORK_IS_DONE
 										   beforeDate:timeoutDate] ;
 	if (workFinishedInTime) {

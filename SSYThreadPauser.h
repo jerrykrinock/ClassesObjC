@@ -5,7 +5,7 @@
 }
 
 /*!
- @brief    Runs a job on another thread and blocks the current
+ @brief    Runs a job on a new thread and blocks the current
  thread until the method is complete, or until a timeout, whichever
  happens first.
  
@@ -18,8 +18,6 @@
  method need not create nor drain an autorelease pool if garbage collection
  is not being used, because SSYThreadPauser takes care of that.
  @param    object  A parameter which will be passed to selector
- @param    workerThread  The thread on which the job will be performed.
- If you pass nil, a temporary thread will be created.
  @param    timeout  The timeout before the job is aborted.  For no
  timeout, pass FLT_MAX.  (Search tags: floatmax float_max maxfloat max_float)
  @result   YES if the job completed, NO if it timed out.
@@ -27,7 +25,6 @@
 + (BOOL)blockUntilWorker:(id)worker
 				selector:(SEL)selector	
 				  object:(id)object
-				  thread:(NSThread*)workerThread
 				 timeout:(NSTimeInterval)timeout ;
 
 @end
@@ -79,7 +76,6 @@ int main (int argc, const char * argv[]) {
 	ok = [SSYThreadPauser blockUntilWorker:workerDemo
 								  selector:@selector(doWorkForTimeInterval:)
 									object:[NSNumber numberWithDouble:duration]
-									thread:nil  // SSYThreadPauser will create a thread
 								   timeout:timeout] ;
 	NSLog(@"Job duration=%0.0f  timeout=%0.0f  succeeded=%ld",
 		  duration,
