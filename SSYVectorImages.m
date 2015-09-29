@@ -55,7 +55,9 @@
                        size:size
                        fill:fill] ;
         [image unlockFocus] ;
+#if SSY_ARC_OR_NO_ARC
         [image autorelease] ;
+#endif
     }
     
     return image ;
@@ -113,15 +115,18 @@
 }
 
 + (void)drawStyle:(SSYVectorImageStyle)style
-           length:(CGFloat)length
-            color:(NSColor *)color {
+           wength:(CGFloat)wength
+            color:(NSColor *)color
+            inset:(CGFloat)inset {
     NSBezierPath* path = [NSBezierPath bezierPath] ;
     [[NSColor colorWithCalibratedWhite:0.0 alpha:0.7] set] ;
     
+    CGFloat radius = wength/2 ;
+
     [[NSGraphicsContext currentContext] saveGraphicsState] ;
     // The idea here is that all images have a normalized size of 100 x 100.
     // Makes it easier to mentally write the code
-    float scale = length / 100.0 ;
+    CGFloat scale = wength / 100.0 ;
     NSAffineTransform* scaleTransform = [NSAffineTransform transform] ;
     [scaleTransform scaleXBy:scale
                          yBy:scale] ;
@@ -129,6 +134,31 @@
     [scaleTransform concat] ;
     
     switch (style) {
+        case SSYVectorImageStyleTarget:
+            // The circle
+            [path appendBezierPathWithArcWithCenter:NSMakePoint(radius, radius)
+                                             radius:(radius - inset)
+                                         startAngle:0.0
+                                           endAngle:359.99] ;
+            [path closePath] ;
+            // The +45° line
+            [path moveToPoint:NSMakePoint(0.0, 0.0)] ;
+            [path relativeLineToPoint:NSMakePoint(wength, wength)] ;
+            // The vertical line
+            [path moveToPoint:NSMakePoint(0.0, wength)] ;
+            [path relativeLineToPoint:NSMakePoint(wength, -wength)] ;
+            
+            [path stroke] ;
+            break ;
+        case SSYVectorImageStyleDot:;
+            [path appendBezierPathWithArcWithCenter:NSMakePoint(radius, radius)
+                                             radius:(radius - inset)
+                                         startAngle:0.0
+                                           endAngle:359.99] ;
+            [path closePath] ;
+            [color setFill] ;
+            [path fill] ;
+            break ;
         case SSYVectorImageStylePlus:
         case SSYVectorImageStyleMinus:;
             [path setLineWidth:10] ;
@@ -158,7 +188,7 @@
             [path stroke] ;
             break ;
         case SSYVectorImageStyleTriangle90:
-        case SSYVectorImageStyleTriangle53:
+        case SSYVectorImageStyleTriangle53: {
             [path setLineWidth:0.0] ;
             
             BOOL taller = (style == SSYVectorImageStyleTriangle53) ;
@@ -184,8 +214,9 @@
             [[NSColor grayColor] setFill] ;
             [path fill] ;
             break;
+        }
         case SSYVectorImageStyleInfoOff:;
-        case SSYVectorImageStyleInfoOn:;
+        case SSYVectorImageStyleInfoOn: {
             NSImage* glyphImage = [self imageWithGlyphName:@"i"
                                                   fattenBy:1.5
                                                       fill:(style == SSYVectorImageStyleInfoOn)] ;
@@ -194,7 +225,8 @@
                          operation:NSCompositeCopy
                           fraction:1.0] ;
             break ;
-        case SSYVectorImageStyleHelp:;
+        }
+        case SSYVectorImageStyleHelp: {
             NSImage* glyphImageQ = [self imageWithGlyphName:@"question"
                                                    fattenBy:1.3
                                                        fill:(style == SSYVectorImageStyleInfoOn)] ;
@@ -203,7 +235,8 @@
                           operation:NSCompositeCopy
                            fraction:1.0] ;
             break ;
-        case SSYVectorImageStyleStar:;
+        }
+        case SSYVectorImageStyleStar:; {
             // 5-pointed star.  We draw starting at the top, go counterclockwise
             [path moveToPoint: NSMakePoint(50, 100)];     // top point
             [path lineToPoint: NSMakePoint(37, 58.4)];
@@ -219,7 +252,8 @@
             [color setFill];
             [path fill];
             break ;
-        case SSYVectorImageStyleRemoveX:;
+        }
+        case SSYVectorImageStyleRemoveX: {
 #define X_SIZE .4
             // Draw the circle
             [path appendBezierPathWithArcWithCenter:NSMakePoint(50.0, 50.0)
@@ -246,7 +280,8 @@
             [path lineToPoint:NSMakePoint(xMax, xMax)] ;
             [path stroke] ;
             break ;
-        case SSYVectorImageStyleFlat:;
+        }
+        case SSYVectorImageStyleFlat: {
 #define ITEM_SPACING 25
             // Draw the three bullets and lines, indicating three "items"
             [path setLineWidth:10] ;
@@ -270,8 +305,9 @@
                 [path removeAllPoints] ;
             }
             break ;
+        }
         case SSYVectorImageStyleHierarchy:
-        case SSYVectorImageStyleLineage:
+        case SSYVectorImageStyleLineage: {
 #define NUMBER_OF_NODES 3
 #define NODE_RADIUS 7
 #define NODE_TO_LINE_SPACING (NODE_RADIUS + 5.0)
@@ -338,7 +374,8 @@
             [path removeAllPoints] ;
             
             break ;
-        case SSYVectorImageStyleBookmark:;
+        }
+        case SSYVectorImageStyleBookmark: {
             [color setFill] ;
             [color setStroke] ;
             [path setLineWidth:1.0] ;
@@ -373,7 +410,8 @@
             [path stroke] ;			
             
             break ;
-        case SSYVectorImageStyleTag:;
+        }
+        case SSYVectorImageStyleTag: {
 #define LINE_WIDTH 7.0
 #define TAG_HEIGHT 54
 #define TAG_INSET 22
@@ -394,6 +432,7 @@
             [path stroke] ;
             
             break ;
+        }
         case SSYVectorImageStyleCheck1:;
             [self checkmarkOnPath:path
                                 x:25] ;
@@ -504,16 +543,53 @@
             [path setLineWidth:2] ;
             [path stroke] ;
             break ;
+        case SSYVectorImageStyleRoundRadioKnob:;
+#define KNOB_MARGIN (radius * 0.25)
+            [path setLineWidth:2.0] ;
+            [path appendBezierPathWithArcWithCenter:NSMakePoint(radius,radius)
+                                             radius:(radius - [path lineWidth] - KNOB_MARGIN)
+                                         startAngle:0.0 endAngle:360.0] ;
+            [path moveToPoint:NSMakePoint(radius, radius)] ;
+            [path relativeLineToPoint:NSMakePoint(0.0, radius - [path lineWidth] - KNOB_MARGIN)] ;
+            [color setStroke] ;
+            [path stroke] ;
+            break ;
+        case SSYVectorImageStyleHexagon:;
+            NSRect wholeFrame = NSMakeRect(0.0, 0.0, wength, wength) ;
+            NSRect frame = NSInsetRect(wholeFrame, inset, inset) ;
+            CGFloat insize = wength - 2*inset ;
+            
+            NSPoint A = NSMakePoint(frame.origin.x + insize / 2, frame.origin.y + frame.size.height);
+            NSPoint B = NSMakePoint(frame.origin.x + insize, frame.origin.y + frame.size.height - insize / 4);
+            NSPoint C = NSMakePoint(frame.origin.x + insize, frame.origin.y + insize / 4);
+            NSPoint D = NSMakePoint(frame.origin.x + insize / 2, frame.origin.y);
+            NSPoint E = NSMakePoint(frame.origin.x, frame.origin.y + insize / 4);
+            NSPoint F = NSMakePoint(frame.origin.x, frame.origin.y + frame.size.height - insize / 4);
+            
+            [color set] ;
+            [color setFill] ;
+            [path moveToPoint:A] ;
+            [path lineToPoint:B] ;
+            [path lineToPoint:C] ;
+            [path lineToPoint:D] ;
+            [path lineToPoint:E] ;
+            [path lineToPoint:F] ;
+            [path closePath] ;
+            
+            [path fill] ;
+            [path stroke] ;
+            break ;
     }
     
     [[NSGraphicsContext currentContext] restoreGraphicsState] ;
 }
 
 + (NSImage*)imageStyle:(SSYVectorImageStyle)style
-                length:(CGFloat)length
+                wength:(CGFloat)wength
 				 color:(NSColor*)color
-		 rotateDegrees:(CGFloat)rotateDegrees {
-    NSSize size = NSMakeSize(length, length) ;
+         rotateDegrees:(CGFloat)rotateDegrees
+                 inset:(CGFloat)inset {
+    NSSize size = NSMakeSize(wength, wength) ;
     NSImage* image ;
     NSImage* rotatedImage ;
 
@@ -523,8 +599,9 @@
                                flipped:NO
                         drawingHandler:^(NSRect dstRect) {
                             [self drawStyle:style
-                                     length:length
-                                      color:color] ;
+                                     wength:wength
+                                      color:color
+                                      inset:(CGFloat)inset] ;
                             return YES ;
                         }] ;
         rotatedImage = [image imageRotatedByDegrees:rotateDegrees] ;
@@ -533,11 +610,14 @@
         image = [[NSImage alloc] initWithSize:size] ;
         [image lockFocus] ;
         [self drawStyle:style
-                 length:length
-                  color:color] ;
+                 wength:wength
+                  color:color
+                  inset:inset] ;
         [image unlockFocus] ;
         rotatedImage = [image imageRotatedByDegrees:rotateDegrees] ;
+#if SSY_ARC_OR_NO_ARC
         [image release] ;
+#endif
     }
     
     [rotatedImage setTemplate:YES] ;

@@ -44,17 +44,20 @@ NSString* const constKeyRating = @"rating" ;
         [self setDisplayMode:SSYStarRatingViewDisplayFull] ;
         [self setHalfStarThreshold:SSY_STAR_RATING_VIEW_DEFAULT_HALFSTAR_THRESHOLD] ;
 		[self setStarImage:[SSYVectorImages imageStyle:SSYVectorImageStyleStar
-											    length:starHeight
+											    wength:starHeight
 												 color:[NSColor lightGrayColor]
-										 rotateDegrees:0.0]] ;
+                                         rotateDegrees:0.0
+                                                 inset:0.0]] ;
 		[self setStarHighlightedImage:[SSYVectorImages imageStyle:SSYVectorImageStyleStar
-														   length:starHeight
+														   wength:starHeight
 															color:[NSColor blueColor]
-													rotateDegrees:0.0]] ;
+                                                    rotateDegrees:0.0
+                                                            inset:0.0]] ;
 		[self setRemoveXImage:[SSYVectorImages imageStyle:SSYVectorImageStyleRemoveX
-												   length:(0.9 * starHeight)
+												   wength:(0.9 * starHeight)
 													color:nil
-											rotateDegrees:0.0]] ;
+                                            rotateDegrees:0.0
+                                                    inset:0.0]] ;
 		[self setEditable:YES] ;
     }
     
