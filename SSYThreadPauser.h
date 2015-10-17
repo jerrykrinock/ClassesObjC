@@ -70,7 +70,7 @@ int main (int argc, const char * argv[]) {
 	NSTimeInterval timeout ;
 	BOOL ok ;	
 	
-	NSLog(@"Starting Test #1") ;
+	NSLog(@"Starting Test #1 (should succeed)") ;
 	duration = 1.0 ;
 	timeout = 2.0 ;
 	ok = [SSYThreadPauser blockUntilWorker:workerDemo
@@ -83,7 +83,7 @@ int main (int argc, const char * argv[]) {
 		  (long)ok) ;
 	
 	
-	NSLog(@"Starting Test #2") ;
+	NSLog(@"Starting Test #2 (should not succeed)") ;
 	duration = 3.0 ;
 	timeout = 2.0 ;
 	ok = [SSYThreadPauser blockUntilWorker:workerDemo

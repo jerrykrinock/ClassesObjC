@@ -3,8 +3,8 @@
 
 enum SSYVectorImageStyles_enum
 {
-	SSYVectorImageStylePlus,
-	SSYVectorImageStyleMinus,
+    SSYVectorImageStylePlus,
+    SSYVectorImageStyleMinus,
     /* Dash is narrower and thinner than Minus */
     SSYVectorImageStyleDash,
     SSYVectorImageStyleDot,
@@ -18,14 +18,14 @@ enum SSYVectorImageStyles_enum
     SSYVectorImageStyleTriangle90,
     /* Triangle, horizonal baseline, pointing up, with top vertex 2*arctan(.5)
      = 53.2 degrees.  This one is a taller and thinner than Triangle90. */
-	SSYVectorImageStyleTriangle53,
-	SSYVectorImageStyleInfoOff,
+    SSYVectorImageStyleTriangle53,
+    SSYVectorImageStyleInfoOff,
     SSYVectorImageStyleInfoOn,
     SSYVectorImageStyleHelp,
-	/* Five-pointed star used in SSYStarRatingView */
+    /* Five-pointed star used in SSYStarRatingView */
     SSYVectorImageStyleStar,
     /* White "X" inside a gray circle, used in SSYStarRatingView */
-	SSYVectorImageStyleRemoveX,
+    SSYVectorImageStyleRemoveX,
     /* "Bookmark", solid black except for a white hole near the top */
     SSYVectorImageStyleBookmark,
     SSYVectorImageStyleHierarchy,
@@ -51,9 +51,16 @@ typedef enum SSYVectorImageStyles_enum SSYVectorImageStyle ;
 
 /*
  @param    wength  The width = length of the square image to be returned
- @param    rotateDegrees  Measure by which the result should be rotated clockwise
- @param    inset  Number of points by which to inset the desired shape from the
- given diameter
+ @param    color  The fill and stroke color of the result, and indication of
+ whether or not you want a so-called "template image".  If you pass nil, the
+ fill and stroke color will be black, and also the result will be a "template
+ image".  Otherwise, the result will not be a "template image".  See
+ -[NSImage setTemplate:] documentation for more information.
+ @param    rotateDegrees  Measure by which the result will be rotated clockwise
+ @param    inset  Percent of wength by which to inset the desired shape from the
+ given wength on all four edges.  The maximum useful value of inset is 50.0, at
+ which the returned image will be empty because if you take 50% from each edge
+ you are left with zero.
  
  @details  Known Bug: Not all of the image styles obey the color, rotateDegrees
  and inset parameters.  It's a todo.

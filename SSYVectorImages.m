@@ -1,5 +1,6 @@
 #import "SSYVectorImages.h"
 #import "NSImage+Transform.h"
+#import "SSY_ARC_OR_NO_ARC.h"
 
 @implementation SSYVectorImages
 
@@ -55,7 +56,7 @@
                        size:size
                        fill:fill] ;
         [image unlockFocus] ;
-#if SSY_ARC_OR_NO_ARC
+#if !__has_feature(objc_arc)
         [image autorelease] ;
 #endif
     }
@@ -97,7 +98,7 @@
 #define GROOVE_WIDTH 8
     NSRect rect ;
     NSBezierPath* aPath ;
-
+    
     rect = NSMakeRect(midX-(GROOVE_WIDTH/2), GROOVE_BOTTOM, GROOVE_WIDTH, GROOVE_TOP - GROOVE_BOTTOM) ;
     aPath = [NSBezierPath bezierPathWithRoundedRect:rect
                                             xRadius:(GROOVE_WIDTH/2)
@@ -119,10 +120,9 @@
             color:(NSColor *)color
             inset:(CGFloat)inset {
     NSBezierPath* path = [NSBezierPath bezierPath] ;
-    [[NSColor colorWithCalibratedWhite:0.0 alpha:0.7] set] ;
     
     CGFloat radius = wength/2 ;
-
+    
     [[NSGraphicsContext currentContext] saveGraphicsState] ;
     // The idea here is that all images have a normalized size of 100 x 100.
     // Makes it easier to mentally write the code
@@ -193,25 +193,23 @@
             
             BOOL taller = (style == SSYVectorImageStyleTriangle53) ;
             
-            CGFloat baselineOffset = 
-            taller
-            ? 50
-            : 25 ;
-            CGFloat baseline = 50.0 - baselineOffset ;
+            CGFloat centerToBottom = taller ? 50 : 25 ;
+            CGFloat baseline = 50.0 - centerToBottom + inset ;
+            CGFloat width = 100.0 - 2.0 * inset ;
+            CGFloat height = (taller ? 100.0 : 50.0) - 2.0 * inset ;
             
             // Start at bottom left
-            [path moveToPoint:NSMakePoint(0, baseline)] ;
+            [path moveToPoint:NSMakePoint(inset, baseline)] ;
             
             // Move to the right
-            [path relativeLineToPoint:NSMakePoint(100.0, 0)] ;
+            [path relativeLineToPoint:NSMakePoint(width, 0)] ;
             
             // Move back halfway to the left, and up
-            CGFloat height = taller ? 100.0 : 50.0 ;
-            [path relativeLineToPoint:NSMakePoint(-50.0, height)] ;
+            [path relativeLineToPoint:NSMakePoint(-(width/2), height)] ;
             
             // Finish
             [path closePath] ;
-            [[NSColor grayColor] setFill] ;
+            [color setFill] ;
             [path fill] ;
             break;
         }
@@ -261,9 +259,6 @@
                                          startAngle:0.0
                                            endAngle:360.0] ;
             [path closePath] ;
-            if (!color) {
-                color = [NSColor lightGrayColor] ;
-            }
             [color setFill] ;
             [path fill] ;
             [path removeAllPoints] ;
@@ -407,7 +402,7 @@
             
             
             [path fill] ;
-            [path stroke] ;			
+            [path stroke] ;
             
             break ;
         }
@@ -586,43 +581,30 @@
 
 + (NSImage*)imageStyle:(SSYVectorImageStyle)style
                 wength:(CGFloat)wength
-				 color:(NSColor*)color
+                 color:(NSColor*)color
          rotateDegrees:(CGFloat)rotateDegrees
                  inset:(CGFloat)inset {
     NSSize size = NSMakeSize(wength, wength) ;
     NSImage* image ;
     NSImage* rotatedImage ;
-
-    if ([NSImage respondsToSelector:@selector(imageWithSize:flipped:drawingHandler:)]) {
-        // We must be in OS X 10.8 or later
-        image = [NSImage imageWithSize:size
-                               flipped:NO
-                        drawingHandler:^(NSRect dstRect) {
-                            [self drawStyle:style
-                                     wength:wength
-                                      color:color
-                                      inset:(CGFloat)inset] ;
-                            return YES ;
-                        }] ;
-        rotatedImage = [image imageRotatedByDegrees:rotateDegrees] ;
-    }
-    else {
-        image = [[NSImage alloc] initWithSize:size] ;
-        [image lockFocus] ;
-        [self drawStyle:style
-                 wength:wength
-                  color:color
-                  inset:inset] ;
-        [image unlockFocus] ;
-        rotatedImage = [image imageRotatedByDegrees:rotateDegrees] ;
-#if SSY_ARC_OR_NO_ARC
-        [image release] ;
-#endif
+    
+    // We must be in OS X 10.8 or later
+    image = [NSImage imageWithSize:size
+                           flipped:NO
+                    drawingHandler:^(NSRect dstRect) {
+                        [self drawStyle:style
+                                 wength:wength
+                                  color:(color ? color : [NSColor blackColor])
+                                  inset:(CGFloat)inset] ;
+                        return YES ;
+                    }] ;
+    rotatedImage = [image imageRotatedByDegrees:rotateDegrees] ;
+    
+    if (color == nil) {
+        [rotatedImage setTemplate:YES] ;
     }
     
-    [rotatedImage setTemplate:YES] ;
-    
-	return rotatedImage ;	
+    return rotatedImage ;
 }
 
 

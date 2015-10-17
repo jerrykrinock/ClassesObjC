@@ -1276,22 +1276,6 @@ end:
 	return bundlePath ;
 }
 
-+ (BOOL)activateAppWithBundlePath:(NSString*)bundlePath
-				 bundleIdentifier:(NSString*)bundleIdentifier {
-	if (!bundlePath && bundleIdentifier) {
-		bundlePath = [[NSBundle bundleWithIdentifier:bundleIdentifier] bundlePath] ;
-	}
-	
-	BOOL ok = NO ;
-	if (bundlePath) {
-		ok = [[NSWorkspace sharedWorkspace] openFile:nil
-									 withApplication:bundlePath
-									   andDeactivate:YES] ;
-	}
-	
-	return ok ;
-}
-
 + (NSInteger)secondsRunningPid:(pid_t)pid {
 	NSArray* arguments = [NSArray arrayWithObjects:
 						  @"-p",

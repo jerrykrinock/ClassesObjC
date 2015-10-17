@@ -20,7 +20,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
     }
     NSMutableArray* subs = [[NSMutableArray alloc] init] ;
     [subs addObject:@""] ;
-    if ([query itemClass] == kSecClassInternetPassword) {
+    if ([query itemClass] == (NSString*)kSecClassInternetPassword) {
         if (trySubhosts) {
             [subs addObjectsFromArray:trySubhosts] ;
         }
@@ -69,7 +69,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
     if (itemClass) {
         [query setItemClass:itemClass] ;
     }
-    if ([query itemClass] == kSecClassInternetPassword) {
+    if ([query itemClass] == (NSString*)kSecClassInternetPassword) {
         [query setServer:servostName] ;
     }
     else {
@@ -93,7 +93,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
     if (itemClass) {
         [query setItemClass:itemClass] ;
     }
-    if ([query itemClass] == kSecClassInternetPassword) {
+    if ([query itemClass] == (NSString*)kSecClassInternetPassword) {
         [query setServer:servostName] ;
     }
     else {
@@ -139,13 +139,13 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
 + (NSArray*)allInternetItemsForHost:(NSString*)hostName {
     return [self allItemsForHost:hostName
                          service:nil
-                           class:kSecClassInternetPassword] ;
+                           class:(NSString*)(NSString*)kSecClassInternetPassword] ;
 }
 
 + (NSArray*)allGenericItemsForService:(NSString*)serviceName {
     return [self allItemsForHost:nil
                          service:serviceName
-                           class:kSecClassGenericPassword] ;
+                           class:(NSString*)kSecClassGenericPassword] ;
 }
 
 + (NSArray*)accountNamesForServost:(NSString*)servostName
@@ -155,7 +155,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
     if (itemClass) {
         [query setItemClass:itemClass] ;
     }
-    if ([query itemClass] == kSecClassInternetPassword) {
+    if ([query itemClass] == (NSString*)kSecClassInternetPassword) {
         [query setServer:servostName] ;
     }
     else {

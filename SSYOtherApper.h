@@ -453,15 +453,6 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 + (NSString*)pathOfThisUsersRunningAppWithBundleIdentifier:(NSString*)bundleIdentifier ;
 
 /*!
- @brief    Activates a specified app
-
- @details  Will use either bundlePath or bundleIdentifier,
- preferring bundlePath if it is given.
-*/
-+ (BOOL)activateAppWithBundlePath:(NSString*)bundlePath
-				 bundleIdentifier:(NSString*)bundleIdentifier ;
-
-/*!
  @brief    Returns the number of seconds since a process with a given pid
  has launched, or -1 if no process with the given pid is running
 */

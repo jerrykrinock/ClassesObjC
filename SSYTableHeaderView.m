@@ -11,10 +11,10 @@
 		NSString *identifier = [tableColumn identifier] ;
 		
 		if ([identifier hasPrefix:@"userDefined"]) {
-			NSPopUpButtonCell* headerCell = [tableColumn headerCell] ;
+			NSTableHeaderCell* headerCell = [tableColumn headerCell] ;
 			NSRect rect = [self headerRectOfColumn:[tableView columnWithIdentifier:identifier]] ;
-			[headerCell performClickWithFrame:rect
-									   inView:self] ;
+			[(NSPopUpButtonCell*)headerCell performClickWithFrame:rect
+                                                           inView:self] ;
 		}
 	}
 	else {
