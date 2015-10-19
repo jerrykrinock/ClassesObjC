@@ -134,6 +134,28 @@
     [scaleTransform concat] ;
     
     switch (style) {
+        case SSYVectorImageStyleChasingArrows: {
+#define GAP_DEGREES 15.0
+#define ARROW_DEGREES 15.0
+#define ARROW_START_DEGREES (GAP_DEGREES + ARROW_DEGREES)
+#define ARROW_SHOULDER 10.0
+#define INSIDE_RADIUS 40.0
+#define ARROW_TIP_RADIUS ((50.0 + INSIDE_RADIUS) / 2.0)
+            [path appendBezierPathWithArcWithCenter:NSMakePoint(radius, radius)
+                                             radius:(radius - inset)
+                                         startAngle:(270.0 - GAP_DEGREES)
+                                           endAngle:(90.0 + ARROW_START_DEGREES)] ;
+            // out to one shoulder:
+            [path lineToPoint:NSMakePoint(50.0-(50.0+ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (50.0+ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180))] ;
+            // to the tip of the arrow
+            [path lineToPoint:NSMakePoint(50 - ARROW_TIP_RADIUS*sin(GAP_DEGREES*M_PI/180.0), 50.0 + ARROW_TIP_RADIUS*cos(GAP_DEGREES*M_PI/180.0))] ;
+            // to the other shoulder
+            [path lineToPoint:NSMakePoint(50.0-(INSIDE_RADIUS-ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (INSIDE_RADIUS-ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180))] ;
+            [path closePath] ;
+            
+            [path stroke] ;
+            break ;
+        }
         case SSYVectorImageStyleTarget:
             // The circle
             [path appendBezierPathWithArcWithCenter:NSMakePoint(radius, radius)

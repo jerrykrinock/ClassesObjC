@@ -13,6 +13,7 @@ enum SSYVectorImageStyles_enum
      style, the inset is the inset of the circle.  The width and height of the
      square enclosing the two lines is equal to the wength.  */
     SSYVectorImageStyleTarget,
+    SSYVectorImageStyleChasingArrows,
     /* Triangle, horizonal baseline, pointing up, with top vertex 90 degrees.
      This one is shorter and fatter.  */
     SSYVectorImageStyleTriangle90,
