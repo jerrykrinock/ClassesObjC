@@ -524,7 +524,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	}
 
 	// Yes, the following *is* sometimes necessary to update, for example,
-	// when "Deleting BOOKMARK_NAME at Google (or del.icio.us)"
+	// when "Deleting BOOKMARK_NAME at del.icio.us"
 	[textField display] ;
 	
 	[self updateCompletionsPause] ;

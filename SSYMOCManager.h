@@ -24,6 +24,12 @@
 }
 
 /*!
+ @brief    Returns path to the directory in which the receiver's SQLite
+ MOCS reside on disk.
+ */
++ (NSString*)directoryOfSqliteMOCs ;
+
+/*!
  @brief    Returns whether or not a persistent (sqlite) store exists
  for a given identifier.
 

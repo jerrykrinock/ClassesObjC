@@ -115,14 +115,18 @@ static SSYMOCManager* sharedMOCManager = nil ;
 	}
 }
 
++ (NSString*)directoryOfSqliteMOCs {
+    NSBundle* mainAppBundle = [NSBundle mainAppBundle] ;
+    return [mainAppBundle applicationSupportPathForMotherApp] ;
+}
+
 + (NSURL*)sqliteStoreURLWithIdentifier:(NSString*)identifier {
 	NSString* filename ;
 	if (!identifier) {
 		identifier = @"Shared" ;
 	}
 	filename = [identifier stringByAppendingPathExtension:SSYManagedObjectContextPathExtensionForSqliteStores] ;
-    NSBundle* mainAppBundle = [NSBundle mainAppBundle] ;
-	NSString* path = [[mainAppBundle applicationSupportPathForMotherApp] stringByAppendingPathComponent:filename] ;
+	NSString* path = [[self directoryOfSqliteMOCs] stringByAppendingPathComponent:filename] ;
     NSURL* url = nil ;
     if (path) {
         // Above if() was added in BookMacster 1.19 to eliminate crash in case
