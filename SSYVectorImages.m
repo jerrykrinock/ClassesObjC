@@ -121,12 +121,16 @@
             inset:(CGFloat)inset {
     NSBezierPath* path = [NSBezierPath bezierPath] ;
     
-    CGFloat radius = wength/2 ;
-    
     [[NSGraphicsContext currentContext] saveGraphicsState] ;
-    // The idea here is that all images have a normalized size of 100 x 100.
-    // Makes it easier to mentally write the code
+
+    /* The idea here is that all images have a normalized size of 100 x 100.
+     Makes it easier to mentally write the code.
+     Do NOT use radius, wength or inset.
+     Instead, use 50, 100 and insetPercent. */
+
     CGFloat scale = wength / 100.0 ;
+    CGFloat radius = wength/2 ;
+    CGFloat insetPercent = inset * 100 / wength ;
     NSAffineTransform* scaleTransform = [NSAffineTransform transform] ;
     [scaleTransform scaleXBy:scale
                          yBy:scale] ;
@@ -135,23 +139,26 @@
     
     switch (style) {
         case SSYVectorImageStyleChasingArrows: {
-#define GAP_DEGREES 15.0
+#define GAP_DEGREES 30.0
 #define ARROW_DEGREES 15.0
 #define ARROW_START_DEGREES (GAP_DEGREES + ARROW_DEGREES)
 #define ARROW_SHOULDER 10.0
 #define INSIDE_RADIUS 40.0
 #define ARROW_TIP_RADIUS ((50.0 + INSIDE_RADIUS) / 2.0)
-            [path appendBezierPathWithArcWithCenter:NSMakePoint(radius, radius)
-                                             radius:(radius - inset)
-                                         startAngle:(270.0 - GAP_DEGREES)
-                                           endAngle:(90.0 + ARROW_START_DEGREES)] ;
+            [path appendBezierPathWithArcWithCenter:NSMakePoint(50.0, 50.0)
+                                             radius:(50.0 - insetPercent)
+                                         startAngle:(90.0 + ARROW_START_DEGREES)
+                                           endAngle:(270.0 - GAP_DEGREES)] ;
             // out to one shoulder:
             [path lineToPoint:NSMakePoint(50.0-(50.0+ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (50.0+ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180))] ;
+            NSLog(@"shoulder1 = %@", NSStringFromPoint([path currentPoint])) ;
             // to the tip of the arrow
             [path lineToPoint:NSMakePoint(50 - ARROW_TIP_RADIUS*sin(GAP_DEGREES*M_PI/180.0), 50.0 + ARROW_TIP_RADIUS*cos(GAP_DEGREES*M_PI/180.0))] ;
+            NSLog(@"      tip = %@", NSStringFromPoint([path currentPoint])) ;
             // to the other shoulder
             [path lineToPoint:NSMakePoint(50.0-(INSIDE_RADIUS-ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (INSIDE_RADIUS-ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180))] ;
-            [path closePath] ;
+            NSLog(@"shoulder2 = %@", NSStringFromPoint([path currentPoint])) ;
+            //[path closePath] ;
             
             [path stroke] ;
             break ;
@@ -159,22 +166,22 @@
         case SSYVectorImageStyleTarget:
             // The circle
             [path appendBezierPathWithArcWithCenter:NSMakePoint(radius, radius)
-                                             radius:(radius - inset)
+                                             radius:(50.0 - insetPercent)
                                          startAngle:0.0
                                            endAngle:359.99] ;
             [path closePath] ;
             // The +45° line
             [path moveToPoint:NSMakePoint(0.0, 0.0)] ;
-            [path relativeLineToPoint:NSMakePoint(wength, wength)] ;
+            [path relativeLineToPoint:NSMakePoint(100.0, 100.0)] ;
             // The vertical line
-            [path moveToPoint:NSMakePoint(0.0, wength)] ;
-            [path relativeLineToPoint:NSMakePoint(wength, -wength)] ;
+            [path moveToPoint:NSMakePoint(0.0, 100.0)] ;
+            [path relativeLineToPoint:NSMakePoint(100.0, -100.0)] ;
             
             [path stroke] ;
             break ;
         case SSYVectorImageStyleDot:;
-            [path appendBezierPathWithArcWithCenter:NSMakePoint(radius, radius)
-                                             radius:(radius - inset)
+            [path appendBezierPathWithArcWithCenter:NSMakePoint(50.0, 50.0)
+                                             radius:(50.0 - insetPercent)
                                          startAngle:0.0
                                            endAngle:359.99] ;
             [path closePath] ;
@@ -216,12 +223,12 @@
             BOOL taller = (style == SSYVectorImageStyleTriangle53) ;
             
             CGFloat centerToBottom = taller ? 50 : 25 ;
-            CGFloat baseline = 50.0 - centerToBottom + inset ;
-            CGFloat width = 100.0 - 2.0 * inset ;
-            CGFloat height = (taller ? 100.0 : 50.0) - 2.0 * inset ;
+            CGFloat baseline = 50.0 - centerToBottom + insetPercent ;
+            CGFloat width = 100.0 - 2.0 * insetPercent ;
+            CGFloat height = (taller ? 100.0 : 50.0) - 2.0 * insetPercent ;
             
             // Start at bottom left
-            [path moveToPoint:NSMakePoint(inset, baseline)] ;
+            [path moveToPoint:NSMakePoint(insetPercent, baseline)] ;
             
             // Move to the right
             [path relativeLineToPoint:NSMakePoint(width, 0)] ;
@@ -573,8 +580,8 @@
             break ;
         case SSYVectorImageStyleHexagon:;
             NSRect wholeFrame = NSMakeRect(0.0, 0.0, wength, wength) ;
-            NSRect frame = NSInsetRect(wholeFrame, inset, inset) ;
-            CGFloat insize = wength - 2*inset ;
+            NSRect frame = NSInsetRect(wholeFrame, insetPercent, insetPercent) ;
+            CGFloat insize = wength - 2*insetPercent ;
             
             NSPoint A = NSMakePoint(frame.origin.x + insize / 2, frame.origin.y + frame.size.height);
             NSPoint B = NSMakePoint(frame.origin.x + insize, frame.origin.y + frame.size.height - insize / 4);
