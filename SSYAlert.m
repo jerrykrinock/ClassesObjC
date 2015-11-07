@@ -537,13 +537,13 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 + (NSUInteger)recoveryOptionIndexForRecoveryOption:(NSInteger)recoveryOption {
 	NSUInteger recoveryOptionIndex ;
 	switch (recoveryOption) {
-		case NSAlertDefaultReturn /* 1 */ :
+		case NSAlertFirstButtonReturn /* 1 */ :
 			recoveryOptionIndex = 0 ;
 			break;
-		case NSAlertAlternateReturn /* 0 */ :
+		case NSAlertThirdButtonReturn /* 0 */ :
 			recoveryOptionIndex = 1 ;
 			break;
-		case NSAlertOtherReturn /* -1 */ :
+		case NSAlertSecondButtonReturn /* -1 */ :
 			recoveryOptionIndex = 2 ;
 			break;
 	default:
@@ -761,9 +761,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[self retain] ;
 	
 	// Remember:
-	// Button1 --> tag=NSAlertDefaultReturn = 1
-	// Button2 --> tag=NSAlertAlternateReturn = 0
-	// Button3 --> tag=NSAlertOtherReturn = -1
+	// Button1 --> tag=NSAlertFirstButtonReturn = 1
+	// Button2 --> tag=NSAlertThirdButtonReturn = 0
+	// Button3 --> tag=NSAlertSecondButtonReturn = -1
 	[self setAlertReturn:[sender tag]] ;
 
 	if (m_shouldStickAround) {
@@ -981,7 +981,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		if (!(button = [self button1])) {
 			button = [SSYAlert makeButton] ;
 			[button setKeyEquivalent:@"\r"] ;
-			[button setTag:NSAlertDefaultReturn] ;
+			[button setTag:NSAlertFirstButtonReturn] ;
 			[self setTargetActionForButton:button] ;
 			[self setButton1:button] ;
 			[[[self window] contentView] addSubview:button] ;
@@ -1007,7 +1007,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		if (!(button = [self button2])) {
 			button = [SSYAlert makeButton] ;
 			[button setKeyEquivalent:@"\e"] ;  // escape key
-			[button setTag:NSAlertAlternateReturn] ;
+			[button setTag:NSAlertThirdButtonReturn] ;
 			[self setTargetActionForButton:button] ;
 			[self setButton2:button] ;
 			[[[self window] contentView] addSubview:button] ;
@@ -1032,7 +1032,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		NSButton* button ;
 		if (!(button = [self button3])) {
 			button = [SSYAlert makeButton] ;
-			[button setTag:NSAlertOtherReturn] ;
+			[button setTag:NSAlertSecondButtonReturn] ;
 			[self setTargetActionForButton:button] ;
 			[self setButton3:button] ;
 			[[[self window] contentView] addSubview:button] ;

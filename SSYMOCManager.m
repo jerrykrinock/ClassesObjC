@@ -80,7 +80,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 					 contextInfo:(void*)contextInfo {
 	error = [error deepestRecoverableError] ;
 	switch(recoveryOption) {
-		case NSAlertDefaultReturn:;
+		case NSAlertFirstButtonReturn:;
 			// "Move"
 			NSString* oldPath = [[[error userInfo] objectForKey:constKeyStoreUrl] path] ;
 			NSString* oldFilename = [oldPath lastPathComponent] ;

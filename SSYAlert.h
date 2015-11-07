@@ -17,7 +17,7 @@ typedef enum SSYAlertMode_enum SSYAlertMode ;
 
 /*!
  @brief    This is an addition to Apple's anonymous enumeration containing
- NSAlertDefaultReturn, NSAlertAlternateReturn, NSAlertOtherReturn and NSAlertErrorReturn.
+ NSAlertFirstButtonReturn, NSAlertThirdButtonReturn, NSAlertSecondButtonReturn and NSAlertErrorReturn.
  
  @details  These values are reflected in the 'Sheep Systems Suite'
  AppleScript terminology.  Any changes you make here should be reflected
@@ -113,7 +113,7 @@ extern NSString* const SSYAlertDidProcessErrorNotification ;
  attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:
  in the 'recoveryOption' parameter.
  @param    error  
- @param    recoveryOption  Should be either NSAlertDefaultReturn, NSAlertAlternateReturn,
+ @param    recoveryOption  Should be either NSAlertFirstButtonReturn, NSAlertThirdButtonReturn,
  or NSAlertAlternate return.  Note that this is different from Apple's method
  attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:
  in which the analagous optionIndex parameter can be any nonnegative integer.
@@ -134,7 +134,7 @@ extern NSString* const SSYAlertDidProcessErrorNotification ;
  attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:
  in the 'recoveryOption' parameter.
  @param    error  
- @param    recoveryOption  Should be either NSAlertDefaultReturn, NSAlertAlternateReturn,
+ @param    recoveryOption  Should be either NSAlertFirstButtonReturn, NSAlertThirdButtonReturn,
  or NSAlertAlternate return.  Note that this is different from Apple's method
  attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:
  in which the analagous optionIndex parameter can be any nonnegative integer.
@@ -431,9 +431,9 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  to specify which didEndSelector runs.
  @result   Same as Apple's alert returns:
  <ul>
- <li>If button 1 (left) was clicked, NSAlertDefaultReturn.</li>
- <li>If button 2 (right) was clicked, NSAlertAlternateReturn.</li>
- <li>If button 3 (middle) was clicked, NSAlertOtherReturn.</li>
+ <li>If button 1 (left) was clicked, NSAlertFirstButtonReturn.</li>
+ <li>If button 2 (right) was clicked, NSAlertThirdButtonReturn.</li>
+ <li>If button 3 (middle) was clicked, NSAlertSecondButtonReturn.</li>
  </ul>
  */
 @property (assign) NSInteger alertReturn ;
@@ -696,8 +696,8 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  the error -isOnlyInformational.
   
  @param    error  The error to be presented, or nil.
- @result   If recovery was not attempted, will be NSAlertDefaultReturn, NSAlertAlternateReturn,
- or NSAlertOtherReturn depending on whether user clicked the first, second, or third button.
+ @result   If recovery was not attempted, will be NSAlertFirstButtonReturn, NSAlertThirdButtonReturn,
+ or NSAlertSecondButtonReturn depending on whether user clicked the first, second, or third button.
  If recovery was attempted, result will be SSYAlertRecoverySucceeded, SSYAlertRecoveryFailed,
  or SSYAlertRecoveryAttemptedAsynchronously.
  */
@@ -759,7 +759,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  buttons 1-3, terminated by a nil sentinel.
  If no button titles are passed, dialog will have 1 button titled
  as localized "OK".
- @result   Indicates button clicked by user: NSAlertDefaultReturn, NSAlertAlternateReturn or NSAlertOtherReturn 
+ @result   Indicates button clicked by user: NSAlertFirstButtonReturn, NSAlertThirdButtonReturn or NSAlertSecondButtonReturn 
  */
 + (NSInteger)runModalDialogTitle:(NSString*)title
 				   message:(NSString*)msg
@@ -775,7 +775,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  @param    buttonsArray: An array of 0-3 strings which will become
  the titles of buttons 1-3.&nbsp; If this parameter is nil or an
  empty array, dialog will have 1 button titled as localized "OK".
- @result   Indicates button clicked by user: NSAlertDefaultReturn, NSAlertAlternateReturn or NSAlertOtherReturn 
+ @result   Indicates button clicked by user: NSAlertFirstButtonReturn, NSAlertThirdButtonReturn or NSAlertSecondButtonReturn 
  */
 + (NSInteger)runModalDialogTitle:(NSString*)title
 				   message:(NSString*)msg

@@ -362,7 +362,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
                                                otherButton:nil
                                  informativeTextWithFormat:@"%@", msg2] ;
             NSInteger alertReturn = [alert runModal] ;
-            if (alertReturn == NSAlertAlternateReturn) {
+            if (alertReturn == NSAlertThirdButtonReturn) {
                 // 'Cancel'
                 underlyingError = [NSError errorWithDomain:SSYPersistentDocumentMultiMigratorErrorDomain
                                                       code:SSYPersistentDocumentMultiMigratorErrorCodeUserCancelledUndisplayableRestore

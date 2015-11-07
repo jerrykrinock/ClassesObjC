@@ -10,17 +10,17 @@
 	NSInvocation* invocation = nil ;
 	
 	switch (returnCode) {
-		case NSAlertDefaultReturn:
+		case NSAlertFirstButtonReturn:
 			if ([invocations count] > 0) {
 				invocation = [invocations objectAtIndex:0] ;
 			}
 			break ;
-		case NSAlertAlternateReturn:
+		case NSAlertThirdButtonReturn:
 			if ([invocations count] > 1) {
 				invocation = [invocations objectAtIndex:1] ;
 			}
 			break ;
-		case NSAlertOtherReturn:
+		case NSAlertSecondButtonReturn:
 			if ([invocations count] > 2) {
 				invocation = [invocations objectAtIndex:2] ;
 			}

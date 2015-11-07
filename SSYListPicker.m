@@ -127,13 +127,13 @@ NSString* constKeyDidCancelInvocation = @"didCancelInvocation" ;
 	
 	[alert endModalSession] ;
 	
-	if ([alert alertReturn] == NSAlertDefaultReturn) {
+	if ([alert alertReturn] == NSAlertFirstButtonReturn) {
 		// Clicked "OK" or "Done"
 		selectedIndexSet = [[[alert otherSubviews] objectAtIndex:0] selectedIndexes] ;
 		done = YES ;
 		proceed = YES ;
 	}
-	else if ([alert alertReturn] == NSAlertAlternateReturn) {
+	else if ([alert alertReturn] == NSAlertThirdButtonReturn) {
 		// Clicked "Cancel"
 		done = YES ;
 	}
