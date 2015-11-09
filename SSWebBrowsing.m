@@ -44,17 +44,15 @@
 }
 
 + (NSString*)defaultBrowserDisplayName {
-	OSStatus err ;
+	CFErrorRef error ;
 
 	// Get browser's URL
 	NSURL *defaultBrowserURL = nil ;
-	err = LSGetApplicationForURL(
-								 [self sampleHttpUrl],
-								 kLSRolesViewer,
-								 NULL,
-								 (CFURLRef *)&defaultBrowserURL) ;
+    defaultBrowserURL = (NSURL*)LSCopyDefaultApplicationURLForURL([self sampleHttpUrl],
+                                                                  kLSRolesViewer,
+                                                                  &error) ;
 	NSString* name = nil ;
-	if ((err == noErr) && defaultBrowserURL) {
+	if (!error && defaultBrowserURL) {
 		name = [[NSFileManager defaultManager] displayNameAtPath:[defaultBrowserURL path]] ;
 		// Remove suffix ".app":
 		if ([name hasSuffix:@".app"]) {
@@ -66,7 +64,6 @@
 		name = @"??" ;
 	}
     
-    // Memory leak fixed in BookMacster 1.17.  See LSGetApplicationForURL() doc.
     if (defaultBrowserURL) {
         CFRelease(defaultBrowserURL) ;
     }

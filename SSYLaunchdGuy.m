@@ -208,9 +208,11 @@ NSString* const SSYLaunchdGuyErrorKeyCommandStderr = @"Command Stderr" ;
 	
 	// Create data
 	NSString* errorDescription = nil ;
-	NSData* data = [NSPropertyListSerialization dataFromPropertyList:dic
-															  format:NSPropertyListXMLFormat_v1_0
-													errorDescription:&errorDescription] ;
+    NSError* underlyingError = nil ;
+    NSData* data = [NSPropertyListSerialization dataWithPropertyList:dic
+                                                                 format:NSPropertyListXMLFormat_v1_0
+                                                                options:0
+                                                                  error:&underlyingError] ;
 	if (!data) {
 		NSString* msg = [NSString stringWithFormat:
 						 @"Could not make agent data because %@",
@@ -222,6 +224,7 @@ NSString* const SSYLaunchdGuyErrorKeyCommandStderr = @"Command Stderr" ;
 		error = SSYMakeError(48376, msg) ;
 		error = [error errorByAddingUserInfoObject:dic
 												  forKey:@"Dictionary"] ;
+        error = [error errorByAddingUnderlyingError:underlyingError] ;
 		ok = NO ;
 		goto end ;
 	}

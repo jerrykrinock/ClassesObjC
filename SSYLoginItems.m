@@ -114,19 +114,19 @@ end:
 	// Now, iterate through the items in the snapshot.  Resolve each item
 	// to a URL, and if it matches the given URL, assign it to targetItem
 	// and break.
-	OSStatus status = noErr ;
 	NSInteger i = 1 ;
 	for (id item in (NSArray*)*snapshot_p) {
-		NSURL* aURL = nil ;
-		status = LSSharedFileListItemResolve(
-											  (LSSharedFileListItemRef)item,
-											  0,
-											  (CFURLRef*)&aURL,
-											  NULL) ;
-		if ((status == noErr) && (aURL != nil)) {
-			if ([aURL isEqual:url]) {
+		CFURLRef aURL = nil ;
+        CFErrorRef underlyingError ;
+        aURL = LSSharedFileListItemCopyResolvedURL(
+                                                   (LSSharedFileListItemRef)item,
+                                                   0,
+                                                   &underlyingError) ;
+		if (!underlyingError && (aURL != nil)) {
+			if ([(NSURL*)aURL isEqual:url]) {
 				targetItem = (LSSharedFileListItemRef)item ;
-                CFSafeRelease(aURL) ;  // Memory leak fixed in BookMacster 1.17
+                CFSafeRelease(aURL) ;
+                aURL = NULL ;
 				break ;
 			}
 		}
@@ -139,7 +139,6 @@ end:
             // Bug fixed in BookMacster 1.13.6 right here.  The condition
             // "if (error)" on the next 2  dozen lines, which made no sense,
             // was removed.
-            NSError* underlyingError = [NSError errorWithMacErrorCode:status] ;
             NSString* desc = @"Mac OS X could not resolve your Login Items." ;
             NSString* path = [url path] ;
             if (!path) {
@@ -157,28 +156,20 @@ end:
                                              reason, NSLocalizedFailureReasonErrorKey, // won't be nil
                                              underlyingError, NSUnderlyingErrorKey,     // won't be nil
                                              [NSNumber numberWithInteger:i], @"Broken Item Index", // won't be nil
-                                             [NSNumber numberWithInteger:status], @"Underlying Error Status Code",  // won't be nil
+                                             underlyingError ? (NSError*)underlyingError : @"Nil underlying error", @"Underlying Error",  // won't be nil
                                              path , @"Path Looking For",   // might be nil
                                              nil] ;
-            
-            if ((status == fnfErr) || (status == nsvErr)) {
-                NSString* suggestion = [NSString stringWithFormat:
-                                        @"Visit your System Preferences and delete or reinstall Login Item Number %ld.",
-                                        (long)i] ;
-                [userInfo setObject:suggestion
-                             forKey:NSLocalizedRecoverySuggestionErrorKey] ;
-            }
             
             error = [NSError errorWithDomain:constSSYLoginItemsErrorDomain
                                         code:SSYLoginItemsCouldNotResolveExistingItemErrorCode
                                     userInfo:userInfo] ;
 
 			ok = NO ;
-            CFSafeRelease(aURL) ;  // Memory leak fixed in BookMacster 1.17
+            CFSafeRelease(aURL) ;
+            aURL = NULL ;
 			break ;
 		}
         
-        // Memory leak fixed in BookMacster 1.17
         CFSafeRelease(aURL) ;
         
 		i++ ;
