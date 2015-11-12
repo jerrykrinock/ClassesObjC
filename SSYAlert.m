@@ -1808,9 +1808,13 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		// I think this is better because: What if the attached sheet is not our window!
 		NSWindow* sheet = [self window] ;
 		
-		// Roll up and close the sheet.
-		
-		[sheet orderOut:self];
+        // When we roll up and close the sheet, ARC will release and
+        // dealloc self.  Why??  Whatever, we grab self's alert return now.
+        NSInteger alertReturn = [self alertReturn] ;
+        
+        
+        // Roll up and close the sheet.
+        [sheet orderOut:self] ;
 		[sheet retain] ;  // Will release it below
 		[sheet close] ;
 
@@ -1828,8 +1832,15 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 		// The following will cause the didEndSelector to execute.
 		if (sheet) {
-			[NSApp endSheet:sheet
-				 returnCode:[self alertReturn]] ;
+            /* The following will cause the completion handler in the call to
+             -[NSWindow beginSheet:completionHandler: in -[SSYAlert
+             runModalSheetOnWindow:modalDelegate:didEndSelector:contextInfo:]
+             to execute.  Prior to the "blocks revolution", I sent this exact
+             same method signature to NSApp instead of NSWindow, and it caused
+             the didEndSelector to execute synchronously.  */
+            [documentWindow_ endSheet:sheet
+                           returnCode:alertReturn] ;
+            /* Completion handler has executed and returned. */
 		}
 		[sheet release] ;
 		// We return here after the didEndSelector has completed
