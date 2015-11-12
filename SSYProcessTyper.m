@@ -62,23 +62,6 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
 	return type ;
 }
 
-+ (pid_t)inactivateActiveAppAndReturnNewActiveApp {
-	//NSLog(@"1000 Hiding Current ActiveApp: %@", [[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationName"]) ;
-	pid_t activeAppPid = (pid_t)[[[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationProcessIdentifier"] integerValue] ;
-	OSStatus err;
-	ProcessSerialNumber psn ;
-	err = GetProcessForPID(activeAppPid, &psn) ;
-	if (err != noErr) {
-        NSLog(@"Internal Error 915-9384 %ld", (long)err) ;
-    }
-	err = ShowHideProcess(&psn, false) ;
-	if (err != noErr) {
-        NSLog(@"Internal Error 915-9385 %ld", (long)err) ;
-    }
-	activeAppPid = (pid_t)[[[[NSWorkspace sharedWorkspace] activeApplication] objectForKey:@"NSApplicationProcessIdentifier"] integerValue] ;
-    return activeAppPid ;
-}
-
 #define TIMEOUT_BEFORE_TRYING_DANCE_WITH_FINDER 2.0
 /*
  The above should be long enough that it does not do the dance when launched
@@ -94,13 +77,8 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
 #define TIMEOUT_FOR_DANCE_WITH_FINDER 3.0
 
 + (void)bringFrontPid:(pid_t)pid {
-	ProcessSerialNumber psn ;
-	OSStatus err ;
-	err = GetProcessForPID(pid, &psn) ;
-	if (err != noErr) {
-        NSLog(@"Internal Error 915-9386 %ld", (long)err) ;
-    }
-	SetFrontProcess(&psn);
+    NSRunningApplication* app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid] ;
+    [app activateWithOptions:0] ;
 }
 
 + (void)danceWithFinder {
@@ -255,8 +233,6 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
 	[self transformToType:SSYProcessTyperTypeForeground] ;
 }
 
-#if (MAC_OS_X_VERSION_MAX_ALLOWED > 1060)
-
 + (void)transformToUIElement:(id)sender {
 	[self transformToType:SSYProcessTyperTypeUIElement] ;
 }
@@ -264,8 +240,6 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
 + (void)transformToBackground:(id)sender {
 	[self transformToType:SSYProcessTyperTypeBackground] ;
 }
-
-#endif
 
 
 @end
