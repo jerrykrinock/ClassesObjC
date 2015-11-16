@@ -2,7 +2,6 @@
 
 #import "SSYProcessTyper.h"
 #import "SSYMailto.h"
-#import "SSYSheetManager.h"
 #import "SSYSystemDescriber.h"
 #import "SSYWrappingCheckbox.h"
 
@@ -16,6 +15,8 @@
 #import "NSError+SSYInfo.h"
 #import "SSYWindowHangout.h"
 #import "NSBundle+MainApp.h"
+#import "SSYVectorImages.h"
+#import "NSInvocation+Quick.h"
 
 NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager = nil ;
 
@@ -165,6 +166,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @property (copy) NSString* helpAnchorString ;
 @property (retain) NSError* errorPresenting ;
 @property (retain) NSImageView* iconInformational ;
+@property (retain) NSImageView* iconWarning ;
 @property (retain) NSImageView* iconCritical ;
 @property (retain) NSButton* buttonPrototype ;
 @property (copy) NSString* wordAlert ;
@@ -395,6 +397,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @synthesize helpAnchorString ;
 @synthesize errorPresenting ;
 @synthesize iconInformational ;
+@synthesize iconWarning ;
 @synthesize iconCritical ;
 @synthesize buttonPrototype ;
 @synthesize wordAlert ;
@@ -796,39 +799,83 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (void)stealObjectsFromAppleAlerts {
-	NSPanel* panel ;
-
-	panel = NSGetAlertPanel(nil, @"dummyInfoText", @"OK", nil, nil) ;
-	NSArray* subviews = [[panel contentView] subviews] ;
-	for (NSView* subview in subviews) {
-		if ([subview isKindOfClass:[NSImageView class]]) {
-			[self setIconInformational:(NSImageView*)subview] ;
-		}
-		else if ([subview isKindOfClass:[NSTextField class]]) {
-			NSString* string  = [(NSTextField*)subview stringValue] ;
-			if ([string isEqualToString:@"dummyInfoText"]) {
-			}
-			else {
-				[self setWordAlert:string] ;
-			}
-		}
-	}
-	// The following was added in BookMacster 1.11, to fix memory leak.
-	// This is odd, since we used NS*Get*AlertPanel, but per documentation.
-	NSReleaseAlertPanel(panel) ;
-	
-	// Now, go back and get the critical-badged icon
-	panel = NSGetCriticalAlertPanel(@"", @"", @"OK", nil, nil) ;
-	subviews = [[panel contentView] subviews] ;
-	for (NSView* subview in subviews) {
-		if ([subview isKindOfClass:[NSImageView class]]) {
-			[self setIconCritical:(NSImageView*)subview] ;
-			break ;
-		}
-	}
-	// The following was added in BookMacster 1.11
-	// This is odd, since we used NS*Get*AlertPanel, but per documentation.
-	NSReleaseAlertPanel(panel) ;
+    NSAlert* nsAlert = [[NSAlert alloc] init] ;
+    
+    NSImageView* iconView ;
+    NSRect frame = NSMakeRect(0.0, 0.0, 64.0, 64.0) ;
+    NSImage* badge ;
+    
+    // Steal localized word for "alert"
+    [self setWordAlert:[nsAlert messageText]] ;
+    
+    // Steal the icon.  (Could also get this from NSBundle I suppose.)
+    NSImage* rawIcon = [nsAlert icon] ;
+    NSImage* image = [[NSImage alloc] initWithSize:(NSMakeSize(64.0, 64.0))] ;
+    [image lockFocus] ;
+    [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
+    CGFloat borderWength = 8.0 ;
+    [rawIcon drawInRect:NSMakeRect(
+                                   borderWength,
+                                   borderWength,
+                                   [image size].width - 2 * borderWength,
+                                   [image size].height - 2 * borderWength)
+               fromRect:NSZeroRect
+              operation:NSCompositeSourceOver
+               fraction:1.0] ;
+    [image unlockFocus] ;
+    
+    
+    
+    
+    // Set raw icon as "informational"
+    iconView = [[NSImageView alloc] initWithFrame:frame] ;
+    iconView.image = [image copy] ;
+    [self setIconInformational:iconView] ;
+    
+    // Badge with yellow and set as "warning"
+    badge = [SSYVectorImages imageStyle:SSYVectorImageStyleHexagon
+                                 wength:64.0
+                                  color:[NSColor yellowColor]
+                          rotateDegrees:90.0
+                                  inset:12.0] ;
+    [image lockFocus] ;
+    [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
+    [badge drawInRect:NSMakeRect(
+                                 [image size].width / 2,
+                                 0,
+                                 [image size].width / 2,
+                                 [image size].height / 2)
+             fromRect:NSZeroRect
+            operation:NSCompositeSourceOver
+             fraction:0.75] ;
+    [image unlockFocus] ;
+    iconView = [[NSImageView alloc] initWithFrame:frame] ;
+    iconView.image = [image copy] ;
+    [self setIconWarning:iconView] ;
+    
+    // Badge with red and set as "critical"
+    badge = [SSYVectorImages imageStyle:SSYVectorImageStyleHexagon
+                                 wength:64.0
+                                  color:[NSColor redColor]
+                          rotateDegrees:90.0
+                                  inset:12.0] ;
+    [image lockFocus] ;
+    [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
+    [badge drawInRect:NSMakeRect(
+                                 [image size].width / 2,
+                                 0,
+                                 [image size].width / 2,
+                                 [image size].height / 2)
+             fromRect:NSZeroRect
+            operation:NSCompositeSourceOver
+             fraction:0.75] ;
+    [image unlockFocus] ;
+    iconView = [[NSImageView alloc] initWithFrame:frame] ;
+    iconView.image = [image copy] ;
+    [self setIconCritical:iconView] ;
+    
+    /* Thanks to Brian Dunagan for the few lines of compositing code used above.
+     http://bdunagan.com/2010/01/25/cocoa-tip-nsimage-composites/ */
 }
 
 
@@ -956,6 +1003,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		case SSYAlertIconInformational:
 			icon_ = [self iconInformational] ;
 			break ;
+        case SSYAlertIconWarning:
+            icon_ = [self iconWarning] ;
+            break ;
 		case SSYAlertIconCritical:
         default:
 			icon_ = [self iconCritical] ;
@@ -1314,12 +1364,15 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 		[self setDocumentWindow:documentWindow_] ;
 		
-		[SSYSheetManager enqueueSheet:[self window]
-					   modalForWindow:documentWindow_
-                         retainHelper:nil  // Not needed because we use SSYWindowHangout
-						modalDelegate:modalDelegate
-					   didEndSelector:didEndSelector
-						  contextInfo:contextInfo] ;
+        [documentWindow_ beginSheet:[self window]
+                  completionHandler:^void(NSModalResponse modalResponse) {
+                      NSWindow* window = [self window] ;
+                      NSInvocation* invocation = [NSInvocation invocationWithTarget:modalDelegate
+                                                                           selector:didEndSelector
+                                                                    retainArguments:YES
+                                                                  argumentAddresses:&window, &modalResponse, &contextInfo] ;
+                      [invocation invoke] ;
+                  }] ;
 	}
 }
 
@@ -1352,18 +1405,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	
 	[self setIsDoingModalDialog:YES] ;	
 
-	// In case this is not the active application, we need to activate
-	// We want to activate only this alert window.  Because the following
-	// call to SetFrontProcessWithOptions() will bring forward the front
-	// window only, we want to make sure that our window is front.
-	// It will be, when we -runModalForWindow, but that might be too late.
-	// So we -orderFrontRegardless before SetFrontProcessWithOptions().
 	[[self window] orderFrontRegardless] ;
-	ProcessSerialNumber psn = { 0, kCurrentProcess } ;
-	SetFrontProcessWithOptions(
-							   &psn,
-							   kSetFrontProcessFrontWindowOnly
-							   ) ;
+    [NSApp activateIgnoringOtherApps:YES] ;  // was deprecated SetFrontProcessWithOptions()
     NSWindow* window = [self window] ;
     if (window) {
         // The following method will also make the window "key" and "visible"
@@ -1403,7 +1446,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 - (void)endModalSession {
 	if ([self modalSession]) {
 		NSInteger response = [NSApp runModalSession:[self modalSession]] ;
-		BOOL done = (response != NSRunContinuesResponse) ;
+		BOOL done = (response != NSModalResponseContinue) ;
 		if (!done) {
 			// if() since re-sending -stopModal might cause a crash
 			[NSApp stopModal] ;
@@ -1777,13 +1820,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// In case we are only being retained as the attachedSheet of our documentWindow...
 	[self retain] ;
 	
-	// The following is necessary to use the trick in SSYSheetManager
-	// in case the window is in fact not visible at this time.
-	if (![[self window] isVisible]) {
-		[[self window] setFrame:NSZeroRect
-						display:NO] ;
-	}
-	
 	[self endModalSession] ;
 	
 	if ([self isDoingModalDialog]) {
@@ -1888,7 +1924,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	BOOL running ;
 	if ([self modalSession]) {
 		NSInteger response = [NSApp runModalSession:[self modalSession]] ;
-		running = (response == NSRunContinuesResponse) ;
+		running = (response == NSModalResponseContinue) ;
 	}
 	else {
 		running = NO ;
@@ -2233,6 +2269,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[helpAnchorString release] ;
 	[errorPresenting release] ;
 	[iconInformational release] ;
+    [iconWarning release] ;
 	[iconCritical release] ;
 	[buttonPrototype release] ;
 	[wordAlert release] ;

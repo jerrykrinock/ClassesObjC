@@ -216,18 +216,6 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 					  user:(NSString*)user ;
 
 /*!
- @brief    Gets the bundle path of a process with a given process name
- which must have the same user id as this process.
- 
- @details  If no such process exists, returns 0.  I think that the name is the
- CFBundleName, but it may be CFExecutableName.  Finds some background processes but
- not all.  For example, finds QuicKeysBackgroundEngine, mdworker, SystemUIServer,
- SizzlingKeys4iTunes, loginwindow, iTunesHelper.  But does not find BookMacster-Quatch.
- Go figure.  Will not return zombie (Z) or (UEs) processes.  Uses Carbon > Process Manager.
- */
-+ (NSString*)bundlePathForProcessName:(NSString*)processName ;
-
-/*!
  @brief    Returns an array with one element for each running executable, with each element
  being a dictionary containing entries for pid, user, and command.
  
@@ -266,39 +254,6 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 + (NSSet*)infosOfProcessesNamed:(NSSet*)processNames
                            user:(NSString*)user ;
 
-+ (struct ProcessSerialNumber)processSerialNumberForAppWithBundleIdentifier:(NSString*)bundleIdentifier ;
-
-/*!
- @brief    Returns the process serial number of an *app* given its
- unix process ID (pid).
-
- @details  Will return {0,0} if the process whose
- pid is 'pid' does not have a PSN.  To find if a process has a PSN, in Terminal
- command "ps -alxww".  Processes which have a PSN are apps, and *some* helper
- tools.  Basic unix executables such as launchd, kextd, etc. do *not* have a PSN.
- BookMacster-Worker does *not* have a PSN.  iChatAgent *does* have a PSN.
- 
- @param    pid  
- @result   The process serial number of the target process, or struct values
- {0,0} if no such process exists.
-*/
-+ (struct ProcessSerialNumber)processSerialNumberForAppWithPid:(pid_t)pid ;
-
-/*!
- @brief    Returns the unix process identifier (pid) of a process with a given
- bundle path with the same user ID as the current process.
-
- @detail  	Although it's not documented, I have tested and confirmed that
- the GetProcessForPID() function which this method invokes under the hood
- will return error -600 procNotFound, and psn will be {0, 0}, for processes whose
- uid are other users than the current user (502, 503, whatever) or root (0),
- or some other system guy like 65.
- 
- @param    bundlePath  The bundle path with the result must have
- @result   The pid of the target process, or 0 if no qualifying process exists.
-*/
-+ (pid_t)pidOfThisUsersProcessWithBundlePath:(NSString*)bundlePath ;
-
 /*!
  @brief    Returns whether or not a process with a given unix process
  identifier (pid) is running.
@@ -329,19 +284,6 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  that of a running process
 */
 + (NSString*)descriptionOfPid:(pid_t)pid ;
-
-/*!
- @brief    Returns whether or not this user has an *app* running
- with a given pid.  Will return NO if pid is a basic unix executable.
- May return YES if running for some kinds of helper tools.
- 
- @details  Will return NO if the process whose
- pid is 'pid' does not have a PSN.  To find if a process has a PSN, in Terminal
- command "ps -alxww".  Processes which have a PSN are apps, and *some* helper
- tools.  Basic unix executables such as launchd, kextd, etc. do *not* have a PSN.
- BookMacster-Worker does *not* have a PSN.  iChatAgent *does* have a PSN.
-*/
-+ (BOOL)isThisUsersAppRunningWithPID:(pid_t)pid ;
 
 /*!
  @brief    Finds a running app, owned by the current user,
@@ -377,16 +319,6 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 					  killAfterTimeout:(BOOL)killAfterTimeout
 						  wasRunning_p:(BOOL*)wasRunning_p
 							   error_p:(NSError**)error_p ;
-
-/*!
- @brief    An Objective-C wrapper around Process Manager's KillProcess()
-*/
-+ (BOOL)killProcessWithProcessSerialNumber:(ProcessSerialNumber)psn ;
-
-/* This was stupid.  Use kill(pid, SIGKILL).
-+ (void)killProcessPID:(pid_t)pid
-		 waitUntilExit:(BOOL)wait ;
- */
 
 /*!
  @brief    Finds a running app, owned by the current user,
@@ -439,8 +371,6 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 		   timeout:(NSTimeInterval)timeout
 	  cpuPercent_p:(CGFloat*)cpuPercent_p
 		   error_p:(NSError**)error_p ;
-
-+ (NSString*)bundlePathOfSenderOfEvent:(NSAppleEventDescriptor*)event ;
 
 /*!
  @brief    Returns the full path to an application with the given

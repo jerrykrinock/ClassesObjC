@@ -131,10 +131,14 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 		goto end ;
 	}
 	NSString* errorString = nil ;
-	NSDictionary* versionInfo = [NSPropertyListSerialization propertyListFromData:plistData 
-																 mutabilityOption:NSPropertyListImmutable
-																		   format:NULL
-																 errorDescription:&errorString] ;
+    NSDictionary* versionInfo = nil ;
+    if (plistData) {
+        versionInfo = [NSPropertyListSerialization propertyListWithData:plistData
+                                                                options:NSPropertyListImmutable
+                                                                 format:NULL
+                                                                  error:&underlyingError] ;
+    }
+    
 	if (!versionInfo) {
 		errorCode = SSYPersistentDocumentMultiMigratorErrorCodeNoVersionInfoInPlist ;
 		[errorInfo setValue:errorString

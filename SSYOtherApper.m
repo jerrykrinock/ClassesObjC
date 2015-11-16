@@ -414,42 +414,6 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 }
 
 
-+ (struct ProcessSerialNumber)processSerialNumberForAppWithPid:(pid_t)pid {
-	OSStatus oss ;
-	struct ProcessSerialNumber psn = {0, 0};
-	oss = GetProcessForPID (pid, &psn) ;
-	if (oss != noErr) {
-		NSLog(@"Internal Error 502-9373 %ld", (long)oss) ;
-	}
-	/* Note: GetProcessForPID() will return procNotFound if the process whose
-	 pid is 'pid' does not have a PSN.  To find if a process has a PSN, in Terminal
-	 command "ps -alxww".  Processes which have a PSN are apps, and *some* helper
-	 tools.  Basic unix executables such as launchd, kextd, etc. do *not* have a PSN.
-	 BookMacster-Worker does *not* have a PSN.  iChatAgent *does* have a PSN. */
-	 return psn ;	
-}	
-
-+ (struct ProcessSerialNumber)processSerialNumberForAppWithBundleIdentifier:(NSString*)bundleIdentifier {
-	OSStatus err = noErr;
-	ProcessSerialNumber psn = { kNoProcess, kNoProcess };
-	while (err == noErr) {
-		err = GetNextProcess(&psn);
-		if (err == noErr) {
-			CFDictionaryRef procInfo = ProcessInformationCopyDictionary(
-																		&psn,
-																		kProcessDictionaryIncludeAllInformationMask
-			) ;
-			if ([[(NSDictionary *)procInfo objectForKey:(NSString*)kCFBundleIdentifierKey] isEqualToString:bundleIdentifier]) {
-				CFRelease(procInfo) ;
-				break ;
-			}
-			CFRelease(procInfo) ;
-		}
-	}
-	
-	return psn ;
-}
-
 + (pid_t)pidOfMyRunningExecutableName:(NSString*)executableName {
 	pid_t pid = 0 ;  // not found
 	NSString* targetUser = NSUserName() ;
@@ -568,29 +532,15 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	NSData* data = [NSData dataWithContentsOfFile:infoPlistPath] ;
 	NSDictionary* infoDic = nil ;
     if (data) {
-        if ([[NSPropertyListSerialization class] respondsToSelector:@selector(propertyListWithData:options:format:error:)]) {
-            // Mac OS X 10.6 or later
-            NSError* error = nil ;
-            infoDic = [NSPropertyListSerialization propertyListWithData:data
-                                                                options:NSPropertyListImmutable
-                                                                 format:NULL
-                                                                  error:&error] ;
-            // Documentation of this method is vague, but it appears to be
-            // better to check for error != nil than infoDic == nil.
-            if (error) {
-                NSLog(@"Internal Error 425-2349 %@", error) ;
-            }
-        }
-        else if ([[NSPropertyListSerialization class] respondsToSelector:@selector(propertyListFromData:mutabilityOption:format:errorDescription:)]) {
-            // Mac OS X 10.5 or earlier
-            NSError* error = nil ;
-            infoDic = [NSPropertyListSerialization propertyListWithData:data
-                                                                options:NSPropertyListImmutable
-                                                                 format:NULL
-                                                                  error:&error] ;
-            if (error) {
-                NSLog(@"Internal Error 425-2349 %@", error) ;
-            }
+        NSError* error = nil ;
+        infoDic = [NSPropertyListSerialization propertyListWithData:data
+                                                            options:NSPropertyListImmutable
+                                                             format:NULL
+                                                              error:&error] ;
+        // Documentation of this method is vague, but it appears to be
+        // better to check for error != nil than infoDic == nil.
+        if (error) {
+            NSLog(@"Internal Error 425-2349 %@", error) ;
         }
     }
     
@@ -628,36 +578,6 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	}
 
 	return majorVersion ;
-}
-
-+ (NSString*)processNameWithProcessSerialNumber:(struct ProcessSerialNumber)psn {
-	OSStatus    err = noErr;  
-	ProcessInfoRec  infoRec;
-	
-	Str255 processName ; // unsigned char Str255[256]
-    
-	infoRec.processInfoLength = sizeof(ProcessInfoRec) ;
-	// These two must be initialized or GetProcessInformation() will crash…
-	infoRec.processName = (StringPtr)&processName ; // a StringPtr = unsigned char *
-#if __LP64__
-    infoRec.processAppRef = NULL ;
-#else
-	infoRec.processAppSpec = NULL ;
-#endif	
-	err = GetProcessInformation(&psn, &infoRec);
-	
-	NSString* name = nil ;
-	if (err == noErr) {
-		name = (NSString *)CFStringCreateWithPascalString(NULL,
-														  (ConstStr255Param)&processName,  // a ConstStr255Param = const unsigned char *
-														  CFStringGetSystemEncoding()) ;
-		// The following worked too
-		// name = [[NSString alloc] initWithBytes:&(processName[1])
-		//								length:processName[0] 
-		//							  encoding:NSMacOSRomanStringEncoding] ;
-	}
-	
-	return [name  autorelease] ;
 }
 
 + (pid_t)pidOfProcessNamed:(NSString*)processName
@@ -713,68 +633,6 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
     [results release] ;
     [answer autorelease] ;
 	return answer ;
-}
-
-+ (NSString*)processBundlePathWithProcessSerialNumber:(struct ProcessSerialNumber)psn {
-	NSDictionary* processInfo = (NSDictionary*)ProcessInformationCopyDictionary (
-																				 &psn,
-																				 kProcessDictionaryIncludeAllInformationMask) ;
-	NSString* bundlePath = [processInfo objectForKey:@"BundlePath"] ;
-	
-	// Because Core Foundation doesn't have autorelease, we need to do this:
-	[[processInfo retain] autorelease] ;
-	// Otherwise, it will be released as soon as the app whose bundlePath it is quits.
-	// Before we did that, if Bookdog was running, BookMacster would crash in 
-	// -[SSYOtherApper quitThisUsersAppWithBundlePath:closeWindows:timeout:killAfterTimeout:wasRunning_p:error_p:] after
-	// quitting Bookdog, when sending [self isThisUsersAppRunningWithBundlePath:bundlePath].
-	// (This bug was fixed in BookMacster 1.5.7.)
-	CFRelease(processInfo) ;
-	return bundlePath ;
-}
-
-+ (NSString*)bundlePathForProcessName:(NSString*)processName {
-	struct ProcessSerialNumber psn ;
-	NSString* path = nil ;
-	
-	psn.lowLongOfPSN  = kNoProcess;
-	psn.highLongOfPSN  = kNoProcess;
-	
-	while (!(GetNextProcess (&psn))) {
-		NSString* aProcessName = [self processNameWithProcessSerialNumber:psn] ;
-		if ([aProcessName isEqualToString:processName] ) {
-			path = [self processBundlePathWithProcessSerialNumber:psn] ;
-			break ;
-		}
-	}
-	
-	return path ;
-}
-
-
-+ (pid_t)pidOfThisUsersProcessWithBundlePath:(NSString*)bundlePath {
-	OSStatus err = noErr;
-	pid_t pid = 0 ;
-	struct ProcessSerialNumber psn ;
-	
-	psn.lowLongOfPSN  = kNoProcess;
-	psn.highLongOfPSN  = kNoProcess;
-	
-	while (!(GetNextProcess (&psn))) {
-		NSString* aBundlePath = [self processBundlePathWithProcessSerialNumber:psn] ;
-		if ([aBundlePath isEqualToString:bundlePath] ) {
-			err = GetProcessPID(&psn, &pid);
-			if (!err) {
-				break ;
-			}
-		}
-	}
-	
-	return pid ;
-}
-
-+ (BOOL)isThisUsersAppRunningWithPID:(pid_t)pid {
-	ProcessSerialNumber psn = [self processSerialNumberForAppWithPid:pid] ;
-	return ((psn.lowLongOfPSN != 0) || (psn.highLongOfPSN != 0)) ;
 }
 
 + (BOOL)runAppleScriptSource:(NSString*)source
@@ -1056,7 +914,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
             if ([(NSDate*)[NSDate date] compare:endDate] == NSOrderedDescending) {
                 // Timed out
                 if (killAfterTimeout) {
-                    pid_t pid = [self pidOfThisUsersProcessWithBundlePath:bundlePath] ;
+                    pid_t pid = [self pidOfThisUsersAppWithBundlePath:bundlePath] ;
                     if (pid != 0) {
                         kill(pid, SIGKILL) ;
                     }
@@ -1090,11 +948,6 @@ end:
         *error_p = error ;
     }
 	return ok ;
-}
-
-+ (BOOL)killProcessWithProcessSerialNumber:(ProcessSerialNumber)psn {
-	OSErr err = KillProcess(&psn) ;
-	return (err == noErr) ;
 }
 
 /*
@@ -1142,19 +995,15 @@ end:
 }
 
 + (NSString*)applicationPathForUrl:(NSURL*)url {
-    OSStatus oss ;
-    CFURLRef appUrl ;
-    oss = LSGetApplicationForURL(
-                                 (CFURLRef)url,
-                                 kLSRolesViewer,
-                                 NULL,
-                                 &appUrl
-                                 ) ;
+    CFErrorRef error = nil ;
+    CFURLRef appUrl = LSCopyDefaultApplicationURLForURL((CFURLRef)url,
+                                                        kLSRolesViewer,
+                                                        &error
+                                                        ) ;
+    NSString* path = [(NSURL*)appUrl path] ;
     
-    
-    NSString* path = nil ;
-    if (oss == noErr) {		
-        path = [(NSURL*)appUrl path] ;
+    if (appUrl) {
+        CFRelease(appUrl) ;
     }
     
     return path ;
@@ -1255,25 +1104,6 @@ end:
 	[psErrorString release] ;
 	
 	return ok ;
-}
-
-+ (NSString*)bundlePathOfSenderOfEvent:(NSAppleEventDescriptor*)event {
-	// Thanks to Greg Robbins for this…
-	// http://www.cocoabuilder.com/archive/cocoa/125741-finding-the-sender-of-an-appleevent-in-cocoa-app-on-10-2-8-or-greater.html
-	// I think that the second part of his code, where you get the OSTypeSendersSignature,
-	// is probably depracated since 20050114, so I did not include it.
-	NSAppleEventDescriptor *addrDesc = [event attributeDescriptorForKeyword:keyAddressAttr] ;
-	NSData *psnData = [[addrDesc coerceToDescriptorType:typeProcessSerialNumber] data] ;
-	NSString* bundlePath ;
-	if (psnData) {
-		ProcessSerialNumber psn = *(ProcessSerialNumber *) [psnData bytes] ;
-		bundlePath = [SSYOtherApper processBundlePathWithProcessSerialNumber:psn] ;
-	}
-	else {
-		bundlePath = nil ;
-	}
-	
-	return bundlePath ;
 }
 
 + (NSInteger)secondsRunningPid:(pid_t)pid {

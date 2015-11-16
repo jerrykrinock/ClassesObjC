@@ -392,15 +392,14 @@ end:
 	name = [name stringByDeletingPathExtension] ;
 	mutableRefs = [NSMutableArray array] ;
 	for (id item in (NSArray*)snapshot) {
-		NSURL* aURL ;
+		CFURLRef aURL ;
 		BOOL breakAfterCleanup = NO ;
-		status = LSSharedFileListItemResolve(
-											  (LSSharedFileListItemRef)item,
-											  0,
-											  (CFURLRef*)&aURL,
-											  NULL) ;
+        aURL = LSSharedFileListItemCopyResolvedURL(
+                                                     (LSSharedFileListItemRef)item,
+                                                     0,
+                                                     NULL) ;
 		if (status == noErr) {
-			NSString* aPath = [aURL path]  ;
+			NSString* aPath = [(NSURL*)aURL path]  ;
 			if ((dontDeletePath == nil) || ![dontDeletePath isEqualToString:aPath]) {
 				NSString* aName = [[aPath lastPathComponent] stringByDeletingPathExtension]  ;
 				if ([aName isEqual:name]) {
@@ -412,12 +411,6 @@ end:
 			breakAfterCleanup = YES ;
 		}
 
-		// Documentation says to release this
-		// (Maybe because CF does not feature autorelease?)
-        // But I commented it out for some reason, apparently long ago.
-        // See also Note 21030229.
-		////CFSafeRelease(aURL) ;
-        // Added back in BookMacster 1.17…
         CFSafeRelease(aURL) ;
 		
 		if (breakAfterCleanup) {
@@ -591,14 +584,12 @@ end:
 	OSStatus status = noErr ;
 	paths = [NSMutableArray array] ;
 	for (id item in (NSArray*)snapshot) {
-		NSURL* aURL ;
-		status = LSSharedFileListItemResolve(
-                                             (LSSharedFileListItemRef)item,
-                                             0,
-                                             (CFURLRef*)&aURL,
-                                             NULL) ;
+        CFURLRef aURL = LSSharedFileListItemCopyResolvedURL(
+                                                            (LSSharedFileListItemRef)item,
+                                                            0,
+                                                            NULL) ;
 		if (status == noErr) {
-			NSString* aPath = [aURL path]  ;
+			NSString* aPath = [(NSURL*)aURL path]  ;
             [paths addObject:aPath] ;
 		}
         

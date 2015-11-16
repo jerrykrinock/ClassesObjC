@@ -1479,10 +1479,14 @@ end:
 	}
 	
 	if (result == SQLITE_OK) {
-		NSString *errorStr = nil ;
-		NSData* data = [NSPropertyListSerialization dataFromPropertyList:object
-																  format:NSPropertyListBinaryFormat_v1_0
-														errorDescription:&errorStr];
+		NSError* error = nil ;
+		NSData* data = [NSPropertyListSerialization dataWithPropertyList:object
+                                                                  format:NSPropertyListBinaryFormat_v1_0
+                                                                 options:0
+                                                                   error:&error] ;
+        if (!data) {
+            goto end ;
+        }
 		
 		// bind attribute object
 		result = sqlite3_bind_blob(preparedStatement, 1, [data bytes], (int)[data length], SQLITE_TRANSIENT) ;
@@ -1589,22 +1593,20 @@ end:
 			
 			NSData* data = [[NSData alloc] initWithBytes:pFirstByte length:nBytes] ;				
 			
-			if (data && ([data length] > 0)) {
-				NSString *plistError;
-				NSPropertyListFormat format;
-				plist = [NSPropertyListSerialization propertyListFromData:data
-														 mutabilityOption:NSPropertyListImmutable
-																   format:&format
-														 errorDescription:&plistError];
+			if ([data length] > 0) {
+				NSError *plistError ;
+				NSPropertyListFormat format ;
+				plist = [NSPropertyListSerialization propertyListWithData:data
+                                                                  options:NSPropertyListImmutable
+                                                                   format:&format
+                                                                    error:&plistError] ;
 				
 				if (!plist) {
 					error = SSYMakeError(453026, @"Could not make plist from data") ;
 					error = [error errorByAddingUserInfoObject:statement
 														forKey:@"query"] ;
-					error = [error errorByAddingUserInfoObject:plistError
-														forKey:@"underlying plist error"] ;
-					[plistError release] ;
-				}		
+					error = [error errorByAddingUnderlyingError:plistError] ;
+				}
 			}
             
             [data release] ;
@@ -1622,7 +1624,7 @@ end:
 	}			
 
 end:
- 	if (error_p != nil) {
+ 	if (error && error_p) {
 		*error_p = error ;
 	}
 	
@@ -1688,14 +1690,22 @@ end:
 				
 				NSData* data = [[NSData alloc] initWithBytes:pFirstByte length:nBytes] ;				
 
-				if (data && ([data length] > 0)) {
-					NSString *plistError;
-					NSPropertyListFormat format;
-					id plist = [NSPropertyListSerialization propertyListFromData:data
-															 mutabilityOption:NSPropertyListImmutable
-																	   format:&format
-															 errorDescription:&plistError];
-					if(plist) {
+				if ([data length] > 0) {
+					NSPropertyListFormat format ;
+                    NSError* plistError = nil ;
+					id plist = [NSPropertyListSerialization propertyListWithData:data
+                                                                         options:NSPropertyListImmutable
+                                                                          format:&format
+                                                                           error:&plistError] ;
+                    if (error) {
+                        error = SSYMakeError(453036, @"Could not make plist from data") ;
+                        error = [error errorByAddingUserInfoObject:data
+                                                            forKey:@"Data"] ;
+                        error = [error errorByAddingUnderlyingError:plistError] ;
+                        goto end ;
+                    }
+
+                    if(plist) {
 						[rowColumns addObject:plist] ;
 					}
 					else {
@@ -1801,11 +1811,19 @@ end:
 			// Now, another loop to bind each parameter value to its question mark
 			int i ;
 			for (i=0; i<nAttributes; i++) {
-				NSString *errorStr = nil ;
-				NSData* data = [NSPropertyListSerialization dataFromPropertyList:[valuesArray objectAtIndex:i]
-																		  format:NSPropertyListBinaryFormat_v1_0
-																errorDescription:&errorStr];
-				
+				NSError* plistError = nil ;
+				NSData* data = [NSPropertyListSerialization dataWithPropertyList:[valuesArray objectAtIndex:i]
+                                                                          format:NSPropertyListBinaryFormat_v1_0
+                                                                         options:0
+                                                                           error:&plistError] ;
+                if (plistError) {
+                    error = SSYMakeError(453037, @"Could not make data from value") ;
+                    error = [error errorByAddingUnderlyingError:plistError] ;
+                    error = [error errorByAddingUserInfoObject:[valuesArray objectAtIndex:i]
+                                                        forKey:@"Value"] ;
+                    goto end ;
+                }
+                
 				// i+1 in next line is because the question marks in sqlite are indexed starting with 1, not 0
 				result = sqlite3_bind_blob(preparedStatement, i+1, [data bytes], (int)[data length], SQLITE_TRANSIENT) ;
 				if (result != SQLITE_OK) {  

@@ -3,9 +3,10 @@
 @class SSYWrappingCheckbox ;
 
 enum {
-	SSYAlertIconNoIcon,         /*!<  Alert will have no icon */
-	SSYAlertIconCritical,       /*!<  Alert will have "critical" (red) icon */
-	SSYAlertIconInformational   /*!<  Alert will have "informational" (yellow) icon */
+    SSYAlertIconNoIcon,          /*!<  Alert will have no icon */
+    SSYAlertIconInformational,   /*!<  Alert will be app icon with no badge */
+    SSYAlertIconWarning,         /*!<  Alert will be app icon with yellow warning badge */
+    SSYAlertIconCritical,        /*!<  Alert will be app icon with red critical badge */
 } ;
 
 enum SSYAlertMode_enum {
@@ -337,6 +338,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 	NSString* helpAnchorString ;
 	NSError* errorPresenting ;
 	NSImageView* iconInformational ;
+    NSImageView* iconWarning ;
 	NSImageView* iconCritical ;
 	NSButton* buttonPrototype ;
 	NSString* wordAlert ;
@@ -850,9 +852,9 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 
 /*!
  @brief    Sets the icon which will appear in the receiver
- @param    iconStyle  Pass one of the constants SSYAlertIconNoIcon,
+ @param    iconStyle  Pass one of the constants SSYAlertIconWarning, SSYAlertIconNoIcon,
  SSYAlertIconCritical, or SSYAlertIconInformational
-*/
+ */
 - (void)setIconStyle:(NSInteger)iconStyle ;
 
 /*!
@@ -1112,14 +1114,8 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 
 
 /*!
- @brief    Ends any modal session that might be running, sets the
- receiver's window's frame size to NSZeroRect and closes it.
- 
- @details  The reason for setting the frame size to NSZeroRect is
- because this signals to SSYSheetManager, in case the receiver's
- window is still in an SSYSheetManagerQueue and has not been displayed
- yet, to skip it when it is dequeued.  In other words,
- this method also "cancels" any future display by SSYSheetManager.
+ @brief    Ends any modal session that might be running and closes the
+ receiver's window.
 */
 - (void)goAway ;
 

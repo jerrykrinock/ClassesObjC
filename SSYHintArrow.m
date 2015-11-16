@@ -205,7 +205,6 @@ static SSYHintArrow* static_helpArrow = nil ;
         [self setAlphaValue:1.0] ;
         [self setOpaque:NO] ;
         [self setHasShadow:YES] ;
-        [self useOptimizedDrawing:YES] ;
 		
         // Make the view
 		m_view = [[NSView alloc] initWithFrame:contentRect] ;

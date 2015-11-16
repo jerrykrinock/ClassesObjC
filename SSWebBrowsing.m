@@ -72,20 +72,16 @@
 }
 
 + (NSString*)defaultBrowserBundleIdentifier {
-	OSStatus err ;
-	
-	// Get browser's FSRef
-    CFURLRef browserUrl ;
-	err = LSGetApplicationForURL(
-								 [self sampleHttpUrl],
-								 kLSRolesViewer,
-								 NULL,
-								 &browserUrl) ;
+    NSError* error ;
+    CFURLRef browserUrl = LSCopyDefaultApplicationURLForURL(
+                                                            [self sampleHttpUrl],
+                                                            kLSRolesViewer,
+                                                            (CFErrorRef*)&error) ;
 	
 	// Get path (NSString*)
     NSString* path = [(NSURL*)browserUrl path] ;
 	if (!path) {
-		NSLog(@"Internal Error 324-5847.  OSStatus=%ld", (long)err) ;
+		NSLog(@"Internal Error 324-5847  %@", error) ;
 	}
 	
 	// Get bundle
