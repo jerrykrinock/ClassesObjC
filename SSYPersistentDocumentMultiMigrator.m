@@ -360,13 +360,14 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
             // restored from Versions Browser, albeit sight unseen.
             NSString* msg1 = @"The version you have selected is probably available, but must be converted and cannot be immediately displayed." ;
             NSString* msg2 = @"If you 'Select Anyhow', the document you will see on the right is *not* what you will get.  Ignore it.  To see the document, you must actually restore by then clicking 'Restore'.  If it turns out to not be the one you want, you may click File > Revert to > Browse All Versions again, and select a different version, including the version which is now current." ;
-            NSAlert* alert = [NSAlert alertWithMessageText:msg1
-                                             defaultButton:@"Select Anyhow"
-                                           alternateButton:@"Cancel"
-                                               otherButton:nil
-                                 informativeTextWithFormat:@"%@", msg2] ;
+            NSAlert* alert = [[NSAlert alloc] init] ;
+            [alert setMessageText:msg1] ;
+            [alert setInformativeText:msg2] ;
+            [alert addButtonWithTitle:@"Select Anyhow"] ;
+            [alert addButtonWithTitle:@"Cancel"] ;
             NSInteger alertReturn = [alert runModal] ;
-            if (alertReturn == NSAlertThirdButtonReturn) {
+            [alert release] ;
+            if (alertReturn == NSAlertSecondButtonReturn) {
                 // 'Cancel'
                 underlyingError = [NSError errorWithDomain:SSYPersistentDocumentMultiMigratorErrorDomain
                                                       code:SSYPersistentDocumentMultiMigratorErrorCodeUserCancelledUndisplayableRestore

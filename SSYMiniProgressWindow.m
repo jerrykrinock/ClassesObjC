@@ -21,7 +21,6 @@
         [self setAlphaValue:1.0] ;
         [self setOpaque:NO] ;
         [self setHasShadow:YES] ;
-        [self useOptimizedDrawing:YES] ;
 		[self setLevel:NSFloatingWindowLevel] ;
 		
 		// Adjust position if the window is going to overflow off the screen
