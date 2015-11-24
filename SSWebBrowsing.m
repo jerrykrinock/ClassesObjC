@@ -80,6 +80,9 @@
 	
 	// Get path (NSString*)
     NSString* path = [(NSURL*)browserUrl path] ;
+    if (browserUrl) {
+        CFRelease(browserUrl) ;
+    }
 	if (!path) {
 		NSLog(@"Internal Error 324-5847  %@", error) ;
 	}

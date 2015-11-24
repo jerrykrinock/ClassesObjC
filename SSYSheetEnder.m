@@ -15,12 +15,12 @@
 				invocation = [invocations objectAtIndex:0] ;
 			}
 			break ;
-		case NSAlertThirdButtonReturn:
+		case NSAlertSecondButtonReturn:
 			if ([invocations count] > 1) {
 				invocation = [invocations objectAtIndex:1] ;
 			}
 			break ;
-		case NSAlertSecondButtonReturn:
+		case NSAlertThirdButtonReturn:
 			if ([invocations count] > 2) {
 				invocation = [invocations objectAtIndex:2] ;
 			}

@@ -3,10 +3,10 @@
 @class SSYWrappingCheckbox ;
 
 enum {
-    SSYAlertIconNoIcon,          /*!<  Alert will have no icon */
+	SSYAlertIconNoIcon,          /*!<  Alert will have no icon */
     SSYAlertIconInformational,   /*!<  Alert will be app icon with no badge */
     SSYAlertIconWarning,         /*!<  Alert will be app icon with yellow warning badge */
-    SSYAlertIconCritical,        /*!<  Alert will be app icon with red critical badge */
+	SSYAlertIconCritical,        /*!<  Alert will be app icon with red critical badge */
 } ;
 
 enum SSYAlertMode_enum {
@@ -17,8 +17,30 @@ enum SSYAlertMode_enum {
 typedef enum SSYAlertMode_enum SSYAlertMode ;
 
 /*!
- @brief    This is an addition to Apple's anonymous enumeration containing
- NSAlertFirstButtonReturn, NSAlertThirdButtonReturn, NSAlertSecondButtonReturn and NSAlertErrorReturn.
+ @details
+ 
+ Classic layout is commonly used when button1 = OK, button2 = cancel
+ and button3 = alternate.  It looks like this:
+ 
+ | [2]         [3]  [1] |
+ 
+ Right to left layout is what it says
+ 
+ |        [3]  [2]  [1] |
+ 
+ which reflects Apple's current descriptions of NSAlertFirstButtonReturn,
+ NSAlertSecondButtonReturn, NSAlertThirdButtonReturn
+ */
+enum SSYAlertButtonLayout_enum {
+    SSYAlertButtonLayoutClassic,
+    SSYAlertButtonLayoutRightToLeft,
+};
+typedef enum SSYAlertMode_enum SSYAlertButtonLayout ;
+
+/*!
+ @brief    These are an addition to Apple's anonymous enumeration containing
+ NSAlertFirstButtonReturn, NSAlertSecondButtonReturn, NSAlertThirdButtonReturn
+ and NSAlertErrorReturn.
  
  @details  These values are reflected in the 'Sheep Systems Suite'
  AppleScript terminology.  Any changes you make here should be reflected
@@ -35,6 +57,7 @@ enum SSYAlertRecovery_enum {
     SSYAlertRecoveryInternalError            = 106
 } ;
 typedef enum SSYAlertRecovery_enum SSYAlertRecovery ;
+
 enum SSYAlertRecoveryApplescriptCode_enum {
     SSYAlertRecoveryAppleScriptCodeThereWasNoError          = 'Nerr',
 	SSYAlertRecoveryAppleScriptCodeSucceeded		        = 'ReSx',
@@ -44,7 +67,7 @@ enum SSYAlertRecoveryApplescriptCode_enum {
 	SSYAlertRecoveryAppleScriptCodeErrorIsHidden            = 'ErHd',
 	SSYAlertRecoveryAppleScriptCodeUserCancelledPreviously  = 'UsCn'	
 } ;
-typedef enum SSYAlertRecoveryAppleScriptCode_enum SSYAlertRecoveryAppleScriptCode ;
+typedef enum SSYAlertRecoveryApplescriptCode_enum SSYAlertRecoveryAppleScriptCode ;
 
 /*!
  @brief    Key used in the contextInfo sent to attemptRecoveryFromError:::::
@@ -114,8 +137,9 @@ extern NSString* const SSYAlertDidProcessErrorNotification ;
  attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:
  in the 'recoveryOption' parameter.
  @param    error  
- @param    recoveryOption  Should be either NSAlertFirstButtonReturn, NSAlertThirdButtonReturn,
- or NSAlertAlternate return.  Note that this is different from Apple's method
+ @param    recoveryOption  Should be one of NSAlertFirstButtonReturn,
+ NSAlertSecondButtonReturn, or NSAlertAlternate return.  Note that this is
+ different from Apple's method
  attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:
  in which the analagous optionIndex parameter can be any nonnegative integer.
  @param    delegate  
@@ -135,8 +159,9 @@ extern NSString* const SSYAlertDidProcessErrorNotification ;
  attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:
  in the 'recoveryOption' parameter.
  @param    error  
- @param    recoveryOption  Should be either NSAlertFirstButtonReturn, NSAlertThirdButtonReturn,
- or NSAlertAlternate return.  Note that this is different from Apple's method
+ @param    recoveryOption  Should be one of NSAlertFirstButtonReturn,
+ NSAlertSecondButtonReturn, or NSAlertThirdButton return.  Note that this is
+ different from Apple's method
  attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:
  in which the analagous optionIndex parameter can be any nonnegative integer.
  @result   
@@ -433,9 +458,9 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  to specify which didEndSelector runs.
  @result   Same as Apple's alert returns:
  <ul>
- <li>If button 1 (left) was clicked, NSAlertFirstButtonReturn.</li>
- <li>If button 2 (right) was clicked, NSAlertThirdButtonReturn.</li>
- <li>If button 3 (middle) was clicked, NSAlertSecondButtonReturn.</li>
+ <li>If button 1 (right) was clicked, NSAlertFirstButtonReturn.</li>
+ <li>If button 2 (middle) was clicked, NSAlertSecondButtonReturn.</li>
+ <li>If button 3 (left) was clicked, NSAlertThirdButtonReturn.</li>
  </ul>
  */
 @property (assign) NSInteger alertReturn ;
@@ -576,6 +601,12 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 */
 @property (assign) BOOL shouldStickAround ;
 
+/*!
+ @brief    Specfies how to lay out the buttons during -doooLayout
+ @details  Default value is SSYAlertButtonLayoutClassic.
+ */
+@property SSYAlertButtonLayout buttonLayout ;
+
 
 #pragma mark * Class Methods returning Constants
 
@@ -698,10 +729,11 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  the error -isOnlyInformational.
   
  @param    error  The error to be presented, or nil.
- @result   If recovery was not attempted, will be NSAlertFirstButtonReturn, NSAlertThirdButtonReturn,
- or NSAlertSecondButtonReturn depending on whether user clicked the first, second, or third button.
- If recovery was attempted, result will be SSYAlertRecoverySucceeded, SSYAlertRecoveryFailed,
- or SSYAlertRecoveryAttemptedAsynchronously.
+ @result   If recovery was not attempted, will be NSAlertFirstButtonReturn,
+ NSAlertSecondButtonReturn, or NSAlertThirdButtonReturn depending on whether
+ user clicked the first, second, or third button from the right.
+ If recovery was attempted, result will be SSYAlertRecoverySucceeded,
+ SSYAlertRecoveryFailed, or SSYAlertRecoveryAttemptedAsynchronously.
  */
 - (SSYAlertRecovery)alertError:(NSError*)error ;
 
@@ -761,7 +793,8 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  buttons 1-3, terminated by a nil sentinel.
  If no button titles are passed, dialog will have 1 button titled
  as localized "OK".
- @result   Indicates button clicked by user: NSAlertFirstButtonReturn, NSAlertThirdButtonReturn or NSAlertSecondButtonReturn 
+ @result   Indicates button clicked by user: NSAlertFirstButtonReturn,
+ NSAlertSecondButtonReturn or NSAlertThirdButtonReturn
  */
 + (NSInteger)runModalDialogTitle:(NSString*)title
 				   message:(NSString*)msg
@@ -777,7 +810,8 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  @param    buttonsArray: An array of 0-3 strings which will become
  the titles of buttons 1-3.&nbsp; If this parameter is nil or an
  empty array, dialog will have 1 button titled as localized "OK".
- @result   Indicates button clicked by user: NSAlertFirstButtonReturn, NSAlertThirdButtonReturn or NSAlertSecondButtonReturn 
+ @result   Indicates button clicked by user: NSAlertFirstButtonReturn,
+ NSAlertSecondButtonReturn or NSAlertThirdButtonReturn
  */
 + (NSInteger)runModalDialogTitle:(NSString*)title
 				   message:(NSString*)msg
@@ -852,9 +886,9 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 
 /*!
  @brief    Sets the icon which will appear in the receiver
- @param    iconStyle  Pass one of the constants SSYAlertIconWarning, SSYAlertIconNoIcon,
- SSYAlertIconCritical, or SSYAlertIconInformational
- */
+ @param    iconStyle  Pass one of the constants SSYAlertIconNoIcon,
+ SSYAlertIconInformational, SSYAlertIconWarning or SSYAlertIconCritical
+*/
 - (void)setIconStyle:(NSInteger)iconStyle ;
 
 /*!
@@ -1031,8 +1065,11 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  
  @details  This method must be invoked after adding, removing, or
  changing size of any subview.
+
+ Name of this method has been designed to avoid confusion and/or
+ conflict with Cocoa's -doLayout method.
  */
-- (void)doLayout ;
+- (void)doooLayout ;
 
 
 /*!
@@ -1040,7 +1077,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  subviews, makes it the key window and orders it to the front.&nbsp; 
  Otherwise, orders the window out.
 
- @details  This method, or -doLayout, must be invoked after adding,
+ @details  This method, or -doooLayout, must be invoked after adding,
  removing, or changing size of any subview.
 */
 - (void)display ;
@@ -1082,7 +1119,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  @details  The only way to end a modal dialog is for the user
  to click a button.&nbsp; If the alert does not currently have a button 1,
  this method will add a button 1 before displaying.&nbsp; The title
- of the added button will be [NSString localize:@"ok"].
+ of the added button will be [NSString localize:@"OK"].
  
  In most cases, you should configure subviews as desired and then
  invoke -display before invoking this method.
@@ -1114,8 +1151,14 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 
 
 /*!
- @brief    Ends any modal session that might be running and closes the
- receiver's window.
+ @brief    Ends any modal session that might be running, sets the
+ receiver's window's frame size to NSZeroRect and closes it.
+ 
+ @details  The reason for setting the frame size to NSZeroRect is
+ because this signals to SSYSheetManager, in case the receiver's
+ window is still in an SSYSheetManagerQueue and has not been displayed
+ yet, to skip it when it is dequeued.  In other words,
+ this method also "cancels" any future display by SSYSheetManager.
 */
 - (void)goAway ;
 

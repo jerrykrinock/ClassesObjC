@@ -6,7 +6,7 @@
 
 + (NSArray*)profilePseudonymsForHomePath:(NSString*)homePath ;
 
-+ (NSArray*)profileNamesForHomePath:(NSString*)homePath ;
++ (NSArray*)profileNames ;
     
 + (NSString*)displayedSuffixForProfileName:(NSString*)profileName
                                   homePath:(NSString*)homePath ;

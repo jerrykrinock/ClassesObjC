@@ -74,8 +74,8 @@
     return pseudonyms ;
 }
 
-+ (NSArray*)profileNamesForHomePath:(NSString*)homePath {
-	NSString* filepathProfilesIni = [self profilesFilePathForHomePath:homePath] ;
++ (NSArray*)profileNames {
+	NSString* filepathProfilesIni = [self profilesFilePathForHomePath:NSHomeDirectory()] ;
 	
 	NSString* profilesIniContents = [[NSString alloc] initWithContentsOfFile:filepathProfilesIni
                                                                 usedEncoding:NULL
@@ -115,7 +115,7 @@
 + (NSString*)displayedSuffixForProfileName:(NSString*)profileName
                                   homePath:(NSString*)homePath {
     NSString* suffix ;
-    if ([[self profileNamesForHomePath:homePath] count] > 1) {
+    if ([[self profileNames] count] > 1) {
         suffix = [NSString stringWithFormat:
                   @" (%@)",
                   profileName] ;

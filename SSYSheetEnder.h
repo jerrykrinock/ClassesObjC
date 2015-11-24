@@ -15,8 +15,8 @@
  on the return code, if the array's count is large enough:
  ;    Return Code             objectAtIndex
  ;    NSAlertFirstButtonReturn    0
- ;    NSAlertThirdButtonReturn  1
- ;    NSAlertSecondButtonReturn      2
+ ;    NSAlertSecondButtonReturn   1
+ ;    NSAlertThirddButtonReturn    2
  If an object is obtained, it will be tested to see if
  it responds to -invoke, and will be send the -invoke
  message if it does.

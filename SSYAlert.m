@@ -1,12 +1,10 @@
 #import "SSYAlert.h"
 
-#import "SSYProcessTyper.h"
 #import "SSYMailto.h"
 #import "SSYSystemDescriber.h"
 #import "SSYWrappingCheckbox.h"
 
 #import "NSError+InfoAccess.h"
-#import "NSString+LocalizeSSY.h"
 #import "NSString+Truncate.h"
 #import "NSView+Layout.h"
 #import "NSWindow+Sizing.h"
@@ -15,10 +13,15 @@
 #import "NSError+SSYInfo.h"
 #import "SSYWindowHangout.h"
 #import "NSBundle+MainApp.h"
+#import "NSObject+RecklessPerformSelector.h"
 #import "SSYVectorImages.h"
+#import "NSString+LocalizeSSY.h"
 #import "NSInvocation+Quick.h"
 
+
 NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager = nil ;
+
+NSMutableSet* static_alertHangout = nil ;
 
 NSString* const SSYAlertDidRecoverInvocationKey = @"SSYAlertDidRecoverInvocationKey" ;
 NSString* const SSYAlert_ErrorSupportEmailKey = @"SSYAlert_ErrorSupportEmail" ;
@@ -50,21 +53,21 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	SEL selector ;
 	selector = @selector(string) ;
 	if ([self respondsToSelector:selector]) {
-		length = MAX(length, [[self performSelector:selector] length]) ;
+		length = MAX(length, [[self recklessPerformSelector:selector] length]) ;
 
 	}
 	selector = @selector(stringValue) ;
 	if ([self respondsToSelector:selector]) {
 		// Because NSImageView has a -stringValue describing each of its sizes...
 		if (![self isKindOfClass:[NSImageView class]]) {
-			length = MAX(length, [[self performSelector:selector] length]) ;
+			length = MAX(length, [[self recklessPerformSelector:selector] length]) ;
 		}
 	}
 	
 	// Recursion into documentView, if any
 	selector = @selector(documentView) ;
 	if ([self respondsToSelector:selector]) {
-		length = [[self performSelector:selector] stringLengthInAnySubviewLongerThan:length] ;
+		length = [[self recklessPerformSelector:selector] stringLengthInAnySubviewLongerThan:length] ;
 	}
 	
 	// Recursion into subviews, if any:
@@ -200,7 +203,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
  important that the user see the critical controls.  This is what Apple's
  alerts do when there is a similar overflow.
  
- This was added in BookMacster 1.9.5 to replace code in -doLayout which
+ This was added in BookMacster 1.9.5 to replace code in -doooLayout which
  did not work properly.
 */
 - (void)setFrameOrigin:(NSPoint)frameOrigin {
@@ -366,6 +369,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 @implementation SSYAlert : NSWindowController
 
++ (void)load {
+    static_alertHangout = [[NSMutableSet alloc] init] ;
+}
+
 
 + (NSString*)supportEmailString {
 	return [[NSBundle mainAppBundle] objectForInfoDictionaryKey:SSYAlert_ErrorSupportEmailKey] ;
@@ -397,7 +404,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @synthesize helpAnchorString ;
 @synthesize errorPresenting ;
 @synthesize iconInformational ;
-@synthesize iconWarning ;
+@synthesize iconWarning;
 @synthesize iconCritical ;
 @synthesize buttonPrototype ;
 @synthesize wordAlert ;
@@ -528,25 +535,20 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 #pragma mark * Private Methods
 
 /*!
- @brief    Translates from the 'recovery option' as expressed in our -doLayoutError:
- method to the 'recovery option index' expressed in Cocoa's error presentation method,
- -presentError:.
-
- @details  Cocoa's arrangement allows an unlimited number of error recovery options,
- indexed from 0.  Our -doLayoutError: method only allows three options, which are
- indexed like the buttons in NSAlert.  In particular, note that the values 
- represented by 0 and 1 are reversed.
+ @brief    Translates from the 'recovery option' as expressed in our
+ -doLayoutError: method to the 'recovery option index' expressed in Cocoa's
+ error presentation method, -presentError:
 */
 + (NSUInteger)recoveryOptionIndexForRecoveryOption:(NSInteger)recoveryOption {
 	NSUInteger recoveryOptionIndex ;
 	switch (recoveryOption) {
-		case NSAlertFirstButtonReturn /* 1 */ :
+		case NSAlertFirstButtonReturn :
 			recoveryOptionIndex = 0 ;
 			break;
-		case NSAlertThirdButtonReturn /* 0 */ :
+		case NSAlertSecondButtonReturn :
 			recoveryOptionIndex = 1 ;
 			break;
-		case NSAlertSecondButtonReturn /* -1 */ :
+		case NSAlertThirdButtonReturn :
 			recoveryOptionIndex = 2 ;
 			break;
 	default:
@@ -564,93 +566,101 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 						   recoveryOption:(NSUInteger)recoveryOption
 							  contextInfo:(NSMutableDictionary*)infoDictionary {
 	NSUInteger result = SSYAlertRecoveryNotAttempted ;
-	NSError* docOpeningError = nil ;
 	
 	NSError* deepestRecoverableError = [error deepestRecoverableError] ;
-	id recoveryAttempter = [deepestRecoverableError openRecoveryAttempterForRecoveryOption:recoveryOption
-																				   error_p:&docOpeningError] ;
-	if (recoveryAttempter) {
-		// Try the sheet method, attemptRecoveryFromError::::: first, since, in my
-		// opinion, it gives a better user experience.  If the recoveryAttempter
-		// does not respond to that, try the window method, attemptRecoveryFromError::
-		if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:recoveryOption:delegate:didRecoverSelector:contextInfo:)]) {
-			NSInvocation* invocation = [error didRecoverInvocation] ;
-			id delegate = [invocation target] ;
-			SEL didRecoverSelector = [invocation selector] ;
-			// I put the whole invocation into the context info, believing it to be alot cleaner.
-			if (invocation) {
-				// Before we invoke the didRecoverInvocation, we also put it into the
-				// current infoDictionary in case an error occurs again and we need
-				// to re-recover.
-				[infoDictionary setObject:invocation
-								   forKey:SSYAlertDidRecoverInvocationKey] ;
-			}
-			[recoveryAttempter attemptRecoveryFromError:[[deepestRecoverableError retain] autorelease]
-										 recoveryOption:recoveryOption
-											   delegate:delegate   
-									 didRecoverSelector:didRecoverSelector
-											contextInfo:[[infoDictionary retain] autorelease]] ;
-			// Also, the retain] autorelease] is probably not necessary since I'm invoking attemptRecoveryFromError:::::
-			// directly, but I'm always fearful of crashes due to invalid contextInfo.
-			result = SSYAlertRecoveryAttemptedAsynchronously ;
-		}
-		else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:)]) {
-			/* This is an error produced by Cocoa.
-			 In particular, in Mac OS X 10.7, it might be one like this:
-			 Error Domain = NSCocoaErrorDomain
-			 Code = 67000
-			 UserInfo = {
-			 •   NSLocalizedRecoverySuggestion=Click Save Anyway to keep your changes and save the
-			 changes made by the other application as a version, or click Revert to keep the changes from the other
-			 application and save your changes as a version.
-			 •   NSLocalizedFailureReason=The file has been changed by another application.
-			 •   NSLocalizedDescription=This document’s file has been changed by another application.
-			 •   NSLocalizedRecoveryOptions = ("Save Anyway", "Revert")
-			 }
-			*/
-			NSInvocation* invocation = [error didRecoverInvocation] ;
-			id delegate = [invocation target] ;
-			SEL didRecoverSelector = [invocation selector] ;
-			// I put the whole invocation into the context info, believing it to be alot cleaner.
-			if (invocation) {
-				// Before we invoke the didRecoverInvocation, we also put it into the
-				// current infoDictionary in case an error occurs again and we need
-				// to re-recover.
-				[infoDictionary setObject:invocation
-								   forKey:SSYAlertDidRecoverInvocationKey] ;
-			}
-			NSInteger recoveryOptionIndex = [self recoveryOptionIndexForRecoveryOption:recoveryOption] ;
-			
-			[recoveryAttempter attemptRecoveryFromError:[[deepestRecoverableError retain] autorelease]
-											optionIndex:recoveryOptionIndex
-											   delegate:delegate   
-									 didRecoverSelector:didRecoverSelector
-											contextInfo:[[infoDictionary retain] autorelease]] ;
-			// Also, the retain] autorelease] is probably not necessary since I'm invoking attemptRecoveryFromError:::::
-			// directly, but I'm always fearful of crashes due to invalid contextInfo.
-			result = SSYAlertRecoveryAttemptedAsynchronously ;
-		}
-		else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:recoveryOption:)]) {
-			BOOL ok = [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
-												   recoveryOption:recoveryOption] ;
-			
-			result = ok ? SSYAlertRecoverySucceeded : SSYAlertRecoveryFailed ;
-		}
-		else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:optionIndex:)]) {
-			// This is an error produced by Cocoa.
-			NSInteger recoveryOptionIndex = [self recoveryOptionIndexForRecoveryOption:recoveryOption] ;
-			BOOL ok = [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
-													  optionIndex:recoveryOptionIndex] ;
-			
-			result = ok ? SSYAlertRecoverySucceeded : SSYAlertRecoveryFailed ;
-		}
-		else {
-			NSLog(@"Internal Error 342-5587.  Given Recovery Attempter %@ does not respond to any attemptRecoveryFromError:... method", recoveryAttempter) ;
-		}
-	}
-	else if (docOpeningError) {
-		[self alertError:docOpeningError] ;
-	}
+    id recoveryAttempter ;
+    if ([[[error userInfo] objectForKey:SSYRecoveryAttempterIsAppDelegateErrorKey] boolValue]) {
+        recoveryAttempter = [NSApp delegate] ;
+    }
+    else {
+        recoveryAttempter = [error recoveryAttempter] ;
+    }
+    
+    if (!recoveryAttempter) {
+        NSURL* recoveryAttempterUrl = [[error userInfo] objectForKey:SSYRecoveryAttempterUrlErrorKey] ;
+        if (recoveryAttempterUrl) {
+            // recoveryOption NSAlertSecondButtonReturn is assumed to mean "Cancel".
+            if (recoveryOption == NSAlertFirstButtonReturn) {
+                result = SSYAlertRecoveryAttemptedAsynchronously ;
+                [[NSDocumentController sharedDocumentController] openDocumentWithContentsOfURL:recoveryAttempterUrl
+                                                                                       display:YES
+                                                                             completionHandler:^void(
+                                                                                                     NSDocument* newDocument,
+                                                                                                     BOOL documentWasAlreadyOpen,
+                                                                                                     NSError* documentOpeningError) {
+                                                                                 if (newDocument) {
+                                                                                     // Try the sheet method, attemptRecoveryFromError::::: first, since, in my
+                                                                                     // opinion, it gives a better user experience.  If the recoveryAttempter
+                                                                                     // does not respond to that, try the window method, attemptRecoveryFromError::
+                                                                                     if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:recoveryOption:delegate:didRecoverSelector:contextInfo:)]) {
+                                                                                         NSInvocation* invocation = [error didRecoverInvocation] ;
+                                                                                         id delegate = [invocation target] ;
+                                                                                         SEL didRecoverSelector = [invocation selector] ;
+                                                                                         // I put the whole invocation into the context info, believing it to be alot cleaner.
+                                                                                         if (invocation) {
+                                                                                             // Before we invoke the didRecoverInvocation, we also put it into the
+                                                                                             // current infoDictionary in case an error occurs again and we need
+                                                                                             // to re-recover.
+                                                                                             [infoDictionary setObject:invocation
+                                                                                                                forKey:SSYAlertDidRecoverInvocationKey] ;
+                                                                                         }
+                                                                                         [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
+                                                                                                                      recoveryOption:recoveryOption
+                                                                                                                            delegate:delegate
+                                                                                                                  didRecoverSelector:didRecoverSelector
+                                                                                                                         contextInfo:(__bridge void *)(infoDictionary)] ;
+                                                                                     }
+                                                                                     else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:)]) {
+                                                                                         /* This is an error produced by Cocoa.
+                                                                                          In particular, in Mac OS X 10.7, it might be one like this:
+                                                                                          Error Domain = NSCocoaErrorDomain
+                                                                                          Code = 67000
+                                                                                          UserInfo = {
+                                                                                          •   NSLocalizedRecoverySuggestion=Click Save Anyway to keep your changes and save the
+                                                                                          changes made by the other application as a version, or click Revert to keep the changes from the other
+                                                                                          application and save your changes as a version.
+                                                                                          •   NSLocalizedFailureReason=The file has been changed by another application.
+                                                                                          •   NSLocalizedDescription=This document’s file has been changed by another application.
+                                                                                          •   NSLocalizedRecoveryOptions = ("Save Anyway", "Revert")
+                                                                                          }
+                                                                                          */
+                                                                                         NSInvocation* invocation = [error didRecoverInvocation] ;
+                                                                                         id delegate = [invocation target] ;
+                                                                                         SEL didRecoverSelector = [invocation selector] ;
+                                                                                         // I put the whole invocation into the context info, believing it to be alot cleaner.
+                                                                                         if (invocation) {
+                                                                                             // Before we invoke the didRecoverInvocation, we also put it into the
+                                                                                             // current infoDictionary in case an error occurs again and we need
+                                                                                             // to re-recover.
+                                                                                             [infoDictionary setObject:invocation
+                                                                                                                forKey:SSYAlertDidRecoverInvocationKey] ;
+                                                                                         }
+                                                                                         NSInteger recoveryOptionIndex = [self recoveryOptionIndexForRecoveryOption:recoveryOption] ;
+                                                                                         
+                                                                                         [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
+                                                                                                                         optionIndex:recoveryOptionIndex
+                                                                                                                            delegate:delegate
+                                                                                                                  didRecoverSelector:didRecoverSelector
+                                                                                                                         contextInfo:(__bridge void *)(infoDictionary)] ;
+                                                                                     }
+                                                                                     else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:recoveryOption:)]) {
+                                                                                         [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
+                                                                                                                      recoveryOption:recoveryOption] ;
+                                                                                     }
+                                                                                     else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:optionIndex:)]) {
+                                                                                         // This is an error produced by Cocoa.
+                                                                                         NSInteger recoveryOptionIndex = [self recoveryOptionIndexForRecoveryOption:recoveryOption] ;
+                                                                                         [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
+                                                                                                                         optionIndex:recoveryOptionIndex] ;
+                                                                                     }
+                                                                                     else {
+                                                                                         NSLog(@"Internal Error 342-5587.  Given Recovery Attempter %@ does not respond to any attemptRecoveryFromError:... method", recoveryAttempter) ;
+                                                                                     }
+                                                                                 }
+                                                                             }] ;
+            }
+        }
+    }
 	
 	return result ;
 }
@@ -709,13 +719,14 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 									encoding:NSUTF8StringEncoding
 									   error:&writeError] ;
 			if (writeOk) {
-				NSString* msg = [NSString localizeFormat:
-								 @"additionalInfoZipX",
-								 filename] ;
+				NSString* msg = [[NSString alloc] initWithFormat:
+                                 NSLocalizedString(@"A file named \"%@\" has just been written to your desktop.\n\nThe extended error information in this file may help our Support crew to solve the problem.\n\nPlease review this file for any too-sensitive information, zip it, and then attach the .zip to your email.", nil),
+                                 filename] ;
 				[SSYAlert runModalDialogTitle:nil
 									  message:msg
 									  buttons:nil] ;
-				
+                [msg release] ;
+                
 				mailableDescription = [NSString stringWithFormat:
 									   @"******   I M P O R T A N T   I N S T R U C T I O N S   ******\n\n"
 									   @"*** Please look on your Desktop and find the file named %@ ***\n"
@@ -737,7 +748,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 
 	NSMutableString* body = [NSMutableString stringWithFormat:@"%@\n\n\n\n%@ %@ (%@)\n%@\n\n%@",
-							 [NSString localize:@"additionalInfoAsk"],
+							 NSLocalizedString(@"Please insert any additional information regarding what happened that might help us to investigate this problem:", nil),
 							 appName,
 							 appVersionString,
 							 appVersion,
@@ -764,9 +775,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[self retain] ;
 	
 	// Remember:
-	// Button1 --> tag=NSAlertFirstButtonReturn = 1
-	// Button2 --> tag=NSAlertThirdButtonReturn = 0
-	// Button3 --> tag=NSAlertSecondButtonReturn = -1
+	// Button1 --> tag=NSAlertFirstButtonReturn
+	// Button2 --> tag=NSAlertSecondButtonReturn
+	// Button3 --> tag=NSAlertThirdButtonReturn
 	[self setAlertReturn:[sender tag]] ;
 
 	if (m_shouldStickAround) {
@@ -780,8 +791,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 	
 	if ([self clickTarget]) {
-		[[self clickTarget] performSelector:[self clickSelector]
-								 withObject:self] ;
+        [[self clickTarget] recklessPerformSelector:[self clickSelector]
+                                             object:self] ;
 		[self setIsDoingModalDialog:NO] ;
 	}
 	
@@ -807,9 +818,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     
     // Steal localized word for "alert"
     [self setWordAlert:[nsAlert messageText]] ;
-    
+
     // Steal the icon.  (Could also get this from NSBundle I suppose.)
     NSImage* rawIcon = [nsAlert icon] ;
+    [nsAlert release] ;
     NSImage* image = [[NSImage alloc] initWithSize:(NSMakeSize(64.0, 64.0))] ;
     [image lockFocus] ;
     [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
@@ -823,14 +835,17 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
               operation:NSCompositeSourceOver
                fraction:1.0] ;
     [image unlockFocus] ;
-    
-    
-    
-    
+
+                      
+                      
+                      
     // Set raw icon as "informational"
     iconView = [[NSImageView alloc] initWithFrame:frame] ;
-    iconView.image = [image copy] ;
+    NSImage* imageCopy = [image copy] ;
+    iconView.image = imageCopy ;
     [self setIconInformational:iconView] ;
+    [iconView release] ;
+    [imageCopy release] ;
     
     // Badge with yellow and set as "warning"
     badge = [SSYVectorImages imageStyle:SSYVectorImageStyleHexagon
@@ -850,8 +865,11 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
              fraction:0.75] ;
     [image unlockFocus] ;
     iconView = [[NSImageView alloc] initWithFrame:frame] ;
-    iconView.image = [image copy] ;
+    imageCopy = [image copy] ;
+    iconView.image = imageCopy ;
     [self setIconWarning:iconView] ;
+    [iconView release] ;
+    [imageCopy release] ;
     
     // Badge with red and set as "critical"
     badge = [SSYVectorImages imageStyle:SSYVectorImageStyleHexagon
@@ -871,9 +889,13 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
              fraction:0.75] ;
     [image unlockFocus] ;
     iconView = [[NSImageView alloc] initWithFrame:frame] ;
-    iconView.image = [image copy] ;
+    imageCopy = [image copy] ;
+    iconView.image = imageCopy ;
     [self setIconCritical:iconView] ;
-    
+    [iconView release] ;
+    [image release] ;
+    [imageCopy release] ;
+
     /* Thanks to Brian Dunagan for the few lines of compositing code used above.
      http://bdunagan.com/2010/01/25/cocoa-tip-nsimage-composites/ */
 }
@@ -883,12 +905,12 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 - (void)setSupportEmail {
 	if ([SSYAlert supportEmailString] != nil) {
-		NSButton* button ;
-		if (!(button = [self supportButton])) {
+		NSButton* button = [self supportButton] ;
+		if (!button) {
 			// The image is 32 and the bezel border on each side is 2*2=4.
 			// However, testing shows that we need 38.  Oh, well.
 			NSRect frame = NSMakeRect(0, 0, 38.0, 38.0) ;
-			NSButton* button = [[NSButton alloc] initWithFrame:frame] ;
+			button = [[NSButton alloc] initWithFrame:frame] ;
 			[button setBezelStyle:NSRegularSquareBezelStyle] ;
 			[button setTarget:self] ;
 			[button setAction:@selector(support:)] ;
@@ -897,7 +919,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			NSImage* image = [[NSImage alloc] initByReferencingFile:imagePath] ;
 			[button setImage:image] ;
 			[image release] ;
-			NSString* toolTip = [[self class] contactSupportToolTip] ;								 
+			NSString* toolTip = [[self class] contactSupportToolTip] ;
 			[button setToolTip:toolTip] ;
 			[self setSupportButton:button] ;
 			[[[self window] contentView] addSubview:button] ;
@@ -1030,7 +1052,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		
 		if (!(button = [self button1])) {
 			button = [SSYAlert makeButton] ;
-			[button setKeyEquivalent:@"\r"] ;
 			[button setTag:NSAlertFirstButtonReturn] ;
 			[self setTargetActionForButton:button] ;
 			[self setButton1:button] ;
@@ -1056,8 +1077,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		NSButton* button ;
 		if (!(button = [self button2])) {
 			button = [SSYAlert makeButton] ;
-			[button setKeyEquivalent:@"\e"] ;  // escape key
-			[button setTag:NSAlertThirdButtonReturn] ;
+			[button setTag:NSAlertSecondButtonReturn] ;
 			[self setTargetActionForButton:button] ;
 			[self setButton2:button] ;
 			[[[self window] contentView] addSubview:button] ;
@@ -1082,7 +1102,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		NSButton* button ;
 		if (!(button = [self button3])) {
 			button = [SSYAlert makeButton] ;
-			[button setTag:NSAlertSecondButtonReturn] ;
+			[button setTag:NSAlertThirdButtonReturn] ;
 			[self setTargetActionForButton:button] ;
 			[self setButton3:button] ;
 			[[[self window] contentView] addSubview:button] ;
@@ -1106,13 +1126,13 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// This one is tricky since we've got two ivars to worry about:
 	// NSButton* helpButton and NSString* helpAnchorString
 	if (anchor) {
-		NSButton* button ;
-		if (!(button = [self helpButton])) {
+		NSButton* button = [self helpButton] ;
+		if (!button) {
 			NSRect frame = NSMakeRect(0, 0, 21.0, 23.0) ;
 				// because help button in Interface Builder is 21x23
 				// It seems there should be an NSHelpButtonSize constant,
 				// but I can't find any.
-			NSButton* button = [[NSButton alloc] initWithFrame:frame] ;
+			button = [[NSButton alloc] initWithFrame:frame] ;
 			[button setBezelStyle:NSHelpButtonBezelStyle] ;
 			[button setTarget:self] ;
 			[button setAction:@selector(help:)] ;
@@ -1293,7 +1313,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 	[[self class] tryRecoveryAttempterForError:[self errorPresenting]
 								   recoveryOption:returnCode
-								   contextInfo:contextInfo] ;
+								   contextInfo:(__bridge NSMutableDictionary *)(contextInfo)] ;
 }
 
 /*!
@@ -1354,7 +1374,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			didEndSelector = @selector(sheetDidEnd:returnCode:contextInfo:) ;
 		}
 		
-		[self doLayout] ;
+		[self doooLayout] ;
 		
 		if ([self progressBarShouldAnimate]) {
 			[[self progressBar] startAnimation:self] ;
@@ -1376,25 +1396,12 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 }
 
-/*- (oneway void)release {
-	NSLog(@"RebugLog:  Before releasing, rc=%i for %@", [self retainCount], self) ;
-	[super release] ;
-	return ;
-}	
-
-- (id)retain {
-	[super retain] ;
-	NSLog(@"RebugLog:  After retaining, rc=%i for %@", [self retainCount], self) ;
-	return self ;
-}
-*/
-
 - (void)runModalDialog {
 	// End current modal session, if any
 	[self endModalSession] ;
 	
 	[self setButton1IfNeeded] ;	
-	[self doLayout] ;
+	[self doooLayout] ;
 	
 	BOOL progressBarWasAnimating = NO ;
 	
@@ -1485,7 +1492,11 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 #define SUBFRAME_SPACING 24.0
 #define CONTROL_VERTICAL_SPACING 14.0
 
-- (void)doLayout {
+/*!
+ @details  Name of this method has been designed to avoid confusion and/or
+ conflict with Cocoa's -doLayout method.
+ */
+- (void)doooLayout {
 	// used for looping through other subviews
 	NSEnumerator* e ;
 	NSView* subview ;
@@ -1532,7 +1543,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	while((subview = [e nextObject])) {
 		[subview setLeftEdge:t] ;
 	}
-	[self.button2 setLeftEdge:t] ;
+	
+    if (self.buttonLayout == SSYAlertButtonLayoutClassic) {
+        [self.button2 setLeftEdge:t] ;
+    }
 	
 	CGFloat rightSubframeWidth = 0.0 ;
 	if (self.button1) {
@@ -1576,10 +1590,26 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	
 	t += rightSubframeWidth ;
 	CGFloat contentWidth = t + WINDOW_EDGE_SPACING ;
-	[self.button1 setRightEdge:t] ;
-	
-	t = [self.button1 leftEdge] - BUTTON_SPACING ;
-	[self.button3 setRightEdge:t] ;
+
+    
+    if (self.buttonLayout == SSYAlertButtonLayoutClassic) {
+        [self.button1 setRightEdge:t] ;
+        t = [self.button1 leftEdge] - BUTTON_SPACING ;
+        [self.button3 setRightEdge:t] ;
+    }
+    else {
+        if (self.button1) {
+            [self.button1 setRightEdge:t] ;
+            t = [self.button1 leftEdge] - BUTTON_SPACING ;
+        }
+        if (self.button2) {
+            [self.button2 setRightEdge:t] ;
+            t = [self.button2 leftEdge] - BUTTON_SPACING ;
+        }
+        if (self.button3) {
+            [self.button3 setRightEdge:t] ;
+        }
+    }
 	
 	// Y-AXIS LAYOUT
 	// First, we have to set the final height of the variable-height subviews.
@@ -1733,7 +1763,12 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[self.button1 setEnabled:[self isEnabled]] ;
 	[self.button1 setToolTip:[self whyDisabled]] ;
 	
-	// Now, set up the keyboard loop for tabbing
+    // Define left, middle and right buttons
+    NSButton* leftmostButton = self.button3 ;
+    NSButton* middleButton = self.button2 ;
+    NSButton* rightmostButton = self.button1 ;
+
+    // Set up the keyboard loop for tabbing
 	e = [self.otherSubviews objectEnumerator] ;
 	NSView* firstResponder = nil ; // redundant but necessary because I don't see any safe way to set the the first responder of a NSWindow to nil or other convenient known object.  -resignFirstResponder says "Never invoke this method directly".
 	NSView* previousResponder = nil ;
@@ -1755,21 +1790,27 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[responder makeNextKeyViewOfWindow:self.window
 						firstResponder:&firstResponder
 					 previousResponder:&previousResponder] ;
-	responder = self.button2 ;
+	responder = leftmostButton ;
 	[responder makeNextKeyViewOfWindow:self.window
 						firstResponder:&firstResponder
 					 previousResponder:&previousResponder] ;
-	responder = self.button3 ;
+	responder = middleButton ;
 	[responder makeNextKeyViewOfWindow:self.window
 						firstResponder:&firstResponder
 					 previousResponder:&previousResponder] ;
-	responder = self.button1 ;
+	responder = rightmostButton ;
 	[responder makeNextKeyViewOfWindow:self.window
 						firstResponder:&firstResponder
 					 previousResponder:&previousResponder] ;
 	[responder setNextKeyView:firstResponder] ; // Close the loop
-	
-	// Resize the window itself, and display window and views as needed
+    
+    // Set key equivalents of buttons
+    [rightmostButton setKeyEquivalent:@"\r"] ;
+    if (self.buttonLayout == SSYAlertButtonLayoutClassic) {
+        [self.button2 setKeyEquivalent:@"\033"] ;  // escape key
+    }
+
+    // Resize the window itself, and display window and views as needed
 	[self.window setFrameToFitContentViewThenDisplay:YES] ;
 	// argument must be YES to avoid flicker.  Counterintuitive,
 	// but it took me the better part of a day to discover that.
@@ -1797,10 +1838,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		[self.progressBar startAnimation:self] ;
 		[self.progressBar stopAnimation:self] ;
 	}
-}	
+}
 
 - (void)display {	
-	[self doLayout] ;
+	[self doooLayout] ;
 	// Next, invoke -display to update subviews and any areas where subviews have
 	// been removed from, which will not necessarily be done
 	// by displaying the window.  To increase efficiency by
@@ -1817,6 +1858,12 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (void)goAway {
+	// The following is necessary to use the trick in SSYSheetManager
+	// in case the window is in fact not visible at this time.
+	if (![[self window] isVisible]) {
+		[[self window] setFrame:NSZeroRect
+						display:NO] ;
+	}
 	// In case we are only being retained as the attachedSheet of our documentWindow...
 	[self retain] ;
 	
@@ -1828,6 +1875,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 	
 	NSWindow* documentWindow_ = [self documentWindow] ;
+    if (!documentWindow_) {
+        documentWindow_ = [[self window] parentWindow] ;
+    }
 	if (documentWindow_) {
 		// We're on a sheet
 		
@@ -1852,7 +1902,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
         // Roll up and close the sheet.
         [sheet orderOut:self] ;
 		[sheet retain] ;  // Will release it below
-		[sheet close] ;
 
 		// Note that, since Cocoa does not support piling multiple
 		// sheets onto a window, we rolled up the sheet before 
@@ -1864,9 +1913,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		// Sometimes Apple piles up multiple sheets.  I think maybe
 		// the example he gave is when a document is closing, or
 		// something like that.
-		
-
-		// The following will cause the didEndSelector to execute.
+        
 		if (sheet) {
             /* The following will cause the completion handler in the call to
              -[NSWindow beginSheet:completionHandler: in -[SSYAlert
@@ -1874,7 +1921,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
              to execute.  Prior to the "blocks revolution", I sent this exact
              same method signature to NSApp instead of NSWindow, and it caused
              the didEndSelector to execute synchronously.  */
-            [documentWindow_ endSheet:sheet
+			[documentWindow_ endSheet:sheet
                            returnCode:alertReturn] ;
             /* Completion handler has executed and returned. */
 		}
@@ -1951,11 +1998,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 // bottom of the menu bar.
 
 - (id)init {
-	if (!NSApp || ([SSYProcessTyper currentType] != SSYProcessTyperTypeForeground)) {
+	if (!NSApp) {
 		// See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
-		// Actually, this is unsafe, as pointed out by Quincey Morris…
-		// http://lists.apple.com/archives/Cocoa-dev/2011/May/msg00814.html
-		// But it hasn't caused any trouble so far.
+        //TODO: Should also go here if process is background type, but API ProcessInformationCopyDictionary() I've used to do that has been deprecated :(
 		[super dealloc] ;
 		return nil ;
 	}
@@ -2060,7 +2105,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		}
 		else {
 			// No recovery options
-			[self setButton1Title:[NSString localize:@"ok"]] ;
+			[self setButton1Title:NSLocalizedString(@"OK", nil)] ;
 		}
 	}
 }
@@ -2076,7 +2121,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	SSYAlert* alert ;
 	
 	if (NSApp != nil) {
-		alert = [[[self alloc] init] autorelease] ; 
+		alert = [[self alloc] init] ;
+        [alert autorelease] ;
 	}
 	else {
 		alert = nil ;

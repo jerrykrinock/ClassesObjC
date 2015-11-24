@@ -133,7 +133,7 @@ NSString* constKeyDidCancelInvocation = @"didCancelInvocation" ;
 		done = YES ;
 		proceed = YES ;
 	}
-	else if ([alert alertReturn] == NSAlertThirdButtonReturn) {
+	else if ([alert alertReturn] == NSAlertSecondButtonReturn) {
 		// Clicked "Cancel"
 		done = YES ;
 	}
