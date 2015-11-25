@@ -44,7 +44,7 @@
 }
 
 + (NSString*)defaultBrowserDisplayName {
-	CFErrorRef error ;
+	CFErrorRef error = nil ;
 
 	// Get browser's URL
 	NSURL *defaultBrowserURL = nil ;

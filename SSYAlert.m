@@ -1876,7 +1876,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	
 	NSWindow* documentWindow_ = [self documentWindow] ;
     if (!documentWindow_) {
-        documentWindow_ = [[self window] parentWindow] ;
+        documentWindow_ = [[self window] sheetParent] ;
     }
 	if (documentWindow_) {
 		// We're on a sheet
