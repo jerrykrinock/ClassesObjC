@@ -208,7 +208,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 */
 - (void)setFrameOrigin:(NSPoint)frameOrigin {
 	[super setFrameOrigin:frameOrigin] ;
-
+    //TODO: Temporary workaround!
+#if 11
+    return ;
+#else
 	SSYAlert* alert = [self windowController] ;
 
 	// Defensive Programming
@@ -219,21 +222,30 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 	CGFloat overflowHeight ;
 		
+    /*SSYDBL*/ NSLog(@"Doing damage control isSheet=%hhd sheetParent=%@", [self isSheet], [self sheetParent]) ;
 	if ([self isSheet]) {
+        /*SSYDBL*/ NSLog(@"isSheet") ;
 		// This branch was added in BookMacster 1.9.8.
 		// If there is space between the top of the parent window and the menu bar,
 		// Cocoa will move the window up into that extra height in order to make
 		// room for the sheet, and unfortunately this has not been done yet.  So
 		// I need to, arghhh, predict what Cocoa is going to do…
 		NSWindow* parentWindow = [[self windowController] documentWindow] ;
+        /*SSYDBL*/ NSLog(@"parentWindow = %@", parentWindow) ;
 		CGFloat useableScreenHeight = [[parentWindow screen] visibleFrame].size.height ;
+        /*SSYDBL*/ NSLog(@"useableScreenHeight = %f", useableScreenHeight) ;
 		// useableScreenHeight does not include menu bar and does not include the Dock.
 		CGFloat tootlebarHeight = [parentWindow tootlebarHeight] ;
+        /*SSYDBL*/ NSLog(@"tootlebarHeight = %f", tootlebarHeight) ;
 		CGFloat availableHeight = useableScreenHeight - tootlebarHeight ;
+        /*SSYDBL*/ NSLog(@"availableHeight = %f", availableHeight) ;
 		overflowHeight = [self frame].size.height - availableHeight ;
+        /*SSYDBL*/ NSLog(@"overflowHeight = %f", overflowHeight) ;
 	}
 	else {
+        /*SSYDBL*/ NSLog(@"is not sheet") ;
 		overflowHeight = WINDOW_EDGE_SPACING - [self frame].origin.y ;
+        /*SSYDBL*/ NSLog(@"overflowHeight = %f", overflowHeight) ;
 	}
 	
 	if (overflowHeight > 0.0) {
@@ -244,6 +256,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		[[alert supportButton] deltaY:overflowHeight deltaH:0.0] ;
 		[[alert checkbox] deltaY:overflowHeight deltaH:0.0] ;
 	}
+#endif
 }
 
 - (NSInteger)checkboxState {
