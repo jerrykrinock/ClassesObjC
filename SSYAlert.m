@@ -1291,29 +1291,34 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 }
 
+- (void)runModalSheetOnWindow:(NSWindow*)hostWindow
+            completionHandler:(void(^)(NSModalResponse returnCode))completionHandler {
+    [self setButton1IfNeeded] ;
+    if (!m_dontAddOkButton) {
+        NSAssert(self.button1.target, @"Internal Error 943-4183") ;
+        NSAssert(self.button1.action, @"Internal Error 954-9543") ;
+    }
+
+    [self doooLayout] ;
+    
+    if ([self progressBarShouldAnimate]) {
+        [[self progressBar] startAnimation:self] ;
+    }
+    
+    [self setIsDoingModalDialog:YES] ;
+    
+    [self setDocumentWindow:hostWindow] ;
+    
+    [hostWindow beginSheet:[self window]
+         completionHandler:completionHandler] ;
+}
+
+
 - (void)runModalSheetOnWindow:(NSWindow*)documentWindow_
                 modalDelegate:(id)modalDelegate
                didEndSelector:(SEL)didEndSelector
                   contextInfo:(void*)contextInfo {
 	if (documentWindow_) {
-		[self setButton1IfNeeded] ;
-		
-		// if () conditions added in BookMacster 1.5.7 since button1 target and action
-		// should always be set by setButton1Title:
-		// If the debugger stops here, figure out why!!
-		if (([[self button1] target] == nil) && !m_dontAddOkButton) {
-			[[self button1] setTarget:self] ;
-#if DEBUG
-			NSLog(@"Internal Error 928-9983") ;
-#endif
-		}
-		if (([[self button1] action] == NULL) && !m_dontAddOkButton) {
-			[[self button1] setAction:@selector(clickedButton:)] ;
-#if DEBUG
-			NSLog(@"Internal Error 135-5614") ;
-#endif
-		}
-		
 		NSAssert(((modalDelegate != nil) == (didEndSelector != nil)), @"222 modalDelegate vs. didEndSelector inconsistency.") ;
 		if (!modalDelegate) {
 			modalDelegate = self ;
@@ -1323,17 +1328,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			didEndSelector = @selector(sheetDidEnd:returnCode:contextInfo:) ;
 		}
 		
-		[self doooLayout] ;
-		
-		if ([self progressBarShouldAnimate]) {
-			[[self progressBar] startAnimation:self] ;
-		}
-		
-		[self setIsDoingModalDialog:YES] ;
-
-		[self setDocumentWindow:documentWindow_] ;
-		
-        [documentWindow_ beginSheet:[self window]
+        [self runModalSheetOnWindow:documentWindow_
                   completionHandler:^void(NSModalResponse modalResponse) {
                       NSWindow* window = [self window] ;
                       NSInvocation* invocation = [NSInvocation invocationWithTarget:modalDelegate

@@ -1091,11 +1091,32 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 
 /*!
  @brief    Runs the receiver on a sheet as a modal session and returns
- immediately.
+ immediately, running an optional invocation (target+selector+contextInfo)
+ later if you send -[NSWindow endSheet:] or -[NSWindow endSheet:modalResponse:]
+ to the host window.
+ 
+@details  If the receiver has not had any button titles yet, and if the
+receiver has not had dontAddOkButton set, this method adds a default "OK"
+button before displaying the sheet.
+ */
+- (void)runModalSheetOnWindow:(NSWindow*)hostWindow
+            completionHandler:(void(^)(NSModalResponse returnCode))completionHandler ;
 
- @details  If the receiver has not had any button titles yet, and if the
- receiver has not had dontAddOkButton set, this method adds a default "OK"
- button before displaying the sheet.
+/*!
+ @brief    Runs the receiver on a sheet as a modal session and returns
+ immediately, running an optional invocation (target+selector+contextInfo)
+ later if you send -[NSWindow endSheet:] or -[NSWindow endSheet:modalResponse:]
+ to the host window
+
+ @details  Although this method cleverly wraps Apple's new block-based method 
+ with an invocation to maintain backward compatibility, and should thus continue
+ to work until Apple gets tired of blocks and moves on to some other new fad,
+ we recommend using the new direct method
+ -runModalSheetOnWindow:completionHandler: instead of this old one.
+ 
+ If the receiver has not had any button titles yet, and if the receiver has not
+ had dontAddOkButton set, this method adds a default "OK" button before
+ displaying the sheet.
  
  @param    documentWindow  The document window to which to attach the sheet.
  @param    modalDelegate  The object which will receive and must respond to
@@ -1108,7 +1129,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  @param    contextInfo  Pointer to data which will be returned as the
  third element of the didEndSelector.
 */
-- (void)runModalSheetOnWindow:(NSWindow*)documentWindow
+- (void)runModalSheetOnWindow:(NSWindow*)hostWindow
 				modalDelegate:(id)modalDelegate
 			   didEndSelector:(SEL)didEndSelector
 				  contextInfo:(void*)contextInfo ;
