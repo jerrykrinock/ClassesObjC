@@ -48,12 +48,10 @@
     }
 }
 
-#if 0
 - (void)     parser:(NSXMLParser*)parser
  parseErrorOccurred:(NSError*)error {
-    //NSLog(@"Found error in XML: %@", error) ;
+    NSLog(@"Found error in XML: %@", error) ;
 }
-#endif
 
 - (NSArray*)weblocFilenamesAndUrlsInPaths:(NSArray*)paths {
 	NSMutableArray* filenamesAndURLs = [NSMutableArray array] ;
@@ -62,23 +60,31 @@
 		NSString* url = nil ;
         
         NSData* data = [NSData dataWithContentsOfFile:path] ;
-        if (data) {
-            NSXMLParser* parser = [[NSXMLParser alloc] initWithData:data] ;
-            [parser setDelegate:self] ;
-            NSMutableString* xmlString = [[NSMutableString alloc] init] ;
-            [self setXmlString:xmlString] ;
-            [xmlString release] ;
-            
-            [parser parse] ;
-            // Note that -parse is synchronous and will not return until the parsing
-            // is done or aborted.
-            [parser release] ;
-            
-            url = [self xmlString] ;
-            
-            // Not really necessary, but for resource usage efficiency we
-            // release xmlString here instead of in -dealloc…
-            [self setXmlString:nil] ;
+        NSDictionary* dic = [NSPropertyListSerialization propertyListWithData:data
+                                                                      options:0
+                                                                       format:NULL
+                                                                        error:NULL] ;
+        url = [dic objectForKey:@"URL"] ;
+        if (!url) {
+            if (data) {
+                NSXMLParser* parser = [[NSXMLParser alloc] initWithData:data] ;
+                [parser setDelegate:self] ;
+                NSMutableString* xmlString = [[NSMutableString alloc] init] ;
+                [self setXmlString:xmlString] ;
+                [xmlString release] ;
+                
+                [parser parse] ;
+                // Note that -parse is synchronous and will not return until the parsing
+                // is done or aborted.
+                [parser release] ;
+                
+                url = [self xmlString] ;
+                
+                // Not really necessary, but for resource usage efficiency we
+                // release xmlString here instead of in -dealloc…
+                /*SSYDBL*/ NSLog(@"Got url: %@", url) ;
+                [self setXmlString:nil] ;
+            }
         }
         
         if (url) {
