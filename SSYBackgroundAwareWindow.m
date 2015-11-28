@@ -4,7 +4,7 @@
 @implementation SSYBackgroundAwareWindow
 
 - (BOOL)keepHidden {
-    return ([SSYProcessTyper currentType] != SSYProcessTyperTypeForeground) ;
+    return ([SSYProcessTyper currentType] != NSApplicationActivationPolicyRegular) ;
 }
 
 - (BOOL)canBecomeKeyWindow {
