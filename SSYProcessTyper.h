@@ -1,26 +1,6 @@
 #import <Cocoa/Cocoa.h>
 
 /*
- This enum was added in BookMacster 1.14.4.  Prior to that,
- I piggybacked on kProcessTransformToForegroundApplication and 
- its two friends.  But those are not all defined in the 10.6
- SDK.  So I did it the correct way now.  For defensive programming,,
- the three values here match the values of the corresponding
- kProcessTransformToForegroundApplication and friends.
- 
- I don't know what is the difference between the types "Background" and
- "UIElement".  I never user the former, only the latter.  I have not been able
- to find any explanation in Apple documemtation.
- */
-enum SSYProcessTyperType_enum {
-	SSYProcessTyperTypeForeground = 1,
-	SSYProcessTyperTypeBackground = 2,
-	SSYProcessTyperTypeUIElement = 4
-} ;
-typedef enum SSYProcessTyperType_enum SSYProcessTyperType ;
-
-
-/*
  @brief    Class which provides methods for reading and setting the 'type' of
  the current process, where 'type' means Foreground, LSUIElement, or Background
 */
@@ -28,60 +8,37 @@ typedef enum SSYProcessTyperType_enum SSYProcessTyperType ;
 
 }
 
-+ (SSYProcessTyperType)currentType ;
++ (NSApplicationActivationPolicy)currentType ;
 
 /*
- @brief    Transforms the current process to foreground type if it is not.
+ @brief    Transforms the current process to foreground type by setting the
+ current app's activation policy, activating it, and if necessary dancing
+ with another app to get ownership of the menu bar
  
- @details  For this method to work properly, if you are running in Mac OS X
- 10.9 or later, you should invoke this method in your app delegate's
- -applicationDidFinishLaunching.  Otherwise, you should invoke this method in
- your app delegate's -init.  I have no explanation for this.  That's just the
- way it works.  If you do it wrong, the menu bar will not show until the user
- activates a different application (a third app, not the prior frontmost app.)
+ @details   This method features a kludge which "dances" with some other
+ application if OS X does not give it ownership of the menu bar immediately.
+ That other application is an already-running, preferably, faceless application
+ (so the dance is not so visible) whose bundle identifier is returned by your
+ app delegate's -associatedBackgroundAppBundleIdentifier method, if it responds
+ to that selector and such an app is found to be running.  Otherwise, it dances
+ with Finder.
  
- Mac OS X 10.9 or later is indicated by this expression:
- (NSAppKitVersionNumber >= 1200).
- 
- Starting with BookMacster 1.19.6, this method features a "dance
- with Finder" kludge.  This kludge is to fix the issue which arose in Mac
- OS X 10.9 Mavericks, after I began invoking this method in app delegate's
- -applicationDidFinishLaunching instead of -init.  The new issue was that the
- menu still would not show when launched from an app such as Alfred version 2,
- which is itself an LSUIElement background app.  According to Alfred
- developer Andrew Pepperrell, Alfred 2 uses a standard NSWorkspace method to
- launch apps, nothing tricky.
- http://www.alfredforum.com/topic/3358-application-bookmacster-menu-does-not-show-immediately/
- The solution is to do what I call a "dance with Finder", and supposedly this
- kludge was actually recommended by Apple
- http://stackoverflow.com/questions/7596643/when-calling-transformprocesstype-the-app-menu-doesnt-show-up
- But I modified it somewhat.  First of all, I found that the delays of 0.1 did
- not help, and further that if the app was not launched by Finder but by some
- other means (Alfred, LaunchBar, AppleScript, open(1), etc.) then the Finder's
- menu would flash before BookMacster's menu would show.  Therefore I added
- additional code to detect when showing the menu failed and only initiate the
- "dance with Finder" if it fails, which should be only if launched by Alfred 2.
- Fortunately, for 10.7 and later users, method
- -[NSWorkspace sharedWorkspace] menuBarOwningApplication]
- provides the detection.  The "dance with Finder" code is a real mess, but I
- tested in 10.6, 10.7, 10.8, 10.9 and it works in all cases.
- */
+ In OS X 10.11, it appears that the dance may only be necessary if app is
+ launched is LSUIElement in Info.plist, is launched by Xcode and then
+ made foreground during -applicationDidFinishLaunching.  If the app does get
+ ownership of the menu bar immediately, then the dance is not performed. */
 + (void)transformToForeground:(id)sender ;
 
-#if (MAC_OS_X_VERSION_MAX_ALLOWED > 1060)
-
 /*
- @brief    Transforms the current process to UIElement type if it is not.
- @details  Available in Mac OS X 10.7 or later.
-*/
+ @brief    Transforms the current process to UIElement type by setting the
+ current app's activation policy
+ */
 + (void)transformToUIElement:(id)sender ;
 
 /*
- @brief    Transforms the current process to background type if it is not.
- @details  Available in Mac OS X 10.7 or later.
+ @brief    Transforms the current process to background type by setting the
+ current app's activation policy
  */
 + (void)transformToBackground:(id)sender ;
-
-#endif
 
 @end

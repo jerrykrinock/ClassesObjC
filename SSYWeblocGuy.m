@@ -82,7 +82,6 @@
                 
                 // Not really necessary, but for resource usage efficiency we
                 // release xmlString here instead of in -dealloc…
-                /*SSYDBL*/ NSLog(@"Got url: %@", url) ;
                 [self setXmlString:nil] ;
             }
         }
