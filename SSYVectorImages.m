@@ -145,12 +145,8 @@
 #define ARROW_SHOULDER 10.0
 #define INSIDE_RADIUS 40.0
 #define ARROW_TIP_RADIUS ((50.0 + INSIDE_RADIUS) / 2.0)
-            [path appendBezierPathWithArcWithCenter:NSMakePoint(50.0, 50.0)
-                                             radius:(50.0 - insetPercent)
-                                         startAngle:(90.0 + ARROW_START_DEGREES)
-                                           endAngle:(270.0 - GAP_DEGREES)] ;
-            // out to one shoulder:
-            [path lineToPoint:NSMakePoint(50.0-(50.0+ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (50.0+ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180))] ;
+            // start at one shoulder:
+            [path moveToPoint:NSMakePoint(50.0-(50.0+ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (50.0+ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180))] ;
             NSLog(@"shoulder1 = %@", NSStringFromPoint([path currentPoint])) ;
             // to the tip of the arrow
             [path lineToPoint:NSMakePoint(50 - ARROW_TIP_RADIUS*sin(GAP_DEGREES*M_PI/180.0), 50.0 + ARROW_TIP_RADIUS*cos(GAP_DEGREES*M_PI/180.0))] ;
@@ -158,6 +154,13 @@
             // to the other shoulder
             [path lineToPoint:NSMakePoint(50.0-(INSIDE_RADIUS-ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (INSIDE_RADIUS-ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180))] ;
             NSLog(@"shoulder2 = %@", NSStringFromPoint([path currentPoint])) ;
+            // back in to the inner circle:
+            [path lineToPoint:NSMakePoint(50.0-(50.0-ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (50.0-ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180))] ;
+            NSLog(@"shoulder1 = %@", NSStringFromPoint([path currentPoint])) ;
+            [path appendBezierPathWithArcWithCenter:NSMakePoint(50.0, 50.0)
+                                             radius:(50.0 - insetPercent)
+                                         startAngle:(90.0 + ARROW_START_DEGREES)
+                                           endAngle:(270.0 - GAP_DEGREES)] ;
             //[path closePath] ;
             
             [path stroke] ;
