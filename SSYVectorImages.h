@@ -23,6 +23,7 @@ enum SSYVectorImageStyles_enum
     SSYVectorImageStyleInfoOff,
     SSYVectorImageStyleInfoOn,
     SSYVectorImageStyleHelp,
+    SSYVectorImageStyleExclamation,
     /* Five-pointed star used in SSYStarRatingView */
     SSYVectorImageStyleStar,
     /* White "X" inside a gray circle, used in SSYStarRatingView */

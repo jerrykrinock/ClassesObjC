@@ -19,47 +19,36 @@
 
 + (void)drawGlyphName:(NSString*)glyphName
                  size:(NSSize)size
+                color:(NSColor*)color
                  fill:(BOOL)fill {
     NSBezierPath* bezier = [NSBezierPath bezierPath] ;
     [self glyphOnPath:bezier
                  name:glyphName
             halfWidth:size.width/2] ;
     [bezier setLineWidth:2] ;
-    [[NSColor blackColor] set] ;
+    [color set] ;
     [bezier stroke] ;
     if (fill) {
-        [[NSColor blackColor] setFill] ;
+        [color setFill] ;
         [bezier fill] ;
     }
 }
 
 + (NSImage*)imageWithGlyphName:(NSString*)glyphName
                       fattenBy:(CGFloat)fattenBy
+                         color:(NSColor*)color
                           fill:(BOOL)fill {
     NSSize size = NSMakeSize(100/fattenBy, 100) ;
     NSImage* image ;
-    if ([NSImage respondsToSelector:@selector(imageWithSize:flipped:drawingHandler:)]) {
-        // We must be in OS X 10.8 or later
-        image = [NSImage imageWithSize:size
-                               flipped:NO
-                        drawingHandler:^(NSRect dstRect) {
-                            [self drawGlyphName:glyphName
-                                           size:size
-                                           fill:fill] ;
-                            return YES ;
-                        }] ;
-    }
-    else {
-        image = [[NSImage alloc] initWithSize:size] ;
-        [image lockFocus] ;
-        [self drawGlyphName:glyphName
-                       size:size
-                       fill:fill] ;
-        [image unlockFocus] ;
-#if !__has_feature(objc_arc)
-        [image autorelease] ;
-#endif
-    }
+    image = [NSImage imageWithSize:size
+                           flipped:NO
+                    drawingHandler:^(NSRect dstRect) {
+                        [self drawGlyphName:glyphName
+                                       size:size
+                                      color:color
+                                       fill:fill] ;
+                        return YES ;
+                    }] ;
     
     return image ;
 }
@@ -121,6 +110,9 @@
             inset:(CGFloat)inset {
     NSBezierPath* path = [NSBezierPath bezierPath] ;
     
+    [color setFill] ;
+    [color setStroke] ;
+
     [[NSGraphicsContext currentContext] saveGraphicsState] ;
 
     /* The idea here is that all images have a normalized size of 100 x 100.
@@ -139,29 +131,75 @@
     
     switch (style) {
         case SSYVectorImageStyleChasingArrows: {
-#define GAP_DEGREES 30.0
-#define ARROW_DEGREES 15.0
+            [path setLineWidth:2.0] ;
+            
+            // The outer radius is 50 - inset
+#define GAP_DEGREES 15.0
+#define ARROW_DEGREES 35.0
 #define ARROW_START_DEGREES (GAP_DEGREES + ARROW_DEGREES)
-#define ARROW_SHOULDER 10.0
-#define INSIDE_RADIUS 40.0
-#define ARROW_TIP_RADIUS ((50.0 + INSIDE_RADIUS) / 2.0)
-            // start at one shoulder:
-            [path moveToPoint:NSMakePoint(50.0-(50.0+ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (50.0+ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180))] ;
-            NSLog(@"shoulder1 = %@", NSStringFromPoint([path currentPoint])) ;
+#define ARROW_SHOULDER 12.0
+#define INSIDE_RADIUS 38.0
+#define OUTER_RADIUS 49.0  // = 50 - line thickness
+#define AVERAGE_RADIUS ((OUTER_RADIUS + INSIDE_RADIUS) / 2.0)
+            
+            /* In the following code, the reason why we jump around is because
+             the NSBezierPath method -appendBezierPathWithArcWithCenter::::
+             seems to only go counterclockwise. */
+            
+            // Start at the top left shoulder of the left arrow:
+            NSPoint leftStart = NSMakePoint(50.0-(OUTER_RADIUS+ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (OUTER_RADIUS+ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180)) ;
+            [path moveToPoint:leftStart] ;
             // to the tip of the arrow
-            [path lineToPoint:NSMakePoint(50 - ARROW_TIP_RADIUS*sin(GAP_DEGREES*M_PI/180.0), 50.0 + ARROW_TIP_RADIUS*cos(GAP_DEGREES*M_PI/180.0))] ;
-            NSLog(@"      tip = %@", NSStringFromPoint([path currentPoint])) ;
+            [path lineToPoint:NSMakePoint(50 - AVERAGE_RADIUS*sin(GAP_DEGREES*M_PI/180.0), 50.0 + AVERAGE_RADIUS*cos(GAP_DEGREES*M_PI/180.0))] ;
             // to the other shoulder
-            [path lineToPoint:NSMakePoint(50.0-(INSIDE_RADIUS-ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (INSIDE_RADIUS-ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180))] ;
-            NSLog(@"shoulder2 = %@", NSStringFromPoint([path currentPoint])) ;
-            // back in to the inner circle:
-            [path lineToPoint:NSMakePoint(50.0-(50.0-ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (50.0-ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180))] ;
-            NSLog(@"shoulder1 = %@", NSStringFromPoint([path currentPoint])) ;
+            [path lineToPoint:NSMakePoint(50.0 - (INSIDE_RADIUS-ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (INSIDE_RADIUS-ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180))] ;
+            // back in to the inner circle, at the armpit
+            [path lineToPoint:NSMakePoint(50.0 - INSIDE_RADIUS*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + INSIDE_RADIUS*cos(ARROW_START_DEGREES*M_PI/180))] ;
+            // Inner arc of left arrow
             [path appendBezierPathWithArcWithCenter:NSMakePoint(50.0, 50.0)
-                                             radius:(50.0 - insetPercent)
+                                             radius:(INSIDE_RADIUS)
                                          startAngle:(90.0 + ARROW_START_DEGREES)
                                            endAngle:(270.0 - GAP_DEGREES)] ;
-            //[path closePath] ;
+            // across the tail
+            [path lineToPoint:NSMakePoint(50.0 - OUTER_RADIUS*sin(GAP_DEGREES*M_PI/180), 50.0 - OUTER_RADIUS*cos(GAP_DEGREES*M_PI/180))] ;
+            
+            // Now jump across the bottom to the right arrow and do the lower right shoulder
+            NSPoint rightStart = NSMakePoint(50.0+(OUTER_RADIUS+ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 - (OUTER_RADIUS+ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180)) ;
+            [path moveToPoint:rightStart] ;
+            // to the tip of the arrow
+            [path lineToPoint:NSMakePoint(50 + AVERAGE_RADIUS*sin(GAP_DEGREES*M_PI/180.0), 50.0 - AVERAGE_RADIUS*cos(GAP_DEGREES*M_PI/180.0))] ;
+            // to the other shoulder
+            [path lineToPoint:NSMakePoint(50.0 + (INSIDE_RADIUS-ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 - (INSIDE_RADIUS-ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180))] ;
+            // back in to the inner circle, at the armpit
+            [path lineToPoint:NSMakePoint(50.0 + INSIDE_RADIUS*sin(ARROW_START_DEGREES*M_PI/180), 50.0 - INSIDE_RADIUS*cos(ARROW_START_DEGREES*M_PI/180))] ;
+            // Inner arc of right arrow
+            [path appendBezierPathWithArcWithCenter:NSMakePoint(50.0, 50.0)
+                                             radius:(INSIDE_RADIUS)
+                                         startAngle:(270.0 + ARROW_START_DEGREES)
+                                           endAngle:(90.0 - GAP_DEGREES)] ;
+            
+            // across the tail
+            [path lineToPoint:NSMakePoint(50.0 + OUTER_RADIUS*sin(GAP_DEGREES*M_PI/180), 50.0 + OUTER_RADIUS*cos(GAP_DEGREES*M_PI/180))] ;
+            
+            // Now jump across the top to the left arrow and complete it.
+            [path moveToPoint:leftStart] ;
+            // In to the armpit
+            [path lineToPoint:NSMakePoint(50.0 - OUTER_RADIUS*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + OUTER_RADIUS*cos(ARROW_START_DEGREES*M_PI/180))] ;
+            // Outer arc of left arrow
+            [path appendBezierPathWithArcWithCenter:NSMakePoint(50.0, 50.0)
+                                             radius:(OUTER_RADIUS)
+                                         startAngle:(90.0 + ARROW_START_DEGREES)
+                                           endAngle:(270.0 - GAP_DEGREES)] ;
+            
+            // Now jump across the bottom to the right arrow and complete it.
+            [path moveToPoint:rightStart] ;
+            // In to the armpit
+            [path lineToPoint:NSMakePoint(50.0 + OUTER_RADIUS*sin(ARROW_START_DEGREES*M_PI/180), 50.0 - OUTER_RADIUS*cos(ARROW_START_DEGREES*M_PI/180))] ;
+            // Outer arc of right arrow
+            [path appendBezierPathWithArcWithCenter:NSMakePoint(50.0, 50.0)
+                                             radius:(OUTER_RADIUS)
+                                         startAngle:(270.0 + ARROW_START_DEGREES)
+                                           endAngle:(90.0 - GAP_DEGREES)] ;
             
             [path stroke] ;
             break ;
@@ -188,7 +226,6 @@
                                          startAngle:0.0
                                            endAngle:359.99] ;
             [path closePath] ;
-            [color setFill] ;
             [path fill] ;
             break ;
         case SSYVectorImageStylePlus:
@@ -241,7 +278,6 @@
             
             // Finish
             [path closePath] ;
-            [color setFill] ;
             [path fill] ;
             break;
         }
@@ -249,6 +285,7 @@
         case SSYVectorImageStyleInfoOn: {
             NSImage* glyphImage = [self imageWithGlyphName:@"i"
                                                   fattenBy:1.5
+                                                     color:color
                                                       fill:(style == SSYVectorImageStyleInfoOn)] ;
             [glyphImage drawInRect:NSMakeRect(0,0,100,100)
                           fromRect:NSZeroRect
@@ -257,13 +294,25 @@
             break ;
         }
         case SSYVectorImageStyleHelp: {
-            NSImage* glyphImageQ = [self imageWithGlyphName:@"question"
-                                                   fattenBy:1.3
-                                                       fill:(style == SSYVectorImageStyleInfoOn)] ;
-            [glyphImageQ drawInRect:NSMakeRect(0,0,100,100)
-                           fromRect:NSZeroRect
-                          operation:NSCompositeCopy
-                           fraction:1.0] ;
+            NSImage* glyphImage = [self imageWithGlyphName:@"question"
+                                                  fattenBy:1.3
+                                                     color:color
+                                                      fill:NO] ;
+            [glyphImage drawInRect:NSMakeRect(0,0,100,100)
+                          fromRect:NSZeroRect
+                         operation:NSCompositeCopy
+                          fraction:1.0] ;
+            break ;
+        }
+        case SSYVectorImageStyleExclamation: {
+            NSImage* glyphImage = [self imageWithGlyphName:@"exclam"
+                                                  fattenBy:1.3
+                                                     color:color
+                                                      fill:YES] ;
+            [glyphImage drawInRect:NSMakeRect(0,0,100,100)
+                          fromRect:NSZeroRect
+                         operation:NSCompositeCopy
+                          fraction:1.0] ;
             break ;
         }
         case SSYVectorImageStyleStar:; {
@@ -278,9 +327,8 @@
             [path lineToPoint: NSMakePoint(70, 37)];
             [path lineToPoint: NSMakePoint(100.0, 58.4)];  // top right point
             [path lineToPoint: NSMakePoint(63.0, 58.4)];
-            [path closePath];
-            [color setFill];
-            [path fill];
+            [path closePath] ;
+            [path fill] ;
             break ;
         }
         case SSYVectorImageStyleRemoveX: {
@@ -291,7 +339,6 @@
                                          startAngle:0.0
                                            endAngle:360.0] ;
             [path closePath] ;
-            [color setFill] ;
             [path fill] ;
             [path removeAllPoints] ;
             
@@ -403,8 +450,6 @@
             break ;
         }
         case SSYVectorImageStyleBookmark: {
-            [color setFill] ;
-            [color setStroke] ;
             [path setLineWidth:1.0] ;
             
             // Draw the bookmark body
@@ -578,7 +623,6 @@
                                          startAngle:0.0 endAngle:360.0] ;
             [path moveToPoint:NSMakePoint(radius, radius)] ;
             [path relativeLineToPoint:NSMakePoint(0.0, radius - [path lineWidth] - KNOB_MARGIN)] ;
-            [color setStroke] ;
             [path stroke] ;
             break ;
         case SSYVectorImageStyleHexagon:;
@@ -593,8 +637,6 @@
             NSPoint E = NSMakePoint(frame.origin.x, frame.origin.y + insize / 4);
             NSPoint F = NSMakePoint(frame.origin.x, frame.origin.y + frame.size.height - insize / 4);
             
-            [color set] ;
-            [color setFill] ;
             [path moveToPoint:A] ;
             [path lineToPoint:B] ;
             [path lineToPoint:C] ;
