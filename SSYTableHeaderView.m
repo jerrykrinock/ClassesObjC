@@ -13,6 +13,7 @@
 		if ([identifier hasPrefix:@"userDefined"]) {
 			NSTableHeaderCell* headerCell = [tableColumn headerCell] ;
 			NSRect rect = [self headerRectOfColumn:[tableView columnWithIdentifier:identifier]] ;
+
 			[(NSPopUpButtonCell*)headerCell performClickWithFrame:rect
                                                            inView:self] ;
 		}
@@ -21,14 +22,5 @@
 		[super mouseDown:event] ;
 	}
 }
-
-#if 0
-#warning Super Sized Header
-- (NSRect)frame {
-    NSRect frame = [super frame] ;
-    frame.size.height = 100.0 ;
-    return frame ;
-}
-#endif
 
 @end
