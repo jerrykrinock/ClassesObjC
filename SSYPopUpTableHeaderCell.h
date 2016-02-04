@@ -4,6 +4,18 @@
 #define LOG_UNREAL_SSY_POP_UP_TABLE_HEADER_CELLS 1
 #endif
 
+enum SSYPopupTableHeaderCellSortState_enum {
+    SSYPopupTableHeaderCellSortStateNotSorted = 0,
+    SSYPopupTableHeaderCellSortStateSortedAscending = 1,
+    SSYPopupTableHeaderCellSortStateSortedDescending = 2
+} ;
+typedef enum SSYPopupTableHeaderCellSortState_enum SSYPopupTableHeaderCellSortState ;
+
+@protocol SSYPopupTableHeaderSortableColumn
+- (void)sortAsAscending:(BOOL)ascending ;
+@end
+
+
 
 /*!
  @brief    A table header cell that is a popup menu!
