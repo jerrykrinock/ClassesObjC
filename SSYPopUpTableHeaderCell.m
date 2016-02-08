@@ -1,5 +1,7 @@
 #import "SSYPopUpTableHeaderCell.h"
 #import "NS(Attributed)String+Geometrics.h"
+//BAD:
+#import "StarkTableColumn.h"
 
 @interface SSYPopUpTableHeaderCell ()
 
@@ -15,9 +17,11 @@
 
 @synthesize lostWidth ;
 @synthesize priorSelectedTitle = _priorSelectedTitle ;
+@synthesize fixedNonMenuTitle = _fixedNonMenuTitle ;
 
 - (void)dealloc {
     [_priorSelectedTitle release] ;
+    [_fixedNonMenuTitle release] ;
     
     [super dealloc] ;
 }
@@ -25,6 +29,8 @@
 - (id)copyWithZone:(NSZone *)zone {
     SSYPopUpTableHeaderCell* copy = [[SSYPopUpTableHeaderCell allocWithZone: zone] init] ;
 	[copy setLostWidth:[self lostWidth]] ;
+    [copy setPriorSelectedTitle:[self priorSelectedTitle]] ;
+    [copy setFixedNonMenuTitle:[self fixedNonMenuTitle]] ;
 	
     return copy ;
 }
@@ -41,12 +47,17 @@
 	return self ;
 }
 
-- (void)performClickWithFrame:(NSRect)frame
-                       inView:(NSView *)controlView {
+- (NSPoint)clickedPointInControlView:(NSView*)controlView {
     NSEvent* event = [NSApp currentEvent] ;
     NSPoint eventPoint = [event locationInWindow] ;
     NSPoint point = [controlView convertPoint:eventPoint
                                      fromView:nil];
+    return point;
+}
+
+- (void)performClickWithFrame:(NSRect)frame
+                       inView:(NSView *)controlView {
+    NSPoint point = [self clickedPointInControlView:controlView] ;
     CGFloat eventX = point.x ;
     if (eventX < [self sortIndicatorLeftEdge]) {
         [super performClickWithFrame:frame
@@ -132,10 +143,17 @@
 		CGFloat scaleFactor = cellFrame.size.height / 17.0 ;
         NSBezierPath* path ;
         
-        CGFloat sortIndicatorWidth = 17.0 * scaleFactor ;
-        CGFloat arrowMargin = 3.0 * scaleFactor ;
-        CGFloat sortIndicatorMarginH = 5.5 * scaleFactor ;
-        CGFloat sortIndicatorMarginV = 6.5 * scaleFactor ;
+        NSTableView* tableView = [(NSTableHeaderView*)controlView tableView] ;
+        BOOL sortable = YES ;
+        if ([tableView respondsToSelector:@selector(sortable)]) {
+            sortable = [(NSTableView <SSYPopupTableHeaderCellTableSortableOrNot> *)tableView sortable] ;
+        }
+        CGFloat sortScaleFactor = sortable ? scaleFactor : 0.0 ;
+        CGFloat rightMargin = sortable ? 0.0 : 5.0 ;
+        
+        CGFloat sortIndicatorWidth = 17.0 * sortScaleFactor ;
+        CGFloat sortIndicatorMarginH = 5.5 * sortScaleFactor ;
+        CGFloat sortIndicatorMarginV = 6.5 * sortScaleFactor ;
 
         CGFloat sortIndicatorRight = NSMaxX(cellFrame) - sortIndicatorMarginH ;
         CGFloat sortIndicatorLeft = NSMaxX(cellFrame) - sortIndicatorWidth + sortIndicatorMarginH ;
@@ -143,22 +161,23 @@
         CGFloat sortIndicatorVertexY ;
         CGFloat sortIndicatorBaseY ;
         if ([self sortState] == SSYPopupTableHeaderCellSortStateSortedDescending) {
-            // Point down
+            // Sort indicator/control pointing down
             sortIndicatorBaseY = sortIndicatorMarginV ;
             sortIndicatorVertexY = cellFrame.size.height - sortIndicatorMarginV ;
         }
         else {
-            // Point up
+            // Sort indicator/control pointing up
             sortIndicatorVertexY = sortIndicatorMarginV ;
             sortIndicatorBaseY = cellFrame.size.height - sortIndicatorMarginV ;
         }
         
 		CGFloat arrowSeparationY = 3.0 * scaleFactor ;
-		CGFloat arrowHeight = (cellFrame.size.height - arrowSeparationY)/2 - arrowMargin ;
+        CGFloat arrowVerticalMargin = 3.0 * scaleFactor ;
+		CGFloat arrowHeight = (cellFrame.size.height - arrowSeparationY)/2 - arrowVerticalMargin ;
 		CGFloat arrowWidth = arrowHeight ;
 		CGFloat arrowHalfWidth = arrowWidth/2.0 ;
 		CGFloat middleY = cellFrame.size.height / 2 ;
-		CGFloat lostWidth_ = sortIndicatorWidth + arrowWidth ;
+		CGFloat lostWidth_ = sortIndicatorWidth + arrowWidth + rightMargin ;
 		[self setLostWidth:lostWidth_] ;
 		CGFloat arrowMinX = NSMaxX(cellFrame) - lostWidth_ ;
 		CGFloat arrowOffsetY = arrowSeparationY / 2 ;
@@ -168,43 +187,68 @@
         // We'll need this later, for hit testing in -performClickWithFrame::
         [self setSortIndicatorLeftEdge:sortIndicatorLeft] ;
 		
-        // Draw the sort indicator
-        path = [NSBezierPath bezierPath] ;
-        if ([self sortState] != SSYPopupTableHeaderCellSortStateNotSorted) {
-            [path setLineWidth:2.5] ;
-            [[NSColor blueColor] set] ;
+        // Draw the sort indicator/control
+        if (sortable) {
+            path = [NSBezierPath bezierPath] ;
+            if ([self sortState] != SSYPopupTableHeaderCellSortStateNotSorted) {
+                [path setLineWidth:2.5] ;
+                [[NSColor blueColor] set] ;
+            }
+            [path moveToPoint:NSMakePoint(sortIndicatorLeft, sortIndicatorBaseY)] ;
+            [path lineToPoint:NSMakePoint(sortIndicatorMiddle, sortIndicatorVertexY)] ;
+            [path lineToPoint:NSMakePoint(sortIndicatorRight, sortIndicatorBaseY)] ;
+            [path stroke] ;
         }
-        [path moveToPoint:NSMakePoint(sortIndicatorLeft, sortIndicatorBaseY)] ;
-        [path lineToPoint:NSMakePoint(sortIndicatorMiddle, sortIndicatorVertexY)] ;
-        [path lineToPoint:NSMakePoint(sortIndicatorRight, sortIndicatorBaseY)] ;
-        [path stroke] ;
         
         [[NSColor blackColor] set] ;
-        
-        // Draw the upper arrow that points up
-		path = [NSBezierPath bezierPath] ;
-		[path moveToPoint:NSMakePoint(arrowMinX, topArrowBottom)] ;
-		[path relativeLineToPoint:NSMakePoint(arrowWidth, 0)] ;
-		[path relativeLineToPoint:NSMakePoint(-arrowHalfWidth, arrowHeight)] ;
-		[path closePath] ;
-		[path fill] ;
-		
-		// Draw the lower arrow that points down
-		path = [NSBezierPath bezierPath] ;
-		[path moveToPoint:NSMakePoint(arrowMinX, bottomArrowTop)] ;
-		[path relativeLineToPoint:NSMakePoint(arrowWidth, 0)] ;
-		[path relativeLineToPoint:NSMakePoint(-arrowHalfWidth, -arrowHeight)] ;
-		[path closePath] ;
-		[path fill] ;
+
+        if ([self isUserDefined]) {
+            // Draw the upper arrow that points up
+            path = [NSBezierPath bezierPath] ;
+            [path moveToPoint:NSMakePoint(arrowMinX, topArrowBottom)] ;
+            [path relativeLineToPoint:NSMakePoint(arrowWidth, 0)] ;
+            [path relativeLineToPoint:NSMakePoint(-arrowHalfWidth, arrowHeight)] ;
+            [path closePath] ;
+            [path fill] ;
+            
+            // Draw the lower arrow that points down
+            path = [NSBezierPath bezierPath] ;
+            [path moveToPoint:NSMakePoint(arrowMinX, bottomArrowTop)] ;
+            [path relativeLineToPoint:NSMakePoint(arrowWidth, 0)] ;
+            [path relativeLineToPoint:NSMakePoint(-arrowHalfWidth, -arrowHeight)] ;
+            [path closePath] ;
+            [path fill] ;
+        }
 		
 		cellFrame.size.width -= lostWidth_ ;
 
         CGFloat xMargin = 1.0 * scaleFactor ;
         CGFloat yMargin = 3.7 * scaleFactor ;
         NSPoint titlePoint = NSMakePoint(NSMinX(cellFrame) + xMargin, yMargin) ;
-        NSAttributedString* truncatedTitle = [[self attributedTitle] attributedStringTruncatedToWidth:cellFrame.size.width - xMargin
-                                                                                               height:cellFrame.size.height] ;
+        NSAttributedString* attributedTitle ;
+        if ([self fixedNonMenuTitle]) {
+            NSTableView* tableView = [(NSTableHeaderView*)controlView tableView] ;
+            NSPoint point = cellFrame.origin ;
+            point.x = point.x + [tableView intercellSpacing].width  ;
+            point.y = point.y + [tableView intercellSpacing].height ;
+            NSInteger columnIndex = [tableView columnAtPoint:point] ;
+            NSArray <NSTableColumn <SSYPopupTableHeaderSortableColumn>*> * columns = (NSArray <NSTableColumn <SSYPopupTableHeaderSortableColumn>*> *)[tableView tableColumns] ;
+            NSTableColumn <SSYPopupTableHeaderSortableColumn> * thisColumn = [columns objectAtIndex:columnIndex] ;
+            NSFont* font = [thisColumn headerFont] ;
+            NSDictionary* attributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                                        font, NSFontAttributeName,
+                                        nil] ;
+            attributedTitle = [[NSAttributedString alloc] initWithString:[self fixedNonMenuTitle]
+                                                              attributes:attributes] ;
+        }
+        else {
+            attributedTitle = [self attributedTitle] ;
+            [attributedTitle retain] ;
+        }
+        NSAttributedString* truncatedTitle = [attributedTitle attributedStringTruncatedToWidth:cellFrame.size.width - xMargin
+                                                                                        height:cellFrame.size.height] ;
         [truncatedTitle drawAtPoint:titlePoint] ;
+        [attributedTitle release] ;
     }
 }
 

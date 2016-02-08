@@ -10,13 +10,11 @@
 	if (tableColumn) {
 		NSString *identifier = [tableColumn identifier] ;
 		
-		if ([identifier hasPrefix:@"userDefined"]) {
-			NSTableHeaderCell* headerCell = [tableColumn headerCell] ;
-			NSRect rect = [self headerRectOfColumn:[tableView columnWithIdentifier:identifier]] ;
-
-			[(NSPopUpButtonCell*)headerCell performClickWithFrame:rect
-                                                           inView:self] ;
-		}
+        NSTableHeaderCell* headerCell = [tableColumn headerCell] ;
+        NSRect rect = [self headerRectOfColumn:[tableView columnWithIdentifier:identifier]] ;
+        
+        [(NSPopUpButtonCell*)headerCell performClickWithFrame:rect
+                                                       inView:self] ;
 	}
 	else {
 		[super mouseDown:event] ;

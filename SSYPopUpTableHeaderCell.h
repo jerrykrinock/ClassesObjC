@@ -12,9 +12,18 @@ enum SSYPopupTableHeaderCellSortState_enum {
 typedef enum SSYPopupTableHeaderCellSortState_enum SSYPopupTableHeaderCellSortState ;
 
 @protocol SSYPopupTableHeaderSortableColumn
+
 - (void)sortAsAscending:(BOOL)ascending ;
+- (NSFont*)headerFont ;
+
 @end
 
+
+@protocol SSYPopupTableHeaderCellTableSortableOrNot
+
+- (BOOL)sortable ;
+
+@end
 
 
 /*!
@@ -32,9 +41,21 @@ typedef enum SSYPopupTableHeaderCellSortState_enum SSYPopupTableHeaderCellSortSt
 
 /*!
  @brief    The width on the right side of the column header which
- is not available for menu text because it is used by the popup arrows
- and whitespace to the right of the arrows.
+ is not available for menu text because it is used by the popup arrows if used,
+ sorting controls if used, and whitespace to the right of the arrows.
 */
 @property (readonly) CGFloat lostWidth ;
+
+@property (assign) BOOL isUserDefined ;
+
+/*!
+ @brief    If not nil, the receiver behaves like a plain table header cell,
+ with no popup menu, but with a blue/black sort control, to match the
+ blue/black sort control of SSYPopUpTableHeaderCell that have popup menus.
+ 
+ @details  Set this if you have a column in a table of user-defined popup
+ columns which you do *not* want to have a user-definfed popup menu.
+ */
+@property (copy) NSString* fixedNonMenuTitle ;
 
 @end
