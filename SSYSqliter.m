@@ -413,7 +413,7 @@ static NSInteger SSAppSQLiteCallback(void* NotUsed, NSInteger nColumns, char **c
 - (BOOL)initDatabaseError_p:(NSError**)error_p {
 	BOOL ok = YES ;
 	NSInteger result = sqlite3_open([[self path] UTF8String], (sqlite3**)&m_db) ;
-	
+
 	if (result != SQLITE_OK) {
 		if (error_p) {
 			m_db = NULL ;
@@ -809,6 +809,12 @@ end:
                                        SQLITE_CHECKPOINT_PASSIVE,
                                        &nFramesLogged,
                                        &nFramesCheckpointed) ;
+    if (result == SQLITE_BUSY) {
+        /* I've found that this happens when deallocating an ExtoreFirefox,
+         after an export in style 2, which should not even have used an
+         SSYSQLiter.  So we ignore this error. */
+        result = SQLITE_OK ;
+    }
 	if ((result != SQLITE_OK) && error_p) {
 		*error_p = [self makeErrorWithAppCode:453035
 								   sqliteCode:result
