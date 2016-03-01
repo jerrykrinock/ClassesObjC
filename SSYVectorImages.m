@@ -385,8 +385,9 @@
 #define NUMBER_OF_NODES 3
 #define NODE_RADIUS 7
 #define NODE_TO_LINE_SPACING (NODE_RADIUS + 5.0)
+#define ANCESTRYLINE_WIDTH 2.0
             // Draw the three nodes (little circles)
-            [path setLineWidth:5] ;
+            [path setLineWidth:ANCESTRYLINE_WIDTH] ;
             NSInteger i ;
             CGFloat xb = 20 ;
             CGFloat yb = 75 ;
@@ -409,10 +410,9 @@
             }
             
             // Draw lines connecting the nodes
-            [[NSColor darkGrayColor] set] ;
             
             [path moveToPoint:NSMakePoint(nodes[0].x + NODE_TO_LINE_SPACING, nodes[0].y)] ;
-            [path lineToPoint:NSMakePoint(nodes[1].x, nodes[0].y)] ;
+            [path lineToPoint:NSMakePoint(nodes[1].x + ANCESTRYLINE_WIDTH/2, nodes[0].y)] ;
             [path stroke] ;
             [path removeAllPoints] ;
             
@@ -422,7 +422,7 @@
             [path removeAllPoints] ;
             
             [path moveToPoint:NSMakePoint(nodes[1].x + NODE_TO_LINE_SPACING, nodes[1].y)] ;
-            [path lineToPoint:NSMakePoint(nodes[2].x, nodes[1].y)] ;
+            [path lineToPoint:NSMakePoint(nodes[2].x+ ANCESTRYLINE_WIDTH/2, nodes[1].y)] ;
             [path stroke] ;
             [path removeAllPoints] ;
             
