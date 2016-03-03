@@ -58,4 +58,6 @@ typedef enum SSYPopupTableHeaderCellSortState_enum SSYPopupTableHeaderCellSortSt
  */
 @property (copy) NSString* fixedNonMenuTitle ;
 
+@property SSYPopupTableHeaderCellSortState sortState ;
+
 @end

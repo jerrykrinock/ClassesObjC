@@ -18,4 +18,6 @@
 
 }
 
+@property (retain) NSTableColumn* sortedColumn ;
+
 @end

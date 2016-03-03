@@ -21,4 +21,10 @@
 	}
 }
 
+- (void)dealloc {
+    [_sortedColumn release] ;
+    
+    [super dealloc] ;
+}
+
 @end

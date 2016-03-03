@@ -1,5 +1,6 @@
 #import "SSYPopUpTableHeaderCell.h"
 #import "NS(Attributed)String+Geometrics.h"
+#import "SSYTableHeaderView.h"
 //BAD:
 #import "StarkTableColumn.h"
 
@@ -8,7 +9,6 @@
 @property CGFloat lostWidth ;
 @property CGFloat sortIndicatorLeftEdge ;
 @property (copy) NSString* priorSelectedTitle ;
-@property SSYPopupTableHeaderCellSortState sortState ;
 
 @end
 
@@ -64,7 +64,7 @@
                               inView:controlView] ;
     }
     else {
-        NSTableView* tableView = [(NSTableHeaderView*)controlView tableView] ;
+        NSTableView* tableView = [(SSYTableHeaderView*)controlView tableView] ;
         NSInteger clickedColumnIndex = [(NSTableHeaderView*)controlView columnAtPoint:point] ;
         NSArray <NSTableColumn <SSYPopupTableHeaderSortableColumn>*> * columns = (NSArray <NSTableColumn <SSYPopupTableHeaderSortableColumn>*> *)[tableView tableColumns] ;
         NSInteger columnIndex = 0 ;
@@ -75,6 +75,7 @@
                         [self setSortState:SSYPopupTableHeaderCellSortStateSortedDescending] ;
                         if ([tableColumn respondsToSelector:@selector(sortAsAscending:)]) {
                             [tableColumn sortAsAscending:NO] ;
+                            [(SSYTableHeaderView*)controlView setSortedColumn:tableColumn] ;
                         }
                         break ;
                     case SSYPopupTableHeaderCellSortStateNotSorted:
@@ -83,6 +84,7 @@
                         [self setSortState:SSYPopupTableHeaderCellSortStateSortedAscending] ;
                         if ([tableColumn respondsToSelector:@selector(sortAsAscending:)]) {
                             [tableColumn sortAsAscending:YES] ;
+                            [(SSYTableHeaderView*)controlView setSortedColumn:tableColumn] ;
                         }
                         break ;
                 }
