@@ -19,7 +19,7 @@ NSString* const constKeyActionValue = @"actionValue" ;
 #if 0
 /* I can't figure out why the left edge of the progress indicator's rect is
  sometimes, in Yosemite, a thin black line.  I know it is part of the
- NSProgressIndicator, because it I set the 'hidden' attribute of _progBar to
+ NSProgressIndicator, because if I set the 'hidden' attribute of _progBar to
  YES, the thin black line disappears (along with the progress indicator).
  The following code, which attempts to thin black line with a thicker red line,
  makes a thick red line only when the thin black line is not there.   To use
@@ -516,7 +516,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 - (void)unsafeSetVerb:(NSString*)newVerb
 			   resize:(BOOL)resize {
 	NSTextField* textField = [self textField] ;
-	[textField setStringValue:newVerb] ;
+    [textField setStringValue:newVerb] ;
 	[[textField cell] setLineBreakMode:NSLineBreakByTruncatingMiddle] ;
 
 	if (resize) {
@@ -638,7 +638,6 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	[progBar startAnimation:self] ;
 	[progBar setHidden:NO] ;
 	[self display] ;
-	
 }
 
 - (void)setIndeterminate:(BOOL)indeterminate
@@ -981,6 +980,15 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 - (void)incrementDoubleValueByObject:(NSNumber*)value {
 	[self incrementDoubleValueBy:[value doubleValue]] ;
 }	
+
+- (BOOL)isShowingProgress {
+    return
+    (
+     ![[self progBar] isHidden]
+     &&
+     ([[self progBar] frame].size.width > 0.0)
+     ) ;
+}
 
 - (SSYProgressView*)initWithFrame:(NSRect)frame {
 	self = [super initWithFrame:frame] ;
