@@ -72,8 +72,8 @@ extern NSString* const SSYHintArrowDidCloseNotification ;
 	
     @private
 	NSGradient* m_gradient ;
-    __weak NSView* m_view ;
-    __weak NSWindow* m_window ;
+    NSView* m_view ;
+    NSWindow* m_window ;
     NSPoint m_point ;
     CGFloat m_distance ;
     NSRect m_viewFrame ;
