@@ -981,15 +981,6 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	[self incrementDoubleValueBy:[value doubleValue]] ;
 }	
 
-- (BOOL)isShowingProgress {
-    return
-    (
-     ![[self progBar] isHidden]
-     &&
-     ([[self progBar] frame].size.width > 0.0)
-     ) ;
-}
-
 - (SSYProgressView*)initWithFrame:(NSRect)frame {
 	self = [super initWithFrame:frame] ;
 	

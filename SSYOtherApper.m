@@ -218,6 +218,11 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
              avoid blocking for up to 120 seconds.  But this is good enough. */
             [script release] ;
         }) ;
+#if !__has_feature(objc_arc)
+        dispatch_async(aSerialQueue, ^{
+            dispatch_release(aSerialQueue) ;
+        }) ;
+#endif
     }
     
     if (ok && (launchTimeout > 0.0)) {

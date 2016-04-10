@@ -12,7 +12,9 @@
 }
 
 @property (retain) NSInvocation* invocation ;
+@property (retain) NSString* logMsg ;
 
-+ (SSYDeallocDetector*)detectorWithInvocation:(NSInvocation*)invocation ;
++ (SSYDeallocDetector*)detectorWithInvocation:(NSInvocation*)invocation
+                                       logMsg:(NSString*)logMsg ;
 
 @end

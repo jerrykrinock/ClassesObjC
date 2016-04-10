@@ -80,8 +80,6 @@ extern NSString* const constKeyActionValue ;
 	double progressValue ;
 }
 
-@property (readonly) BOOL isShowingProgress ;
-
 /*!
  @brief    Sets the verb and optionally resizes its text field
 
