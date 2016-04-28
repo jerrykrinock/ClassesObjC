@@ -9,6 +9,7 @@
 @property CGFloat lostWidth ;
 @property CGFloat sortIndicatorLeftEdge ;
 @property (copy) NSString* priorSelectedTitle ;
+@property (assign) NSTableHeaderView* headerView ;
 
 @end
 
@@ -72,7 +73,7 @@
             if (columnIndex == clickedColumnIndex) {
                 switch ([self sortState]) {
                     case SSYPopupTableHeaderCellSortStateSortedAscending:
-                        [self setSortState:SSYPopupTableHeaderCellSortStateSortedDescending] ;
+                       [self setSortState:SSYPopupTableHeaderCellSortStateSortedDescending] ;
                         if ([tableColumn respondsToSelector:@selector(sortAsAscending:)]) {
                             [tableColumn sortAsAscending:NO] ;
                             [(SSYTableHeaderView*)controlView setSortedColumn:tableColumn] ;
@@ -98,11 +99,31 @@
             }
             columnIndex++ ;
         }
+
+        /* In my BkmkMgrs project, the following line is necessary for the Find
+         table to immediately redraw to update the sort indicators.  Without
+         the following, the indicators will not be redrawn until the window
+         is redrawn by, for example, activating another app.  Inexplicably,
+         the following is *not* necessary in BkmkMgrs Content outline.
+         
+         Also, note that I send the message to self.headerView instead of
+         self.controlView.  In this instance, for some reason, self.controlView
+         is nil.  Apparently Cocoa never sets it.  I do, however, get a
+         control view in -drawWithFrame:inView:.  So I assign that to my own
+         private property, headerView.  I thought about assigning
+         to controlView, but decided that, since I don't understand what
+         Apple is doing or not doing with controlView, it would be safer
+         to use a private property. */
+        [self.headerView setNeedsDisplay:YES] ;
     }
 }
 
 - (void)drawWithFrame:(NSRect)cellFrame
 			   inView:(NSView*)controlView {
+    /* In fact, the controlView never changes, and the following line only 
+     really needs to execute the first time that this method is called. */
+    self.headerView = (SSYTableHeaderView*)controlView ;
+    
     /* It would make more sense and be more efficient to put the following in
      an override of -setSelectedItem:, -setSelectedItemWithIndex:, and
      -setSelectedItemWithTitle:, but I could not get that to work. */
@@ -135,9 +156,9 @@
 							   inView:controlView] ;
 	[templateHeaderCell release] ;
 	
-	// Second, draw the pair of popup arrows near the right edge
-	// and also remove width from the right of cellFrame.size.width
-	// so that only the part available for text remains in cellFrame.size.width
+    /* Second, draw the pair of popup arrows and sort indicators near the right
+     edge and also remove width from the right of cellFrame.size.width so that
+     only the part available for text remains in cellFrame.size.width */
 	if (cellFrame.size.width > 0) {
         // Design is based on a cell frame height of 17.0 pixels,
 		// which I believe is the standard and only height for an NSTableHeaderView
