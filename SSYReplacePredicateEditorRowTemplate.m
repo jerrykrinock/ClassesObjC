@@ -1,5 +1,7 @@
 #import "SSYReplacePredicateEditorRowTemplate.h"
 
+NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredicateCheckboxWillGoAwayNotification" ;
+
 @implementation SSYReplacePredicateCheckbox
 
 #if !__has_feature(objc_arc)
@@ -8,6 +10,13 @@
     [super dealloc] ;
 }
 #endif
+
+- (void)viewDidMoveToSuperview {
+    if (self.superview == nil) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:SSYReplacePredicateCheckboxWillGoAwayNotification
+                                                            object:self] ;
+    }
+}
 
 @end
 
