@@ -29,12 +29,29 @@ NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredic
 
 - (void)viewDidMoveToSuperview {
     [super viewDidMoveToSuperview] ;
-    if (self.superview == nil) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:SSYReplacePredicateCheckboxWillGoAwayNotification
-                                                            object:self] ;
-    }
+    
+    /* Here is another kludge to work around weird behavior of
+     NSPredicateEditor.
+     
+     We are only really interested when a checkbox is going away for good.
+     For whatever reason, dealloc does not seem to happen (until much later?),
+     and indeed this method is, I think, the generally-accepted correct place
+     to do such housekeeping.  However, it seems that, when user changes the
+     middle (operator) popup in a row, the checkbox (self here) is momentarily
+     removed from the superview NSRuleEditorViewSliceRow and then, in the same
+     run loop cycle, moved back into it.  So merely checking for a nil superview
+     here will detect false removals.  Instead, we must enqueue a notification
+     lazily, and then re-check for nil superview in the notification observer
+     method -[StarkPredicateEditor checkViewnessOfCheckboxNote:] */
+    NSNotification* note = [NSNotification notificationWithName:SSYReplacePredicateCheckboxWillGoAwayNotification
+                                                         object:self] ;
+    [[NSNotificationQueue defaultQueue] enqueueNotification:note
+                                               postingStyle:NSPostWhenIdle
+                                               coalesceMask:(NSNotificationCoalescingOnName | NSNotificationCoalescingOnSender)
+                                                   forModes:nil] ;
 #if TRY_TO_MAKE_WIDTH_TRACK_SUPERVIEW
-    else {
+    
+    if (self.superview) {
         [self.superview addObserver:self
                          forKeyPath:@"frame"
                             options:0
@@ -63,7 +80,6 @@ NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredic
     NSRect newFrame = self.frame ;
     newFrame.origin.x += deltaWidth ;
     self.frame = newFrame ;
-    /*SSYDBL*/ NSLog(@"new frame = %@", NSStringFromRect(newFrame)) ;
     [self setNeedsDisplay] ;
 }
 #endif
@@ -171,7 +187,7 @@ NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredic
 }
 
 + (NSString*)localizedRegexMenuItemTitle {
-    return NSLocalizedString(@"Regular Expression (grep)", nil) ;
+    return NSLocalizedString(@"Matches Regular Expression", nil) ;
 }
 
 @end
