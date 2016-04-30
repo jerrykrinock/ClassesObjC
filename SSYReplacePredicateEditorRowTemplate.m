@@ -2,6 +2,12 @@
 
 NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredicateCheckboxWillGoAwayNotification" ;
 
+@interface SSYReplacePredicateCheckbox ()
+
+@property (assign) CGFloat lastSuperWidth ;
+
+@end
+
 @implementation SSYReplacePredicateCheckbox
 
 #if !__has_feature(objc_arc)
@@ -11,12 +17,55 @@ NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredic
 }
 #endif
 
+/* 
+ #define this to 0 because it does not work, nor does the autoresizing
+ mask on the editable text field work, even though, according to debugging,
+ • the text field's autoresizing mask is NSWidthSizable
+ • the text field's immediate superview is resizing as expected
+ • does not work even if I don't add my checkbox
+ */
+#define TRY_TO_MAKE_WIDTH_TRACK_SUPERVIEW 0
+
 - (void)viewDidMoveToSuperview {
+    [super viewDidMoveToSuperview] ;
     if (self.superview == nil) {
         [[NSNotificationCenter defaultCenter] postNotificationName:SSYReplacePredicateCheckboxWillGoAwayNotification
                                                             object:self] ;
     }
+#if TRY_TO_MAKE_WIDTH_TRACK_SUPERVIEW
+    else {
+        [self.superview addObserver:self
+                         forKeyPath:@"frame"
+                            options:0
+                            context:NULL] ;
+    }
+#endif
 }
+
+#if TRY_TO_MAKE_WIDTH_TRACK_SUPERVIEW
+- (void)viewWillMoveToSuperview:(NSView*)newSuperview {
+    [super viewWillMoveToSuperview:newSuperview] ;
+    [self.superview removeObserver:self
+                        forKeyPath:@"frame"] ;
+}
+
+- (void)observeValueForKeyPath:(NSString*)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary<NSString *,id> *)change
+                       context:(void *)context {
+    [self trackSuperview] ;
+}
+
+- (void)trackSuperview {
+    CGFloat deltaWidth = self.superview.frame.size.width - self.lastSuperWidth ;
+    self.lastSuperWidth = self.superview.frame.size.width ;
+    NSRect newFrame = self.frame ;
+    newFrame.origin.x += deltaWidth ;
+    self.frame = newFrame ;
+    /*SSYDBL*/ NSLog(@"new frame = %@", NSStringFromRect(newFrame)) ;
+    [self setNeedsDisplay] ;
+}
+#endif
 
 @end
 
@@ -29,6 +78,7 @@ NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredic
     SSYReplacePredicateEditorRowTemplate* copy = [super copyWithZone:zone] ;
     copy.replacer = self.replacer ;
     copy.attributeKey = self.attributeKey ;
+    /*SSYDBL*/ NSLog(@"Made copy: %@ with ak=%@", copy, copy.attributeKey ) ;
     return copy ;
 }
 
