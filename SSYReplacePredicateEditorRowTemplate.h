@@ -34,7 +34,8 @@ extern NSString* SSYReplacePredicateCheckboxWillGoAwayNotification ;
 @interface SSYReplacePredicateCheckbox : NSButton
 
 @property (assign) SSYReplacePredicateEditorRowTemplate* predicateEditorRowTemplate ;
-@property (copy) NSString* attributeKey ;
+@property (readonly) NSString* attributeKey ;
+@property (readonly) BOOL isRegex ;
 
 @end
 
@@ -48,5 +49,6 @@ extern NSString* SSYReplacePredicateCheckboxWillGoAwayNotification ;
 @property (copy) NSString* attributeKey ;
 
 + (NSString*)anyEditableStringValueInView:(NSView*)view ;
++ (NSString*)localizedRegexMenuItemTitle ;
 
 @end

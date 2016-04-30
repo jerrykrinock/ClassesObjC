@@ -5,6 +5,7 @@ NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredic
 @interface SSYReplacePredicateCheckbox ()
 
 @property (assign) CGFloat lastSuperWidth ;
+@property (copy) NSString* attributeKey ;
 
 @end
 
@@ -67,18 +68,49 @@ NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredic
 }
 #endif
 
+/*!
+ @details  This method is a kludge.  I tried to do it the proper way, which is
+ to look at the -representedObject of the menu items.  Unfortunately, that is
+ an undocumented NSDictionary.  Then I tried to add tags of value equal to the
+ to NSPredicateOperatorType value, in -[StarkPredicateEditor templates].  That
+ didn't work because the popup menu in the view is a
+ NSRuleEditorPopupButton which is apparently copied by Cocoa from the
+ NSPopUpButton seen in the -templates method, but when Cocoa copies it, it
+ apparently does not copy the tag because the tags in these copies are all 0.
+ So, finally I settled on this kludge which is to compare the, eek, menu titles.
+ It is reliable because I defined localizedRegexMenuItemTitle and use it to both
+ make the menu and, then in here, to do the comparison and, or course, it would
+ be a programming error if two menu items had the same title :)   But it's still
+ a code-smelly way to identify a menu item. */
+- (BOOL)isRegex {
+    NSPopUpButton* operatorPopup = nil ;
+    for (NSView* sibling in self.superview.subviews) {
+        if ([sibling isKindOfClass:[NSPopUpButton class]]) {
+            if (sibling.frame.origin.x >= operatorPopup.frame.origin.x) {
+                operatorPopup = (NSPopUpButton*)sibling ;
+            }
+        }
+    }
+    
+    NSString* selectedTitle = operatorPopup.selectedItem.title ;
+    BOOL isRegex = ([selectedTitle isEqualToString:[SSYReplacePredicateEditorRowTemplate localizedRegexMenuItemTitle]]) ;
+
+    return isRegex ;
+}
+
+
 @end
 
 @implementation SSYReplacePredicateEditorRowTemplate
 
 /* Superclass NSPredicateEditorRowTemplate must conform to NSCopying because,
- as the name implies, this is a *template*.  Cocoa makes a copy whenever
- it needs another one. */
+ as the name implies, this is a *template*.  For some reason, Cocoa makes a copy
+ whenever it needs another one, and then of course, I guess, it makes a view
+ (NSView) from that. */
 - (SSYReplacePredicateEditorRowTemplate*)copyWithZone:(NSZone*)zone {
     SSYReplacePredicateEditorRowTemplate* copy = [super copyWithZone:zone] ;
     copy.replacer = self.replacer ;
     copy.attributeKey = self.attributeKey ;
-    /*SSYDBL*/ NSLog(@"Made copy: %@ with ak=%@", copy, copy.attributeKey ) ;
     return copy ;
 }
 
@@ -136,6 +168,10 @@ NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredic
     }
     
     return answer ;
+}
+
++ (NSString*)localizedRegexMenuItemTitle {
+    return NSLocalizedString(@"Regular Expression (grep)", nil) ;
 }
 
 @end
