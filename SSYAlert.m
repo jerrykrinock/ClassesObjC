@@ -2078,6 +2078,26 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (void)alertError:(NSError*)error
+          onWindow:(NSWindow*)window
+ completionHandler:(void(^)(NSModalResponse returnCode))completionHandler {
+    if (!error) {
+        return ;
+    }
+    
+    if ([gSSYAlertErrorHideManager shouldHideError:error]) {
+        return ;
+    }
+    
+    if ([[error domain] isEqualToString:NSCocoaErrorDomain] && ([error code] == NSUserCancelledError)) {
+        return ;
+    }
+
+    [self doLayoutError:error] ;
+    [self runModalSheetOnWindow:window
+              completionHandler:completionHandler] ;
+}
+
+- (void)alertError:(NSError*)error
 		  onWindow:(NSWindow*)documentWindow_
 	 modalDelegate:(id)modalDelegate
 	didEndSelector:(SEL)didEndSelector

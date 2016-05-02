@@ -114,8 +114,8 @@ NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredic
     return isRegex ;
 }
 
-
 @end
+
 
 @implementation SSYReplacePredicateEditorRowTemplate
 
@@ -187,7 +187,7 @@ NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredic
 }
 
 + (NSString*)localizedRegexMenuItemTitle {
-    return NSLocalizedString(@"Matches Regular Expression", nil) ;
+    return NSLocalizedString(@"matches regular expression", nil) ;
 }
 
 @end

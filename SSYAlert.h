@@ -737,6 +737,10 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  */
 - (SSYAlertRecovery)alertError:(NSError*)error ;
 
+- (void)alertError:(NSError*)error
+          onWindow:(NSWindow*)window
+ completionHandler:(void(^)(NSModalResponse returnCode))completionHandler ;
+
 /*!
  @brief    Invokes -alertError: on the application's shared alert.
 */ 
