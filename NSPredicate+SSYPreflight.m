@@ -35,7 +35,6 @@
         }
     }
     else {
-        /*SSYDBL*/ NSLog(@"Whoooops: %@", [self className]) ;
         /* Could be something like NSTruePredicate */
     }
     
