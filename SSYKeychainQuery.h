@@ -1,12 +1,25 @@
 #import <Foundation/Foundation.h>
 #import <Security/Security.h>
 
+/*
+ #define CHECK_FOR_ICLOUD_SYNCHRONIZATION_IN_LATER_SDK to nonzero only if your
+ app is sandboxed.  If your app is not sandboxed, in OS X 10.11 or later,
+ checking for iCloud synchronization will print two warnings like the following
+ to the system console every time that your app uses this class to fetch a
+ keychain item:
+ 16/05/05 15:24:04.122 secd[26548]:  securityd_xpc_dictionary_handler BookMacster[27734] copy_matching Error Domain=NSOSStatusErrorDomain Code=-34018 "client has neither application-identifier nor keychain-access-groups entitlements" UserInfo={NSDescription=client has neither application-identifier nor keychain-access-groups entitlements}
+ 16/05/05 15:24:04.122 BookMacster[27734]:  SecOSStatusWith error:[-34018] Error Domain=NSOSStatusErrorDomain Code=-34018 "client has neither application-identifier nor keychain-access-groups entitlements" UserInfo={NSDescription=client has neither application-identifier nor keychain-access-groups entitlements}
+*/
+#define CHECK_FOR_ICLOUD_SYNCHRONIZATION_IN_LATER_SDK 0
+
+#if CHECK_FOR_ICLOUD_SYNCHRONIZATION_IN_LATER_SDK
 #if __IPHONE_7_0 || __MAC_10_9
 // Keychain synchronization available at compile time
-#define SSYKeychain_SYNCHRONIZATION_AVAILABLE 1
+#define ICLOUD_SYNCHRONIZATION_AVAILABLE 1
+#endif
 #endif
 
-#ifdef SSYKeychain_SYNCHRONIZATION_AVAILABLE
+#ifdef ICLOUD_SYNCHRONIZATION_AVAILABLE
 typedef NS_ENUM(NSUInteger, SSYKeychainQuerySynchronizationMode) {
     SSYKeychainQuerySynchronizationModeAny,
     SSYKeychainQuerySynchronizationModeNo,
@@ -58,7 +71,7 @@ typedef NS_ENUM(NSUInteger, SSYKeychainQuerySynchronizationMode) {
 @property (nonatomic, copy) NSString *accessGroup ;
 #endif
 
-#ifdef SSYKeychain_SYNCHRONIZATION_AVAILABLE
+#ifdef ICLOUD_SYNCHRONIZATION_AVAILABLE
 /** kSecAttrSynchronizable */
 @property (nonatomic) SSYKeychainQuerySynchronizationMode synchronizationMode ;
 #endif
@@ -130,10 +143,10 @@ typedef NS_ENUM(NSUInteger, SSYKeychainQuerySynchronizationMode) {
  */
 - (BOOL)fetch:(NSError**)error ;
 
-#ifdef SSYKeychain_SYNCHRONIZATION_AVAILABLE
+#ifdef ICLOUD_SYNCHRONIZATION_AVAILABLE
 /*!
  @brief  Returns a boolean indicating if keychain synchronization is available
- on the device at runtime. The #define SSYKeychain_SYNCHRONIZATION_AVAILABLE is
+ on the device at runtime. The #define ICLOUD_SYNCHRONIZATION_AVAILABLE is
  only for compile time. If you are checking for the presence of synchronization,
  you should use this method.
  

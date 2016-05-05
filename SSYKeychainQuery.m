@@ -13,7 +13,7 @@
 @synthesize accessGroup = _accessGroup ;
 #endif
 
-#ifdef SSYKeychain_SYNCHRONIZATION_AVAILABLE
+#ifdef ICLOUD_SYNCHRONIZATION_AVAILABLE
 @synthesize synchronizationMode = _synchronizationMode ;
 #endif
 
@@ -244,7 +244,7 @@
 
 #pragma mark - Synchronization Status
 
-#ifdef SSYKeychain_SYNCHRONIZATION_AVAILABLE
+#ifdef ICLOUD_SYNCHRONIZATION_AVAILABLE
 + (BOOL)isSynchronizationAvailable {
 #if TARGET_OS_IPHONE
     // Apple suggested way to check for 7.0 at runtime
@@ -282,7 +282,7 @@
     }
 #endif
     
-#ifdef SSYKeychain_SYNCHRONIZATION_AVAILABLE
+#ifdef ICLOUD_SYNCHRONIZATION_AVAILABLE
     if ([[self class] isSynchronizationAvailable]) {
         id value ;
         
