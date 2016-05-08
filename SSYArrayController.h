@@ -132,7 +132,9 @@
 @property (copy) NSString* parentObjectKey ;
 @property (copy) NSString* contentKey ;
 @property (assign) CGFloat tableFontSize ;
-// To work around Apple Bug ID  in NSArrayController
+
+/* To work around bug in NSArrayController, Apple Bug ID 7827354 which was
+ closed as a duplicate of 3404770. */
 @property (assign, readonly) BOOL hasSelection ;
 
 /*!
