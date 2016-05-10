@@ -7,6 +7,8 @@
 
 @end
 
+#import "SSYMoreObserveableArrayController.h"
+
 /*!
  @brief    An array controller which supports reordering of objects by the user,
  better-behaved -remove:, a new "add" method which behaves better than -add:,
@@ -116,7 +118,7 @@
  font size to be set in the table view's cell.  It does this by implementing
  the delegate method tableView:willDisplayCell:forTableColumn:row:.
  */
-@interface SSYArrayController : NSArrayController {
+@interface SSYArrayController : SSYMoreObserveableArrayController {
     id m_parentObject ;
     NSString* m_parentObjectKey ;
 	NSString* m_contentKey ;
@@ -133,9 +135,6 @@
 @property (copy) NSString* contentKey ;
 @property (assign) CGFloat tableFontSize ;
 
-/* To work around bug in NSArrayController, Apple Bug ID 7827354 which was
- closed as a duplicate of 3404770. */
-@property (assign, readonly) BOOL hasSelection ;
 
 /*!
  @brief    Adds a new item below the current selection, or at the 

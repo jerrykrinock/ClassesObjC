@@ -14,11 +14,6 @@ NSString* SSYArrayControllerRowsType = @"SSYArrayControllerRowsType" ;
 @end
 
 
-@interface SSYArrayController ()
-
-@property (assign) BOOL hasSelection ;
-
-@end
 
 @implementation SSYArrayController
 
@@ -28,12 +23,8 @@ NSString* SSYArrayControllerRowsType = @"SSYArrayControllerRowsType" ;
 @synthesize pendingObjectsIndexSet = m_pendingObjectsIndexSet ;
 @synthesize lineHeightMultiplier = m_lineHeightMultiplier ;
 @synthesize tableFontSize = m_tableFontSize ;
-@synthesize hasSelection = m_hasSelection ;
 
-- (void)dealloc {
-	[self removeObserver:self
-			  forKeyPath:@"selectedObjects"] ;
-	
+- (void)dealloc {	
 	[m_parentObjectKey release] ;
 	[m_contentKey release] ;
 	[m_pendingObjectsIndexSet release] ;
@@ -55,51 +46,7 @@ NSString* SSYArrayControllerRowsType = @"SSYArrayControllerRowsType" ;
 							 nil] ;
     [tableView registerForDraggedTypes:draggedTypes] ;
     [tableView setAllowsMultipleSelection:YES] ;
-
-	[self addObserver:self
-		   forKeyPath:@"selectedObjects"
-			  options:0
-			  context:NULL] ;
 }
-
-- (void)observeValueForKeyPath:(NSString *)keyPath
-					  ofObject:(id)object
-						change:(NSDictionary *)change
-					   context:(void *)context {
-	if ([keyPath isEqualToString:@"selectedObjects"]) {
-#if 0
-#warning observing changes to selected objects for Mythical Deep Observer
-		NSLog(@"1681: Some sleazeball changed selection: %@", [change shortDescription]) ;
-		NSLog(@"continuing") ;
-#endif
-		NSInteger selectionCount = [[self selectedObjects] count] ;
-		[self setHasSelection:(selectionCount > 0)] ;
-	}
-
-//	NSTimeInterval startTime = [NSDate timeIntervalSinceReferenceDate] ;
-
-	[super observeValueForKeyPath:keyPath
-						 ofObject:object
-						   change:change
-						  context:context] ;
-
-/*
- NSTimeInterval thisTime = [NSDate timeIntervalSinceReferenceDate] - startTime ;
-	if ([object isKindOfClass:[Starkoid class]]) {
-		starkoidTime += thisTime ;
-		NSLog(@"starkoidTime = %0.3f", starkoidTime) ;
-	}
-	else if ([object isKindOfClass:[SSYArrayController class]]) {
-		arrayControllerTime += thisTime ;
-		NSLog(@"arrayControllerTime = %0.3f", arrayControllerTime) ;
-	}
-	else {
-		otherTime += thisTime ;
-		NSLog(@"otherTime = %0.3f", otherTime) ;
-	}
-*/
-}
-
 
 - (BOOL)     tableView:(NSTableView *)tv
   writeRowsWithIndexes:(NSIndexSet*)indexes
@@ -113,8 +60,6 @@ NSString* SSYArrayControllerRowsType = @"SSYArrayControllerRowsType" ;
 	
     return YES ;
 }
-
-
 
 - (NSDragOperation)tableView:(NSTableView*)tv
 				validateDrop:(id <NSDraggingInfo>)info
