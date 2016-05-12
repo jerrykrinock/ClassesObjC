@@ -3,6 +3,7 @@
 @interface SSYMoreObserveableArrayController ()
 
 @property (assign) BOOL hasSelection ;
+@property (assign) NSInteger countOfArrangedObjects ;
 
 @end
 
@@ -28,22 +29,31 @@
     [self addObserver:self
            forKeyPath:@"selectedObjects"
               options:0
-              context:NULL] ;
+              context:[self class]] ;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath
                       ofObject:(id)object
                         change:(NSDictionary *)change
                        context:(void *)context {
-    if ([keyPath isEqualToString:@"selectedObjects"]) {
+    if ((context == [self class]) && [keyPath isEqualToString:@"selectedObjects"]) {
         NSInteger selectionCount = [[self selectedObjects] count] ;
-        [self setHasSelection:(selectionCount > 0)] ;
+        BOOL hasSelection = (selectionCount > 0) ;
+        self.hasSelection = hasSelection ;
+        /*SSYDBL*/ NSLog(@"   set hasSelection to %hhd", self.hasSelection) ;
     }
     
     [super observeValueForKeyPath:keyPath
                          ofObject:object
                            change:change
                           context:context] ;
+}
+
+- (void)rearrangeObjects {
+    [super rearrangeObjects] ;
+    
+    self.countOfArrangedObjects = ((NSArray*)self.arrangedObjects).count ;
+    /*SSYDBL*/ NSLog(@"   set countOfArrangedObjects to %ld", self.countOfArrangedObjects) ;
 }
 
 @end

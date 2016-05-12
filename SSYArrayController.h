@@ -110,7 +110,7 @@
  
  SELECTION METHODS
  
- Provides -selectFirstArranged, -hasSelection.
+ Provides -selectFirstArranged
  
  TABLE FONT SIZE
  
