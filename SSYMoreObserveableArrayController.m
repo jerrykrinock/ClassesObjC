@@ -40,7 +40,6 @@
         NSInteger selectionCount = [[self selectedObjects] count] ;
         BOOL hasSelection = (selectionCount > 0) ;
         self.hasSelection = hasSelection ;
-        /*SSYDBL*/ NSLog(@"   set hasSelection to %hhd", self.hasSelection) ;
     }
     
     [super observeValueForKeyPath:keyPath
@@ -53,7 +52,6 @@
     [super rearrangeObjects] ;
     
     self.countOfArrangedObjects = ((NSArray*)self.arrangedObjects).count ;
-    /*SSYDBL*/ NSLog(@"   set countOfArrangedObjects to %ld", self.countOfArrangedObjects) ;
 }
 
 @end
