@@ -602,7 +602,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
                                                                                          [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
                                                                                                                          optionIndex:recoveryOptionIndex] ;
                                                                                      }
-                                                                                     else {
+                                                                                     else if (recoveryAttempter != nil) {
                                                                                          NSLog(@"Internal Error 342-5587.  Given Recovery Attempter %@ does not respond to any attemptRecoveryFromError:... method", recoveryAttempter) ;
                                                                                      }
                                                                                  }
