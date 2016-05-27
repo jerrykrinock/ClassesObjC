@@ -75,24 +75,26 @@
 	
 	NSArray* childrenIn ;
 
-	if ((childrenIn = [nodeIn performSelector:_childrenInExtractor])) {
-		for (id childIn in childrenIn) {
-			// Get next child out with recursion
-			id nextChildOut = [self copyDeepTransformOf:childIn] ;
-			// nextChildOut may be nil, in particular for Safari, because of iCloud, deleted
-			// starks are not deleted before the actual export.  To delete them, we
-			// temporarily set the stark's 'isDeletedThisIxport' flag bit, in
-			// -[ExtoreSafari extoreRootsForExport], which causes
-			// extoreItemForSafari:, or reformatter, and thus this method, to return nil.
-			// I noted once that there are other cause(s) in BookMacster which can make
-			// nextChildOut be nil at this point, but did not document them.
-			if (nextChildOut) {
-				[nextChildOut performSelector:_newParentMover withObject:nodeOut] ;
-				// Since the above will add nextChildOut to nodeOut's Children array, I can now release it.
-				[nextChildOut release] ;
-			}
-		}
-	}
+    if ([nodeIn respondsToSelector:_childrenInExtractor]) {  // Defensive programming
+        if ((childrenIn = [nodeIn performSelector:_childrenInExtractor])) {
+            for (id childIn in childrenIn) {
+                // Get next child out with recursion
+                id nextChildOut = [self copyDeepTransformOf:childIn] ;
+                // nextChildOut may be nil, in particular for Safari, because of iCloud, deleted
+                // starks are not deleted before the actual export.  To delete them, we
+                // temporarily set the stark's 'isDeletedThisIxport' flag bit, in
+                // -[ExtoreSafari extoreRootsForExport], which causes
+                // extoreItemForSafari:, or reformatter, and thus this method, to return nil.
+                // I noted once that there are other cause(s) in BookMacster which can make
+                // nextChildOut be nil at this point, but did not document them.
+                if (nextChildOut) {
+                    [nextChildOut performSelector:_newParentMover withObject:nodeOut] ;
+                    // Since the above will add nextChildOut to nodeOut's Children array, I can now release it.
+                    [nextChildOut release] ;
+                }
+            }
+        }
+    }
 
 	return [nodeOut retain] ; 
 	// Since this method must return a "copy", but nodeOut was autoreleased, I retain it before returning
