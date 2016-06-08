@@ -53,14 +53,19 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	SEL selector ;
 	selector = @selector(string) ;
 	if ([self respondsToSelector:selector]) {
-		length = MAX(length, [[self recklessPerformSelector:selector] length]) ;
-
+        NSInteger minLength = [[self recklessPerformSelector:selector] length] ;
+        if (length < minLength) {
+            length = minLength ;
+        }
 	}
 	selector = @selector(stringValue) ;
 	if ([self respondsToSelector:selector]) {
 		// Because NSImageView has a -stringValue describing each of its sizes...
 		if (![self isKindOfClass:[NSImageView class]]) {
-			length = MAX(length, [[self recklessPerformSelector:selector] length]) ;
+            NSInteger minLength = [[self recklessPerformSelector:selector] length] ;
+            if (length < minLength) {
+                length = minLength ;
+            }
 		}
 	}
 	
@@ -114,7 +119,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 	@finally { }
 	
-	return [copy retain] ;
+#if !__has_feature(objc_arc)
+    [copy retain] ;
+#endif
+    return copy ;
 }
 
 @end
@@ -328,13 +336,20 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (id)clickObject {
-    return [[clickObject retain] autorelease];
+#if !__has_feature(objc_arc)
+	[[clickObject retain] autorelease] ;
+#endif
+	
+    return clickObject ;
 }
 
 - (void)setClickObject:(id)value {
     if (clickObject != value) {
-        [clickObject release];
-        clickObject = [value retain];
+#if !__has_feature(objc_arc)
+    [clickObject release] ;
+    [value retain] ;
+#endif
+    clickObject = value ;
     }
 }
 
@@ -426,7 +441,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 - (NSString*)whyDisabled {
 	NSString* whyDisabled ;
 	@synchronized(self) {
-		whyDisabled = [[m_whyDisabled copy] autorelease] ; ;
+		whyDisabled = [m_whyDisabled copy] ;
+#if !__has_feature(objc_arc)
+        [whyDisabled autorelease] ;
+#endif
 	}
 	return whyDisabled ;
 }
@@ -436,7 +454,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 	@synchronized(self) {
 		if (whyDisabled != m_whyDisabled) {
+#if !__has_feature(objc_arc)
 			[m_whyDisabled release] ;
+#endif
 			m_whyDisabled = [whyDisabled copy] ;
 		}
 	}
@@ -446,7 +466,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     if (!otherSubviews) {
         otherSubviews = [[NSMutableArray alloc] init];
     }
-    return [[otherSubviews retain] autorelease];
+#if !__has_feature(objc_arc)
+    [[otherSubviews retain] autorelease] ;
+#endif
+    return otherSubviews ;
 }
 
 #pragma mark * Class Methods returning Constants
@@ -477,7 +500,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	NSButton* button = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 49, 49)] ;
 	[button setFont:[NSFont systemFontOfSize:13]] ;
 	[button setBezelStyle:NSRoundedBezelStyle] ;
-	return [button autorelease] ;
+#if !__has_feature(objc_arc)
+    [button autorelease] ;
+#endif
+	return button ;
 }
 
 
@@ -674,7 +700,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 				[SSYAlert runModalDialogTitle:nil
 									  message:msg
 									  buttons:nil] ;
+#if !__has_feature(objc_arc)
                 [msg release] ;
+#endif
                 
 				mailableDescription = [NSString stringWithFormat:
 									   @"******   I M P O R T A N T   I N S T R U C T I O N S   ******\n\n"
@@ -720,8 +748,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
  run loop cycle.
  */
 - (IBAction)clickedButton:(id)sender {	
-	// In case executing the clickSelector method will remove our last retainer...
+#if !__has_feature(objc_arc)
+    // In case executing the clickSelector method will remove our last retainer...
 	[self retain] ;
+#endif
 	
 	// Remember:
 	// Button1 --> tag=NSAlertFirstButtonReturn
@@ -749,8 +779,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		[[self checkboxInvocation] invoke] ;
 	}
 	
+#if !__has_feature(objc_arc)
 	// Balance the -retain, above.
 	[self release] ;
+#endif
 }
 
 - (void)setTargetActionForButton:(NSButton*)button {
@@ -770,7 +802,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
     // Steal the icon.  (Could also get this from NSBundle I suppose.)
     NSImage* rawIcon = [nsAlert icon] ;
+#if !__has_feature(objc_arc)
     [nsAlert release] ;
+#endif
     NSImage* image = [[NSImage alloc] initWithSize:(NSMakeSize(64.0, 64.0))] ;
     [image lockFocus] ;
     [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
@@ -790,8 +824,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     NSImage* imageCopy = [image copy] ;
     iconView.image = imageCopy ;
     [self setIconInformational:iconView] ;
+#if !__has_feature(objc_arc)
     [iconView release] ;
     [imageCopy release] ;
+#endif
     
     // Badge with yellow and set as "warning"
     badge = [SSYVectorImages imageStyle:SSYVectorImageStyleHexagon
@@ -814,8 +850,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     imageCopy = [image copy] ;
     iconView.image = imageCopy ;
     [self setIconWarning:iconView] ;
+#if !__has_feature(objc_arc)
     [iconView release] ;
     [imageCopy release] ;
+#endif
     
     // Badge with red and set as "critical"
     badge = [SSYVectorImages imageStyle:SSYVectorImageStyleHexagon
@@ -838,9 +876,11 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     imageCopy = [image copy] ;
     iconView.image = imageCopy ;
     [self setIconCritical:iconView] ;
+#if !__has_feature(objc_arc)
     [iconView release] ;
     [image release] ;
     [imageCopy release] ;
+#endif
 
     /* Thanks to Brian Dunagan for the few lines of compositing code used above.
      http://bdunagan.com/2010/01/25/cocoa-tip-nsimage-composites/ */
@@ -864,12 +904,14 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 																  ofType:@"tif"] ;
 			NSImage* image = [[NSImage alloc] initByReferencingFile:imagePath] ;
 			[button setImage:image] ;
-			[image release] ;
-			NSString* toolTip = [[self class] contactSupportToolTip] ;
+            NSString* toolTip = [[self class] contactSupportToolTip] ;
 			[button setToolTip:toolTip] ;
 			[self setSupportButton:button] ;
 			[[[self window] contentView] addSubview:button] ;
-			[button release] ;	
+#if !__has_feature(objc_arc)
+            [image release] ;
+            [button release] ;
+#endif
 		}
 		
 		[button setEnabled:YES] ;
@@ -900,7 +942,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			[progressBar_ setUsesThreadedAnimation:YES] ;
 			[self setProgressBar:progressBar_] ;
 			[[[self window] contentView] addSubview:progressBar_] ;
+#if !__has_feature(objc_arc)
 			[progressBar_ release] ;
+#endif
 		}
 	}
 	else if (progressBar_) {
@@ -917,8 +961,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			[textView setFont:[SSYAlert titleTextFont]] ;
 			[textView configureForSSYAlertUsage] ;
 			[self setTitleTextView:textView] ;
-			[textView release] ;
 			[[[self window] contentView] addSubview:textView] ;
+#if !__has_feature(objc_arc)
+            [textView release] ;
+#endif
 		}
 		
 		[textView setString:[text stringByTruncatingMiddleToLength:self.titleMaxChars
@@ -938,7 +984,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	NSTextView* textView = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, 100, [SSYAlert smallTextHeight])] ;
 	[textView setFont:[SSYAlert smallTextFont]] ;
 	[textView configureForSSYAlertUsage] ;
-	return [textView autorelease] ;
+#if !__has_feature(objc_arc)
+    [textView autorelease] ;
+#endif
+    return textView ;
 }
 
 - (void)setSmallText:(NSString*)text {
@@ -1085,7 +1134,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			[button setTitle:@""] ;
 			[self setHelpButton:button] ;
 			[[[self window] contentView] addSubview:button] ;
-			[button release] ;	
+#if !__has_feature(objc_arc)
+			[button release] ;
+#endif
 		}
 		
 		[button setEnabled:YES] ;
@@ -1127,7 +1178,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 													   maxWidth:[self rightColumnMaximumWidth]] ;
 			[self setCheckbox:button] ;
 			[[[self window] contentView] addSubview:button] ;
-			[button release] ;	
+#if !__has_feature(objc_arc)
+			[button release] ;
+#endif
 		}
 		
 		[button setEnabled:YES] ;
@@ -1142,6 +1195,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (void)addOtherSubview:(NSView*)subview atIndex:(NSInteger)index {
+    if (index > [[self otherSubviews] count]) {
+        index = [[self otherSubviews] count] ;
+    }
 	[[self otherSubviews] insertObject:subview
 							   atIndex:index] ;
 	[[[self window] contentView] addSubview:subview] ;
@@ -1163,6 +1219,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (void)setIndeterminate:(BOOL)indeterminate {
+    NSAssert([self progressBar], @"Internal Error 423-9496.  For %s to work, you must *first* -setShowsProgressBar:YES", __PRETTY_FUNCTION__) ;
 	[[self progressBar] setUsesThreadedAnimation:YES] ;
 	[[self progressBar] setIndeterminate:indeterminate] ;
 }
@@ -1799,8 +1856,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (void)goAway {
+#if !__has_feature(objc_arc)
 	// In case we are only being retained as the attachedSheet of our documentWindow...
 	[self retain] ;
+#endif
 	
 	[self endModalSession] ;
 	
@@ -1836,7 +1895,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
         
         // Roll up and close the sheet.
         [sheet orderOut:self] ;
+        /*SSYDBL*/ NSLog(@"ordered out sheet %@", sheet) ;
+#if !__has_feature(objc_arc)
 		[sheet retain] ;  // Will release it below
+#endif
 
 		// Note that, since Cocoa does not support piling multiple
 		// sheets onto a window, we rolled up the sheet before 
@@ -1868,14 +1930,18 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
          controls in the window. */
         [sheet close] ;
         
+#if !__has_feature(objc_arc)
 		[sheet release] ;
+#endif
 	}
 	else {
 		// We're a freestanding dialog
 		[[self window] close] ;
 	}
 	
+#if !__has_feature(objc_arc)
 	[self release] ;  // Balances retain, above
+#endif
 }
 
 - (void)someWindowDidBecomeKey:(NSNotification*)note {
@@ -1970,8 +2036,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 	// Invoke designated initializer for super, NSWindowController
 	self = [super initWithWindow:window] ;
+#if !__has_feature(objc_arc)
 	[window release] ;
-	
+#endif
+
 	if (self) {
 		[self stealObjectsFromAppleAlerts] ;
 		
@@ -2064,8 +2132,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	
 	if (NSApp != nil) {
 		alert = [[self alloc] init] ;
+#if !__has_feature(objc_arc)
         [alert autorelease] ;
-	}
+#endif
+    }
 	else {
 		alert = nil ;
 	}
@@ -2225,11 +2295,14 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 	
 	NSArray* buttonsArrayOut = [buttonsArray copy] ;
+#if !__has_feature(objc_arc)
 	[buttonsArray release] ;
-	
+    [buttonsArrayOut autorelease] ;
+#endif
+    
 	return [self runModalDialogTitle:title
 							 message:msg
-						buttonsArray:[buttonsArrayOut autorelease]] ;	
+						buttonsArray:buttonsArrayOut] ;
 }
 
 + (NSInteger)runModalDialogTitle:(NSString*)title
@@ -2264,6 +2337,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 - (void)dealloc {
     [self stopObservingOtherWindowsToBecomeKey] ;
     
+#if !__has_feature(objc_arc)
 	[icon release] ;
 	[progressBar release] ;
 	[titleTextView release] ;
@@ -2282,14 +2356,13 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[buttonPrototype release] ;
 	[wordAlert release] ;
 	[documentWindow release] ;
-
 	[otherSubviews release] ;
-	
 	[clickTarget release] ;
 	[clickObject release] ;
 	[m_checkboxInvocation release] ;
 	
 	[super dealloc] ;
+#endif
 }
 
 - (BOOL)acceptsFirstResponder {
