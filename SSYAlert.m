@@ -1345,6 +1345,36 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 }
 
+- (void)prepareAsSheetOnWindow:(NSWindow*)docWindow {
+    [self setButton1IfNeeded] ;
+    
+    // if () conditions added in BookMacster 1.5.7 since button1 target and action
+    // should always be set by setButton1Title:
+    // If the debugger stops here, figure out why!!
+    if (([[self button1] target] == nil) && !m_dontAddOkButton) {
+        [[self button1] setTarget:self] ;
+#if DEBUG
+        NSLog(@"Internal Error 928-9983") ;
+#endif
+    }
+    if (([[self button1] action] == NULL) && !m_dontAddOkButton) {
+        [[self button1] setAction:@selector(clickedButton:)] ;
+#if DEBUG
+        NSLog(@"Internal Error 135-5614") ;
+#endif
+    }
+    
+    [self doooLayout] ;
+    
+    if ([self progressBarShouldAnimate]) {
+        [[self progressBar] startAnimation:self] ;
+    }
+    
+    [self setIsDoingModalDialog:YES] ;
+    
+    [self setDocumentWindow:docWindow] ;
+}
+
 - (void)runModalSheetOnWindow:(NSWindow*)hostWindow
             completionHandler:(void(^)(NSModalResponse returnCode))completionHandler {
     [self setButton1IfNeeded] ;
@@ -1368,29 +1398,31 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 
-- (void)runModalSheetOnWindow:(NSWindow*)documentWindow_
+- (void)runModalSheetOnWindow:(NSWindow*)docWindow
                 modalDelegate:(id)modalDelegate
                didEndSelector:(SEL)didEndSelector
                   contextInfo:(void*)contextInfo {
-	if (documentWindow_) {
-		NSAssert(((modalDelegate != nil) == (didEndSelector != nil)), @"222 modalDelegate vs. didEndSelector inconsistency.") ;
-		if (!modalDelegate) {
-			modalDelegate = self ;
-		}
+	if (docWindow) {
+        NSAssert(((modalDelegate != nil) == (didEndSelector != nil)), @"222 modalDelegate vs. didEndSelector inconsistency.") ;
+        if (!modalDelegate) {
+            modalDelegate = self ;
+        }
+        
+        if (!didEndSelector) {
+            didEndSelector = @selector(sheetDidEnd:returnCode:contextInfo:) ;
+        }
+        
+        [self prepareAsSheetOnWindow:docWindow];
 		
-		if (!didEndSelector) {
-			didEndSelector = @selector(sheetDidEnd:returnCode:contextInfo:) ;
-		}
-		
-        [self runModalSheetOnWindow:documentWindow_
-                  completionHandler:^void(NSModalResponse modalResponse) {
-                      NSWindow* window = [self window] ;
-                      NSInvocation* invocation = [NSInvocation invocationWithTarget:modalDelegate
-                                                                           selector:didEndSelector
-                                                                    retainArguments:YES
-                                                                  argumentAddresses:&window, &modalResponse, &contextInfo] ;
-                      [invocation invoke] ;
-                  }] ;
+        [docWindow beginSheet:[self window]
+            completionHandler:^void(NSModalResponse modalResponse) {
+                NSWindow* window = [self window] ;
+                NSInvocation* invocation = [NSInvocation invocationWithTarget:modalDelegate
+                                                                     selector:didEndSelector
+                                                              retainArguments:YES
+                                                            argumentAddresses:&window, &modalResponse, &contextInfo] ;
+                [invocation invoke] ;
+            }] ;
 	}
 }
 
