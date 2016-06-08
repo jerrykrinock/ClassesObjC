@@ -337,7 +337,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  didEndSelector to do the generic cleanup.
  </li>
  <li>For safety in projects that have both foreground application and background
-  workertarget products, its instance method -init checks if NSApp is non-nil
+ worker target products, its instance method -init checks if NSApp is non-nil
  and also whether or not the process is an LSUIElement.  If either is
  true, -init returns nil and consequently this entire class becomes a no-op.
  Actually, it also deallocs super and there may be some danger in this.
@@ -1176,14 +1176,7 @@ button before displaying the sheet.
 
 
 /*!
- @brief    Ends any modal session that might be running, sets the
- receiver's window's frame size to NSZeroRect and closes it.
- 
- @details  The reason for setting the frame size to NSZeroRect is
- because this signals to SSYSheetManager, in case the receiver's
- window is still in an SSYSheetManagerQueue and has not been displayed
- yet, to skip it when it is dequeued.  In other words,
- this method also "cancels" any future display by SSYSheetManager.
+ @brief    Ends any modal session that might be running and closes it.
 */
 - (void)goAway ;
 

@@ -1799,12 +1799,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (void)goAway {
-	// The following is necessary to use the trick in SSYSheetManager
-	// in case the window is in fact not visible at this time.
-	if (![[self window] isVisible]) {
-		[[self window] setFrame:NSZeroRect
-						display:NO] ;
-	}
 	// In case we are only being retained as the attachedSheet of our documentWindow...
 	[self retain] ;
 	
@@ -1866,8 +1860,15 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
                            returnCode:alertReturn] ;
             /* Completion handler has executed and returned. */
 		}
+
+        /* We do -close after the completion handler has executed, because it
+         will cause -[WindowHangout windowDidCloseNote:] to execute which will
+         set our window to nil.  The completion handler may have needed the
+         window, for example, to extract values entered by the user from
+         controls in the window. */
+        [sheet close] ;
+        
 		[sheet release] ;
-		// We return here after the didEndSelector has completed
 	}
 	else {
 		// We're a freestanding dialog
