@@ -22,11 +22,11 @@ typedef enum SSYAlertMode_enum SSYAlertMode ;
  Classic layout is commonly used when button1 = OK, button2 = cancel
  and button3 = alternate.  It looks like this:
  
- | [2]         [3]  [1] |
+ | [2]           [3]  [1] |
  
  Right to left layout is what it says
  
- |        [3]  [2]  [1] |
+ |     [4]  [3]  [2]  [1] |
  
  which reflects Apple's current descriptions of NSAlertFirstButtonReturn,
  NSAlertSecondButtonReturn, NSAlertThirdButtonReturn
@@ -35,7 +35,7 @@ enum SSYAlertButtonLayout_enum {
     SSYAlertButtonLayoutClassic,
     SSYAlertButtonLayoutRightToLeft,
 };
-typedef enum SSYAlertMode_enum SSYAlertButtonLayout ;
+typedef enum SSYAlertButtonLayout_enum SSYAlertButtonLayout ;
 
 /*!
  @brief    These are an addition to Apple's anonymous enumeration containing
@@ -54,7 +54,8 @@ enum SSYAlertRecovery_enum {
 	SSYAlertRecoveryAttemptedAsynchronously  = 103,
 	SSYAlertRecoveryErrorIsHidden            = 104,
 	SSYAlertRecoveryUserCancelledPreviously  = 105,
-    SSYAlertRecoveryInternalError            = 106
+    SSYAlertRecoveryInternalError            = 106,
+    SSYAlertFourthButtonReturn               = 1003
 } ;
 typedef enum SSYAlertRecovery_enum SSYAlertRecovery ;
 
@@ -95,7 +96,7 @@ extern NSString* const SSYAlertDidProcessErrorNotification ;
 /*!
  @brief    The subclass of NSWindow created by SSYAlert.  The interface
  is exposed so that you can get the checkbox state after an SSYAlert is closed,
- without setting shouldStickAround to YES
+ without setting dontGoAwayUponButtonClicked to YES
  
  @details  Typically, in a -didEndSheet:returnCode:contextInfo: callback
  on a sheet whose window controller is an SSYAlert alert, the SSYAlert may
@@ -275,7 +276,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  SSYAlert alert = [SSYAlert alert] ;
 
  // So that we can re-use this alert…
- [alert setShouldStickAround:YES] ;
+ [alert setDontGoAwayUponButtonClicked:YES] ;
  
  // First use
  [alert setSmallText:firstMessage] ;
@@ -294,7 +295,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  NSInteger alertReturn = [alert alertReturn] ;
  ... do whatever
  
- // Done.  But with setShouldStickAround:YES, SSYAlert does not go away
+ // Done.  But with dontGoAwayUponButtonClicked = YES, SSYAlert does not go away
  // automatically.
  [alert goAway] ;
 </p>
@@ -353,6 +354,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
     NSImageView* icon ;
 	NSProgressIndicator* progressBar ;
     NSTextView* titleTextView ;
+    NSScrollView* smallTextScrollView ;
     NSTextView* smallTextView ;
 	NSButton* helpButton ;
 	NSButton* supportButton ;
@@ -360,6 +362,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 	NSButton* button1 ;
     NSButton* button2 ;
     NSButton* button3 ;
+    NSButton* button4 ;
 	NSString* helpAnchorString ;
 	NSError* errorPresenting ;
 	NSImageView* iconInformational ;
@@ -388,7 +391,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 	NSModalSession modalSession ;
 	NSPoint windowTopCenter ;
 	BOOL progressBarShouldAnimate ;
-	BOOL m_shouldStickAround ;
+	BOOL m_dontGoAwayUponButtonClicked ;
 	NSTimeInterval nextProgressUpdate ;
 	
 	NSMutableArray* otherSubviews ;
@@ -593,13 +596,22 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 @property (retain, readonly) NSMutableArray* otherSubviews ;
 
 /*!
+ @brief    Whether or not to put CONTROL_VERTICAL_SPACING points of vertical
+ space between each otherSubview
+ @details  The default value is NO, meaning that space *is* put.  This is only
+ for space *between* successive otherSubview subviews.  If the receiver has less
+ than two otherSubview subviews, this parameter has no effect.
+ */
+@property BOOL noSpaceBetweenOtherSubviews ;
+
+/*!
  @brief    If YES, indicates that the receiver should not -goAway
  when a button is clicked
 
  @details  The default value is NO.
  This property  was added in BookMacster 1.9.3.
 */
-@property (assign) BOOL shouldStickAround ;
+@property (assign) BOOL dontGoAwayUponButtonClicked ;
 
 /*!
  @brief    Specfies how to lay out the buttons during -doooLayout
@@ -912,8 +924,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 - (void)setButton1Title:(NSString*)title ;
 
 /*!
- @brief    Sets the title of the (leftmost) "alternate" button, the
- one whose key equivalent is 'escape'.
+ @brief    Sets the title of button 2
  
  @details  Passing title as nil will remove the button.
  @param    title  The desired button title, or nil.
@@ -921,13 +932,20 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 - (void)setButton2Title:(NSString*)title ;  // key equivalent is escape
 
 /*!
- @brief    Sets the title of the (middle) "other" button, the
- one with no key equivalent.
+ @brief    Sets the title of button 3
  
  @details  Passing title as nil will remove the button.
  @param    title  The desired button title, or nil.
  */
 - (void)setButton3Title:(NSString*)title ;
+
+/*!
+ @brief    Sets the title of button 4
+ 
+ @details  Passing title as nil will remove the button.
+ @param    title  The desired button title, or nil.
+ */
+- (void)setButton4Title:(NSString*)title ;
 
 /*!
  @brief    En/Disables Button 1, if it exists
@@ -960,6 +978,16 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 - (void)setButton3Enabled:(BOOL)enabled ;
 
 /*!
+ @brief    En/Disables Button 4, if it exists
+ 
+ @details  This method does not create the button.
+ During configuration, therefore, you must setButton4Title:
+ and then -display the receiver before sending this
+ message, or it will have no effect.
+ */
+- (void)setButton4Enabled:(BOOL)enabled ;
+
+/*!
  @brief    Sets the anchor in the application's Help Book which will
  be displayed in Help Viewer when the user clicks the question-mark
  "Help" button in the receiver's window.
@@ -984,6 +1012,8 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 
  @details  An "other subview" is placed near the middle
  of the receiver's right column.
+ @param    index  You may pass NSNotFound to add it as the next item after the
+ last one.
 */
 - (void)addOtherSubview:(NSView*)subview
 				atIndex:(NSInteger)index ;
@@ -1075,6 +1105,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  */
 - (void)doooLayout ;
 
+- (void)doLayoutError:(NSError*)error ;
 
 /*!
  @brief    If the receiver's window is visible, lays out all of the
@@ -1097,19 +1128,6 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  @brief    Runs the receiver on a sheet as a modal session and returns
  immediately, running an optional invocation (target+selector+contextInfo)
  later if you send -[NSWindow endSheet:] or -[NSWindow endSheet:modalResponse:]
- to the host window.
- 
-@details  If the receiver has not had any button titles yet, and if the
-receiver has not had dontAddOkButton set, this method adds a default "OK"
-button before displaying the sheet.
- */
-- (void)runModalSheetOnWindow:(NSWindow*)hostWindow
-            completionHandler:(void(^)(NSModalResponse returnCode))completionHandler ;
-
-/*!
- @brief    Runs the receiver on a sheet as a modal session and returns
- immediately, running an optional invocation (target+selector+contextInfo)
- later if you send -[NSWindow endSheet:] or -[NSWindow endSheet:modalResponse:]
  to the host window
 
  @details  Although this method cleverly wraps Apple's new block-based method 
@@ -1122,7 +1140,7 @@ button before displaying the sheet.
  had dontAddOkButton set, this method adds a default "OK" button before
  displaying the sheet.
  
- @param    documentWindow  The document window to which to attach the sheet.
+ @param    docWindow  The document window to which to attach the sheet.
  @param    modalDelegate  The object which will receive and must respond to
  the didEndSelector, or nil if you want the receiver to handle it.  If the
  receiver handles it, its alertReturn will be set to the NSAlertReturn value
@@ -1133,10 +1151,24 @@ button before displaying the sheet.
  @param    contextInfo  Pointer to data which will be returned as the
  third element of the didEndSelector.
 */
-- (void)runModalSheetOnWindow:(NSWindow*)hostWindow
+- (void)runModalSheetOnWindow:(NSWindow*)docWindow
 				modalDelegate:(id)modalDelegate
 			   didEndSelector:(SEL)didEndSelector
 				  contextInfo:(void*)contextInfo ;
+
+/*!
+ @brief    Runs the receiver on a sheet as a modal session and returns
+ immediately
+ 
+ @details  If the receiver has not had any button titles yet, and if the
+ receiver has not had dontAddOkButton set, this method adds a default "OK"
+ button before displaying the sheet.
+ 
+ @param    docWindow  The document window to which to attach the sheet.
+ @param    completionHandler  Block which will run when the sheet ends
+ */
+- (void)runModalSheetOnWindow:(NSWindow*)docWindow
+            completionHandler:(void (^)(NSModalResponse returnCode))handler ;
 
 /*!
  @brief    Runs the receiver as a modal dialog.
@@ -1199,3 +1231,38 @@ button before displaying the sheet.
 - (NSCellStateValue)checkboxState ;
 
 @end
+
+
+/*
+ Some test code for the new scrollable Small Text:
+ 
+ NSMutableString* junk = [NSMutableString new] ;
+ for (NSInteger i=0; i<20; i++) {
+ [junk appendFormat:@"%zd. Just a few lines here!\n", i] ;
+ }
+ 
+ SSYAlert* alert ;
+ 
+ alert = [SSYAlert new] ;
+ [alert setTitleText:NSLocalizedString(@"Import Results", nil)] ;
+ [alert setRightColumnMinimumWidth:620] ;
+ [alert setIconStyle:SSYAlertIconInformational] ;
+ [alert setSmallText:junk] ;
+ [alert doooLayout] ;
+ [alert runModalDialog] ;
+ 
+ [junk deleteCharactersInRange:NSMakeRange(0, junk.length)] ;
+ for (NSInteger i=0; i<200; i++) {
+ [junk appendFormat:@"%zd. A lot of lines now!\n", i] ;
+ }
+ 
+ alert = [SSYAlert new] ;
+ [alert setTitleText:NSLocalizedString(@"Import Results", nil)] ;
+ [alert setRightColumnMinimumWidth:620] ;
+ [alert setIconStyle:SSYAlertIconInformational] ;
+ [alert setSmallText:junk] ;
+ [alert doooLayout] ;
+ [alert runModalDialog] ;
+ 
+ exit(0) ;
+*/

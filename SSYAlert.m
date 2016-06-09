@@ -11,13 +11,12 @@
 #import "NSError+MoreDescriptions.h"
 #import "NSError+Recovery.h"
 #import "NSError+SSYInfo.h"
-#import "SSYWindowHangout.h"
 #import "NSBundle+MainApp.h"
 #import "NSObject+RecklessPerformSelector.h"
 #import "SSYVectorImages.h"
 #import "NSString+LocalizeSSY.h"
 #import "NSInvocation+Quick.h"
-
+#import "NS(Attributed)String+Geometrics.h"
 
 NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager = nil ;
 
@@ -39,9 +38,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
  - In .m, -[SSAlert display], read the ivar value and affect the content accordingly.
  */
 
-
 @interface NSView (StringsInSubviews)
-
 
 - (NSInteger)longestStringLengthInAnySubview ;
 
@@ -168,12 +165,14 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @property (retain) NSProgressIndicator* progressBar ; // readonly in public @interface
 @property (retain) NSTextView* titleTextView ; // readonly in public @interface
 @property (retain) NSTextView* smallTextView ; // readonly in public @interface
+@property (retain) NSScrollView* smallTextScrollView ;
 @property (retain) NSButton* helpButton ;
 @property (retain) NSButton* supportButton ;
 @property (retain) SSYWrappingCheckbox* checkbox ;
 @property (retain) NSButton* button1 ;
 @property (retain) NSButton* button2 ;
 @property (retain) NSButton* button3 ;
+@property (retain) NSButton* button4 ;
 @property (copy) NSString* helpAnchorString ;
 @property (retain) NSError* errorPresenting ;
 @property (retain) NSImageView* iconInformational ;
@@ -202,6 +201,58 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 @implementation SSYAlertWindow
 
+/*!
+ @brief    Override of base class method which does damage control in the
+ event that the content exceeds the available height on the screen.
+
+ @details  Damage control is done by moving the critical controls up onto
+ the screen.  Note that they will cover other subviews, but it's more
+ important that the user see the critical controls.  This is what Apple's
+ alerts do when there is a similar overflow.
+ 
+ This was added in BookMacster 1.9.5 to replace code in -doooLayout which
+ did not work properly.
+*/
+- (void)setFrameOrigin:(NSPoint)frameOrigin {
+	[super setFrameOrigin:frameOrigin] ;
+
+	SSYAlert* alert = [self windowController] ;
+
+	// Defensive Programming
+	if (![alert isKindOfClass:[SSYAlert class]]) {
+		NSLog(@"Warning 624-2948  Expected SSYAlert") ;
+		return ;
+	}
+
+	CGFloat overflowHeight ;
+		
+	if ([self isSheet]) {
+		// This branch was added in BookMacster 1.9.8.
+		// If there is space between the top of the parent window and the menu bar,
+		// Cocoa will move the window up into that extra height in order to make
+		// room for the sheet, and unfortunately this has not been done yet.  So
+		// I need to, arghhh, predict what Cocoa is going to do…
+		NSWindow* parentWindow = [[self windowController] documentWindow] ;
+		CGFloat useableScreenHeight = [[parentWindow screen] visibleFrame].size.height ;
+		// useableScreenHeight does not include menu bar and does not include the Dock.
+		CGFloat tootlebarHeight = [parentWindow tootlebarHeight] ;
+		CGFloat availableHeight = useableScreenHeight - tootlebarHeight ;
+		overflowHeight = [self frame].size.height - availableHeight ;
+	}
+	else {
+		overflowHeight = WINDOW_EDGE_SPACING - [self frame].origin.y ;
+	}
+	
+	if (overflowHeight > 0.0) {
+		[[alert button1] deltaY:overflowHeight deltaH:0.0] ;
+		[[alert button2] deltaY:overflowHeight deltaH:0.0] ;
+		[[alert button3] deltaY:overflowHeight deltaH:0.0] ;
+        [[alert button4] deltaY:overflowHeight deltaH:0.0] ;
+		[[alert helpButton] deltaY:overflowHeight deltaH:0.0] ;
+		[[alert supportButton] deltaY:overflowHeight deltaH:0.0] ;
+		[[alert checkbox] deltaY:overflowHeight deltaH:0.0] ;
+	}
+}
 
 - (NSInteger)checkboxState {
     NSInteger state = NSMixedState ; // default answer in case we can't find checkbox
@@ -288,19 +339,22 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @implementation NSView (KeyboardLooping)
 
 - (void)makeNextKeyViewOfWindow:(NSWindow*)window
-				 firstResponder:(NSView**)hdlFirstResponder
-			  previousResponder:(NSView**)hdlPreviousResponder {
-	if (!*hdlFirstResponder) {
-		if ([window makeFirstResponder:self]) { 
-			[window setInitialFirstResponder:self] ; 
-			*hdlFirstResponder = self ;
-			*hdlPreviousResponder = self ;
-		}
-	}
-	else {
-		[*hdlPreviousResponder setNextKeyView:self] ;
-		*hdlPreviousResponder = self ;
-	}
+				 firstResponder:(NSView**)firstResponder_p
+			  previousResponder:(NSView**)previousResponder_p {
+    if ([self acceptsFirstResponder]) {
+        if (!*firstResponder_p) {
+            // No first responder yet
+            if ([window makeFirstResponder:self]) {
+                [window setInitialFirstResponder:self] ;
+                *firstResponder_p = self ;
+                *previousResponder_p = self ;
+            }
+        }
+        else {
+            [*previousResponder_p setNextKeyView:self] ;
+            *previousResponder_p = self ;
+        }
+    }
 }
 
 @end
@@ -359,12 +413,14 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @synthesize progressBar ;
 @synthesize titleTextView ;
 @synthesize smallTextView ;
+@synthesize smallTextScrollView ;
 @synthesize helpButton ;
 @synthesize supportButton ;
 @synthesize checkbox ;
 @synthesize button1 ;
 @synthesize button2 ;
 @synthesize button3 ;
+@synthesize button4 ;
 @synthesize helpAnchorString ;
 @synthesize errorPresenting ;
 @synthesize iconInformational ;
@@ -388,7 +444,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @synthesize modalSession ;
 @synthesize windowTopCenter ;
 @synthesize progressBarShouldAnimate ;
-@synthesize shouldStickAround = m_shouldStickAround ;
+@synthesize dontGoAwayUponButtonClicked = m_dontGoAwayUponButtonClicked ;
 @synthesize nextProgressUpdate ;
 
 - (CGFloat)rightColumnMaximumWidth {
@@ -526,6 +582,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		case NSAlertThirdButtonReturn :
 			recoveryOptionIndex = 2 ;
 			break;
+        case SSYAlertFourthButtonReturn :
+            recoveryOptionIndex = 3 ;
+            break;
 	default:
 			// This should never happen since we only have 3 buttons and return
 			// one of the above three values like NSAlert.
@@ -748,18 +807,13 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
  run loop cycle.
  */
 - (IBAction)clickedButton:(id)sender {	
-#if !__has_feature(objc_arc)
-    // In case executing the clickSelector method will remove our last retainer...
-	[self retain] ;
-#endif
-	
-	// Remember:
+	// For classic button layout
 	// Button1 --> tag=NSAlertFirstButtonReturn
 	// Button2 --> tag=NSAlertSecondButtonReturn
 	// Button3 --> tag=NSAlertThirdButtonReturn
 	[self setAlertReturn:[sender tag]] ;
 
-	if (m_shouldStickAround) {
+	if (m_dontGoAwayUponButtonClicked) {
         if ([self isDoingModalDialog]) {
             [NSApp stopModal] ;
             [self setIsDoingModalDialog:NO] ;
@@ -778,11 +832,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	if ([self checkboxState] == NSOnState) {
 		[[self checkboxInvocation] invoke] ;
 	}
-	
-#if !__has_feature(objc_arc)
-	// Balance the -retain, above.
-	[self release] ;
-#endif
+    
+    if (!m_dontGoAwayUponButtonClicked) {
+        [self releaseFromStatic] ;
+    }
 }
 
 - (void)setTargetActionForButton:(NSButton*)button {
@@ -904,7 +957,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 																  ofType:@"tif"] ;
 			NSImage* image = [[NSImage alloc] initByReferencingFile:imagePath] ;
 			[button setImage:image] ;
-            NSString* toolTip = [[self class] contactSupportToolTip] ;
+			NSString* toolTip = [[self class] contactSupportToolTip] ;
 			[button setToolTip:toolTip] ;
 			[self setSupportButton:button] ;
 			[[[self window] contentView] addSubview:button] ;
@@ -990,21 +1043,61 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     return textView ;
 }
 
+#define MIN_TEXT_FIELD_WIDTH 250.0
+#define MAX_TEXT_FIELD_WIDTH 500.0
+#define MAX_TEXT_FIELD_HEIGHT 450.0
+
 - (void)setSmallText:(NSString*)text {
-	NSTextView* textView = [self smallTextView] ;
-	if (text) {
-		if (!textView) {
-			textView = [self smallTextViewPrototype] ;
-			[self setSmallTextView:textView] ;
-			[[[self window] contentView] addSubview:textView] ;
-		}
-		
-		[textView setString:text] ;
-	}
-	else {
-		[textView removeFromSuperviewWithoutNeedingDisplay] ;
-		[self setSmallTextView:nil] ;
-	}
+    [self.smallTextScrollView removeFromSuperviewWithoutNeedingDisplay] ;
+    [self setSmallTextScrollView:nil] ;
+    [self setSmallTextView:nil] ;
+
+    CGFloat width = [self rightColumnMinimumWidth] ;
+    if (width < MIN_TEXT_FIELD_WIDTH) {
+        width = MIN_TEXT_FIELD_WIDTH ;
+    }
+    if (width > [self rightColumnMaximumWidth]) {
+        width = [self rightColumnMaximumWidth] ;
+    }
+    if (text) {
+        NSRect scrollViewFrame = NSMakeRect(0.0, 0.0, width, MAX_TEXT_FIELD_HEIGHT) ;
+        NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:scrollViewFrame] ;
+        NSSize contentSize = [scrollView contentSize] ;
+        
+        [scrollView setBorderType:NSNoBorder] ;
+        scrollView.autohidesScrollers = YES ;
+        [scrollView setHasVerticalScroller:YES] ;
+        [scrollView setHasHorizontalScroller:NO] ;
+        [scrollView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable] ;
+        scrollView.drawsBackground = NO ;
+        
+        NSTextView* textView = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)] ;
+        [textView setMinSize:NSMakeSize(0.0, contentSize.height)] ;
+        [textView setMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)] ;
+        textView.editable = NO ;
+        textView.selectable = YES ;
+        [textView setVerticallyResizable:YES] ;
+        [textView setHorizontallyResizable:NO] ;
+        [textView setAutoresizingMask:NSViewWidthSizable] ;
+        [textView.textContainer setContainerSize:NSMakeSize(contentSize.width, FLT_MAX)] ;
+        [textView.textContainer setWidthTracksTextView:YES] ;
+        textView.string = text ;
+        textView.drawsBackground = NO ;
+        textView.font = [SSYAlert smallTextFont] ;
+
+        /*
+         The following line will sometimes print to the console, 14 times:
+         CGAffineTransformInvert:
+         */
+        [scrollView setDocumentView:textView] ;
+        [self.window.contentView addSubview:scrollView] ;
+        self.smallTextScrollView = scrollView ;
+        self.smallTextView = textView ;
+#if !__has_feature(objc_arc)
+        [scrollView release] ;
+        [textView release] ;
+#endif
+    }
 }
 
 - (NSString*)smallText {
@@ -1117,6 +1210,31 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 }
 
+- (void)setButton4Title:(NSString*)title {
+    if (title) {
+        NSButton* button ;
+        if (!(button = [self button4])) {
+            button = [SSYAlert makeButton] ;
+            [button setTag:SSYAlertFourthButtonReturn] ;
+            [self setTargetActionForButton:button] ;
+            [self setButton4:button] ;
+            [[[self window] contentView] addSubview:button] ;
+        }
+        
+        [button setEnabled:YES] ;
+        [button setTitle:title] ;
+        //[button setWidthToFitTitlePlusTotalMargins:40] ;
+        [button sizeToFitIncludingNiceMargins] ;
+    }
+    else if (title && ![title length]) {
+        [[self button4] setEnabled:NO] ;
+    }
+    else {
+        [[self button4] removeFromSuperviewWithoutNeedingDisplay] ;
+        [self setButton4:nil] ;
+    }
+}
+
 - (void)setHelpAnchor:(NSString*)anchor {
 	// This one is tricky since we've got two ivars to worry about:
 	// NSButton* helpButton and NSString* helpAnchorString
@@ -1168,6 +1286,12 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	NSButton* button = [self button3] ;
 	[button setEnabled:enabled] ;
 	[button setNeedsDisplay] ;
+}
+
+- (void)setButton4Enabled:(BOOL)enabled {
+    NSButton* button = [self button4] ;
+    [button setEnabled:enabled] ;
+    [button setNeedsDisplay] ;
 }
 
 - (void)setCheckboxTitle:(NSString*)title {
@@ -1269,6 +1393,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[self setButton1Title:nil] ;
 	[self setButton2Title:nil] ;
 	[self setButton3Title:nil] ;
+    [self setButton4Title:nil] ;
 	[self setHelpAnchor:nil] ;
 	[self setCheckboxTitle:nil] ;
 	[self setWhyDisabled:nil] ;
@@ -1375,28 +1500,15 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     [self setDocumentWindow:docWindow] ;
 }
 
-- (void)runModalSheetOnWindow:(NSWindow*)hostWindow
-            completionHandler:(void(^)(NSModalResponse returnCode))completionHandler {
-    [self setButton1IfNeeded] ;
-    if (!m_dontAddOkButton) {
-        NSAssert(self.button1.target, @"Internal Error 943-4183") ;
-        NSAssert(self.button1.action, @"Internal Error 954-9543") ;
+- (void)runModalSheetOnWindow:(NSWindow*)docWindow
+            completionHandler:(void (^)(NSModalResponse returnCode))handler {
+    if (docWindow) {
+        [self prepareAsSheetOnWindow:docWindow];
+        
+        [docWindow beginSheet:[self window]
+            completionHandler:handler] ;
     }
-
-    [self doooLayout] ;
-    
-    if ([self progressBarShouldAnimate]) {
-        [[self progressBar] startAnimation:self] ;
-    }
-    
-    [self setIsDoingModalDialog:YES] ;
-    
-    [self setDocumentWindow:hostWindow] ;
-    
-    [hostWindow beginSheet:[self window]
-         completionHandler:completionHandler] ;
 }
-
 
 - (void)runModalSheetOnWindow:(NSWindow*)docWindow
                 modalDelegate:(id)modalDelegate
@@ -1424,6 +1536,14 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
                 [invocation invoke] ;
             }] ;
 	}
+}
+
+- (void)retainToStatic {
+    [static_alertHangout addObject:self] ;
+}
+
+- (void)releaseFromStatic {
+    [static_alertHangout removeObject:self] ;
 }
 
 - (void)runModalDialog {
@@ -1476,7 +1596,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		}
 	}
 	else {
-		NSLog(@"Internal Error 359-0751  Modal session %p already in progress", [self modalSession]) ;
+		NSLog(@"Internal Error 359-0751  Modal session %p already in progress", (void*)[self modalSession]) ;
 	}
 }
 
@@ -1505,15 +1625,16 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 }	
 
-#define MIN_TEXT_FIELD_WIDTH 250.0
-#define MAX_TEXT_FIELD_WIDTH 500.0
-
 - (void)setRightColumnMinimumWidthForNiceAspectRatio {
 	NSInteger nChars = [[[self window] contentView] longestStringLengthInAnySubview] ;
 	CGFloat	width = 16 * sqrt(nChars) ;
 	// Subject to upper and lower bounds...
-	width = MAX(MIN_TEXT_FIELD_WIDTH, width) ;
-	width = MIN(MAX_TEXT_FIELD_WIDTH, width) ;
+    if (width < MIN_TEXT_FIELD_WIDTH) {
+        width = MIN_TEXT_FIELD_WIDTH ;
+    }
+    if (width > MAX_TEXT_FIELD_WIDTH) {
+        width = MAX_TEXT_FIELD_WIDTH ;
+    }
 	[self setRightColumnMinimumWidth:width] ;
 }
 
@@ -1567,7 +1688,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	
 	[self.titleTextView setLeftEdge:t] ;
 	[self.progressBar setLeftEdge:t] ;
-	[self.smallTextView setLeftEdge:t] ;
+	[self.smallTextScrollView setLeftEdge:t] ;
 	[self.checkbox setLeftEdge:t] ;
 	e = [self.otherSubviews objectEnumerator] ;
 	while((subview = [e nextObject])) {
@@ -1590,25 +1711,36 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		rightSubframeWidth += [button3 width] ;
 		rightSubframeWidth += BUTTON_SPACING ;
 	}
+    if (self.button4) {
+        rightSubframeWidth += [button4 width] ;
+        rightSubframeWidth += BUTTON_SPACING ;
+    }
 	
 	if ([self rightColumnMinimumWidth] == 0) {
 		[self setRightColumnMinimumWidthForNiceAspectRatio] ;
 	}
 	
 	// The width of the right column (the stuff in the right of the window)
-	// will be the width of either
+	// will be the width of
 	//	(a) the row of buttons (just calculated)
 	//	(b) the width of the checkbox
 	//  (c) self.rightColumnMinimumWidth
-	// whichever is greater...
-	rightSubframeWidth = MAX(rightSubframeWidth, [checkbox width]) ;
-	rightSubframeWidth = MAX(rightSubframeWidth, self.rightColumnMinimumWidth) ;
+	// whichever is greatest...
+    if (rightSubframeWidth < checkbox.width) {
+        rightSubframeWidth = checkbox.width ;
+    }
+    if (rightSubframeWidth < self.rightColumnMinimumWidth) {
+        rightSubframeWidth = self.rightColumnMinimumWidth ;
+    }
+    
 	// and then constrained by its maximum
-	rightSubframeWidth = MIN(rightSubframeWidth, self.rightColumnMaximumWidth) ;
+    if (rightSubframeWidth > self.rightColumnMaximumWidth) {
+        rightSubframeWidth = self.rightColumnMaximumWidth;
+    }
 	
 	[self.progressBar setWidth:rightSubframeWidth] ;
 	[self.titleTextView setWidth:rightSubframeWidth] ;
-	[self.smallTextView setWidth:rightSubframeWidth] ;
+	[self.smallTextScrollView setWidth:rightSubframeWidth] ;
 	[self.checkbox setWidth:rightSubframeWidth] ;
 	e = [self.otherSubviews objectEnumerator] ;
 	while ((subview = [e nextObject])) {
@@ -1622,22 +1754,53 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	CGFloat contentWidth = t + WINDOW_EDGE_SPACING ;
 
     
+    NSMutableArray* buttonsLeftToRight = [[NSMutableArray alloc] init] ;
     if (self.buttonLayout == SSYAlertButtonLayoutClassic) {
-        [self.button1 setRightEdge:t] ;
-        t = [self.button1 leftEdge] - BUTTON_SPACING ;
-        [self.button3 setRightEdge:t] ;
+        if (self.button1) {
+            [self.button1 setRightEdge:t] ;
+            t = [self.button1 leftEdge] - BUTTON_SPACING ;
+            [buttonsLeftToRight addObject:self.button1] ;
+        }
+        if (self.button2) {
+            // Button 2 goes on the left, was placed earlier
+            [buttonsLeftToRight insertObject:self.button2
+                                     atIndex:0] ;
+        }
+        if (self.button3) {
+            [self.button3 setRightEdge:t] ;
+            t = [self.button3 leftEdge] - BUTTON_SPACING ;
+            [buttonsLeftToRight insertObject:self.button3
+                                     atIndex:1] ;
+        }
+        if (self.button4) {
+            [self.button4 setRightEdge:t] ;
+            [buttonsLeftToRight insertObject:self.button2
+                                     atIndex:1] ;
+        }
     }
     else {
         if (self.button1) {
             [self.button1 setRightEdge:t] ;
             t = [self.button1 leftEdge] - BUTTON_SPACING ;
+            [buttonsLeftToRight insertObject:self.button1
+                                     atIndex:0] ;
         }
         if (self.button2) {
             [self.button2 setRightEdge:t] ;
             t = [self.button2 leftEdge] - BUTTON_SPACING ;
+            [buttonsLeftToRight insertObject:self.button2
+                                     atIndex:0] ;
         }
         if (self.button3) {
             [self.button3 setRightEdge:t] ;
+            t = [self.button3 leftEdge] - BUTTON_SPACING ;
+            [buttonsLeftToRight insertObject:self.button3
+                                     atIndex:0] ;
+        }
+        if (self.button4) {
+            [self.button4 setRightEdge:t] ;
+            [buttonsLeftToRight insertObject:self.button4
+                                     atIndex:0] ;
         }
     }
 	
@@ -1647,7 +1810,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// the text fields depends on their width, which was just set in the 
 	// previous section of code.
 	[self.titleTextView sizeHeightToFitAllowShrinking:self.allowsShrinking] ;
-	[self.smallTextView sizeHeightToFitAllowShrinking:self.allowsShrinking] ;
+	[self.smallTextScrollView sizeHeightToFitAllowShrinking:self.allowsShrinking] ;
 	for (subview in self.otherSubviews) {
 		[(NSView*)subview sizeHeightToFitAllowShrinking:self.allowsShrinking] ;
 	}
@@ -1687,8 +1850,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		rightHeight += [self.progressBar height] ;
 		nSubviews++ ;
 	}
-	if (self.smallTextView != nil) {
-		rightHeight += [self.smallTextView height] ;
+	if (self.smallTextScrollView != nil) {
+		rightHeight += [self.smallTextScrollView height] ;
 		nSubviews++ ;
 	}
 	if (self.checkbox != nil) {
@@ -1699,15 +1862,23 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		rightHeight += [self.button1 height] ;
 		nSubviews++ ;
 	}
+    NSInteger otherSubviewIndex = 0 ;
 	for (subview in self.otherSubviews) {
-		rightHeight += [subview height] ;
-		nSubviews++ ;
+        otherSubviewIndex++ ;
+        rightHeight += [subview height] ;
+        if (![self noSpaceBetweenOtherSubviews] || otherSubviewIndex == self.otherSubviews.count) {
+            nSubviews++ ;
+        }
 	}
 	rightHeight += (nSubviews - 1) * CONTROL_VERTICAL_SPACING ;
 	
-	// Choose left or right
-	CGFloat contentHeight = MAX(leftHeight, rightHeight) + 2 * WINDOW_EDGE_SPACING ;
-	
+    CGFloat contentHeight = leftHeight ;
+    if (contentHeight < rightHeight) {
+        contentHeight = rightHeight ;
+    }
+    
+    contentHeight += 2 * WINDOW_EDGE_SPACING ;
+    
 	// Set y position of each subview
 	if (self.icon) {
 		[self.icon setTop:(contentHeight - WINDOW_EDGE_SPACING)] ;
@@ -1718,13 +1889,14 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// correctly  as they were stolen from the Apple alert.
 	// However, in order to have a uniform look in the case where
 	// there are no buttons, I start over from 0 at the bottom.
-	// and figure it out myself using my WINDOW_EDGE_SPACING (Bookdog 4.4.0)
-	t = WINDOW_EDGE_SPACING ;
+	// and figure it out myself using my WINDOW_EDGE_SPACING
+    t = WINDOW_EDGE_SPACING ;
 	
 	if (self.button1 != nil) {
 		[self.button1 setBottom:t] ;
 		[self.button2 setBottom:t] ;
 		[self.button3 setBottom:t] ;
+        [self.button4 setBottom:t] ;
 		t += ([self.button1 height] + CONTROL_VERTICAL_SPACING) ;
 	}
 	
@@ -1765,15 +1937,20 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		t -= ([self.progressBar height] + CONTROL_VERTICAL_SPACING) ;
 	}
 	
-	if (self.smallTextView != nil) {
-		[self.smallTextView setTop:t] ;
-		t -= ([self.smallTextView height] + CONTROL_VERTICAL_SPACING) ;
+	if (self.smallTextScrollView != nil) {
+		[self.smallTextScrollView setTop:t] ;
+		t -= ([self.smallTextScrollView height] + CONTROL_VERTICAL_SPACING) ;
 	}
 	
 	e = [self.otherSubviews objectEnumerator] ;
+    otherSubviewIndex = 0 ;
 	while ((subview = [e nextObject]) != nil) {
+        otherSubviewIndex++ ;
 		[subview setTop:t] ;
-		t -= ([subview height] + CONTROL_VERTICAL_SPACING) ;
+		t -= [subview height] ;
+        if (!self.noSpaceBetweenOtherSubviews || otherSubviewIndex == self.otherSubviews.count) {
+            t -= CONTROL_VERTICAL_SPACING ;
+        }
 	}
 	
 	// Next, we'll resize the window's contentView
@@ -1792,54 +1969,55 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// isEnabled and whyDisabled, we can access and forward them to button1.
 	[self.button1 setEnabled:[self isEnabled]] ;
 	[self.button1 setToolTip:[self whyDisabled]] ;
-	
-    // Define left, middle and right buttons
-    NSButton* leftmostButton = self.button3 ;
-    NSButton* middleButton = self.button2 ;
-    NSButton* rightmostButton = self.button1 ;
 
     // Set up the keyboard loop for tabbing
-	e = [self.otherSubviews objectEnumerator] ;
-	NSView* firstResponder = nil ; // redundant but necessary because I don't see any safe way to set the the first responder of a NSWindow to nil or other convenient known object.  -resignFirstResponder says "Never invoke this method directly".
-	NSView* previousResponder = nil ;
-	NSView* responder = nil ;
-	while ((responder = [e nextObject])) {
-		[responder makeNextKeyViewOfWindow:self.window
-							firstResponder:&firstResponder
-						 previousResponder:&previousResponder] ;
-	}
-	responder = self.checkbox ;
-	[responder makeNextKeyViewOfWindow:self.window
-						firstResponder:&firstResponder
-					 previousResponder:&previousResponder] ;
-	responder = self.helpButton ;
-	[responder makeNextKeyViewOfWindow:self.window
-						firstResponder:&firstResponder
-					 previousResponder:&previousResponder] ;
-	responder = self.supportButton ;
-	[responder makeNextKeyViewOfWindow:self.window
-						firstResponder:&firstResponder
-					 previousResponder:&previousResponder] ;
-	responder = leftmostButton ;
-	[responder makeNextKeyViewOfWindow:self.window
-						firstResponder:&firstResponder
-					 previousResponder:&previousResponder] ;
-	responder = middleButton ;
-	[responder makeNextKeyViewOfWindow:self.window
-						firstResponder:&firstResponder
-					 previousResponder:&previousResponder] ;
-	responder = rightmostButton ;
-	[responder makeNextKeyViewOfWindow:self.window
-						firstResponder:&firstResponder
-					 previousResponder:&previousResponder] ;
-	[responder setNextKeyView:firstResponder] ; // Close the loop
+    NSView* firstResponder = nil ; // redundant but necessary because I don't see any safe way to set the the first responder of a NSWindow to nil or other convenient known object.  -resignFirstResponder says "Never invoke this method directly".
+    NSView* previousResponder = nil ;
+    NSView* responder = nil ;
+    NSView* aResponder ;
+    for (aResponder in self.otherSubviews) {
+        [aResponder makeNextKeyViewOfWindow:self.window
+                             firstResponder:&firstResponder
+                          previousResponder:&previousResponder] ;
+        responder = aResponder ;
+    }
+    if (self.checkbox) {
+        responder = self.checkbox ;
+        [responder makeNextKeyViewOfWindow:self.window
+                            firstResponder:&firstResponder
+                         previousResponder:&previousResponder] ;
+    }
+    if (self.helpButton) {
+        responder = self.helpButton ;
+        [responder makeNextKeyViewOfWindow:self.window
+                            firstResponder:&firstResponder
+                         previousResponder:&previousResponder] ;
+    }
+    if (self.supportButton) {
+        responder = self.supportButton ;
+        [responder makeNextKeyViewOfWindow:self.window
+                            firstResponder:&firstResponder
+                         previousResponder:&previousResponder] ;
+    }
+    for (aResponder in buttonsLeftToRight) {
+        [aResponder makeNextKeyViewOfWindow:self.window
+                             firstResponder:&firstResponder
+                          previousResponder:&previousResponder] ;
+        responder = aResponder ;
+    }
+    // End.  Close the loop
+	[responder setNextKeyView:firstResponder] ;
     
     // Set key equivalents of buttons
-    [rightmostButton setKeyEquivalent:@"\r"] ;
+    [[buttonsLeftToRight lastObject] setKeyEquivalent:@"\r"] ;
     if (self.buttonLayout == SSYAlertButtonLayoutClassic) {
         [self.button2 setKeyEquivalent:@"\033"] ;  // escape key
     }
 
+#if !__has_feature(objc_arc)
+    [buttonsLeftToRight release] ;
+#endif
+    
     // Resize the window itself, and display window and views as needed
 	[self.window setFrameToFitContentViewThenDisplay:YES] ;
 	// argument must be YES to avoid flicker.  Counterintuitive,
@@ -1848,8 +2026,12 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// Reposition the window so that the title bar remains at the original "top center"
 	NSRect frame = [self.window frame] ;
 	frame.origin.x = self.windowTopCenter.x - frame.size.width/2 ;
-	frame.origin.y = MAX(self.windowTopCenter.y - frame.size.height, 0.0) ;
-	[self.window setFrame:frame display:NO] ; // This "display" is only "ifNeeded"
+	frame.origin.y = self.windowTopCenter.y - frame.size.height ;
+    if (frame.origin.y < 0.0) {
+        frame.origin.y = 0.0 ;
+    }
+
+    [self.window setFrame:frame display:NO] ; // This "display" is only "ifNeeded"
 	
 	// This took me a couple hours to figure out...
 	// If you send an NSProgressIndicator -startAnimation:, and then
@@ -1888,11 +2070,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (void)goAway {
-#if !__has_feature(objc_arc)
-	// In case we are only being retained as the attachedSheet of our documentWindow...
-	[self retain] ;
-#endif
-	
 	[self endModalSession] ;
 	
 	if ([self isDoingModalDialog]) {
@@ -1900,80 +2077,22 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		[self setIsDoingModalDialog:NO] ;
 	}
 	
-	NSWindow* documentWindow_ = [self documentWindow] ;
-    if (!documentWindow_) {
-        documentWindow_ = [[self window] sheetParent] ;
-    }
-	if (documentWindow_) {
-		// We're on a sheet
-		
-		// Clear for next usage.  Before 20090526, I did this after endSheet:returnCode:,
-		// but this cleared a ^new^ document window in case endSheet:returnCode:
-		// starts a new session, as does 
-		// -[BkmxDoc legacyArtifactDialogDidEnd:returnCode:contextInfo:].
+	if ([[self window] isSheet]) {
 		[self setDocumentWindow:nil] ;
-		// Without the retain above (or an external retain)
-		// the following will cause self to be dealloced
-		
-		// Prior to BookMacster 1.9.8:
-		// NSWindow* sheet = [documentWindow_ attachedSheet] ;
-		// I think this is better because: What if the attached sheet is not our window!
-		NSWindow* sheet = [self window] ;
-		
-        // When we roll up and close the sheet, ARC will release and
-        // dealloc self.  Why??  Whatever, we grab self's alert return now.
-        NSInteger alertReturn = [self alertReturn] ;
         
-        
-        // Roll up and close the sheet.
-        [sheet orderOut:self] ;
-        /*SSYDBL*/ NSLog(@"ordered out sheet %@", sheet) ;
-#if !__has_feature(objc_arc)
-		[sheet retain] ;  // Will release it below
-#endif
-
-		// Note that, since Cocoa does not support piling multiple
-		// sheets onto a window, we rolled up the sheet before 
-		// invoking endSheet:returnCode:, because that method
-		// will run the didEndSelector which may want to show
-		// a new sheet.
-		// NOTE: But as pointed out by, I think, Matt Neuberg,
-		// in fact Apple does not practice what they preach.
-		// Sometimes Apple piles up multiple sheets.  I think maybe
-		// the example he gave is when a document is closing, or
-		// something like that.
-        
-		if (sheet) {
-            /* The following will cause the completion handler in the call to
-             -[NSWindow beginSheet:completionHandler: in -[SSYAlert
-             runModalSheetOnWindow:modalDelegate:didEndSelector:contextInfo:]
-             to execute.  Prior to the "blocks revolution", I sent this exact
-             same method signature to NSApp instead of NSWindow, and it caused
-             the didEndSelector to execute synchronously.  */
-			[documentWindow_ endSheet:sheet
-                           returnCode:alertReturn] ;
+        if (self.window) {
+            [self.window.sheetParent endSheet:self.window
+                                   returnCode:[self alertReturn]] ;
             /* Completion handler has executed and returned. */
-		}
+        }
 
-        /* We do -close after the completion handler has executed, because it
-         will cause -[WindowHangout windowDidCloseNote:] to execute which will
-         set our window to nil.  The completion handler may have needed the
-         window, for example, to extract values entered by the user from
-         controls in the window. */
-        [sheet close] ;
-        
-#if !__has_feature(objc_arc)
-		[sheet release] ;
-#endif
-	}
+        [self.window close] ;
+        [self.window orderOut:self] ;
+    }
 	else {
-		// We're a freestanding dialog
-		[[self window] close] ;
+		/* We're a freestanding dialog. */
+		[self.window close] ;
 	}
-	
-#if !__has_feature(objc_arc)
-	[self release] ;  // Balances retain, above
-#endif
 }
 
 - (void)someWindowDidBecomeKey:(NSNotification*)note {
@@ -2041,7 +2160,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	if (!NSApp) {
 		// See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
         //TODO: Should also go here if process is background type, but API ProcessInformationCopyDictionary() I've used to do that has been deprecated :(
+#if !__has_feature(objc_arc)
 		[super dealloc] ;
+#endif
 		return nil ;
 	}
 	
@@ -2061,9 +2182,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 	[self setWindow:window] ;
 	[window setWindowController:self] ;
-	[window setReleasedWhenClosed:NO] ;
-	// The above is so that when we tell it to close in -goAway, it only hides.
-	// Unlike the default NSWindow, this one is going to get a lot of re-use.
+	[window setReleasedWhenClosed:YES] ;
 	[window center] ;
 
 	// Invoke designated initializer for super, NSWindowController
@@ -2088,7 +2207,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		windowTopCenter_.y += WINDOW_PROTOTYPE_HEIGHT ;  // move from bottom to top
 		self.windowTopCenter = windowTopCenter_ ;
         
-        [SSYWindowHangout hangOutWindowController:self] ;
+        [self retainToStatic] ;
 	}
 
 	return self ;
@@ -2144,6 +2263,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			if ([recoveryOptions count] > 2) {
 				[self setButton3Title:[recoveryOptions objectAtIndex:2]] ;
 			}				
+            if ([recoveryOptions count] > 3) {
+                [self setButton4Title:[recoveryOptions objectAtIndex:2]] ;
+            }				
 		}
 		else {
 			// No recovery options
@@ -2350,6 +2472,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	if ([buttonsArray count] > 2) {
 		[alert setButton3Title:[buttonsArray objectAtIndex:2]] ;
 	}
+    if ([buttonsArray count] > 3) {
+        [alert setButton4Title:[buttonsArray objectAtIndex:3]] ;
+    }
 	
 	[alert setIconStyle:SSYAlertIconInformational] ;
 	if (title == nil) {
