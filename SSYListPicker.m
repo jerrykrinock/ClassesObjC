@@ -94,7 +94,7 @@ NSString* constKeyDidCancelInvocation = @"didCancelInvocation" ;
 	[alert setIconStyle:SSYAlertIconInformational] ;
 	[alert setClickTarget:self] ;
 	[alert setClickSelector:@selector(handleClickInAlert:)] ;
-	[alert setShouldStickAround:YES] ;
+	[alert setDontGoAwayUponButtonClicked:YES] ;
 	// I think this was added in BookMacster 1.7.3 or, more likely, 1.8.  I forgot why, except that it was definitely needed…
 	[NSApp activateIgnoringOtherApps:YES] ;
 	NSMutableDictionary* didEndInfo = [NSMutableDictionary dictionary] ;
