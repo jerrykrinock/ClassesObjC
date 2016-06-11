@@ -2176,6 +2176,12 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 														 styleMask:NSTitledWindowMask
 														   backing:NSBackingStoreBuffered
 															 defer:NO] ;
+    /* NSWindow has nonstandard memory management.  Note that, under non-ARC,
+     we do *not* release this alloc-initted 'window', and the static analyzer
+     does not complain about this!  If we do [window release], then the static
+     analyzer does not complain either (!!), but we get a runtime crash when
+     this window is autoreleased!  Read comments in my project NSWindowLifer,
+     or maybe I will blog about this. */
 	NSString* appName = [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleName"] ; // CFBundleName may be localized
 	if (appName) {
 		[window setTitle:appName] ;
@@ -2187,9 +2193,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 	// Invoke designated initializer for super, NSWindowController
 	self = [super initWithWindow:window] ;
-#if !__has_feature(objc_arc)
-	[window release] ;
-#endif
 
 	if (self) {
 		[self stealObjectsFromAppleAlerts] ;
