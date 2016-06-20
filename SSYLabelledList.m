@@ -271,7 +271,7 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
 		  mouseLocation:(NSPoint)mouseLocation {
 	id toolTip = [[self toolTips] objectAtIndex:rowIndex] ;
 	if (![toolTip isKindOfClass:[NSString class]]) {
-		toolTip = nil ;
+		toolTip = @"" ;
 	}
 
 	return toolTip ;

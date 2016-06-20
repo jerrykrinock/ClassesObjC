@@ -85,6 +85,7 @@ NSString* const constKeyRating = @"rating" ;
     [m_starHighlightedImage release] ;
     [m_removeXImage release] ;
     [m_backgroundColor release] ;
+    [m_rating release] ;
     
 	[super dealloc] ;
 }

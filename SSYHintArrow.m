@@ -17,8 +17,7 @@ static SSYHintArrow* static_helpArrow = nil ;
 # pragma mark * Heavy Lifters
 
 - (CGFloat)scaleFactor {
-    // Was using deprecated [NSScreen mainScreen] userSpaceScaleFactor]
-    CGFloat factor = [[self contentView] backingScaleFactor] ;
+    CGFloat factor = 1.0 ;
     return factor ;
 }
 

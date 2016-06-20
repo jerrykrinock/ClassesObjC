@@ -39,11 +39,11 @@
 
 
 -(void)	awakeFromNib {
-	NSString*		key;
 	NSInteger		index = 0;
 	NSString*		wndTitle = nil;
 	
-	[[self window] setTitle:[self localizeString:@"windowTitlePrefs"]] ;
+    NSString* title = NSLocalizedString(@"Preferences", nil) ;
+    [[self window] setTitle:title] ;
 
 	// Generate a string containing the window's title so we can display the original window title plus the selected pane:
 	wndTitle = [[ibOutlet_tabView window] title];
@@ -55,7 +55,7 @@
 	[[self window] setFrameAutosaveName:@"PrefsWindow"] ; 
 	
 	// Select the preferences page the user last had selected when this window was opened:
-	key = [NSString stringWithFormat: @"%@.prefspanel.recentTab", @"PrefsWindow"];
+	NSString* key = [NSString stringWithFormat: @"%@.prefspanel.recentTab", @"PrefsWindow"];
 	index = [[NSUserDefaults standardUserDefaults] integerForKey:key];
 	[ibOutlet_tabView selectTabViewItemAtIndex:index];
 	

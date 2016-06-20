@@ -70,5 +70,11 @@ static SSYLinearFileWriter* sharedFileWriter = nil ;
 	[[SSYLinearFileWriter sharedFileWriter] setFileHandle:nil] ;
 }
 
+- (void)dealloc {
+    [m_fileHandle release] ;
+    
+    [super dealloc] ;
+}
+
 @end
 

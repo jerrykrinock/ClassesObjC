@@ -2502,12 +2502,14 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[progressBar release] ;
 	[titleTextView release] ;
 	[smallTextView release] ;
+    [smallTextScrollView release] ;
 	[helpButton release] ;
 	[supportButton release] ;
 	[checkbox release] ;
 	[button1 release] ;
 	[button2 release] ;
 	[button3 release] ;
+    [button4 release] ;
 	[helpAnchorString release] ;
 	[errorPresenting release] ;
 	[iconInformational release] ;

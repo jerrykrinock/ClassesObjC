@@ -3,9 +3,6 @@
 
 @implementation SSYDeallocDetector
 
-@synthesize invocation = m_invocation ;
-@synthesize logMsg = m_logMsg ;
-
 #if 0
 #warning  Logging R&R of Dealloc Detector
 - (id)retain {
@@ -20,13 +17,13 @@
 #endif
 
 - (void)dealloc {
-	[[self invocation] invoke] ;
-	[m_invocation release] ;
+	[_invocation invoke] ;
 
-    if (m_logMsg) {
-        NSLog(@"Deallocced %p %@", (__bridge void*)self, m_logMsg) ;
+    [_invocation release] ;
+    if (_logMsg) {
+        NSLog(@"Deallocced %p %@", (__bridge void*)self, _logMsg) ;
     }
-    [m_logMsg release] ;
+    [_logMsg release] ;
     
 	[super dealloc] ;
 }
