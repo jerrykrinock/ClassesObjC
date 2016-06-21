@@ -9,7 +9,7 @@
 
 
 /*!
- @brief    This is wrapper on OS X and iOS Audio Services API, whose purpose is
+ @brief    This is wrapper on macOS and iOS Audio Services API, whose purpose is
  to play an alert sound cheaply and reliably (in contrast to NSSound)
  
  @details   Requires System/Library/Frameworks/AudioToolbox.framework,

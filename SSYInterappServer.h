@@ -13,11 +13,11 @@ extern NSString* const SSYInterappServerErrorDomain ;
  See comment at bottom of this file.
  
  Troubleshooting tip.  To see if a port is active in the system,
- * On OS X 10.9 or earlier
+ * On macOS 10.9 or earlier
  *      sudo launchctl bstree | grep <fragmentOfYourPortName>
  *    Example:
  *      sudo launchctl bstree | grep sheepsystems
- * On OS X 10.10 or later
+ * On macOS 10.10 or later
  *      sudo launchctl print user/<uid> | grep <fragmentOfYourPortName>
  *    Example:
  *      sudo launchctl print user/501 | grep sheepsystems

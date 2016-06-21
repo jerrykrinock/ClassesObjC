@@ -16,7 +16,7 @@
          The following line was added in BookMacster 1.12.7, to alphabetize
          tags in Tags Popover and Inspector.  However, it also
          cast 'value' to an NSCountedSet and re-invoked -allObjects on it.
-         This *worked* in Mac OS X 10.7 and later, because, strangely, NSArray
+         This *worked* in macOS 10.7 and later, because, strangely, NSArray
          *does* respond to -allObjects in these systems, returns a copy of self.
          But not in 10.6, where an exception could be raised here
          The troublesome cast and -allObjects were removed in 

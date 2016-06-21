@@ -15,7 +15,7 @@ extern NSString *const kSSYKeychainErrorDomain;
 
 
 /*!
- @brief    A class of class methods for accessing items in the user's OS X or
+ @brief    A class of class methods for accessing items in the user's macOS or
  iOS Keychain
  
  @details  This class is a fork of SSKeychain by Sam Soffes,
@@ -95,7 +95,7 @@ extern NSString *const kSSYKeychainErrorDomain;
  you may get a key "class", which I think is supposed to be "kcls", symbolized
  by kSecAttrKeyClass, and I think this is a bug in Keychain Services.
  
- For convenience in debugging, the Attribute Item Keys in OS X 10.10.2 have
+ For convenience in debugging, the Attribute Item Keys in macOS 10.10.2 have
  been dumped below.  Of course, you should use the constants and not the values
  because the latter are an undocumented implementation detail.
  
@@ -141,7 +141,7 @@ extern NSString *const kSSYKeychainErrorDomain;
  kSecAttrCanUnwrap = unwp
  kSecAttrAccessGroup = agrp
  
- You will never see most of those keys.  The keys I found when dumping my OS X
+ You will never see most of those keys.  The keys I found when dumping my macOS
  Keychain of of 114 items, prefixed by their number of occurrences, is:
  
  114 kSecAttrModificationDate = mdat

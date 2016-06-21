@@ -24,7 +24,7 @@
 + (NSString*)defaultBrowserBundleIdentifier ;
 
 /*!
- @details  In OS X 10.10, there is Apple Bug 19642555, which causes
+ @details  In macOS 10.10, there is Apple Bug 19642555, which causes
  -[NSWorkspace openURLs:::::] to fail (and indeed return NO, if you rapid-fire
  it too quickly.  Experimenting on my 2013 13 inch MacBook Air, opening 13 URLs
  in Safari, I find that a 50-100 millisecond delay is necessary between

@@ -42,7 +42,7 @@ __attribute__((visibility("default"))) @interface SSYSemaphorePidKey : NSObject 
  •  http://charette.no-ip.com:81/programming/2010-01-13_PosixSemaphores/index.html
  Those links also explain why I use the "lock file" idea instead of named
  POSIX semaphores.  (Briefly, named POSIX semaphores are not cleaned up by
- OS X if their owning processes crash, which causes a logjam until the
+ macOS if their owning processes crash, which causes a logjam until the
  user logs out and back in.
  
  When using this class, [NSApp delegate] must conform to protocol

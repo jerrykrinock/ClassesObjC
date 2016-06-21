@@ -42,15 +42,15 @@ NSString* const SSYLaunchdGuyErrorKeyCommandStderr = @"Command Stderr" ;
 	if ((result != 0) && ([error code] == SSYShellTaskerErrorTimedOut)) {
         /*
          This method was changed in BookMacster 1.14.4.  I've had a couple
-         reports from Mac OS X 10.8 users, and I saw this happen once myself,
-         but unlike the restart that was necessary to fix it in Mac OS X 10.7,
+         reports from macOS 10.8 users, and I saw this happen once myself,
+         but unlike the restart that was necessary to fix it in macOS 10.7,
          it now seems to fix itself.  So Apple didn't really fix it, but they
          made it enough better that we don't want to annoy the user with the
          warning any more.
          */
 		NSTimeInterval timeout = [[[error userInfo] objectForKey:constKeySSYShellTaskerTimeout] doubleValue] ;
 		NSLog(@"Warning 516-7625 launchctl timed out at %0.1f secs.", timeout) ;
-		NSString* reason = @"The launchd process of Mac OS X is not responding." ;
+		NSString* reason = @"The launchd process of macOS is not responding." ;
 		NSString* suggestion = @"You should restart your Mac at the next opportunity.  "
 		@"This bug has reportedly been fixed by Apple in Mac OS 10.8 (Mountain Lion)." ;
 		error = [error errorByAddingLocalizedFailureReason:reason] ;
@@ -58,18 +58,18 @@ NSString* const SSYLaunchdGuyErrorKeyCommandStderr = @"Command Stderr" ;
 		
         if (NSAppKitVersionNumber < 1187.370000) {
             // The above condition was added in BookMacster 1.14.4.
-            // The above number is for Mac OS X 10.8.3.  I'd like to use the
+            // The above number is for macOS 10.8.3.  I'd like to use the
             // number for 10.8.0, but can't find that.  It doesn't matter that
             // much, oh well.
             // The reason for the condition now, is that this launchd thing
-            // seems to fix itself after some time in Mac OS X 10.8.  It no
+            // seems to fix itself after some time in macOS 10.8.  It no
             // requires a restart
             NSString* message = [NSString stringWithFormat:@"%@\n\n%@",
                                  reason,
                                  suggestion] ;
             
             NSString* windowTitle = [NSString stringWithFormat:
-                                     @"%@ : Problem with Mac OS X",
+                                     @"%@ : Problem with macOS",
                                      [[NSProcessInfo processInfo] processName]] ;
             CFUserNotificationDisplayNotice (
                                              60,  // timeout
@@ -90,7 +90,7 @@ NSString* const SSYLaunchdGuyErrorKeyCommandStderr = @"Command Stderr" ;
 
 // launchctl itself has a built-in timeout of 25 seconds (Mac OS 10.6.6).
 // So, anything over 25 seconds will act like 25 seconds.  However, on
-// 20120428 launchctl got into some weird state in Mac OS X 10.7.3.
+// 20120428 launchctl got into some weird state in macOS 10.7.3.
 // Whenever I gave it a command to load or unload a job, it would hang
 // indefinitely.  So I reduced this in BookMacster 1.11 from 180.0 to
 // 35.0 seconds.
@@ -471,7 +471,7 @@ end:;
             NSString* trimmedResponse = [response stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] ;
             /*
              The following line was fixed in BookMacster 1.17 so that it works
-             if fields are separated by tabs (as they are in Mac OS X 10.8)
+             if fields are separated by tabs (as they are in macOS 10.8)
              instead of spaces.  Maybe they were spaces in an earlier OS X
              version?  Anyhow, we handle either now.
              */

@@ -270,16 +270,16 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
  
  * First Indication:  Open Slow.bkmslf.
  
- Expected result:  Open in 7 seconds (MacMini2 - OS X 10.9)
+ Expected result:  Open in 7 seconds (MacMini2 - macOS 10.9)
  Actual Result: Open in 45 seconds.
  
  * Second Indication: Edit a bookmark name in Saul.bkmslf, hit 'return'
- Expected result: less than 1 second (MacMini2 - OS X 10.9)
+ Expected result: less than 1 second (MacMini2 - macOS 10.9)
  Actual result: 18 seconds.
  
  * Third indication.  Export Saul's bookmrks to Firefox, then change a bookmark title in Bkmx, then import from Firefox
  Expected result: Something reasonable
- Actual result: 45 minutes, mostly in Finding Parents (4/7)  (MacMini2 - OS X 10.9)
+ Actual result: 45 minutes, mostly in Finding Parents (4/7)  (MacMini2 - macOS 10.9)
  
  TRIED SOLUTIONS
  

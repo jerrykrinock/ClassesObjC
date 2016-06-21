@@ -101,7 +101,7 @@ enum {
 	[self endConnection:connection] ;
 }
 
-// Added in BookMacster 1.22.2 to eliminate spurious logging in OS X 10.9.3.
+// Added in BookMacster 1.22.2 to eliminate spurious logging in macOS 10.9.3.
 // See Apple Bug ID 16728139.
 - (BOOL)connectionShouldUseCredentialStorage:(NSURLConnection*)connection {
     return NO ;

@@ -73,7 +73,7 @@
  @param    identifier  A unique identifier for the context/store, or nil to return
  a "common" managed object context/store of the given type for the application.
  If storeType is NSSQLiteStoreType, identifier must contain only characters that are valid
- in a filename. That means, I believe, in Mac OS X, no slashes (/) or colons (:).  
+ in a filename. That means, I believe, in macOS, no slashes (/) or colons (:).  
  This is because the identifier will be incorporated the name of an sqlite database
  file that will be created to support the new managed object context if necessary.
  @param    momdName  The baseName of the baseName.momd directory in 

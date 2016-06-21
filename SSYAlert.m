@@ -646,7 +646,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
                                                                                      }
                                                                                      else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:)]) {
                                                                                          /* This is an error produced by Cocoa.
-                                                                                          In particular, in Mac OS X 10.7, it might be one like this:
+                                                                                          In particular, in macOS 10.7, it might be one like this:
                                                                                           Error Domain = NSCocoaErrorDomain
                                                                                           Code = 67000
                                                                                           UserInfo = {

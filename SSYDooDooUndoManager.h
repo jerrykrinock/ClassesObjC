@@ -77,7 +77,7 @@ extern NSString* const SSYUndoManagerDocumentWillSaveNotification ;
       will work again the next time it is invoked.
  
  Note that if your document is a subclass of NSPersistentDocument,
- and your SDK is Mac OS X 10.6 or later, you could rewrite SSYDooDooUndoManager
+ and your SDK is macOS 10.6 or later, you could rewrite SSYDooDooUndoManager
  to use SSYUndoManagerDocumentWillSaveNotification instead, and then you wouldn't
  need to send SSYUndoManagerDocumentWillSaveNotification.
  

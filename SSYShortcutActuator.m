@@ -590,7 +590,7 @@ OSStatus SSYShortcutActuate(
 	// It is important that we do #1 before #2, because #2 will uninstall our handler
 	// only if it sees that there are no more Registered shortcuts.
 
-	// #2.  Unregister in Mac OS X
+	// #2.  Unregister in macOS
 	[self unregisterShortcutForSelectorName:selectorName] ;
 
 	// #3.  Remove from User Defaults

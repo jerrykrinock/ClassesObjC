@@ -662,7 +662,7 @@
     NSImage* image ;
     NSImage* rotatedImage ;
     
-    // We must be in OS X 10.8 or later
+    // We must be in macOS 10.8 or later
     image = [NSImage imageWithSize:size
                            flipped:NO
                     drawingHandler:^(NSRect dstRect) {

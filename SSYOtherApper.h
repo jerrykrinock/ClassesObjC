@@ -67,7 +67,7 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  launched, this parameter will activate or deactivate it.
  @param    hideGuardTime  I have seen apps show windows after they have been
  launched as hidden.  I think this may be due to windows being restored in
- OS X 10.7+.  If hideGuardTime is > 0 and activate is NO, after the target
+ macOS 10.7+.  If hideGuardTime is > 0 and activate is NO, after the target
  app launches, this method will repeatedly send its NSRunningApplication a
  -hide message for an additional hideGuardTime seconds.  If activate is YES,
  hideGuardTime is ignored.

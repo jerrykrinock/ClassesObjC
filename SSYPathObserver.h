@@ -84,7 +84,7 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  in the unix sense.  Moving a file to the Trash does not
  count here.
  @details  For debugging only, the value of this constant, compiled
- with the Mac OS X 10.6 SDK, 32-bit i386, is: 1
+ with the macOS 10.6 SDK, 32-bit i386, is: 1
  */
 #define SSYPathObserverChangeFlagsDelete     NOTE_DELETE
 /*!
@@ -93,38 +93,38 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  the files it contains has been added, deleted, renamed or had its data
  modified
  @details  For debugging only, the value of this constant, compiled
- with the Mac OS X 10.6 SDK, 32-bit i386, is: 2
+ with the macOS 10.6 SDK, 32-bit i386, is: 2
  */
 #define SSYPathObserverChangeFlagsData       NOTE_WRITE
 /*!
  @brief    Size of file was increased
  @details  For debugging only, the value of this constant, compiled
- with the Mac OS X 10.6 SDK, 32-bit i386, is: 4
+ with the macOS 10.6 SDK, 32-bit i386, is: 4
  */
 #define SSYPathObserverChangeFlagsBigger     NOTE_EXTEND
 /*!
  @brief    File attributes were changed
  @details  For debugging only, the value of this constant, compiled
- with the Mac OS X 10.6 SDK, 32-bit i386, is: 8
+ with the macOS 10.6 SDK, 32-bit i386, is: 8
  */
 #define SSYPathObserverChangeFlagsAttributes NOTE_ATTRIB
 /*!
  @brief    The Link Count of the file was changed
  @details  For debugging only, the value of this constant, compiled
- with the Mac OS X 10.6 SDK, 32-bit i386, is: 16
+ with the macOS 10.6 SDK, 32-bit i386, is: 16
  */
 #define SSYPathObserverChangeFlagsLinkCount  NOTE_LINK
 /*!
  @brief    The file was renamed, which in Macintosh parlance
  includes *moving* a file, including *moving* to the Trash.
  @details  For debugging only, the value of this constant, compiled
- with the Mac OS X 10.6 SDK, 32-bit i386, is: 32
+ with the macOS 10.6 SDK, 32-bit i386, is: 32
  */
 #define SSYPathObserverChangeFlagsRename     NOTE_RENAME
 /*!
  @brief    Access (permissions) to the file was revoked
  @details  For debugging only, the value of this constant, compiled
- with the Mac OS X 10.6 SDK, 32-bit i386, is: 64
+ with the macOS 10.6 SDK, 32-bit i386, is: 64
  */
 #define SSYPathObserverChangeFlagsAccessGone NOTE_REVOKE
 
@@ -169,9 +169,9 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  
  * Availability
  
- This class requires Mac OS X 10.5 or later.
+ This class requires macOS 10.5 or later.
  
- * Hack to kill kqueue watcher thread for Mac OS X 10.5
+ * Hack to kill kqueue watcher thread for macOS 10.5
  
  When this class is compiled using the Mac OS 10.5 SDK, the constant
  KQUEUES_WATCHER_THREAD_NEEDS_KILL_TO_EXIT is set to 1, which causes
@@ -190,9 +190,9 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  Later, I found that Uli may have updated his earlier work.  Check
  out http://www.github.com/uliwitness/UliKit before using this class.
  
- Special thanks to Terry Lambert for the Mac OS X 10.5 workaround.
+ Special thanks to Terry Lambert for the macOS 10.5 workaround.
  
- In *Advanced Mac OS X Programming* by Dalrymple & Hillegass,
+ In *Advanced macOS Programming* by Dalrymple & Hillegass,
  Chapter 15 has information on kqueues.
  
 * Todo

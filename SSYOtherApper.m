@@ -385,7 +385,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 				continue ;
 			}
 			
-			// Scan user.  Fortunately, short user names in Mac OS X cannot contain whitespace
+			// Scan user.  Fortunately, short user names in macOS cannot contain whitespace
 			[scanner scanCharactersFromSet:[[NSCharacterSet whitespaceCharacterSet] invertedSet]
 								intoString:&user] ;
 			

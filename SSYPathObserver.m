@@ -104,7 +104,7 @@ void handleUSR1(NSInteger signum) {
 }
 
 - (void)watchAndWaitObserver:(SSYPathObserver*)pathObserver {
-	/* Note that, in Mac OS X 10.5, we may kill this thread in -release.
+	/* Note that, in macOS 10.5, we may kill this thread in -release.
 	 In Apple's Threading Programming Guide > Terminating a Thread,
 	 killing a thread is "strongly discouraged" because memory or other
 	 resources may be leaked and cause problems later.  One of the

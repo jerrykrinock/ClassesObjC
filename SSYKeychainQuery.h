@@ -3,7 +3,7 @@
 
 /*
  #define CHECK_FOR_ICLOUD_SYNCHRONIZATION_IN_LATER_SDK to nonzero only if your
- app is sandboxed.  If your app is not sandboxed, in OS X 10.11 or later,
+ app is sandboxed.  If your app is not sandboxed, in macOS 10.11 or later,
  checking for iCloud synchronization will print two warnings like the following
  to the system console every time that your app uses this class to fetch a
  keychain item:
@@ -28,7 +28,7 @@ typedef NS_ENUM(NSUInteger, SSYKeychainQuerySynchronizationMode) {
 #endif
 
 /*!
- @brief  Object for querying and changing items in the OS X or iOS Keychain,
+ @brief  Object for querying and changing items in the macOS or iOS Keychain,
  doing the heavy lifting for SSYKeychain which has an easier interface and is
  recommended as a wrapper
  

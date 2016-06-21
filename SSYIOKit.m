@@ -2,7 +2,7 @@
  File:			GetPrimaryMACAddress.c
 	
  Description:	This sample application demonstrates how to do retrieve the Ethernet MAC
- address of the built-in Ethernet interface from the I/O Registry on Mac OS X.
+ address of the built-in Ethernet interface from the I/O Registry on macOS.
  Techniques shown include finding the primary (built-in) Ethernet interface,
  finding the parent Ethernet controller, and retrieving properties from the
  controller's I/O Registry entry.
@@ -187,7 +187,7 @@ CFDataRef CreateMACAddress(io_iterator_t intfIterator)
 	
 	if (MACAddressData == nil) {
 		// May be a Hackintosh.  Use email instead.
-		// Starting with Mac OS X 10.8, -[ABAddressBook me] will produce an ugly warning
+		// Starting with macOS 10.8, -[ABAddressBook me] will produce an ugly warning
 		// asking if it's OK for your app to access Contacts, and will block until
 		// user dismisses the dialog.  But I figure that if someone
 		// is using a Hackintosh, they should expect stuff like that.

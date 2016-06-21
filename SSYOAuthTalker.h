@@ -102,7 +102,7 @@ extern NSString* const constKeyOAuthTokenSecret ;
 + (NSString*)keychainServiceNameForAccounter:(NSObject <SSYOAuthAccounter> *)accounter ;
 
 /*!
- @brief    Returns the Service Name in the Mac OS X Keychain which
+ @brief    Returns the Service Name in the macOS Keychain which
  stores the OAuth Token and OAuth Token Secret for the receiver.
  */
 - (NSString*)keychainServiceName ;
@@ -112,7 +112,7 @@ extern NSString* const constKeyOAuthTokenSecret ;
 
  @param    accounter  An object from which the account name and
  optional service name will be obtained just in time for writing
- an item to the Mac OS X Keychain.  This is kept only as a weak
+ an item to the macOS Keychain.  This is kept only as a weak
  reference.  Make sure it doesn't go away.  (For example, a
  temporary Clientoid produced by a BookMacster Client is not a
  good object to use here.)
@@ -178,7 +178,7 @@ extern NSString* const constKeyOAuthTokenSecret ;
 
 /*!
  @brief    Writes the receiver's current credential information (token,
- token secret, user guid, and session handle) to the Mac OS X Keychain
+ token secret, user guid, and session handle) to the macOS Keychain
  as a generic (application) password, under the current values of
  keychainServiceName and profileName
 */

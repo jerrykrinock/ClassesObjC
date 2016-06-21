@@ -82,7 +82,7 @@ extern NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotifica
  files produce by intermediate-stage migrations appear only
  momentarily while this method is running.
  
- Requires Mac OS X 10.5 or later.
+ Requires macOS 10.5 or later.
  
  @param    url  The file url of the store which is to be migrated if
  needed

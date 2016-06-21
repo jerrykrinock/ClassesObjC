@@ -11,7 +11,7 @@
  @brief    Returns first name, last name and primary email
  address of from the "me" entry in Address Book.
  
- @details  Warning!  Starting with Mac OS X 10.8, invoking
+ @details  Warning!  Starting with macOS 10.8, invoking
  this method will produce an ugly, scary and vague dialog box
  asking the user if it is OK for your app to access their
  Contacts.  This method will block until the dialog is
@@ -30,7 +30,7 @@
  
  The reason is that, according to Apple QA1133, the SCDynamicStoreCopyConsoleUser
  function used herein will "...likely that they will be formally deprecated
- in a future version of Mac OS X".
+ in a future version of macOS".
  
  There is an alternative: getuid(2).  When I first tested this in 2008, I found
  that it was not reliable.  See

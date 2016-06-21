@@ -118,7 +118,7 @@ NSString* const SSYInterappClientErrorDomain = @"SSYInterappClientErrorDomain" ;
 			case kCFMessagePortTransportError:
 				errorDetail = @"Transport Error" ;
 				break ;
-			case -5:  // Mac OS X 10.6 SDK defines this as kCFMessagePortBecameInvalidError
+			case -5:  // macOS 10.6 SDK defines this as kCFMessagePortBecameInvalidError
 				errorDetail = @"Port Became Invalid" ;
 				break ;
 			case SSYInterappClientErrorCantFindReceiver:

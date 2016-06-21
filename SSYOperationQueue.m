@@ -230,7 +230,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 			}
             
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
-            // Being built with Mac OS X 10.9 or later SDK
+            // Being built with macOS 10.9 or later SDK
             id activity = [self noAppNapActivity] ;
             if (activity) {
                 // The following test is actually defensive programming, because
@@ -266,9 +266,9 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 			// KVO notifications are coalesced.
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
-            // Being built with Mac OS X 10.9 or later SDK
+            // Being built with macOS 10.9 or later SDK
             if ([[NSProcessInfo processInfo] respondsToSelector:@selector(beginActivityWithOptions:reason:)]) {
-                // Running in Mac OS X 10.9 or later
+                // Running in macOS 10.9 or later
                 NSString* groupName = nil ;
                 if ([[self operations] count] > 0) {
                     SSYOperation* firstOperation = [[self operations] objectAtIndex:0] ;

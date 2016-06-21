@@ -259,7 +259,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
 			*error_p = [NSError errorWithDomain:SSYInterappServerErrorDomain
 										   code:errorCode
 									   userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-												 @"Mac OS X failed to create a local message port.", NSLocalizedDescriptionKey,
+												 @"macOS failed to create a local message port.", NSLocalizedDescriptionKey,
 												 portName, @"Port Name",
                                                  portAppearsToBeInUse ? @"Yup" : @"Nope", @"Port appears to be already in use?",
                                                  localizedFailureReason, NSLocalizedDescriptionKey, // may be nil

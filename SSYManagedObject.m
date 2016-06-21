@@ -131,7 +131,7 @@ NSString* const constKeyObserverContext = @"context" ;
 
 + (NSEntityDescription*)entityDescription {
     // This method was rewritten for BookMacster 1.19.2, to work around a
-    // bug in Mac OS X 10.9.  See
+    // bug in macOS 10.9.  See
     // http://stackoverflow.com/questions/19626858/over-optimization-bug-in-10-9-core-data-entity-description-methods
     
 	NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainAppBundle]] ;

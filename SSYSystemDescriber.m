@@ -8,7 +8,7 @@
 	NSInteger	minor ;
 	NSInteger	bugFix ;
     if ([NSProcessInfo instancesRespondToSelector:@selector(operatingSystemVersion)]) {
-        // OS X 10.10 or later
+        // macOS 10.10 or later
         NSOperatingSystemVersion version =  [[NSProcessInfo processInfo] operatingSystemVersion] ;
         major = version.majorVersion ;
         minor = version.minorVersion ;
@@ -40,7 +40,7 @@
 }
 
 + (NSString*)softwareVersionString {
-	return [NSString stringWithFormat:@"OS X version = %@",
+	return [NSString stringWithFormat:@"macOS version = %@",
 			[[self softwareVersionTriplet] string]] ;
 }
 

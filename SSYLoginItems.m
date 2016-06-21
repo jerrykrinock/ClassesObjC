@@ -139,7 +139,7 @@ end:
             // Bug fixed in BookMacster 1.13.6 right here.  The condition
             // "if (error)" on the next 2  dozen lines, which made no sense,
             // was removed.
-            NSString* desc = @"Mac OS X could not resolve your Login Items." ;
+            NSString* desc = @"macOS could not resolve your Login Items." ;
             NSString* path = [url path] ;
             if (!path) {
                 path = [url absoluteString] ;
@@ -228,7 +228,7 @@ end:
 end:
 	if (error_p && !ok) {
 		NSMutableDictionary* userInfo = [NSMutableDictionary dictionary] ;
-        [userInfo setObject:@"Error probing your Mac OS X Login Items"
+        [userInfo setObject:@"Error probing your macOS Login Items"
                      forKey:NSLocalizedDescriptionKey] ;
 		[userInfo setValue:[url absoluteString]
                         forKey:@"Url"] ;
@@ -355,7 +355,7 @@ end:
 	
 	if (error_p && !ok) {
 		NSMutableDictionary* userInfo = [NSMutableDictionary dictionary] ;
-        [userInfo setObject:@"Error removing a Mac OS X Login Item"
+        [userInfo setObject:@"Error removing a macOS Login Item"
                      forKey:NSLocalizedDescriptionKey] ;
 		[userInfo setValue:[url absoluteString]
                     forKey:@"Url"] ;
@@ -510,7 +510,7 @@ end:
 end:
 	if (error_p && !ok) {
 		NSMutableDictionary* userInfo = [NSMutableDictionary dictionary] ;
-        [userInfo setObject:@"Error synchronizing a Mac OS X Login Item"
+        [userInfo setObject:@"Error synchronizing a macOS Login Item"
                      forKey:NSLocalizedDescriptionKey] ;
 		[userInfo setValue:[url absoluteString]
                     forKey:@"Url"] ;
