@@ -832,10 +832,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	if ([self checkboxState] == NSOnState) {
 		[[self checkboxInvocation] invoke] ;
 	}
-    
-    if (!m_dontGoAwayUponButtonClicked) {
-        [self releaseFromStatic] ;
-    }
+
 }
 
 - (void)setTargetActionForButton:(NSButton*)button {
@@ -2093,6 +2090,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		/* We're a freestanding dialog. */
 		[self.window close] ;
 	}
+
+    [self releaseFromStatic] ;
 }
 
 - (void)someWindowDidBecomeKey:(NSNotification*)note {
@@ -2180,8 +2179,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
      we do *not* release this alloc-initted 'window', and the static analyzer
      does not complain about this!  If we do [window release], then the static
      analyzer does not complain either (!!), but we get a runtime crash when
-     this window is autoreleased!  Read comments in my project NSWindowLifer,
-     or maybe I will blog about this. */
+     this window is autoreleased!  Read comments in my project NSWindowLifer. */
 	NSString* appName = [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleName"] ; // CFBundleName may be localized
 	if (appName) {
 		[window setTitle:appName] ;
@@ -2415,7 +2413,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 	
 	SSYAlert* alert = [SSYAlert alert] ;
-	return [alert alertError:error] ;
+    return [alert alertError:error] ;
 }
 
 + (void)alertError:(NSError*)error
