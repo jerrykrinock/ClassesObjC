@@ -227,14 +227,14 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	CGFloat overflowHeight ;
 		
 	if ([self isSheet]) {
-		// This branch was added in BookMacster 1.9.8.
-		// If there is space between the top of the parent window and the menu bar,
-		// Cocoa will move the window up into that extra height in order to make
-		// room for the sheet, and unfortunately this has not been done yet.  So
-		// I need to, arghhh, predict what Cocoa is going to do…
+        /* If there is space between the top of the parent window and the menu
+         bar, when the sheet is displayed, Cocoa will soon move the window up
+         into that extra height in order to make room for the sheet.  But at 
+         this point, this has not been done yet.  So we need to, arghhh, predict
+         what Cocoa is going to do… */
 		NSWindow* parentWindow = [[self windowController] documentWindow] ;
 		CGFloat useableScreenHeight = [[parentWindow screen] visibleFrame].size.height ;
-		// useableScreenHeight does not include menu bar and does not include the Dock.
+		/* Note: useableScreenHeight does not include menu bar nor Dock. */
 		CGFloat tootlebarHeight = [parentWindow tootlebarHeight] ;
 		CGFloat availableHeight = useableScreenHeight - tootlebarHeight ;
 		overflowHeight = [self frame].size.height - availableHeight ;
@@ -819,9 +819,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
             [self setIsDoingModalDialog:NO] ;
         }
     }
-    else {
-		[self goAway] ;
-	}
 	
 	if ([self clickTarget]) {
         [[self clickTarget] recklessPerformSelector:[self clickSelector]
@@ -832,7 +829,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	if ([self checkboxState] == NSOnState) {
 		[[self checkboxInvocation] invoke] ;
 	}
-
+    
+    if (!m_dontGoAwayUponButtonClicked) {
+        [self goAway] ;
+    }
 }
 
 - (void)setTargetActionForButton:(NSButton*)button {
@@ -1470,22 +1470,23 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 - (void)prepareAsSheetOnWindow:(NSWindow*)docWindow {
     [self setButton1IfNeeded] ;
     
-    // if () conditions added in BookMacster 1.5.7 since button1 target and action
-    // should always be set by setButton1Title:
-    // If the debugger stops here, figure out why!!
+    /* Button1 target and action should always be set by setButton1Title: */
     if (([[self button1] target] == nil) && !m_dontAddOkButton) {
         [[self button1] setTarget:self] ;
-#if DEBUG
-        NSLog(@"Internal Error 928-9983") ;
-#endif
+        NSAssert(NO, @"Internal Error 928-9983") ;
     }
     if (([[self button1] action] == NULL) && !m_dontAddOkButton) {
         [[self button1] setAction:@selector(clickedButton:)] ;
-#if DEBUG
-        NSLog(@"Internal Error 135-5614") ;
-#endif
+        NSAssert(NO, @"Internal Error 135-5614") ;
     }
     
+    /* To make sure we go away and do not leak in case our parent window is
+     closed before we are dismissed. */
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(parentWindowWillClose:)
+                                                 name:NSWindowWillCloseNotification
+                                               object:docWindow] ;
+
     [self doooLayout] ;
     
     if ([self progressBarShouldAnimate]) {
@@ -1495,6 +1496,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     [self setIsDoingModalDialog:YES] ;
     
     [self setDocumentWindow:docWindow] ;
+}
+
+- (void)parentWindowWillClose:(NSNotification*)note {
+    [self goAway] ;
 }
 
 - (void)runModalSheetOnWindow:(NSWindow*)docWindow
@@ -2075,7 +2080,13 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 	
 	if ([[self window] isSheet]) {
-		[self setDocumentWindow:nil] ;
+        if (self.window.sheetParent) {
+            [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                            name:NSWindowWillCloseNotification
+                                                          object:self.window.sheetParent] ;
+        }
+
+        [self setDocumentWindow:nil] ;
         
         if (self.window) {
             [self.window.sheetParent endSheet:self.window
@@ -2329,11 +2340,13 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	didEndSelector:(SEL)didEndSelector
 	   contextInfo:(void*)contextInfo {
 	if (!error) {
+        [self goAway] ;
 		return ;
 	}
 	
 	if ([NSScriptCommand currentCommand] != nil) {
 		[self returnToScriptError:error] ;
+        [self goAway] ;
 		return ;
 	}
 	
