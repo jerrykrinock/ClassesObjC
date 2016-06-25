@@ -2102,6 +2102,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		[self.window close] ;
 	}
 
+    /*SSYDBL*/ NSLog(@"RFS:%p rc=%ld", self, self.retainCount) ;
     [self releaseFromStatic] ;
 }
 
@@ -2318,10 +2319,12 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
           onWindow:(NSWindow*)window
  completionHandler:(void(^)(NSModalResponse returnCode))completionHandler {
     if (!error) {
+        [self goAway] ;
         return ;
     }
     
     if ([gSSYAlertErrorHideManager shouldHideError:error]) {
+        [self goAway] ;
         return ;
     }
     

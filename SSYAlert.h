@@ -262,9 +262,23 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  <li>If running a modal session, send -modalSessionRunning in your modal session loop.</li>
  <li>To end a modal session without causing alert to go away, -endModalSession.</li>
  <li>To get results from a non-modal window, implement clickSelector in your clickTarget.</ol>
- <li>Alerts are retained by the global SSYWindowHangout "hangout" until their
- window is closed.  Normally, no memory management is required.</li>
-</p>
+ <li>Normally, no memory management is required.  An SSYAlert instance will be
+ retained by the class until the -goAway message executes, after any completion handler or didEndSelector has run.</li>
+ </ol>
+ </p>
+ 
+ <p>
+ In addition to invoking -goAway explicitly, several other events cause -goAway to be invoked automatically.
+ Note that the first one listed here is the normal, common way for an alert to be dismissed,
+ while the last three handle edge cases in which the alert is never displayed to begin with, 
+ or is abnormally removed from the screen.
+ <ul>
+ <li>User clicks one of the buttons along the bottom while property dontGoAwayUponButtonClicked is at its default value of NO (which causes the -goAway message to execute).</li>
+ <li>The instance receives a -alertError: message passing a nil error
+ <li>The instance receives a -alertError: message passing an error for which [gSSYAlertErrorHideManager shouldHideError:error] returns YES.
+ <li>The instance' window is a sheet, and the sheet parent window is closed (programaticallly), or another window becomes key..</li>
+ </ul>
+ </p>
  
 <p>
  By default, SSYAlert closes its window and itself is no longer retained by
@@ -1250,6 +1264,9 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  [alert setSmallText:junk] ;
  [alert doooLayout] ;
  [alert runModalDialog] ;
+ #if !__has_feature(objc_arc)
+ [alert release] ;
+ #endif
  
  [junk deleteCharactersInRange:NSMakeRange(0, junk.length)] ;
  for (NSInteger i=0; i<200; i++) {
@@ -1263,6 +1280,10 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  [alert setSmallText:junk] ;
  [alert doooLayout] ;
  [alert runModalDialog] ;
+ #if !__has_feature(objc_arc)
+ [alert release] ;
+ #endif
+
  
  exit(0) ;
 */
