@@ -2102,7 +2102,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		[self.window close] ;
 	}
 
-    /*SSYDBL*/ NSLog(@"RFS:%p rc=%ld", self, self.retainCount) ;
     [self releaseFromStatic] ;
 }
 
