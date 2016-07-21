@@ -201,59 +201,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 @implementation SSYAlertWindow
 
-/*!
- @brief    Override of base class method which does damage control in the
- event that the content exceeds the available height on the screen.
-
- @details  Damage control is done by moving the critical controls up onto
- the screen.  Note that they will cover other subviews, but it's more
- important that the user see the critical controls.  This is what Apple's
- alerts do when there is a similar overflow.
- 
- This was added in BookMacster 1.9.5 to replace code in -doooLayout which
- did not work properly.
-*/
-- (void)setFrameOrigin:(NSPoint)frameOrigin {
-	[super setFrameOrigin:frameOrigin] ;
-
-	SSYAlert* alert = [self windowController] ;
-
-	// Defensive Programming
-	if (![alert isKindOfClass:[SSYAlert class]]) {
-		NSLog(@"Warning 624-2948  Expected SSYAlert") ;
-		return ;
-	}
-
-	CGFloat overflowHeight ;
-		
-	if ([self isSheet]) {
-        /* If there is space between the top of the parent window and the menu
-         bar, when the sheet is displayed, Cocoa will soon move the window up
-         into that extra height in order to make room for the sheet.  But at 
-         this point, this has not been done yet.  So we need to, arghhh, predict
-         what Cocoa is going to do… */
-		NSWindow* parentWindow = [[self windowController] documentWindow] ;
-		CGFloat useableScreenHeight = [[parentWindow screen] visibleFrame].size.height ;
-		/* Note: useableScreenHeight does not include menu bar nor Dock. */
-		CGFloat tootlebarHeight = [parentWindow tootlebarHeight] ;
-		CGFloat availableHeight = useableScreenHeight - tootlebarHeight ;
-		overflowHeight = [self frame].size.height - availableHeight ;
-	}
-	else {
-		overflowHeight = WINDOW_EDGE_SPACING - [self frame].origin.y ;
-	}
-	
-	if (overflowHeight > 0.0) {
-		[[alert button1] deltaY:overflowHeight deltaH:0.0] ;
-		[[alert button2] deltaY:overflowHeight deltaH:0.0] ;
-		[[alert button3] deltaY:overflowHeight deltaH:0.0] ;
-        [[alert button4] deltaY:overflowHeight deltaH:0.0] ;
-		[[alert helpButton] deltaY:overflowHeight deltaH:0.0] ;
-		[[alert supportButton] deltaY:overflowHeight deltaH:0.0] ;
-		[[alert checkbox] deltaY:overflowHeight deltaH:0.0] ;
-	}
-}
-
 - (NSInteger)checkboxState {
     NSInteger state = NSMixedState ; // default answer in case we can't find checkbox
     BOOL didFindCheckbox = NO ;
@@ -2054,7 +2001,77 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 }
 
-- (void)display {	
+- (void)windowDidBecomeKey:(NSNotification *)notification {
+    /* We doDamageControl after windowDidBecomeKey because doDamageControl
+     asks -isSheet, which, if it is going to be a sheet, will not give the
+     correct answer of YES until, I think, after the sheet has rolled down,
+     which it has at this point, but not, say, during -doooLayout. */
+    [self doDamageControl] ;
+}
+
+/*!
+ @brief    Does damage control in the
+ event that the content exceeds the available height on the screen.
+ 
+ @details  Damage control is done by moving the critical controls up onto
+ the screen.  Note that they will cover other subviews, but it's more
+ important that the user see the critical controls.  This is what Apple's
+ alerts do when there is a similar overflow.
+ */
+- (void)doDamageControl {
+
+    NSWindow* relevantWindow ;
+    if ([self.window isSheet]) {
+        relevantWindow = self.window.sheetParent ;
+    }
+    else {
+        relevantWindow = self.window ;
+    }
+    /* If there is space between the top of the parent window and the menu
+     bar, when the sheet is displayed, Cocoa will soon move the window up
+     into that extra height in order to make room for the sheet.  But at
+     this point, this has not been done yet.  So we need to, arghhh, predict
+     what Cocoa is going to do… */
+    CGFloat useableScreenHeight = [[relevantWindow screen] visibleFrame].size.height ;
+    /* Note: useableScreenHeight does not include menu bar nor Dock. */
+    CGFloat tootlebarHeight = [relevantWindow tootlebarHeight] ;
+    CGFloat availableHeight = useableScreenHeight - tootlebarHeight ;
+    CGFloat overflowHeight = self.window.frame.size.height - availableHeight ;
+    
+    if (overflowHeight > 0.0) {
+        NSRect frame ;
+        
+        frame = self.button1.frame ;
+        frame.origin.y = overflowHeight ;
+        self.button1.frame = frame ;
+
+        frame = self.button2.frame ;
+        frame.origin.y = overflowHeight ;
+        self.button2.frame = frame ;
+        
+        frame = self.button3.frame ;
+        frame.origin.y = overflowHeight ;
+        self.button3.frame = frame ;
+        
+        frame = self.button4.frame ;
+        frame.origin.y = overflowHeight ;
+        self.button4.frame = frame ;
+        
+        frame = self.helpButton.frame ;
+        frame.origin.y = overflowHeight ;
+        self.helpButton.frame = frame ;
+        
+        frame = self.supportButton.frame ;
+        frame.origin.y = overflowHeight ;
+        self.supportButton.frame = frame ;
+        
+        frame = self.checkbox.frame ;
+        frame.origin.y = overflowHeight + 35.0;
+        self.checkbox.frame = frame ;
+    }
+}
+
+- (void)display {
 	[self doooLayout] ;
 	// Next, invoke -display to update subviews and any areas where subviews have
 	// been removed from, which will not necessarily be done
@@ -2198,6 +2215,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[self setWindow:window] ;
 	[window setWindowController:self] ;
 	[window setReleasedWhenClosed:YES] ;
+    
+    /* Needed so we get -windowDidBecomeKey */
+    window.delegate = self ;
+    
 	[window center] ;
 
 	// Invoke designated initializer for super, NSWindowController

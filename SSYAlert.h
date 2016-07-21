@@ -363,7 +363,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  
  </ol>
  */
-@interface SSYAlert : NSWindowController {
+@interface SSYAlert : NSWindowController <NSWindowDelegate> {
 	// Subviews, all created programatically
     NSImageView* icon ;
 	NSProgressIndicator* progressBar ;
@@ -1248,7 +1248,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 
 
 /*
- Some test code for the new scrollable Small Text:
+ Test code for the new scrollable Small Text:
  
  NSMutableString* junk = [NSMutableString new] ;
  for (NSInteger i=0; i<20; i++) {
@@ -1283,7 +1283,30 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  #if !__has_feature(objc_arc)
  [alert release] ;
  #endif
-
  
- exit(0) ;
+ Test code for doDamageControl
+ 
+ SSYAlert* alert ;
+ 
+ alert = [SSYAlert new] ;
+ [alert setTitleText:NSLocalizedString(@"Do the buttons fall off the screen?", nil)] ;
+ [alert setHelpAnchor:@"fooHelp"] ;
+ [alert setButton1Title:@"Button 1"] ;
+ [alert setButton2Title:@"Button 2"] ;
+ [alert setButton3Title:@"Button 3"] ;
+ [alert setButton4Title:@"Button 4"] ;
+ [alert setCheckboxTitle:@"Check me?"] ;
+ // 100 buttons should be enough to overfill any display height.
+ for (NSInteger i=0; i<33; i++) {
+ NSTextField* textField = [[NSTextField alloc] initWithFrame:NSMakeRect(0,0,25,100)] ;
+ textField.stringValue = [NSString stringWithFormat:@"Text Field %ld", (long)i] ;
+ [alert addOtherSubview:textField
+ atIndex:NSNotFound] ;
+ }
+ [alert doooLayout] ;
+ [alert runModalDialog] ;
+ #if !__has_feature(objc_arc)
+ [alert release] ;
+ #endif
+ 
 */
