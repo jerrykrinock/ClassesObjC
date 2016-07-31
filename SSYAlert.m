@@ -770,12 +770,11 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	if ([self clickTarget]) {
         [[self clickTarget] recklessPerformSelector:[self clickSelector]
                                              object:self] ;
-		[self setIsDoingModalDialog:NO] ;
 	}
-	
-	if ([self checkboxState] == NSOnState) {
-		[[self checkboxInvocation] invoke] ;
-	}
+    
+    if ([self checkboxState] == NSOnState) {
+        [[self checkboxInvocation] invoke] ;
+    }
     
     if (!m_dontGoAwayUponButtonClicked) {
         [self goAway] ;
@@ -1262,7 +1261,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 }
 
-- (void)addOtherSubview:(NSView*)subview atIndex:(NSInteger)index {
+- (void)addOtherSubview:(NSView*)subview
+                atIndex:(NSInteger)index {
     if (index > [[self otherSubviews] count]) {
         index = [[self otherSubviews] count] ;
     }

@@ -94,7 +94,6 @@ NSString* constKeyDidCancelInvocation = @"didCancelInvocation" ;
 	[alert setIconStyle:SSYAlertIconInformational] ;
 	[alert setClickTarget:self] ;
 	[alert setClickSelector:@selector(handleClickInAlert:)] ;
-	[alert setDontGoAwayUponButtonClicked:YES] ;
 	// I think this was added in BookMacster 1.7.3 or, more likely, 1.8.  I forgot why, except that it was definitely needed…
 	[NSApp activateIgnoringOtherApps:YES] ;
 	NSMutableDictionary* didEndInfo = [NSMutableDictionary dictionary] ;
@@ -146,9 +145,7 @@ NSString* constKeyDidCancelInvocation = @"didCancelInvocation" ;
 	NSDictionary* clickDic = [alert clickObject] ;
 
 	if (done) {
-		[alert goAway] ;
-		
-		// Needed to break retain cycle:
+        // Needed to break retain cycle, or possibly no longer necessary?
 		[self setAlert:nil] ;
 	}
 	
