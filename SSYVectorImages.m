@@ -7,7 +7,14 @@
 + (void)glyphOnPath:(NSBezierPath*)path
                name:(NSString*)glyphName
           halfWidth:(CGFloat)halfWidth {
+#if 0
+    /* Old code, fails in 10.12 Beta 5 due to Apple Bug 27813593. */
     NSFont* font = [NSFont labelFontOfSize:100] ;
+#else
+    /* This works OK in 10.11 or 10.12.  Looks a little different, of course. */
+    NSFont* font = [NSFont fontWithName:@"Helvetica"
+                                   size:100] ;
+#endif
     NSGlyph g = [font glyphWithName:glyphName] ;
     NSRect glyphRect = [font boundingRectForGlyph:g] ;
     CGFloat offsetX = NSMidX(glyphRect) - halfWidth ;
