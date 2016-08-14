@@ -5,32 +5,32 @@
 @implementation SSYVectorImages
 
 + (void)glyphOnPath:(NSBezierPath*)path
-               name:(NSString*)glyphName
+          character:(UniChar)character
           halfWidth:(CGFloat)halfWidth {
-#if 0
-    /* Old code, fails in 10.12 Beta 5 due to Apple Bug 27813593. */
     NSFont* font = [NSFont labelFontOfSize:100] ;
-#else
-    /* This works OK in 10.11 or 10.12.  Looks a little different, of course. */
-    NSFont* font = [NSFont fontWithName:@"Helvetica"
-                                   size:100] ;
-#endif
-    NSGlyph g = [font glyphWithName:glyphName] ;
-    NSRect glyphRect = [font boundingRectForGlyph:g] ;
+    UniChar characters[1] ;
+    characters[0] = character ;
+    CGGlyph glyphs[1] ;
+    CTFontGetGlyphsForCharacters(
+                                 (CTFontRef)font,
+                                 characters,
+                                 glyphs,
+                                 1) ;
+    NSRect glyphRect = [font boundingRectForGlyph:glyphs[0]] ;
     CGFloat offsetX = NSMidX(glyphRect) - halfWidth ;
     CGFloat offsetY = NSMidY(glyphRect) - 50 ;
     [path moveToPoint:NSMakePoint(-offsetX,-offsetY)] ;
-    [path appendBezierPathWithGlyph:g
+    [path appendBezierPathWithGlyph:glyphs[0]
                              inFont:font] ;
 }
 
-+ (void)drawGlyphName:(NSString*)glyphName
++ (void)drawCharacter:(UniChar)character
                  size:(NSSize)size
                 color:(NSColor*)color
                  fill:(BOOL)fill {
     NSBezierPath* bezier = [NSBezierPath bezierPath] ;
     [self glyphOnPath:bezier
-                 name:glyphName
+            character:character
             halfWidth:size.width/2] ;
     [bezier setLineWidth:2] ;
     [color set] ;
@@ -41,16 +41,16 @@
     }
 }
 
-+ (NSImage*)imageWithGlyphName:(NSString*)glyphName
-                      fattenBy:(CGFloat)fattenBy
-                         color:(NSColor*)color
-                          fill:(BOOL)fill {
++ (NSImage*)imageOfCharacter:(UniChar)character
+                    fattenBy:(CGFloat)fattenBy
+                       color:(NSColor*)color
+                        fill:(BOOL)fill {
     NSSize size = NSMakeSize(100/fattenBy, 100) ;
     NSImage* image ;
     image = [NSImage imageWithSize:size
                            flipped:NO
                     drawingHandler:^(NSRect dstRect) {
-                        [self drawGlyphName:glyphName
+                        [self drawCharacter:character
                                        size:size
                                       color:color
                                        fill:fill] ;
@@ -290,10 +290,10 @@
         }
         case SSYVectorImageStyleInfoOff:;
         case SSYVectorImageStyleInfoOn: {
-            NSImage* glyphImage = [self imageWithGlyphName:@"i"
-                                                  fattenBy:1.5
-                                                     color:color
-                                                      fill:(style == SSYVectorImageStyleInfoOn)] ;
+            NSImage* glyphImage = [self imageOfCharacter:'i'
+                                                fattenBy:1.5
+                                                   color:color
+                                                    fill:(style == SSYVectorImageStyleInfoOn)] ;
             [glyphImage drawInRect:NSMakeRect(0,0,100,100)
                           fromRect:NSZeroRect
                          operation:NSCompositeCopy
@@ -301,10 +301,10 @@
             break ;
         }
         case SSYVectorImageStyleHelp: {
-            NSImage* glyphImage = [self imageWithGlyphName:@"question"
-                                                  fattenBy:1.3
-                                                     color:color
-                                                      fill:NO] ;
+            NSImage* glyphImage = [self imageOfCharacter:'?'
+                                                fattenBy:1.3
+                                                   color:color
+                                                    fill:NO] ;
             [glyphImage drawInRect:NSMakeRect(0,0,100,100)
                           fromRect:NSZeroRect
                          operation:NSCompositeCopy
@@ -312,10 +312,10 @@
             break ;
         }
         case SSYVectorImageStyleExclamation: {
-            NSImage* glyphImage = [self imageWithGlyphName:@"exclam"
-                                                  fattenBy:1.3
-                                                     color:color
-                                                      fill:YES] ;
+            NSImage* glyphImage = [self imageOfCharacter:'!'
+                                                fattenBy:1.3
+                                                   color:color
+                                                    fill:YES] ;
             [glyphImage drawInRect:NSMakeRect(0,0,100,100)
                           fromRect:NSZeroRect
                          operation:NSCompositeCopy
