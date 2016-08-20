@@ -58,3 +58,7 @@ NSString* SSYDebugCaller(void) ;
 void SSYDebugLogBacktrace(void) ;
 
 NSInteger SSYDebugStackDepth(void) ;
+
+BOOL SSYDebugLogObjcClassesByBundleToFile (
+                                           NSString* path,
+                                           NSError** error_p) ;

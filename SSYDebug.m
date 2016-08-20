@@ -1,7 +1,7 @@
 #import "SSYDebug.h"
 #import <execinfo.h>
 #import <mach-o/dyld.h>
-#import "SSY_ARC_OR_NO_ARC.h"
+#import <objc/runtime.h>
 
 id ssyDebugGlobalObject = nil ;
 double ssyDebugGlobalDouble = 0.0 ;
@@ -47,7 +47,7 @@ NSString* SSYDebugBacktrace(void) {
 	free(strs) ;
 	
 	NSString* answer = [nsString copy] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
 	[nsString release] ;
     [answer autorelease] ;
 #endif
@@ -89,7 +89,7 @@ NSString* SSYDebugBacktraceDepth(NSInteger depth) {
 	free(strs) ;
 	
 	NSString* answer = [nsString copy] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
 	[nsString release] ;
     [answer autorelease] ;
 #endif
@@ -115,7 +115,7 @@ NSString* SSYDebugCaller(void) {
 									 range:NSMakeRange(0, [mutant length])] ;
 	} while ([mutant length] < oldLength) ;
 	caller = [NSString stringWithString:mutant] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
 	[mutant release] ;
 #endif
 	NSArray* comps = [caller componentsSeparatedByString:@" "] ;
@@ -129,4 +129,68 @@ NSString* SSYDebugCaller(void) {
 	return caller ;
 }
 
+BOOL SSYDebugLogObjcClassesByBundleToFile (
+                                           NSString* path,
+                                           NSError** error_p) {
+    BOOL ok = YES ;
+    NSError* error = nil ;
+    NSMutableDictionary* results = [NSMutableDictionary new] ;
+    
+    int numberOfClasses = objc_getClassList(NULL, 0);
+    Class *classes = calloc(sizeof(Class), numberOfClasses);
+    numberOfClasses = objc_getClassList(classes, numberOfClasses);
+    for (int i = 0; i < numberOfClasses; ++i) {
+        Class class = classes[i] ;
+        NSString* className = NSStringFromClass(class) ;
+        if (![className isEqualToString:@"NSViewServiceApplication"]) {
+            NSBundle* bundle = [NSBundle bundleForClass:class] ;
+            NSString* bundleIdentifier = bundle.bundleIdentifier ;
+            if (bundleIdentifier) {
+                if (className) {
+                    NSMutableArray* classNames = [results objectForKey:bundleIdentifier] ;
+                    if (!classNames) {
+                        classNames = [NSMutableArray new] ;
+                        [results setObject:classNames
+                                    forKey:bundleIdentifier] ;
+#if !__has_feature(objc_arc)
+                        [classNames release] ;
+#endif
+                    }
+                    
+                    [classNames addObject:className] ;
+                }
+            }
+        }
+    }
+    free(classes) ;
+    
+    NSMutableArray* bundleIdentifiers = [[results allKeys] mutableCopy] ;
+    [bundleIdentifiers sortUsingSelector:@selector(caseInsensitiveCompare:)] ;
+
+    NSMutableString* narrative = [NSMutableString new] ;
+    for (NSString* bundleIdentifier in bundleIdentifiers) {
+        NSMutableArray* classNames = [results objectForKey:bundleIdentifier] ;
+        [classNames sortUsingSelector:@selector(caseInsensitiveCompare:)] ;
+        [narrative appendFormat:@"CLASSES IN %@\n", bundleIdentifier] ;
+        for (NSString* className in classNames) {
+            [narrative appendFormat:@"   %@\n", className] ;
+        }
+    }
+    
+    ok = [narrative writeToFile:path
+                     atomically:YES
+                       encoding:NSUTF8StringEncoding
+                          error:&error] ;
+    
+#if !__has_feature(objc_arc)
+    [results release] ;
+    [narrative release]  ;
+#endif
+
+    if (error && error_p) {
+        *error_p = error ;
+    }
+
+    return ok ;
+}
 
