@@ -8,6 +8,7 @@
 #import "NSBundle+MainApp.h"
 #import "NSDocument+SSYAutosaveBetter.h"
 #import "NSPersistentDocument+SSYMetadata.h"
+#import "NSString+SSYDotSuffix.h"
 
 NSString* const SSYPersistentDocumentMultiMigratorErrorDomain = @"SSYPersistentDocumentMultiMigratorErrorDomain" ;
 NSString* const SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification = @"SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification" ;
@@ -225,7 +226,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 		// Also added in BookMacster verison 1.3.19
 		NSString* extension = [path pathExtension] ; // Should be "sql"
 		NSString* newPath = [path stringByDeletingPathExtension] ;
-		newPath = [newPath stringByAppendingPathExtension:@"unreadable"] ;
+		newPath = [newPath stringByAppendingDotSuffix:@"unreadable"] ;
 		newPath = [newPath stringByAppendingPathExtension:extension] ;
 		[[NSFileManager defaultManager] moveItemAtPath:path
 												toPath:newPath

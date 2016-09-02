@@ -5,6 +5,7 @@
 #import "NSString+Base64.h"
 #import "NSData+FileAlias.h"
 #import "NSError+MyDomain.h"
+#import "NSString+SSYDotSuffix.h"
 
 @implementation SSYFirefoxProfiler
 
@@ -266,7 +267,7 @@ end:
         // Make one up.
         fullPath = [self browserSupportPathForHomePath:homePath] ;
         fullPath = [fullPath stringByAppendingPathComponent:@"Profiles"] ;
-        NSString* folderName = [[self randomProfilePrefix] stringByAppendingPathExtension:[self defaultProfileName]] ;
+        NSString* folderName = [[self randomProfilePrefix] stringByAppendingDotSuffix:[self defaultProfileName]] ;
         fullPath = [fullPath stringByAppendingPathComponent:folderName] ;
         
         // Also make up and install a profiles.ini file which points to it.
