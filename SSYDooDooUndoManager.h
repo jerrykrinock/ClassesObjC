@@ -189,6 +189,18 @@ extern NSString* const SSYUndoManagerDocumentWillSaveNotification ;
 */
 - (void)endUndoGrouping ;
 
+/*!
+ @brief    Performs operations necessary to make the receiver act as the undo
+ manager for a given document
+ @details  You typically send this after initializing the receiver, if the
+ receiver is to be the undo manager for a document.  This method does not
+ associate a document's managed object context, if any. For Core Data documents,
+ you must also -coupleToManagedObjectContext:.
+ */
+- (void)coupleToDocument:(NSPersistentDocument*)document ;
+
+- (void)coupleToManagedObjectContext:(NSManagedObjectContext*)managedObjectContext ;
+
 @end
 
 

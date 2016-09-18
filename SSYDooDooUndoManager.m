@@ -29,32 +29,28 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 
 @synthesize managedObjectContext = m_managedObjectContext ;
 
-- (id)initWithDocument:(NSPersistentDocument*)document {
-	self = [super init] ;
-	if (self != nil) {
-		NSAssert(document != nil, @"SSYDooDooUndoManager got no document") ;
-		
-        //	[self setGroupsByEvent:NO] ;  // Causes all hell to break loose with Core Data.
+- (void)coupleToManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
+    [managedObjectContext setUndoManager:(id)self] ;
+    [self setManagedObjectContext:managedObjectContext] ;
+}
 
-		// We cast to an id since the compiler expects these to methods
-		// to get something which inherits from NSUndoManager, which 
-		// GCUndoManager does not.
-		[document setUndoManager:(id)self] ; // Causes moc to be created, which causes persisten store to be created ??
-		[[document managedObjectContext] setUndoManager:(id)self] ;
-		
-		[self setManagedObjectContext:[document managedObjectContext]] ;
 
-		[[NSNotificationCenter defaultCenter] addObserver:self
-												 selector:@selector(endAnyUndoGroupings:)
-													 name:SSYUndoManagerDocumentWillSaveNotification
-												   object:document] ;
-		[[NSNotificationCenter defaultCenter] addObserver:self
-												 selector:@selector(endAnyUndoGroupings:)
-													 name:SSYUndoManagerDocumentWillCloseNotification
-												   object:document] ;
-	}
-
-	return self ;
+- (void)coupleToDocument:(NSPersistentDocument*)document {
+    //	[self setGroupsByEvent:NO] ;  // Causes all hell to break loose with Core Data.
+    
+    // We cast to an id since the compiler expects these to methods
+    // to get something which inherits from NSUndoManager, which
+    // GCUndoManager does not.
+    [document setUndoManager:(id)self] ; // Causes moc to be created, which causes persisten store to be created ??
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(endAnyUndoGroupings:)
+                                                 name:SSYUndoManagerDocumentWillSaveNotification
+                                               object:document] ;
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(endAnyUndoGroupings:)
+                                                 name:SSYUndoManagerDocumentWillCloseNotification
+                                               object:document] ;
 }
 
 - (void)dealloc {
@@ -64,7 +60,11 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 }
 
 + (SSYDooDooUndoManager*)makeUndoManagerForDocument:(NSPersistentDocument*)document {
-	return [[[SSYDooDooUndoManager alloc] initWithDocument:document] autorelease] ;
+	SSYDooDooUndoManager* undoManager = [[SSYDooDooUndoManager alloc] init] ;
+    [undoManager coupleToDocument:document] ;
+    [undoManager coupleToManagedObjectContext:[document managedObjectContext]] ;
+    [undoManager autorelease] ;
+    return undoManager ;
 }
 
 - (void)beginManualUndoGrouping {
