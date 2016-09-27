@@ -7,6 +7,7 @@
 #import "NSObject+MoreDescriptions.h"
 #import "NSBundle+MainApp.h"
 #import "NSEntityDescription+SSYMavericksBugFix.h"
+#import "NSObject+DoNil.h"
 
 // Public Notifications
 NSString* const SSYManagedObjectWillUpdateNotification = @"SSYManagedObjectWillUpdateNotification" ;
@@ -333,49 +334,52 @@ end:;
 
 - (void)postWillSetNewValue:(id)value
 					 forKey:(NSString*)key {
-	// Extores do need the notification, to count changes, but they are not
-	// undoable.  So we only begin an undo grouping if the owner is a BkmxDoc.
-	if ([[self owner] isKindOfClass:[NSPersistentDocument class]]) {
-		// Note that beginAutoEndingUndoGrouping will coalesce for us.
-        [(SSYDooDooUndoManager*)[[self owner] undoManager] beginAutoEndingUndoGrouping] ;
-	}
-
-    NSDictionary* info = [NSDictionary dictionaryWithObjectsAndKeys:
-						  key, constKeySSYChangedKey,
-						  value, constKeyNewValue,  // May be nil, so keep this last!
-						  nil] ;
+    if (![NSObject isEqualHandlesNilObject1:[self valueForKey:key]
+                            object2:value]) {
+        // Extores do need the notification, to count changes, but they are not
+        // undoable.  So we only begin an undo grouping if the owner is a BkmxDoc.
+        if ([[self owner] isKindOfClass:[NSPersistentDocument class]]) {
+            // Note that beginAutoEndingUndoGrouping will coalesce for us.
+            [(SSYDooDooUndoManager*)[[self owner] undoManager] beginAutoEndingUndoGrouping] ;
+        }
+        
+        NSDictionary* info = [NSDictionary dictionaryWithObjectsAndKeys:
+                              key, constKeySSYChangedKey,
+                              value, constKeyNewValue,  // May be nil, so keep this last!
+                              nil] ;
 #if 0
 #warning Logging postWillSetNewValue:forKey:
-	NSLog(@"7120: Posting %@ with object: %@\nwith oldValue: %@\nwith info:\n%@",
-		  SSYManagedObjectWillUpdateNotification,
-		  [self shortDescription],
-		  [[self valueForKeyPath:key] shortDescription],
-		  [info shortDescription]) ;
+        NSLog(@"7120: Posting %@ with object: %@\nwith oldValue: %@\nwith info:\n%@",
+              SSYManagedObjectWillUpdateNotification,
+              [self shortDescription],
+              [[self valueForKeyPath:key] shortDescription],
+              [info shortDescription]) ;
 #endif
-    [[NSNotificationCenter defaultCenter] postNotificationName:SSYManagedObjectWillUpdateNotification
-                                                        object:self
-                                                      userInfo:info] ;
-	/* In BookMacster version 1.3.19, I tried changing the above line to this…
-	 NSNotification* notification = [NSNotification notificationWithName:SSYManagedObjectWillUpdateNotification
-	 object:self
-	 userInfo:info] ;
-	 [[NSNotificationQueue defaultQueue] enqueueNotification:notification
-	 postingStyle:NSPostWhenIdle
-	 coalesceMask:(NSNotificationCoalescingOnName|NSNotificationCoalescingOnSender)
-	 forModes:nil] ;
-	 Indeed, the coalescing improved speed when deleting many starks of
-	 the same parent, by a factor of 2.77, because it was not necessary to
-	 re-index all of the siblings whenever one was removed.  However, it broke
-	 when, for example, dragging a stark from one BkmxDoc to another, because
-	 of the coalescing on sender (object=stark).  Since a new stark is created
-	 in this case, all of its attributes are changed from nil.  NSNotificationQueue
-	 selects one of these notifications to send.  The userInfo from all the other
-	 notifications is lost, which breaks the action of the -[BkmxDoc objectWillChangeNote:]
-	 which receives this notifications.  Chances are that it will find no change
-	 between newValue and oldValue, and thus do an early return. 
-	 I imagine there are many other test cases that would break also.*/
+        [[NSNotificationCenter defaultCenter] postNotificationName:SSYManagedObjectWillUpdateNotification
+                                                            object:self
+                                                          userInfo:info] ;
+        /* In BookMacster version 1.3.19, I tried changing the above line to this…
+         NSNotification* notification = [NSNotification notificationWithName:SSYManagedObjectWillUpdateNotification
+         object:self
+         userInfo:info] ;
+         [[NSNotificationQueue defaultQueue] enqueueNotification:notification
+         postingStyle:NSPostWhenIdle
+         coalesceMask:(NSNotificationCoalescingOnName|NSNotificationCoalescingOnSender)
+         forModes:nil] ;
+         Indeed, the coalescing improved speed when deleting many starks of
+         the same parent, by a factor of 2.77, because it was not necessary to
+         re-index all of the siblings whenever one was removed.  However, it broke
+         when, for example, dragging a stark from one BkmxDoc to another, because
+         of the coalescing on sender (object=stark).  Since a new stark is created
+         in this case, all of its attributes are changed from nil.  NSNotificationQueue
+         selects one of these notifications to send.  The userInfo from all the other
+         notifications is lost, which breaks the action of the -[BkmxDoc objectWillChangeNote:]
+         which receives this notifications.  Chances are that it will find no change
+         between newValue and oldValue, and thus do an early return. 
+         I imagine there are many other test cases that would break also.*/
+    }
 }
-	
+
 - (void)logChangesForAllManagedObjectsInSameContext {
 	NSError* error_ = nil ;
 	
