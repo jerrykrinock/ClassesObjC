@@ -548,7 +548,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 							  contextInfo:(NSMutableDictionary*)infoDictionary {
 	NSUInteger result = SSYAlertRecoveryNotAttempted ;
 	
-	NSError* deepestRecoverableError = [error deepestRecoverableError] ;
     id recoveryAttempter ;
     if ([[[error userInfo] objectForKey:SSYRecoveryAttempterIsAppDelegateErrorKey] boolValue]) {
         recoveryAttempter = [NSApp delegate] ;
@@ -557,7 +556,13 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
         recoveryAttempter = [error recoveryAttempter] ;
     }
     
-    if (!recoveryAttempter) {
+    if (recoveryAttempter) {
+        [self attemptRecoveryFromError:error
+                        infoDictionary:infoDictionary
+                        recoveryOption:recoveryOption
+                     recoveryAttempter:recoveryAttempter] ;
+    }
+    else {
         NSURL* recoveryAttempterUrl = [[error userInfo] objectForKey:SSYRecoveryAttempterUrlErrorKey] ;
         if (recoveryAttempterUrl) {
             // recoveryOption NSAlertSecondButtonReturn is assumed to mean "Cancel".
@@ -570,73 +575,13 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
                                                                                                      BOOL documentWasAlreadyOpen,
                                                                                                      NSError* documentOpeningError) {
                                                                                  if (newDocument) {
-                                                                                     // Try the sheet method, attemptRecoveryFromError::::: first, since, in my
-                                                                                     // opinion, it gives a better user experience.  If the recoveryAttempter
-                                                                                     // does not respond to that, try the window method, attemptRecoveryFromError::
-                                                                                     if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:recoveryOption:delegate:didRecoverSelector:contextInfo:)]) {
-                                                                                         NSInvocation* invocation = [error didRecoverInvocation] ;
-                                                                                         id delegate = [invocation target] ;
-                                                                                         SEL didRecoverSelector = [invocation selector] ;
-                                                                                         // I put the whole invocation into the context info, believing it to be alot cleaner.
-                                                                                         if (invocation) {
-                                                                                             // Before we invoke the didRecoverInvocation, we also put it into the
-                                                                                             // current infoDictionary in case an error occurs again and we need
-                                                                                             // to re-recover.
-                                                                                             [infoDictionary setObject:invocation
-                                                                                                                forKey:SSYAlertDidRecoverInvocationKey] ;
-                                                                                         }
-                                                                                         [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
-                                                                                                                      recoveryOption:recoveryOption
-                                                                                                                            delegate:delegate
-                                                                                                                  didRecoverSelector:didRecoverSelector
-                                                                                                                         contextInfo:(__bridge void *)(infoDictionary)] ;
-                                                                                     }
-                                                                                     else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:)]) {
-                                                                                         /* This is an error produced by Cocoa.
-                                                                                          In particular, in macOS 10.7, it might be one like this:
-                                                                                          Error Domain = NSCocoaErrorDomain
-                                                                                          Code = 67000
-                                                                                          UserInfo = {
-                                                                                          •   NSLocalizedRecoverySuggestion=Click Save Anyway to keep your changes and save the
-                                                                                          changes made by the other application as a version, or click Revert to keep the changes from the other
-                                                                                          application and save your changes as a version.
-                                                                                          •   NSLocalizedFailureReason=The file has been changed by another application.
-                                                                                          •   NSLocalizedDescription=This document’s file has been changed by another application.
-                                                                                          •   NSLocalizedRecoveryOptions = ("Save Anyway", "Revert")
-                                                                                          }
-                                                                                          */
-                                                                                         NSInvocation* invocation = [error didRecoverInvocation] ;
-                                                                                         id delegate = [invocation target] ;
-                                                                                         SEL didRecoverSelector = [invocation selector] ;
-                                                                                         // I put the whole invocation into the context info, believing it to be alot cleaner.
-                                                                                         if (invocation) {
-                                                                                             // Before we invoke the didRecoverInvocation, we also put it into the
-                                                                                             // current infoDictionary in case an error occurs again and we need
-                                                                                             // to re-recover.
-                                                                                             [infoDictionary setObject:invocation
-                                                                                                                forKey:SSYAlertDidRecoverInvocationKey] ;
-                                                                                         }
-                                                                                         NSInteger recoveryOptionIndex = [self recoveryOptionIndexForRecoveryOption:recoveryOption] ;
-                                                                                         
-                                                                                         [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
-                                                                                                                         optionIndex:recoveryOptionIndex
-                                                                                                                            delegate:delegate
-                                                                                                                  didRecoverSelector:didRecoverSelector
-                                                                                                                         contextInfo:(__bridge void *)(infoDictionary)] ;
-                                                                                     }
-                                                                                     else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:recoveryOption:)]) {
-                                                                                         [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
-                                                                                                                      recoveryOption:recoveryOption] ;
-                                                                                     }
-                                                                                     else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:optionIndex:)]) {
-                                                                                         // This is an error produced by Cocoa.
-                                                                                         NSInteger recoveryOptionIndex = [self recoveryOptionIndexForRecoveryOption:recoveryOption] ;
-                                                                                         [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
-                                                                                                                         optionIndex:recoveryOptionIndex] ;
-                                                                                     }
-                                                                                     else if (recoveryAttempter != nil) {
-                                                                                         NSLog(@"Internal Error 342-5587.  Given Recovery Attempter %@ does not respond to any attemptRecoveryFromError:... method", recoveryAttempter) ;
-                                                                                     }
+                                                                                     [self attemptRecoveryFromError:error
+                                                                                                     infoDictionary:infoDictionary
+                                                                                                     recoveryOption:recoveryOption
+                                                                                                  recoveryAttempter:newDocument] ;
+                                                                                 }
+                                                                                 else if (documentOpeningError) {
+                                                                                     [self alertError:documentOpeningError] ;
                                                                                  }
                                                                              }] ;
             }
@@ -644,6 +589,80 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     }
 	
 	return result ;
+}
+
++ (void)attemptRecoveryFromError:(NSError*)error
+                  infoDictionary:(NSMutableDictionary*)infoDictionary
+                  recoveryOption:(NSUInteger)recoveryOption
+               recoveryAttempter:(id)recoveryAttempter {
+    NSError* deepestRecoverableError = [error deepestRecoverableError] ;
+    // Try the sheet method, attemptRecoveryFromError::::: first, since, in my
+    // opinion, it gives a better user experience.  If the recoveryAttempter
+    // does not respond to that, try the window method, attemptRecoveryFromError::
+    if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:recoveryOption:delegate:didRecoverSelector:contextInfo:)]) {
+        NSInvocation* invocation = [error didRecoverInvocation] ;
+        id delegate = [invocation target] ;
+        SEL didRecoverSelector = [invocation selector] ;
+        // I put the whole invocation into the context info, believing it to be alot cleaner.
+        if (invocation) {
+            // Before we invoke the didRecoverInvocation, we also put it into the
+            // current infoDictionary in case an error occurs again and we need
+            // to re-recover.
+            [infoDictionary setObject:invocation
+                               forKey:SSYAlertDidRecoverInvocationKey] ;
+        }
+        [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
+                                     recoveryOption:recoveryOption
+                                           delegate:delegate
+                                 didRecoverSelector:didRecoverSelector
+                                        contextInfo:(__bridge void *)(infoDictionary)] ;
+    }
+    else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:)]) {
+        /* This is an error produced by Cocoa.
+         In particular, in macOS 10.7, it might be one like this:
+         Error Domain = NSCocoaErrorDomain
+         Code = 67000
+         UserInfo = {
+         •   NSLocalizedRecoverySuggestion=Click Save Anyway to keep your changes and save the
+         changes made by the other application as a version, or click Revert to keep the changes from the other
+         application and save your changes as a version.
+         •   NSLocalizedFailureReason=The file has been changed by another application.
+         •   NSLocalizedDescription=This document’s file has been changed by another application.
+         •   NSLocalizedRecoveryOptions = ("Save Anyway", "Revert")
+         }
+         */
+        NSInvocation* invocation = [error didRecoverInvocation] ;
+        id delegate = [invocation target] ;
+        SEL didRecoverSelector = [invocation selector] ;
+        // I put the whole invocation into the context info, believing it to be alot cleaner.
+        if (invocation) {
+            // Before we invoke the didRecoverInvocation, we also put it into the
+            // current infoDictionary in case an error occurs again and we need
+            // to re-recover.
+            [infoDictionary setObject:invocation
+                               forKey:SSYAlertDidRecoverInvocationKey] ;
+        }
+        NSInteger recoveryOptionIndex = [self recoveryOptionIndexForRecoveryOption:recoveryOption] ;
+        
+        [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
+                                        optionIndex:recoveryOptionIndex
+                                           delegate:delegate
+                                 didRecoverSelector:didRecoverSelector
+                                        contextInfo:(__bridge void *)(infoDictionary)] ;
+    }
+    else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:recoveryOption:)]) {
+        [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
+                                     recoveryOption:recoveryOption] ;
+    }
+    else if ([recoveryAttempter respondsToSelector:@selector(attemptRecoveryFromError:optionIndex:)]) {
+        // This is an error produced by Cocoa.
+        NSInteger recoveryOptionIndex = [self recoveryOptionIndexForRecoveryOption:recoveryOption] ;
+        [recoveryAttempter attemptRecoveryFromError:deepestRecoverableError
+                                        optionIndex:recoveryOptionIndex] ;
+    }
+    else if (recoveryAttempter != nil) {
+        NSLog(@"Internal Error 342-5587.  Given Recovery Attempter %@ does not respond to any attemptRecoveryFromError:... method", recoveryAttempter) ;
+    }
 }
 
 - (IBAction)help:(id)sender {
@@ -753,7 +772,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
  and if it does, it will run a little prior to this one, in the same
  run loop cycle.
  */
-- (IBAction)clickedButton:(id)sender {	
+- (IBAction)clickedButton:(id)sender {
 	// For classic button layout
 	// Button1 --> tag=NSAlertFirstButtonReturn
 	// Button2 --> tag=NSAlertSecondButtonReturn
