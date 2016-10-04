@@ -127,7 +127,7 @@ typedef enum {
     if (url.length > 0) {
         NSString* filename = [[path lastPathComponent] stringByDeletingPathExtension] ;
         answer = [NSDictionary dictionaryWithObjectsAndKeys:
-                  [filename stringByDeletingPathExtension], @"filename",
+                  filename, @"filename",
                   url, @"url",
                   nil] ;
     }
