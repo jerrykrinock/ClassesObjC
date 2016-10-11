@@ -520,16 +520,16 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 + (NSUInteger)recoveryOptionIndexForRecoveryOption:(NSInteger)recoveryOption {
 	NSUInteger recoveryOptionIndex ;
 	switch (recoveryOption) {
-		case NSAlertFirstButtonReturn :
+		case NSAlertFirstButtonReturn :    // 1000
 			recoveryOptionIndex = 0 ;
 			break;
 		case NSAlertSecondButtonReturn :
-			recoveryOptionIndex = 1 ;
+			recoveryOptionIndex = 1 ;      // 1001
 			break;
-		case NSAlertThirdButtonReturn :
+		case NSAlertThirdButtonReturn :    // 1002
 			recoveryOptionIndex = 2 ;
 			break;
-        case SSYAlertFourthButtonReturn :
+        case SSYAlertFourthButtonReturn :  // 1003
             recoveryOptionIndex = 3 ;
             break;
 	default:
