@@ -40,25 +40,30 @@
 }
 
  + (NSString*)compactUuid {
-	CFUUIDRef cfUUID = CFUUIDCreate(kCFAllocatorDefault) ;
-	CFUUIDBytes uuidBytes = CFUUIDGetUUIDBytes(cfUUID) ;
-    CFRelease(cfUUID) ;
-	NSData* data = [NSData dataWithBytes:(const void*)&uuidBytes
-								  length:16] ;
-	NSMutableString* s = [NSMutableString stringWithString:[data stringBase64Encoded]] ;
-
-	// Remove the padding at the end
-	[s replaceOccurrencesOfString:@"="
-					   withString:@""
-						  options:0
-							range:NSMakeRange(0, [s length])] ;
-
-	// Dashes are more readable than slashes
-	[s replaceOccurrencesOfString:@"/"
-					   withString:@"-"
-						  options:0
-							range:NSMakeRange(0, [s length])] ;
-	return [NSString stringWithString:s] ;
+     CFUUIDRef cfUUID = CFUUIDCreate(kCFAllocatorDefault) ;
+     CFUUIDBytes uuidBytes = CFUUIDGetUUIDBytes(cfUUID) ;
+     CFRelease(cfUUID) ;
+     NSData* data = [NSData dataWithBytes:(const void*)&uuidBytes
+                                   length:16] ;
+     NSMutableString* s = [NSMutableString stringWithString:[data stringBase64Encoded]] ;
+     
+     // Remove the padding at the end
+     [s replaceOccurrencesOfString:@"="
+                        withString:@""
+                           options:0
+                             range:NSMakeRange(0, [s length])] ;
+     
+     // Change from standard Base64 to base64url (RFC4648) character set
+     [s replaceOccurrencesOfString:@"/"
+                        withString:@"-"
+                           options:0
+                             range:NSMakeRange(0, [s length])] ;
+     [s replaceOccurrencesOfString:@"+"
+                        withString:@"_"
+                           options:0
+                             range:NSMakeRange(0, [s length])] ;
+     
+     return [NSString stringWithString:s] ;
 }
 
 @end
