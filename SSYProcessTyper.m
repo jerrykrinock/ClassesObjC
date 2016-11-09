@@ -27,6 +27,21 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
 #define TIMEOUT_TO_START_SUBSEQUENT_DANCES 0.5
 #define MENU_BAR_RETRY_INTERVAL 0.025
 
++ (void)setAndVerifyActivationPolicy:(NSApplicationActivationPolicy)type
+                               label:(NSString*)label {
+    BOOL didSucceed = [NSApp setActivationPolicy:type] ;
+    /* The above method is supposed to return NO if it fails, but we have found
+     that, at least in macOS 10.11 and 10.12, it falsely returns YES.  
+     So we check for that outcome… */
+    NSApplicationActivationPolicy newType = [NSApp activationPolicy] ;
+    if ((newType != type) && (didSucceed == YES)) {
+        NSLog(
+              @"%@ transforming to process type %ld *says* it succeeded, but type is still %ld",
+              label,
+              (long)type,
+              (long)newType) ;
+    }
+}
 
 + (void)dance {
     NSRunningApplication* dancePartnerApp = nil ;
@@ -47,7 +62,8 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
 }
 
 + (void)danceStep2 {
-    [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular] ;
+    [self setAndVerifyActivationPolicy:NSApplicationActivationPolicyRegular
+                                 label:@"1325"] ;
 
     [self performSelector:@selector(danceStep3) withObject:nil
                afterDelay:0.0];
@@ -79,8 +95,29 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
                        withObject:info
                        afterDelay:MENU_BAR_RETRY_INTERVAL] ;
         }
+        else if ([NSApp activationPolicy] == NSApplicationActivationPolicyRegular) {
+            // Succeeded.  Done.
+        }
         else {
-            // Succeeded owning the menu bar.  Done.
+            // Try one more time
+            [self setAndVerifyActivationPolicy:NSApplicationActivationPolicyRegular
+                                         label:@"1335"] ;
+            if ([NSApp activationPolicy] != NSApplicationActivationPolicyRegular) {
+                NSString* format = NSLocalizedString(@"macOS failed to completely activate %@.  This can happen if there are dozens of tabs open in a web browser such as Safari.  Please close unnecessary tabs, then try to relauch %@.", nil) ;
+                NSString* appName = [[[[NSBundle mainBundle] bundlePath] lastPathComponent] stringByDeletingPathExtension] ;
+                NSString* msg = [NSString stringWithFormat:
+                                format,
+                                appName,
+                                appName] ;
+                NSAlert* alert = [[NSAlert alloc] init] ;
+                alert.messageText = NSLocalizedString(@"macOS Failure", nil) ;
+                alert.informativeText = msg ;
+                [alert runModal] ;
+                [NSApp terminate:self] ;
+            }
+            else {
+                NSLog(@"Weird.  Succeeded activating forward on the last retry.") ;
+            }
         }
     }
 }
@@ -90,8 +127,8 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
 }
 
 + (void)transformToType:(NSApplicationActivationPolicy)type {
-    [NSApp setActivationPolicy:type] ;
-    
+    [self setAndVerifyActivationPolicy:type
+                                 label:@"1315"] ;
     BOOL doShow = (type == NSApplicationActivationPolicyRegular) ;
     
     if (doShow) {
