@@ -114,6 +114,7 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
                 alert.informativeText = msg ;
                 [alert runModal] ;
                 [NSApp terminate:self] ;
+                [alert release] ;  // Silly, but to suppress static analyzer warning.
             }
             else {
                 NSLog(@"Weird.  Succeeded activating forward on the last retry.") ;
