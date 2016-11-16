@@ -48,6 +48,7 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 
 @property (retain) NSTextField* labelView ;
 @property (retain) NSScrollView* scrollView ;
+@property (retain) NSView* allOrNoneView ;
 @property (retain) NSArray* choices ;
 @property (retain) NSArray* toolTips ;
 @property (retain) NSDictionary* cellTextAttributes ;
@@ -60,6 +61,7 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 
 @synthesize labelView ;
 @synthesize scrollView ;
+@synthesize allOrNoneView ;
 @synthesize choices ;
 @synthesize toolTips = m_toolTips ;
 @synthesize cellTextAttributes ;
@@ -72,14 +74,6 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 - (void)setSelectedIndexes:(NSIndexSet*)selectedIndexes {
 	[[self tableView] selectRowIndexes:selectedIndexes
 				  byExtendingSelection:NO] ;
-}
-
-- (void)setAllowsMultipleSelection:(BOOL)flag {
-	[[self tableView] setAllowsMultipleSelection:flag] ;
-}
-
-- (void)setAllowsEmptySelection:(BOOL)flag {
-	[[self tableView] setAllowsEmptySelection:flag] ;
 }
 
 - (void)setTableViewDelegate:(id)delegate {
@@ -100,6 +94,7 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 	// Set heights
 	[[self labelView] sizeHeightToFitAllowShrinking:allowShrinking] ;
 	[[self tableView] sizeHeightToFitAllowShrinking:allowShrinking] ;
+    [self.allOrNoneView sizeHeightToFitAllowShrinking:NO] ;
 	NSRect frame = [[self tableView] frame] ;
 	// The scroll view needs to be a little taller than the table
 	// lest scrollers will appear unnecessarily.
@@ -108,7 +103,13 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 	[[self scrollView] setFrame:frame] ;
 	
 	// Set y positions
-	CGFloat y = [[self scrollView] height] ;
+    CGFloat y = 0.0 ;
+    if (self.allOrNoneView) {
+        y += [self.allOrNoneView height] ;
+        y += SPACE_BETWEEN/4 ;
+    }
+    [[self scrollView] setBottom:y] ;
+    y += [[self scrollView] height] ;
 	y += SPACE_BETWEEN ;
 	[[self labelView] setBottom:y] ;
 	y += [[self labelView] height] ;
@@ -122,13 +123,15 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 	return [NSFont systemFontOfSize:12.0] ;
 }
 
-- (id)initWithLabel:(NSString*)label
-			choices:(NSArray*)choices_
-		   toolTips:(NSArray*)toolTips
-	  lineBreakMode:(NSLineBreakMode)lineBreakMode
-	 maxTableHeight:(CGFloat)maxTableHeight_ {
-	self = [super initWithFrame:NSZeroRect] ;
-	if (self != nil) {				
+- (id)     initWithLabel:(NSString*)label
+                 choices:(NSArray*)choices_
+ allowsMultipleSelection:(BOOL)allowsMultipleSelection
+    allowsEmptySelection:(BOOL)allowsEmptySelection
+                toolTips:(NSArray*)toolTips
+           lineBreakMode:(NSLineBreakMode)lineBreakMode
+          maxTableHeight:(CGFloat)maxTableHeight_ {
+    self = [super initWithFrame:NSZeroRect] ;
+	if (self != nil) {
 		[self setChoices:choices_] ;
 		[self setToolTips:toolTips] ;
 		
@@ -139,8 +142,8 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 		
 		NSTableView* tableView_ = [[NSTableView alloc] initWithFrame:nominalFrame] ;
         [tableView_ setDataSource:self] ;
-		[tableView_ setAllowsMultipleSelection:YES] ;  // Needed since NSTableView's default value is NO.
-		// [tableView_ setAllowsEmptySelection:YES] ;  // Not needed since NSTableView's default value is YES.
+		[tableView_ setAllowsMultipleSelection:allowsMultipleSelection] ;
+		[tableView_ setAllowsEmptySelection:allowsEmptySelection] ;
 		// Todo: The following should be parameterized
 		[tableView_ setHeaderView:nil] ;
 		[tableView_ setDelegate:self] ;
@@ -183,7 +186,40 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 		[self setLabelView:textField] ;
 		[self addSubview:textField] ;
 		[textField release] ;
-		
+        
+        if (allowsMultipleSelection && (choices.count > 1)) {
+            NSView* allOrNoneView_ = [[NSView alloc] initWithFrame:NSZeroRect] ;
+            NSButton* allButton = [[NSButton alloc] initWithFrame:NSZeroRect] ;
+            [allButton setFont:[NSFont systemFontOfSize:13]] ;
+            [allButton setBezelStyle:NSSmallSquareBezelStyle] ;
+            [allButton setTitle:NSLocalizedString(@"All", nil)] ;
+            [allButton sizeToFit] ;
+            [allButton setTarget:tableView_] ;
+            [allButton setAction:@selector(selectAll:)] ;
+            [allOrNoneView_ addSubview:allButton] ;
+            [allButton release] ;
+            if (allowsEmptySelection) {
+                NSButton* noneButton = [[NSButton alloc] initWithFrame:NSZeroRect] ; ;
+                [noneButton setFont:[NSFont systemFontOfSize:13]] ;
+                [noneButton setBezelStyle:NSSmallSquareBezelStyle] ;
+                [noneButton setTitle:NSLocalizedString(@"None", nil)] ;
+                [noneButton sizeToFit] ;
+                [noneButton setTarget:tableView_] ;
+                [noneButton setAction:@selector(deselectAll:)] ;
+                NSRect noneButtonFrame = noneButton.frame ;
+                noneButtonFrame.origin.x = allButton.frame.origin.x + allButton.frame.size.width ;
+                noneButton.frame = noneButtonFrame ;
+                [allOrNoneView_ addSubview:noneButton] ;
+                [noneButton release] ;
+            }
+            
+            [allOrNoneView_ setHeight:allButton.frame.size.height] ;
+            [allOrNoneView_ setLeftEdge:0.0] ;
+            [self setAllOrNoneView:allOrNoneView_] ;
+            [self addSubview:allOrNoneView_] ;
+            [allOrNoneView_ release] ;
+        }
+        
 		[self setAutoresizingMask:NSViewWidthSizable] ;
 		
 		// Start out with self and subviews all at same width,
@@ -191,6 +227,7 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 		[self setWidth:[textField width]] ;
 		[[self labelView] setAutoresizingMask:NSViewWidthSizable] ;
 		[[self scrollView] setAutoresizingMask:NSViewWidthSizable] ;
+        [[self allOrNoneView] setAutoresizingMask:NSViewWidthSizable] ;
 		
 		// Note that the final layout is done later, when
 		// -sizeHeightToFitAllowShrinking is invoked during layout.
@@ -224,11 +261,15 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 
 + (SSYLabelledList*)listWithLabel:(NSString*)label
 						  choices:(NSArray*)choices_
+          allowsMultipleSelection:(BOOL)allowsMultipleSelection
+             allowsEmptySelection:(BOOL)allowsEmptySelection
 						 toolTips:(NSArray*)toolTips
 					lineBreakMode:(NSLineBreakMode)lineBreakMode
 					maxTableHeight:(CGFloat)maxTableHeight {
 	SSYLabelledList* instance = [[SSYLabelledList alloc] initWithLabel:label
 															   choices:choices_
+                                               allowsMultipleSelection:allowsMultipleSelection
+                                                  allowsEmptySelection:allowsEmptySelection
 															  toolTips:toolTips
 														 lineBreakMode:lineBreakMode
 														  maxTableHeight:maxTableHeight] ;
@@ -238,6 +279,7 @@ NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
 - (void) dealloc {
 	[labelView release] ;
 	[scrollView release] ;
+    [allOrNoneView release] ;
 	[choices release] ;
 	[m_toolTips release] ;
 	[cellTextAttributes release] ;

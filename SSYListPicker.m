@@ -75,11 +75,11 @@ NSString* constKeyDidCancelInvocation = @"didCancelInvocation" ;
 	
 	SSYLabelledList* list = [SSYLabelledList listWithLabel:message
 												   choices:displayNames
+                                   allowsMultipleSelection:allowMultipleSelection
+                                      allowsEmptySelection:allowEmptySelection
 												  toolTips:toolTips
 											 lineBreakMode:lineBreakMode
 											maxTableHeight:500.0] ;
-	[list setAllowsMultipleSelection:allowMultipleSelection] ;
-	[list setAllowsEmptySelection:allowEmptySelection] ;
 	[list setSelectedIndexes:initialPicks] ;
 	[list setTableViewDelegate:self] ;
 	[alert addOtherSubview:list
@@ -87,9 +87,6 @@ NSString* constKeyDidCancelInvocation = @"didCancelInvocation" ;
 	[alert setWindowTitle:windowTitle] ;
 	[alert setButton1Title:button1Title] ;
 	[alert setButton2Title:button2Title] ;
-	[alert setButton3Title:[NSString localizeFormat:
-							@"clearX",
-							[NSString localize:@"selection"]]] ;
 	[alert setRightColumnMinimumWidth:MIN(width, 700)] ;
 	[alert setIconStyle:SSYAlertIconInformational] ;
 	[alert setClickTarget:self] ;
@@ -135,10 +132,6 @@ NSString* constKeyDidCancelInvocation = @"didCancelInvocation" ;
 	else if ([alert alertReturn] == NSAlertSecondButtonReturn) {
 		// Clicked "Cancel"
 		done = YES ;
-	}
-	else {
-		// Clicked "Clear Selection"
-		[[[alert otherSubviews] objectAtIndex:0] setSelectedIndexes:[NSIndexSet indexSet]] ;
 	}
 	
 	// Need to grab this before popping the configuration
