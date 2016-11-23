@@ -294,7 +294,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	return fullPath ;
 }
 
-+ (NSArray*)pidsExecutablesFull:(BOOL)fullExecutablePath {s
++ (NSArray*)pidsExecutablesFull:(BOOL)fullExecutablePath {
 	// Run unix task "ps" and get results as an array, with each element containing process command and user
 	// The invocation to be constructed is: ps -xa[c]awww -o pid -o user -o command
 	// -ww is required for long command path strings!!
