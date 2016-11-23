@@ -1,6 +1,5 @@
 #import "SSYVectorImages.h"
 #import "NSImage+Transform.h"
-#import "SSY_ARC_OR_NO_ARC.h"
 
 @implementation SSYVectorImages
 
@@ -128,7 +127,6 @@
      Instead, use 50, 100 and insetPercent. */
 
     CGFloat scale = wength / 100.0 ;
-    CGFloat radius = wength/2 ;
     CGFloat insetPercent = inset * 100 / wength ;
     NSAffineTransform* scaleTransform = [NSAffineTransform transform] ;
     [scaleTransform scaleXBy:scale
@@ -140,7 +138,7 @@
         case SSYVectorImageStyleChasingArrows: {
             [path setLineWidth:2.0] ;
             
-            // The outer radius is 50 - inset
+            // The outer radius is 50 - insetPercent
 #define GAP_DEGREES 15.0
 #define ARROW_DEGREES 35.0
 #define ARROW_START_DEGREES (GAP_DEGREES + ARROW_DEGREES)
@@ -213,7 +211,7 @@
         }
         case SSYVectorImageStyleTarget:
             // The circle
-            [path appendBezierPathWithArcWithCenter:NSMakePoint(radius, radius)
+            [path appendBezierPathWithArcWithCenter:NSMakePoint(50.0, 50.0)
                                              radius:(50.0 - insetPercent)
                                          startAngle:0.0
                                            endAngle:359.99] ;
@@ -623,13 +621,13 @@
             [path stroke] ;
             break ;
         case SSYVectorImageStyleRoundRadioKnob:;
-#define KNOB_MARGIN (radius * 0.25)
+#define KNOB_MARGIN 12.5
             [path setLineWidth:2.0] ;
-            [path appendBezierPathWithArcWithCenter:NSMakePoint(radius,radius)
-                                             radius:(radius - [path lineWidth] - KNOB_MARGIN)
+            [path appendBezierPathWithArcWithCenter:NSMakePoint(50.0,50.0)
+                                             radius:(50.0 - [path lineWidth] - KNOB_MARGIN)
                                          startAngle:0.0 endAngle:360.0] ;
-            [path moveToPoint:NSMakePoint(radius, radius)] ;
-            [path relativeLineToPoint:NSMakePoint(0.0, radius - [path lineWidth] - KNOB_MARGIN)] ;
+            [path moveToPoint:NSMakePoint(50.0, 50.0)] ;
+            [path relativeLineToPoint:NSMakePoint(0.0, 50.0 - [path lineWidth] - KNOB_MARGIN)] ;
             [path stroke] ;
             break ;
         case SSYVectorImageStyleHexagon:;
