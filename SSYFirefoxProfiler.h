@@ -20,6 +20,8 @@
  name, and resolving the profile folder path indicated by this entry.
  
  This method performs the inverse of -profileNameForPath:error_p:.
+ 
+ @param    homePath  If nil, defaults to the current user's home path
  */
 + (NSString*)pathForProfileName:(NSString*)profileName
                        homePath:(NSString*)homePath

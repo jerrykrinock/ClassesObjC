@@ -82,7 +82,6 @@
             [scanner scanUpToCharactersFromSet:delimiters
                                     intoString:NULL] ;
             if ([scanner isAtEnd]) {
-                ok = NO ;
                 break ;
             }
             [scanner scanCharactersFromSet:delimiters
@@ -166,6 +165,10 @@
             }
         }
     }
+
+#if !__has_feature(objc_arc)
+    [scanner release] ;
+#endif
     
     return answer ;
 }
