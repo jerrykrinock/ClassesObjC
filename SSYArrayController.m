@@ -265,7 +265,7 @@ NSString* SSYArrayControllerRowsType = @"SSYArrayControllerRowsType" ;
 	NSTableColumn* column = [[tableView tableColumns] objectAtIndex:index] ;
 	NSCell* dataCell = [column dataCell] ;
 	NSFont* font = [dataCell font] ;
-	CGFloat height2 = [font tableRowHeight] ;
+	CGFloat height2 = [font tableRowHeight] + 2.0;
 	CGFloat height1 = [tableView rowHeight] ;
 	m_lineHeightMultiplier = (height2/height1) ;
 }

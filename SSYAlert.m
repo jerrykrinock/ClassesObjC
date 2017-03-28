@@ -2450,7 +2450,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
         }
         else {
             alertReturn = SSYAlertRecoveryInternalError ;
-            NSLog(@"Internal Error 624-9218 Don't re-use SSYAlert instances!") ;
+            NSLog(@"Internal Error 624-9218  Can't show error sheet on nil window.") ;
         }
 	}
 	
