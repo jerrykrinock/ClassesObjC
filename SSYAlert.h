@@ -281,6 +281,10 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  </p>
  
 <p>
+ UPDATE 2017-04-10  Re-using alerts as described in this section is no longer
+ recommended.  One reason is that the flicker referred to does not occur in
+ recent updates of macOS.  Another reason is given later.
+
  By default, SSYAlert closes its window and itself is no longer retained by
  SSYWindowHangout when the user clicks a button.  If you want to present another
  alert immediately after that, you can avoid the flicker of having one window
