@@ -261,6 +261,28 @@
             [path lineToPoint:NSMakePoint(75, 50)] ;
             [path stroke] ;
             break ;
+        case SSYVectorImageStyleWindowWithSidebar: {
+#define SIDEBAR_WIDTH 40.0
+#define SIDEBAR_HALF_LINE_WIDTH 4.0
+
+            CGFloat mainWidth = 100.0 - SIDEBAR_WIDTH;
+            CGRect mainRect = NSMakeRect(
+                                         0.0,
+                                         0.0,
+                                         mainWidth,
+                                         100.0) ;
+            [path appendBezierPathWithRect:mainRect] ;
+            [path fill];
+
+            [path moveToPoint:NSMakePoint(mainWidth, SIDEBAR_HALF_LINE_WIDTH)];
+            [path lineToPoint:NSMakePoint(100.0 - SIDEBAR_HALF_LINE_WIDTH, SIDEBAR_HALF_LINE_WIDTH)];
+            [path lineToPoint:NSMakePoint(100.0 - SIDEBAR_HALF_LINE_WIDTH, 100.0 - SIDEBAR_HALF_LINE_WIDTH)];
+            [path lineToPoint:NSMakePoint(mainWidth, 100.0 - SIDEBAR_HALF_LINE_WIDTH)];
+            [path setLineWidth:SIDEBAR_HALF_LINE_WIDTH * 2.0];
+            [path stroke] ;
+
+            break ;
+        }
         case SSYVectorImageStyleTriangle90:
         case SSYVectorImageStyleTriangle53: {
             [path setLineWidth:0.0] ;

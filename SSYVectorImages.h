@@ -14,6 +14,7 @@ enum SSYVectorImageStyles_enum
      square enclosing the two lines is equal to the wength.  */
     SSYVectorImageStyleTarget,
     SSYVectorImageStyleChasingArrows,
+    SSYVectorImageStyleWindowWithSidebar,
     /* Triangle, horizonal baseline, pointing up, with top vertex 90 degrees.
      This one is shorter and fatter.  */
     SSYVectorImageStyleTriangle90,
