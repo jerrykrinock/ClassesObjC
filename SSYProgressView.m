@@ -436,11 +436,6 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	[self sizeToFitTextOnly:YES] ;
 }
 
-- (void)hideProgressBar {
-	[self setProgressBarWidth:0.0] ;
-}
-
-
 // Cocoa invokes this when the window is resized.  This implementation
 // is needed to scale the subviews (text and progress bar) appropriately.
 - (void)setFrame:(NSRect)frame {
@@ -711,12 +706,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 - (void)unsafeShowCompletionVerb:(NSString*)verb
 						  result:(NSString*)result {
 	NSDictionary* newCompletion = [NSDictionary dictionaryWithObjectsAndKeys:
-								   // Commented out in BookMacster 1.6.5 because it was causing "Save" completions
-								   // spawned by Auto Save to never be shown, because the first time through
-								   // -updateCompletionsPause: it was determined that they had been showing since
-								   // the last time (deltaTime).  I'm not sure why this only affected completions
-								   // spawned by Auto Save.
-								   // [NSNumber numberWithDouble:0.0], constKeyCompletionShowtime, 
+								   [NSNumber numberWithDouble:0.0], constKeyCompletionShowtime,
 								   verb, constKeyCompletionVerb,
 								   result, constKeyCompletionResult,
 								   nil] ;
@@ -734,49 +724,11 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 
 	[[self completions] addObject:newCompletion] ;
 	
-	[self updateCompletionsPause:NO] ;
-	
-#if 0
-#warning Combining Verbs in SSYProgressView, Old Code
-	NSMutableDictionary* activeResults = [NSMutableDictionary dictionaryWithCapacity:8] ;
-	// Combine results with same verb into a dictionary, keyed by verbs
-	for (NSDictionary* completion in [self completions]) {
-		NSString* result = [completion objectForKey:constKeyCompletionResult] ;
-		if (!result) {
-			result = @"" ;
-		} 
-		[activeResults addObject:result
-					toArrayAtKey:[completion objectForKey:constKeyCompletionVerb]] ;
-	}
-	// Process each of the verb+result key/object pairs into a string and
-	// build an array of such strings.  Note that, in order to preserve the
-	// order we enumerate over the verbs in the updated 'completions',
-	// instead of the (unordered) dictionary activeResults.
-	NSMutableArray* activeCompletions = [NSMutableArray array] ;
-	for (NSString* verb in [[[self completions] valueForKey:constKeyCompletionVerb] arrayByRemovingEqualObjects]) {
-		NSArray* resultsArray = [activeResults objectForKey:verb] ;
-		resultsArray = [resultsArray arrayByRemovingObject:@""] ;  // Removes all occurrences of @""
-		NSString* resultsString = @"" ;
-		if ([resultsArray count] > 0) {
-			// This verb has one or more results to be appended
-			resultsString = [resultsArray listValuesForKey:nil
-											   conjunction:nil
-												truncateTo:0] ;
-			resultsString = [NSString stringWithFormat:
-							 @" (%@)",
-							 resultsString] ;
-		}
-		
-		NSString* completionString = [verb stringByAppendingString:resultsString] ;
-		[activeCompletions addObject:completionString] ;
-	}
-	
-#else
-	NSArray* activeCompletions = [self activeCompletions] ;
-#endif
-	
+    [self updateCompletionsPause:NO] ;
 
-	// Combine the verb+result strings into one string
+    NSArray* activeCompletions = [self activeCompletions] ;
+
+    // Combine the verb+result strings into one string
 	NSString* whatDone = [activeCompletions listValuesForKey:nil
 												conjunction:nil
 												  truncateTo:0] ;
