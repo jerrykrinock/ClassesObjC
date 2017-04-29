@@ -106,8 +106,7 @@ IB_DESIGNABLE
  */
 - (instancetype)initWithMainView:(NSView*)mainView
                      sidebarView:(NSView*)sidebarView
-                       whichEdge:(SSYSidebarControllerWhichEdge)whichEdge
-NS_DESIGNATED_INITIALIZER;
+                       whichEdge:(SSYSidebarControllerWhichEdge)whichEdge;
 
 /*!
  @brief    Expands or collapses the sidebar view of the receiver

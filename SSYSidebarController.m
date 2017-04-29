@@ -20,7 +20,7 @@ typedef enum SSYSidebarControllerExpansionDirection_enum SSYSidebarControllerExp
 - (instancetype)initWithMainView:(NSView*)mainView
                      sidebarView:(NSView*)sidebarView
                        whichEdge:(SSYSidebarControllerWhichEdge)whichEdge {
-    self = [self init];
+    self = [super init];
 
     if (self) {
         self.mainView = mainView;
