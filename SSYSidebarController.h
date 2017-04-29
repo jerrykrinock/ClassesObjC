@@ -81,6 +81,17 @@ IB_DESIGNABLE
 @property (assign) IBOutlet NSView* sidebarView;
 
 /*!
+ @brief    The length of the variable-length perimeter segment (width or
+ height) of the receiver's sidebar view, grabbed during -awakeFromNib, before
+ it is collapsed to 0.0.
+
+ @details  You may need this for layout calculations, because the order in
+ which Cocoa sends -awakeFromNib to objects in a nib is indeterminate.
+ */
+@property (assign, readonly) CGFloat sidebarLength;
+
+
+/*!
  @details  The values of this property must be one of the values of the enum
  SSYSidebarControllerWhichEdge.  Unfortunately, as of Xcode 8.2, Interface
  Builder does not know how to show a control for enum types, and thus will not
