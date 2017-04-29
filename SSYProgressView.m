@@ -16,6 +16,10 @@ NSString* const constKeyHyperText = @"hyperText" ;
 NSString* const constKeyTarget = @"target" ;
 NSString* const constKeyActionValue = @"actionValue" ;
 			  
+float const SSYProgressPriorityLowest = 0.0;
+float const SSYProgressPriorityLow = 250.0;
+float const SSYProgressPriorityRegular = 500.0;
+
 #if 0
 /* I can't figure out why the left edge of the progress indicator's rect is
  sometimes, in Yosemite, a thin black line.  I know it is part of the
@@ -77,6 +81,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 @interface SSYProgressView () 
 
 @property (copy) NSDate* completionsLastStartedShowing ;
+@property (assign) float progressPriority;
 @property (assign) double progressValue ;
 // Don't retain this because it will be retained as a subview
 @property (assign) NSProgressIndicator* spinner ;
@@ -550,6 +555,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	NSProgressIndicator* bar = [self progBar] ;
 	[bar stopAnimation:self] ;
 	[bar setHidden:YES] ;
+    self.progressPriority = SSYProgressPriorityLowest;
 }
 
 - (void)unsafeStartSpinning {
@@ -612,7 +618,8 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 }
 
 - (void)unsafeSetIndeterminate:(BOOL)indeterminate
-			 withLocalizedVerb:(NSString*)localizedVerb {
+			 withLocalizedVerb:(NSString*)localizedVerb
+                      priority:(float)priority {
 	[self unsafeRemoveAll] ;
 	
 	NSTextField* textField = [self textField] ;
@@ -632,24 +639,36 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	[progBar setIndeterminate:indeterminate] ;
 	[progBar startAnimation:self] ;
 	[progBar setHidden:NO] ;
+    self.progressPriority = priority;
 	[self display] ;
 }
 
-- (void)setIndeterminate:(BOOL)indeterminate
-	   withLocalizedVerb:(NSString*)localizedVerb {
-	[NSInvocation invokeOnMainThreadTarget:self
-								  selector:@selector(unsafeSetIndeterminate:withLocalizedVerb:)
-						   retainArguments:YES
-							 waitUntilDone:YES
-						 argumentAddresses:&indeterminate, &localizedVerb] ;
-	
-	[self updateCompletionsPause] ;
+- (SSYProgressView*)setIndeterminate:(BOOL)indeterminate
+                   withLocalizedVerb:(NSString*)localizedVerb
+                            priority:(float)priority {
+    SSYProgressView* returnResult;
+    if (priority >= self.progressPriority) {
+        [NSInvocation invokeOnMainThreadTarget:self
+                                      selector:@selector(unsafeSetIndeterminate:withLocalizedVerb:priority:)
+                               retainArguments:YES
+                                 waitUntilDone:YES
+                             argumentAddresses:&indeterminate, &localizedVerb, &priority] ;
+        [self updateCompletionsPause] ;
+        returnResult = self;
+    }
+    else {
+        returnResult = nil;
+    }
+
+    return returnResult;
 }
 
-- (void)setIndeterminate:(BOOL)indeterminate
-	 withLocalizableVerb:(NSString*)localizableVerb {
-	[self setIndeterminate:indeterminate
-		 withLocalizedVerb:[NSString localize:localizableVerb]] ;
+- (SSYProgressView*)setIndeterminate:(BOOL)indeterminate
+                 withLocalizableVerb:(NSString*)localizableVerb
+                            priority:(float)priority {
+	return [self setIndeterminate:indeterminate
+                withLocalizedVerb:[NSString localize:localizableVerb]
+                         priority:priority] ;
 }
 
 - (void)unsafeSetText:(NSString*)text
@@ -659,6 +678,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	if (text == nil) {
 		text = @"" ;
 	}
+
 	NSTextField* textField = [self textField] ;
 	[[textField cell] setLineBreakMode:NSLineBreakByTruncatingMiddle] ;
 	[textField setStringValue:text] ;
@@ -703,9 +723,15 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	return  text ;
 }
 
+- (NSString*)unsafeHyperText {
+    NSString* hyperText = [[self hyperButton] title] ;
+    return  hyperText ;
+}
+
 - (void)unsafeShowCompletionVerb:(NSString*)verb
-						  result:(NSString*)result {
-	NSDictionary* newCompletion = [NSDictionary dictionaryWithObjectsAndKeys:
+						  result:(NSString*)result
+                        priority:(float)priority {
+    NSDictionary* newCompletion = [NSDictionary dictionaryWithObjectsAndKeys:
 								   [NSNumber numberWithDouble:0.0], constKeyCompletionShowtime,
 								   verb, constKeyCompletionVerb,
 								   result, constKeyCompletionResult,
@@ -723,46 +749,68 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
     [completionsCopy release] ;
 
 	[[self completions] addObject:newCompletion] ;
-	
-    [self updateCompletionsPause:NO] ;
 
-    NSArray* activeCompletions = [self activeCompletions] ;
+    if ((priority >= self.progressPriority) || !verb) {
+        if (verb) {
+            self.progressPriority = priority;
+        }
 
-    // Combine the verb+result strings into one string
-	NSString* whatDone = [activeCompletions listValuesForKey:nil
-												conjunction:nil
-												  truncateTo:0] ;
-	
-	// Prepend "Completed: "
+        [self updateCompletionsPause:NO] ;
 
-	NSString* msg = [NSString stringWithFormat:
-					 @"%@ %@",
-					 [NSString localize:@"completed"],
-					 whatDone] ;
-	
-	// Finally, set it into the view!
-	[self unsafeSetText:msg
-			  hyperText:nil
-				 target:nil
-				 action:NULL] ;
+        NSArray* activeCompletions = [self activeCompletions] ;
 
-	// The last, most recent completions are the most important, so we…
-	[[[self textField] cell] setLineBreakMode:NSLineBreakByTruncatingHead] ;
-	// and this must be done *after* -unsafeSetText::: because that
-	// method set the truncation mode to Middle.
+        // Combine the verb+result strings into one string
+        NSString* whatDone = [activeCompletions listValuesForKey:nil
+                                                     conjunction:nil
+                                                      truncateTo:0] ;
+        if ([whatDone length] > 0) {
+            self.progressPriority = priority;
 
-	// Restart the clock
-	[self setCompletionsLastStartedShowing:[NSDate date]] ;
+            // Prepend "Completed: "
+            NSString* msg = [NSString stringWithFormat:
+                             @"%@ %@",
+                             [NSString localize:@"completed"],
+                             whatDone] ;
+
+            // Finally, set it into the view!
+            [self unsafeSetText:msg
+                      hyperText:nil
+                         target:nil
+                         action:NULL] ;
+
+            // The last, most recent completions are the most important, so we…
+            [[[self textField] cell] setLineBreakMode:NSLineBreakByTruncatingHead] ;
+            // and this must be done *after* -unsafeSetText::: because that
+            // method set the truncation mode to Middle.
+
+            // Restart the clock
+            [self setCompletionsLastStartedShowing:[NSDate date]] ;
+        } else {
+            [self unsafeStopSpinning] ;
+            [[self progBar] setHidden:YES] ;
+            self.progressPriority = SSYProgressPriorityLowest;
+            [[self textField] setStringValue:@""] ;
+            [[self hyperButton] setWidth:0.0] ;
+            [self hideCancelButton] ;
+            
+            [self sizeToFitTextOnly:NO] ;
+        }
+    }
 }
 
-- (void)showCompletionVerb:(NSString*)verb
-					result:(NSString*)result {
-	[NSInvocation invokeOnMainThreadTarget:self
-								  selector:@selector(unsafeShowCompletionVerb:result:)
-						   retainArguments:YES
-							 waitUntilDone:YES
-						 argumentAddresses:&verb, &result] ;
-}	
+- (SSYProgressView*)showCompletionVerb:(NSString*)verb
+                                result:(NSString*)result
+                              priority:(float)priority {
+    [NSInvocation invokeOnMainThreadTarget:self
+                                  selector:@selector(unsafeShowCompletionVerb:result:priority:)
+                           retainArguments:YES
+                             waitUntilDone:YES
+                         argumentAddresses:&verb, &result, &priority] ;
+
+    /* A little kludgey here; I am predicting how the above asynchronous method
+     will behave: */
+    return (priority >= self.progressPriority) ? self : nil;
+}
 	
 - (void)setText:(NSString*)text
 	  hyperText:(NSString*)hyperText
@@ -787,6 +835,19 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	[invocation getReturnValue:&text] ;
 	
 	return text ;
+}
+
+- (NSString*)hyperText {
+    NSInvocation* invocation = [NSInvocation invokeOnMainThreadTarget:self
+                                                             selector:@selector(unsafeHyperText)
+                                                      retainArguments:NO
+                                                        waitUntilDone:YES
+                                                    argumentAddresses:NULL] ;
+    [invocation invoke] ;
+    NSString* hyperText = nil ;
+    [invocation getReturnValue:&hyperText] ;
+    
+    return hyperText ;
 }
 
 // staticConfigInfo is actually a "write-only" binding, but if I don't

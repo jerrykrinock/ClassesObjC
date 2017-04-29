@@ -6,6 +6,10 @@ extern NSString* const constKeyHyperText ;
 extern NSString* const constKeyTarget ;
 extern NSString* const constKeyActionValue ;
 
+extern float const SSYProgressPriorityLowest;
+extern float const SSYProgressPriorityLow;
+extern float const SSYProgressPriorityRegular;
+
 
 /*!
  @brief    A control showing a text field, optional progress bar and
@@ -188,24 +192,30 @@ extern NSString* const constKeyActionValue ;
 - (void)clearAll ;
 
 /*!
- @brief    Sets the receiver to have a progress bar, specified as
- determinate or indeterminate, localizes a given verb, appends
- an ellipsis and sets the result as the receiver's verb.
- 
- @details  Also resets the internal record of the last time the
- progress bar was updated in the user interface, so that the next
- time its value is changed, it will be immediately redrawn.
+ @brief    A wrapper around -setIndeterminate:withLocalizedVerb: that first
+ localizes the given verb
 */
-- (void)setIndeterminate:(BOOL)indeterminate
-	 withLocalizableVerb:(NSString*)localizableVerb ; 
+- (SSYProgressView*)setIndeterminate:(BOOL)indeterminate
+                 withLocalizableVerb:(NSString*)localizableVerb
+                            priority:(float)priority;
 
 /*!
- @brief    Sets the receiver to have a progress bar, specified as
- determinate or indeterminate, with a given verb, appends
- an ellipsis and sets the result as the receiver's verb.
+ @brief    If priority, sets the receiver to have a progress bar, specified as
+ determinate or indeterminate, with a given verb
+ 
+ @details  If the given priority is >= the priority which was given for a
+ previous progress bar that is still showing or if no progress bar is currently
+ showing, sets the receiver to have a progress bar, determinate or
+ indeterminate as specified, with the receiver's text being the given verb,
+ with an ellipsis appended.  Otherwise, does nothing.
+ @param    priority  You may use SSYProgressPriorityRegular et al
+ @result   If anything as done, returns the receiver.  Otherwise, returns nil.
+ (The idea is that you can assign the result to the receiver to send subsequent
+ messsages to the receiver.)
  */
-- (void)setIndeterminate:(BOOL)indeterminate
-	   withLocalizedVerb:(NSString*)localizableVerb ; 
+- (SSYProgressView*)setIndeterminate:(BOOL)indeterminate
+                   withLocalizedVerb:(NSString*)localizableVerb
+                            priority:(float)priority;
 
 /*!
  @brief    Sets the receiver to display only text, followed on the
@@ -235,34 +245,48 @@ extern NSString* const constKeyActionValue ;
 - (NSString*)text ;
 
 /*!
- @brief    Commands the receiver to display a localized message
- of the form "Completed <task>".
+ @brief    Returns the text currently being displayed by the
+ receiver's hypertext field.
+ */
+- (NSString*)hyperText ;
 
- @details  If this message is received again, completed tasks
- will be shown as:
+/*!
+ @brief    If priority, causes the receiver to display text of the form
+ "Completed: <task>".
+
+ @details  If the given priority is >= the priority which was given for a
+ previous progress bar that is still showing or if no progress bar is currently
+ showing, if the given verb is not nil, causes the receiver to display text of
+ the form "Completed: <task>".  If the priority is >= but the given verb is
+ nil, restores the previously-showing completion, as explained below.
+
+ If this message is received again, completed tasks will be shown as:
     "Completed <verb1> (<result1>), <verb2> (<result2>)", etc.,
  including any prior task which has not yet been displayed for a
  total of COMPLETION_SHOW_TIME.
  
- You may interrupt the showing of completions sending a different
- configuration message to SSYProgressView.  For example, to
- temporarily show a progress bar, you may send
- -sendIndeterminate:withLocalizedVerb:.  After the progress bar
- is no longer needed, you may restore the previously-showing
- completion, without adding any new completion, by sending this
- message with both arguments nil.
+ You may interrupt the showing of completions sending a different configuration
+ message to SSYProgressView.  For example, to temporarily show a progress bar,
+ you may send -sendIndeterminate:withLocalizedVerb:.  After the progress bar
+ is no longer needed, you may restore the previously-showing completion,
+ without adding any new completion, by sending this message with `verb and 
+ `result` nil.  In this special case, the `priority` is ignored.
  
  If another item with the given verb (-isEqualToString:) already exists in the
  receiver's list of completions, that prior item will be removed.
  
- @param    verb  A localized verb, the task that was completed,
- or nil (see Details).
- @param    result  Additional description of what was done,
- often a number.  May be nil if a result is not desired or 
- not applicable to this particular verb.
+ @param    verb  A localized verb, the task that was completed, or nil (see
+ Details).
+ @param    priority  You may use SSYProgressPriorityRegular et al
+ @param    result  Additional description of what was done, often a number.
+ May be nil if the given verb is sufficient by itself.
+ @result   If anything as done, returns the receiver.  Otherwise, returns nil.
+ (The idea is that you can assign the result to the receiver to send subsequent
+ messsages to the receiver.)
 */
-- (void)showCompletionVerb:(NSString*)verb
-					result:(NSString*)result ;
+- (SSYProgressView*)showCompletionVerb:(NSString*)verb
+                                result:(NSString*)result
+                              priority:(float)priority;
 
 /*!
  @brief    A Cocoa-bindable wrapper for setText:hyperText:target:action.
