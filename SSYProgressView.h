@@ -75,6 +75,7 @@ extern float const SSYProgressPriorityRegular;
 	NSTimeInterval nextProgressUpdate ;
 	NSMutableArray* completions ;
 	NSDate* completionsLastStartedShowing ;
+    CGFloat _fontSize;
 	
 	// When we get a message to setDoubleValue:, incrementDoubleValueBy:,
 	// or incrementDoubleValueByObject:, we only actually set the progress
@@ -83,6 +84,14 @@ extern float const SSYProgressPriorityRegular;
 	// which is always incremented when we get one of these messages.
 	double progressValue ;
 }
+
+/*!
+ @brief    Sets the font size used to draw the receiver
+ 
+ @details  If this is left at its default value of 0.0, font size used will be
+ computed automatically based on frame height.
+*/
+- (void)setFontSize:(CGFloat)fontSize ;
 
 /*!
  @brief    Sets the verb and optionally resizes its text field

@@ -144,8 +144,16 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	return activeCompletions ;
 }
 
+- (void)setFontSize:(CGFloat)fontSize {
+    _fontSize = fontSize;
+}
+
 - (CGFloat)fontSize {
-	CGFloat frameHeight = [self frame].size.height ;
+    if (_fontSize > 0.0) {
+        return _fontSize;
+    }
+
+    CGFloat frameHeight = [self frame].size.height ;
 	CGFloat fontSize ;
 #if 0
 #warning SSYProgressView computing font size the correct, ridiculous way
