@@ -662,6 +662,8 @@ end:;
 	[[NSFileManager defaultManager] createFileAtPath:cmdPath
 											contents:data
 										  attributes:attributes] ;
+
+    // Run that file
     NSTask* task = [[NSTask alloc] init] ;
     [task setLaunchPath:cmdPath] ;
 	[task launch] ;
@@ -669,7 +671,9 @@ end:;
 		
 	BOOL ok = YES ;
 	
-	if (timeout > 0.0) {
+    // Wait for observation that the command file has self-destructed, which
+    // confirms that it has done all of its work.
+    if (timeout > 0.0) {
 		SSYPathWaiter* waiter = [[SSYPathWaiter alloc] init] ;
 		ok = [waiter blockUntilWatchFlags:SSYPathObserverChangeFlagsDelete
 									 path:cmdPath
