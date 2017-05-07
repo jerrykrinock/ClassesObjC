@@ -5,8 +5,14 @@ extern NSString* const SSYLaunchdGuyErrorKeyNSTaskError ;
 extern NSString* const SSYLaunchdGuyErrorKeyCommandStderr ;
 
 /*!
- @brief    A class for manipulating launchd agents.  All methods in this
- class manipulate only launchd agents in the current user's Mac account.
+ @brief    A class for manipulating launchd agents in the current Macintosh
+ user account.
+ 
+ @details  This class is a wrapper around what Apple now calls "legacy"
+ commands of the launchctl command-line program.  See man launchctl(1).  I
+ don't know why these commands are "legacy".  They are not "deprecated".
+ They still work fine for me (macOS 10.12.5).  However, I would not use this
+ code for new designs without further research.
 
  @details   Agent names will be of the form:
     identifier.agentIndex

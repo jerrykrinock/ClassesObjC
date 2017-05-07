@@ -607,7 +607,6 @@ end:;
 	NSString* directory = [SSYLaunchdBasics homeLaunchAgentsPath] ;
 	NSString* plistPath = [directory stringByAppendingPathComponent:filename] ;
 	
-	// Added in BookMacster 1.5.7:
 	if (![[NSFileManager defaultManager] fileExistsAtPath:plistPath]) {
 		return YES ;
 	}
@@ -617,7 +616,7 @@ end:;
 	BOOL isLoaded = [self isLoadedLabel:label] ;
 	
 	
-	NSString* cmdPath = [[NSFileManager defaultManager] temporaryFilePath] ;
+	NSString* scriptPath = [[NSFileManager defaultManager] temporaryFilePath] ;
 	// I presumed we need execute permissions, which we don't get from
 	// -[NSString writeToFile::], so I do it this way:
 	NSNumber* octal755 = [NSNumber numberWithUnsignedLong:0755] ;
@@ -629,7 +628,7 @@ end:;
 								octal755, NSFilePosixPermissions,
 								nil] ;
 	
-	// Generate the command (cmd) as a multi-line string
+	// Generate the shell script as a multi-line string
 	NSMutableString* formatString = [[NSMutableString alloc] init] ;
 	[formatString appendString:
 	 @"#!/bin/sh\n"                                       // shebang
@@ -637,7 +636,7 @@ end:;
 	 @"sleep %d\n" ] ;                                    // for optional delaySeconds
 	if (isLoaded) {
 		[formatString appendString:
-		 @"/bin/launchctl unload -wF \"$PLIST_PATH\"\n"] ;    // Unload the agent
+		 @"/bin/launchctl unload -wF \"$PLIST_PATH\"\n"] ;// Unload the agent
 	}
 	if (justReload) {
 		[formatString appendString:
@@ -646,26 +645,26 @@ end:;
 	}
 	else {
 		[formatString appendString:
-		 @"rm \"$PLIST_PATH\"\n" ] ;                      // Remove the plist file
+		 @"/bin/rm -f \"$PLIST_PATH\"\n" ] ;              // Remove the plist file, if still present.  It might be gone if a previous run of this method was in process and had not deleted it before this method was invoked again.
 	}	
 	[formatString appendString:
-	 @"rm \"%@\"\n"] ;                                    // Remove this script's file (self-destruct)
-	NSString* cmd = [NSString stringWithFormat:
-					 formatString,
-					 plistPath,
-					 delaySeconds,
-					 cmdPath] ;
+	 @"/bin/rm \"%@\"\n"] ;                               // Remove this script's file (self-destruct)
+	NSString* script = [NSString stringWithFormat:
+                        formatString,
+                        plistPath,
+                        delaySeconds,
+                        scriptPath] ;
 	[formatString release] ;
 	
-	// Write the command to a file
-	NSData* data = [cmd dataUsingEncoding:NSUTF8StringEncoding] ;
-	[[NSFileManager defaultManager] createFileAtPath:cmdPath
+	// Write the script to a file
+	NSData* data = [script dataUsingEncoding:NSUTF8StringEncoding] ;
+	[[NSFileManager defaultManager] createFileAtPath:scriptPath
 											contents:data
 										  attributes:attributes] ;
 
-    // Run that file
+    // Run that script file
     NSTask* task = [[NSTask alloc] init] ;
-    [task setLaunchPath:cmdPath] ;
+    [task setLaunchPath:scriptPath] ;
 	[task launch] ;
 	[task release] ;
 		
@@ -676,7 +675,7 @@ end:;
     if (timeout > 0.0) {
 		SSYPathWaiter* waiter = [[SSYPathWaiter alloc] init] ;
 		ok = [waiter blockUntilWatchFlags:SSYPathObserverChangeFlagsDelete
-									 path:cmdPath
+									 path:scriptPath
 								  timeout:timeout] ;
 		[waiter release] ;
 	}
