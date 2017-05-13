@@ -6,6 +6,10 @@
 #define DESIRED_ALPHA 1.0
 #define DESIRED_THICKNESS 1.0
 
+- (void)awakeFromNib {
+    self.accessibilityElement = NO;
+}
+
 - (void)drawRect:(NSRect)dirtyRect {
     NSColor* color = [NSColor colorWithCalibratedWhite:DESIRED_WHITENESS
                                                  alpha:DESIRED_ALPHA] ;
