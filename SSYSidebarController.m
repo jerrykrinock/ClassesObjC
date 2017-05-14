@@ -149,6 +149,12 @@ typedef enum SSYSidebarControllerExpansionDirection_enum SSYSidebarControllerExp
     NSRect windowContentFrame = self.mainView.window.contentView.frame;
     CGFloat delta;
     if (expand) {
+        if (animate) {
+            self.sidebarView.animator.hidden = NO;
+        }
+        else {
+            self.sidebarView.hidden = NO;
+        }
         CGFloat availableLengthFromMainView ;
         availableLengthFromMainView = [self lengthOfFrame:windowContentFrame] - mainViewMinimum;
 
@@ -185,7 +191,13 @@ typedef enum SSYSidebarControllerExpansionDirection_enum SSYSidebarControllerExp
                       toFrame:&windowFrame];
         }
     } else {
-        delta = self.sidebarLength - self.lengthBorrowedFromMainView;
+        if (animate) {
+            self.sidebarView.animator.hidden = YES;
+        }
+        else {
+            self.sidebarView.hidden = YES;
+        }
+       delta = self.sidebarLength - self.lengthBorrowedFromMainView;
         [self addLength:-delta
                 toFrame:&windowFrame];
         [self addLength:-delta
