@@ -20,8 +20,10 @@ NSString* const constKeyMOC = @"moc" ;
 NSString* const constKeyOwner = @"owr" ;
 NSString* const constKeyStoreUrl = @"sturl" ;
 
+#if 0
+#define SIMULATE_BAD_STORE 1
 static BOOL didSimulateBadStoreOnce = NO;
-
+#endif
 
 // This is a singleton, but not a "true singletons", because
 // I didn't bother to override
@@ -235,8 +237,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
                                                                  URL:url
                                                              options:options
                                                                error:error_p] ;
-#if 0
-#warning Simulating a bad store to test error handling
+#if SIMULATE_BAD_STORE
                 if (!didSimulateBadStoreOnce) {
                     persistentStore = nil ;
                     NSString* simulatedErrorDescription = [NSString stringWithFormat:
