@@ -20,6 +20,8 @@ NSString* const constKeyMOC = @"moc" ;
 NSString* const constKeyOwner = @"owr" ;
 NSString* const constKeyStoreUrl = @"sturl" ;
 
+static BOOL didSimulateBadStoreOnce = NO;
+
 
 // This is a singleton, but not a "true singletons", because
 // I didn't bother to override
@@ -227,17 +229,23 @@ static SSYMOCManager* sharedMOCManager = nil ;
 		   
             // Here is where option journal_mode gets used
             if (ok) {
-               // Add persistent store to it
-			   persistentStore = [newPSC addPersistentStoreWithType:NSSQLiteStoreType
-													  configuration:nil
-																URL:url
-															options:options
-															  error:error_p] ;
+                // Add persistent store to it
+                persistentStore = [newPSC addPersistentStoreWithType:NSSQLiteStoreType
+                                                       configuration:nil
+                                                                 URL:url
+                                                             options:options
+                                                               error:error_p] ;
 #if 0
 #warning Simulating a bad store to test error handling
-			   persistentStore = nil ;
-			   *error_p = SSYMakeError(12345, @"Can't use this stinkin' store") ;
-			   NSLog(@"61745: Store set to nil for testing") ;
+                if (!didSimulateBadStoreOnce) {
+                    persistentStore = nil ;
+                    NSString* simulatedErrorDescription = [NSString stringWithFormat:
+                                                           @"Can't use this stinkin' store at\n%@",
+                                                           url.path];
+                    *error_p = SSYMakeError(12345, simulatedErrorDescription) ;
+                    NSLog(@"61745: Simulating bad store at %@", url.path);
+                    didSimulateBadStoreOnce = YES;
+                }
 #endif
 			   if (!persistentStore) {
 				   BOOL fileExists = [fm fileExistsAtPath:[url path]] ;
