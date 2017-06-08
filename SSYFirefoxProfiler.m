@@ -395,7 +395,7 @@ end:;
                 
                 if (thisProfileName && thisRawPath && (thisIsRelative != -1)) {
                     thisProfileDone = YES ;
-                    NSString* thisFullPath = NO ;
+                    NSString* thisFullPath = nil ;
                     NSString* filepathProfilesIni = [self profilesFilePathForHomePath:homePath] ;
 
                     if (thisIsRelative == 1) {
