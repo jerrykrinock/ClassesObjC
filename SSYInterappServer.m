@@ -15,11 +15,11 @@
  @brief    
 
  @details  WHY WE NEED THIS:
- Although documented, CFMessagePort has a rather odd behavior.  If you invalidate
- it with CFMessagePortInvalidate(), it becomes a "dead" port.  It can no longer
- send or receive messages, but if you try and create a new port with the same
- name, CFMessagePortCreateLocal() will fail.  You'll get the following message
- logged to stderr:
+ Although documented, CFMessagePort has a rather odd behavior.  If you
+ invalidate it with CFMessagePortInvalidate(), it becomes a "dead" port.  It
+ can no longer send or receive messages, but if you try and create a new port
+ with the same name, CFMessagePortCreateLocal() will fail.  You'll get the
+ following message logged to stderr:
  
  *** CFMessagePort: bootstrap_register(): failed 1103 (0x44f) 'Service name already exists'
 
@@ -29,12 +29,12 @@
  a Cocoa object object such as SSYInterappServer, however, makes the time of
  deallocation indeterminate, due to autorelease pools.
  
- To fix this, I maintain this singleton/static NSSet of portsInUse which contains
- pointers to CFMessagePortRefs wrapped as NSValue.  In the init method, I check
- this set for a port with the requested name and, if so, send it a CFRetain and
- return it.  Otherwise, I CFCreate a new one.  In -dealloc, I call CFGetRetainCount()
- upon the indicated port and, if this is 2, remove it from portsInUse, also calling
- CFRelease() upon it in any case.
+ To fix this, I maintain this singleton/static NSSet of portsInUse which
+ contains pointers to CFMessagePortRefs wrapped as NSValue.  In the init
+ method, I check this set for a port with the requested name and, if so, send
+ it a CFRetain and return it.  Otherwise, I CFCreate a new one.  In -dealloc,
+ I call CFGetRetainCount() upon the indicated port and, if this is 2, remove it
+ from portsInUse, also calling CFRelease() upon it in any case.
  
  This seems to make everything work OK.
 */
@@ -54,55 +54,61 @@ CFDataRef SSYInterappServerCallBackCreateData(
 									SInt32 msgid,
 									CFDataRef data,
 									void* info) {
-	// Unpack the data and send to delegate
-	char headerByte = 0 ;
+    // Unpack the header byte
+    char headerByte = 0 ;
 	if ([(__bridge NSData*)data length] > 0) {
 		[(__bridge NSData*)data getBytes:&headerByte
 						 length:1] ;
 	}
-	NSData* rxPayload = nil ;
-	if ([(__bridge NSData*)data length] > 1) {
-		rxPayload = [(__bridge NSData*)data subdataWithRange:NSMakeRange(1, [(__bridge NSData*)data length] - 1)] ;
-	}
-	
-	SSYInterappServer* server = (__bridge SSYInterappServer*)info ;
-	
-	NSObject <SSYInterappServerDelegate> * delegate = [server delegate] ;
-	[delegate interappServer:server
-		didReceiveHeaderByte:headerByte
-						data:rxPayload] ;
 
-	// Get response from delegate and return to Client
-	NSMutableData* responseData ;
-	char responseHeaderByte = [delegate responseHeaderByte] ;
-	NSData* responsePayload = [delegate responsePayload] ;
-    if (responseHeaderByte || responsePayload) {
-        responseData = [[NSMutableData alloc] init] ;
-        if (responseHeaderByte != 0) {
-            [responseData appendBytes:(const void*)&responseHeaderByte
-                               length:1] ;
+    CFDataRef outputData = NULL;
+    /* headerByte = 0 means that the client just wants to know if our port
+     name exists on the system. */
+    if (headerByte != 0) {
+        // Unpack the payload data and send to delegate
+        NSData* rxPayload = nil ;
+        if ([(__bridge NSData*)data length] > 1) {
+            rxPayload = [(__bridge NSData*)data subdataWithRange:NSMakeRange(1, [(__bridge NSData*)data length] - 1)] ;
         }
-        if (responsePayload) {
-            [responseData appendData:responsePayload] ;
+
+        SSYInterappServer* server = (__bridge SSYInterappServer*)info ;
+
+        NSObject <SSYInterappServerDelegate> * delegate = [server delegate] ;
+        [delegate interappServer:server
+            didReceiveHeaderByte:headerByte
+                            data:rxPayload] ;
+
+        // Get response from delegate and return to Client
+        NSMutableData* responseData ;
+        char responseHeaderByte = [delegate responseHeaderByte] ;
+        NSData* responsePayload = [delegate responsePayload] ;
+        if (responseHeaderByte || responsePayload) {
+            responseData = [[NSMutableData alloc] init] ;
+            if (responseHeaderByte != 0) {
+                [responseData appendBytes:(const void*)&responseHeaderByte
+                                   length:1] ;
+            }
+            if (responsePayload) {
+                [responseData appendData:responsePayload] ;
+            }
         }
-    }
-    else {
-        responseData = NULL ;
-    }
-    
-	// From CFMessagePortCallBack documentation, we return the
-	// "data to send back to the sender of the message.  The system
-	// releases the returned CFData object."
-    CFDataRef outputData ;
-    if (responseData) {
-        outputData = CFDataCreateCopy(kCFAllocatorDefault, (CFDataRef)responseData) ;
-    }
-    else {
-        outputData = NULL ;
-    }
+        else {
+            responseData = NULL ;
+        }
+
+        // From CFMessagePortCallBack documentation, we return the
+        // "data to send back to the sender of the message.  The system
+        // releases the returned CFData object."
+        if (responseData) {
+            outputData = CFDataCreateCopy(kCFAllocatorDefault, (CFDataRef)responseData) ;
+        }
+        else {
+            outputData = NULL ;
+        }
 #if NO_ARC
-    [responseData release] ;
+        [responseData release] ;
 #endif
+    }
     
 	return outputData ;
 }
@@ -224,44 +230,46 @@ CFDataRef SSYInterappServerCallBackCreateData(
                  this misleading message to the console:
                  *** CFMessagePort: bootstrap_register(): failed 1100 (0x44c) 'Permission denied', port = 0x12e33, name = 'com.sheepsystems.BookMacster.ExtoreFirefox.FromClient'
                  */
-                errorCode = 287101 ;
+                errorCode = SSYInterappServerErrorFailedToCreatePort ;
 			}
 		}
 	}
 	else {
-		errorCode = 287103 ;
+		errorCode = SSYInterappServerErrorFailedToInitializeSelf ;
 	}
 	
 	if (errorCode != 0) {
-		// See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
+        // See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
 #if NO_ARC
 		[super dealloc] ;
 #endif
 		self = nil ;
 		
 		if (error_p) {
-            // Added in BookMacster 1.22.8.
-            // See if the port with our target portName is already in use by
-            // seeing if sending a message to it succeeds.
-            BOOL portAppearsToBeInUse = [SSYInterappClient sendHeaderByte:'t'
-                                                                txPayload:nil
-                                                                 portName:portName
-                                                                     wait:YES
-                                                           rxHeaderByte_p:NULL
-                                                              rxPayload_p:NULL
-                                                                txTimeout:1.0
-                                                                rxTimeout:1.0
-                                                                  error_p:NULL] ;
-            NSString* localizedFailureReason = nil ;
-            if ((errorCode == 287101) && portAppearsToBeInUse) {
-                localizedFailureReason = @"This can happen if your program tries to open a port which it has already opened by that name, or if another running instance of your program already has such a port open." ;
+            NSString* localizedFailureReason = nil;
+            if (errorCode == SSYInterappServerErrorFailedToCreatePort) {
+                // See if the port with our target portName is already in use by
+                // seeing if sending a message to it succeeds.
+                BOOL portAppearsToBeInUse = [SSYInterappClient sendHeaderByte:0
+                                                                    txPayload:nil
+                                                                     portName:portName
+                                                                         wait:YES
+                                                               rxHeaderByte_p:NULL
+                                                                  rxPayload_p:NULL
+                                                                    txTimeout:1.0
+                                                                    rxTimeout:1.0
+                                                                      error_p:NULL] ;
+                if (portAppearsToBeInUse) {
+                    errorCode = SSYInterappServerErrorPortNameAlreadyInUse;
+                    localizedFailureReason = @"Port with requested name appears to be already in use on this system." ;
+                }
             }
-			*error_p = [NSError errorWithDomain:SSYInterappServerErrorDomain
+
+            *error_p = [NSError errorWithDomain:SSYInterappServerErrorDomain
 										   code:errorCode
 									   userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
 												 @"macOS failed to create a local message port.", NSLocalizedDescriptionKey,
 												 portName, @"Port Name",
-                                                 portAppearsToBeInUse ? @"Yup" : @"Nope", @"Port appears to be already in use?",
                                                  localizedFailureReason, NSLocalizedDescriptionKey, // may be nil
 												 nil]] ;
 		}

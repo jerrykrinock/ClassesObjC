@@ -351,6 +351,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 																						 error_p:error_p] ;
 		if (coordinator) {
             managedObjectContext = [[NSManagedObjectContext alloc] init] ;
+            // NSLog(@"Created for %@ moc %p on thread %p isMain=%hhd", identifier, managedObjectContext, [NSThread currentThread], [[NSThread currentThread] isMainThread]) ;
 			[managedObjectContext setPersistentStoreCoordinator:coordinator] ;
 			if (!owner_) {
 				// A no-owner moc is a "cheap" moc.

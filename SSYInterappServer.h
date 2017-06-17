@@ -3,13 +3,22 @@
 
 extern NSString* const SSYInterappServerErrorDomain ;
 
+#define SSYInterappServerErrorFailedToCreatePort 287101
+#define SSYInterappServerErrorPortNameAlreadyInUse 287102
+#define SSYInterappServerErrorFailedToInitializeSelf 287103
+
 @class SSYInterappServer ;
 
 /*!
  @brief    A server object which responds to a message sent by an 
  SSYInterAppClient object from another thread or process.
  
- @details  Dave Keck has suggested an easier way to do this.
+ @details  If the headerByte sent by the SSYInterAppClient is 0, this server
+ will swallow the message but will not respond.  This is useful in case the
+ client just wants to see if the server port is present on the system.  (If
+ not, the client will get a transmit error.)
+
+ Dave Keck has suggested an easier way to do this.
  See comment at bottom of this file.
  
  Troubleshooting tip.  To see if a port is active in the system,
@@ -22,7 +31,7 @@ extern NSString* const SSYInterappServerErrorDomain ;
  *    Example:
  *      sudo launchctl print user/501 | grep sheepsystems
 
- For searching so I can find the above comment later:
+ Here are some search terms, so I can find the above comment later:
  command line, active mach port, active mach ports,
 */
 @interface SSYInterappServer : NSObject {
