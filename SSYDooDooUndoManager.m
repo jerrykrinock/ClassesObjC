@@ -40,9 +40,12 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 - (void)coupleToDocument:(NSDocument*)document {
     //	[self setGroupsByEvent:NO] ;  // Causes all hell to break loose with Core Data.
     
-    // We cast to an id since the compiler expects these to methods
-    // to get something which inherits from NSUndoManager, which
-    // GCUndoManager does not.
+    /* The following line has no effect if document defines its
+     -setUndoManager method to be a noop.  Check with your document class :)
+
+     We cast to an id since the compiler expects these to methods
+     to get something which inherits from NSUndoManager, which
+     GCUndoManager does not. */
     [document setUndoManager:(id)self] ; // Causes moc to be created, which causes persisten store to be created ??
     
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -63,6 +66,9 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 
 + (SSYDooDooUndoManager*)makeUndoManagerForDocument:(BSManagedDocument*)document {
 	SSYDooDooUndoManager* undoManager = [[SSYDooDooUndoManager alloc] init] ;
+    /* The following line has no effect if document defines its
+     -setUndoManager method to be a noop.  Check with your document class :)
+. */
     [undoManager coupleToDocument:document] ;
     [undoManager coupleToManagedObjectContext:[document managedObjectContext]] ;
     [undoManager autorelease] ;
