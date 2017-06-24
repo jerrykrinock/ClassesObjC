@@ -8,6 +8,7 @@
 #import "NSBundle+MainApp.h"
 #import "NSDocument+SSYAutosaveBetter.h"
 #import "NSPersistentDocument+SSYMetadata.h"
+#import "BSManagedDocument.h"
 #import "NSString+SSYDotSuffix.h"
 
 NSString* const SSYPersistentDocumentMultiMigratorErrorDomain = @"SSYPersistentDocumentMultiMigratorErrorDomain" ;
@@ -95,7 +96,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
         // TODO: Maybe we should try this method first, because it is more
         // likely to work, and does not log crap to the console if it does
         // not work.
-        storeMetadata = [NSPersistentDocument metadataAtPath:[url path]] ;
+        storeMetadata = [BSManagedDocument metadataAtPath:[url path]] ;
 #if DEBUG
         if (storeMetadata) {
             NSLog(@"Succeeded after -[NSPersistentStore metadataForPersistentStoreOfType:URL:error:] failed.  Got: %@", storeMetadata) ;

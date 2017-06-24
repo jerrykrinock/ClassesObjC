@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+@class BSManagedDocument;
 
 
 /*!
@@ -84,9 +85,6 @@
  If you do not wish to support multi-hop migration, you may pass nil
  and only Core Data's built-in single-hop automatic migration will
  be used.  For store types other than sqlite, this parameter is ignored.
- @param    useLegacyRollbackJournaling.  See Apple WWDC 2013 Session 207,
- "What's New in Core Data and iCloud", 40:00 - 48:00.  Ignored if storeType
- is not NSSQLiteStoreType.
  @param    error_p  If managed object context could not be created, points to an NSError
  on output. This should not occur for NSInMemoryStoreType, only NSSQLiteStoreType.
  @result   The new or pre-existing managed object context, or nil if one could not be created.
@@ -95,7 +93,6 @@
 											  owner:(id)owner
 										 identifier:(NSString*)identifier
 										   momdName:(NSString*)momdName
-                        useLegacyRollbackJournaling:(BOOL)useLegacyRollbackJournaling
 											error_p:(NSError**)error_p ;
 
 /*!
@@ -114,7 +111,7 @@
  
  @param    managedObjectContext  The managed object context to be registered.
 */
-+ (void)registerOwnerDocument:(NSPersistentDocument*)document
++ (void)registerOwnerDocument:(BSManagedDocument*)document
 	   ofManagedObjectContext:(NSManagedObjectContext*)managedObjectContext ;
 
 /*!

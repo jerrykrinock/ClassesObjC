@@ -8,6 +8,7 @@
 #import "NSBundle+MainApp.h"
 #import "NSEntityDescription+SSYMavericksBugFix.h"
 #import "NSObject+DoNil.h"
+#import "BSManagedDocument.h"
 
 // Public Notifications
 NSString* const SSYManagedObjectWillUpdateNotification = @"SSYManagedObjectWillUpdateNotification" ;
@@ -47,11 +48,9 @@ NSString* const constKeyObserverContext = @"context" ;
 	// an NSInvocation here and invoke these next two on main thread:
 	BOOL isUndoing = [um isUndoing] ;
 	BOOL isRedoing = [um isRedoing] ;
-//	if ([[self owner] isKindOfClass:[NSPersistentDocument class]]) {
 	if (isUndoing || isRedoing) {
 		NSLog(@"%@ %@did changed value for key: %@",
 			  [[self entity] name],
-//			  [self shortDescription],
 			  isUndoing ? @"un" : @"re",
 			  key) ;
 		// Optional: Put a breakpoint here and debug to see what caused it
@@ -338,7 +337,7 @@ end:;
                             object2:value]) {
         // Extores do need the notification, to count changes, but they are not
         // undoable.  So we only begin an undo grouping if the owner is a BkmxDoc.
-        if ([[self owner] isKindOfClass:[NSPersistentDocument class]]) {
+        if ([[self owner] isKindOfClass:[BSManagedDocument class]]) {
             // Note that beginAutoEndingUndoGrouping will coalesce for us.
             [(SSYDooDooUndoManager*)[[self owner] undoManager] beginAutoEndingUndoGrouping] ;
         }

@@ -1,6 +1,6 @@
 #import "SSYThreadConfinedCoreDataStack.h"
 #import "NSBundle+MainApp.h"
-#import "NSPersistentStoreCoordinator+PatchRollback.h"
+#import "BSManagedDocument.h"
 
 @implementation SSYThreadConfinedCoreDataStack
 
@@ -37,12 +37,24 @@
         // Create the coordinator and store
         m_persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:[self managedObjectModel]] ;
     
+        NSURL* url = [self storeUrl];
+        NSString* path = [url path];
+        BOOL isDirectory;
+        [[NSFileManager defaultManager] fileExistsAtPath:path
+                                             isDirectory:&isDirectory];
+        if (isDirectory) {
+            /* It's a file package. */
+            path = [path stringByAppendingPathComponent:[BSManagedDocument storeContentName]];
+            path = [path stringByAppendingPathComponent:[BSManagedDocument persistentStoreName]];
+            url = [NSURL fileURLWithPath:path];
+        }
+
+
         error = nil ;
-        NSDictionary* options = [NSPersistentStoreCoordinator dictionaryByAddingSqliteRollbackToDictionary:nil] ;
         if (![m_persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType
                                                        configuration:nil
-                                                                 URL:[self storeUrl]
-                                                             options:options
+                                                                 URL:url
+                                                             options:nil
                                                                error:&error]) {
             NSLog(@"Internal Error 285-0013 %@ %@", error, [error userInfo]) ;
         }

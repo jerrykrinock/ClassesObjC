@@ -13,7 +13,7 @@
 #import "NSBundle+SSYMotherApp.h"
 #import "NSBundle+MainApp.h"
 #import "NSDictionary+SimpleMutations.h"
-#import "NSPersistentStoreCoordinator+PatchRollback.h"
+#import "BSManagedDocument.h"
 
 
 NSString* const constKeyMOC = @"moc" ;
@@ -375,7 +375,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 	return managedObjectContext ;
 }
 
-+ (void)registerOwnerDocument:(NSPersistentDocument*)document
++ (void)registerOwnerDocument:(BSManagedDocument*)document
 	   ofManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
 	NSMutableDictionary* mocDics = [[self sharedMOCManager] docMOCDics] ;
 
@@ -493,14 +493,8 @@ static SSYMOCManager* sharedMOCManager = nil ;
 											  owner:(id)owner
 										 identifier:(NSString*)identifier
 										   momdName:(NSString*)momdName
-                        useLegacyRollbackJournaling:(BOOL)useLegacyRollbackJournaling
 											error_p:(NSError**)error_p {
     NSDictionary* options = nil ;
-    if ([type isEqualToString:NSSQLiteStoreType]) {
-        if (useLegacyRollbackJournaling) {
-            options = [NSPersistentStoreCoordinator dictionaryByAddingSqliteRollbackToDictionary:nil] ;
-        }
-    }
 
 	NSManagedObjectContext* moc = [[self sharedMOCManager] managedObjectContextType:type
 																			  owner:owner

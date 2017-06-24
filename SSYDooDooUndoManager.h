@@ -136,7 +136,7 @@ extern NSString* const SSYUndoManagerDocumentWillSaveNotification ;
  don't need this.  You can always get it later by sending -undoManager
  to your document.
 */
-+ (SSYDooDooUndoManager*)makeUndoManagerForDocument:(NSPersistentDocument*)document ;
++ (SSYDooDooUndoManager*)makeUndoManagerForDocument:(NSDocument*)document ;
 
 /*!
  @brief    Begins an undo grouping which is highly resistant to
@@ -197,7 +197,7 @@ extern NSString* const SSYUndoManagerDocumentWillSaveNotification ;
  associate a document's managed object context, if any. For Core Data documents,
  you must also -coupleToManagedObjectContext:.
  */
-- (void)coupleToDocument:(NSPersistentDocument*)document ;
+- (void)coupleToDocument:(NSDocument*)document ;
 
 - (void)coupleToManagedObjectContext:(NSManagedObjectContext*)managedObjectContext ;
 

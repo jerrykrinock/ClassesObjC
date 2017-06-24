@@ -1,6 +1,8 @@
 #import "SSYDooDooUndoManager.h"
 #import "SSYMOCManager.h"
 
+#import "BSManagedDocument.h"
+
 NSString* const SSYUndoManagerWillEndUndoGroupNotification = @"SSYUndoManagerWillEndUndoGroupNotification" ;
 NSString* const SSYUndoManagerDocumentWillSaveNotification = @"SSYUndoManagerDocumentWillSaveNotification" ;
 NSString* const SSYUndoManagerDocumentDidOpenNotification = @"SSYUndoManagerDocumentDidOpenNotification" ;
@@ -35,7 +37,7 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 }
 
 
-- (void)coupleToDocument:(NSPersistentDocument*)document {
+- (void)coupleToDocument:(NSDocument*)document {
     //	[self setGroupsByEvent:NO] ;  // Causes all hell to break loose with Core Data.
     
     // We cast to an id since the compiler expects these to methods
@@ -59,7 +61,7 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 	[super dealloc] ;
 }
 
-+ (SSYDooDooUndoManager*)makeUndoManagerForDocument:(NSPersistentDocument*)document {
++ (SSYDooDooUndoManager*)makeUndoManagerForDocument:(BSManagedDocument*)document {
 	SSYDooDooUndoManager* undoManager = [[SSYDooDooUndoManager alloc] init] ;
     [undoManager coupleToDocument:document] ;
     [undoManager coupleToManagedObjectContext:[document managedObjectContext]] ;
