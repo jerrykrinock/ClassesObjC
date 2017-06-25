@@ -1,6 +1,10 @@
 #import "SSYThreadConfinedCoreDataStack.h"
 #import "NSBundle+MainApp.h"
 #import "BSManagedDocument.h"
+/* BSManagedDocument is a open source replacement for NSPersistentDocument.
+ It is recommended for any Core Data document-based app.
+ https://github.com/jerrykrinock/BSManagedDocument
+ */
 
 @implementation SSYThreadConfinedCoreDataStack
 
@@ -39,16 +43,8 @@
     
         NSURL* url = [self storeUrl];
         NSString* path = [url path];
-        BOOL isDirectory;
-        [[NSFileManager defaultManager] fileExistsAtPath:path
-                                             isDirectory:&isDirectory];
-        if (isDirectory) {
-            /* It's a file package. */
-            path = [path stringByAppendingPathComponent:[BSManagedDocument storeContentName]];
-            path = [path stringByAppendingPathComponent:[BSManagedDocument persistentStoreName]];
-            url = [NSURL fileURLWithPath:path];
-        }
-
+        path = [BSManagedDocument storePathForDocumentPath:path];
+        url = [NSURL fileURLWithPath:path];
 
         error = nil ;
         if (![m_persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType
