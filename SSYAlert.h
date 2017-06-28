@@ -389,7 +389,6 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 	NSButton* buttonPrototype ;
 	NSString* wordAlert ;
 	NSString* m_whyDisabled ;
-	NSWindow* documentWindow ;
 	NSInvocation* m_checkboxInvocation ;
 	
 	BOOL m_isEnabled ;
@@ -460,13 +459,6 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  If set to nil, the tooltip is removed.
  */
 @property (copy) NSString* whyDisabled ;
-
-/*!
- @brief    A stupid patch for the fact that when a modal sheet ends,
- the action method only gives me the button and not the documentWindow
- or its sheet which I need to forward to endSheet:.
- */
-@property (retain) NSWindow* documentWindow ;
 
 /*!
  @brief    Indicates which button was last clicked
@@ -791,8 +783,8 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  This method also posts an SSYAlertDidProcessErrorNotification, unless 
  the error -isOnlyInformational.
  
- @param    error  The error to be presented, or nil.
- @param    documentWindow  The document window to which to attach the sheet.
+ @param    error  The error to be presented, or nil
+ @param    sheetParent  The window upon which to attach the sheet
  @param    modalDelegate  The object which will receive and must respond to
  the didEndSelector, or nil if you want the receiver to handle it.  If the
  receiver handles it, its alertReturn will be set to the NSAlertReturn value
@@ -803,10 +795,10 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  to make the sheet go away, the didEndSelector must send -orderOut: to the
  'sheet' argument it receives.
  @param    contextInfo  Pointer to data which will be returned as the
- third element of the didEndSelector.
+ third element of the didEndSelector
  */
 + (void)alertError:(NSError*)error
-		  onWindow:(NSWindow*)documentWindow
+		  onWindow:(NSWindow*)sheetParent
 	 modalDelegate:(id)modalDelegate
 	didEndSelector:(SEL)didEndSelector
 	   contextInfo:(void*)contextInfo ;

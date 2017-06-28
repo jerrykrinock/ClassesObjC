@@ -375,7 +375,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @synthesize iconCritical ;
 @synthesize buttonPrototype ;
 @synthesize wordAlert ;
-@synthesize documentWindow ;
 
 @synthesize isVisible ;
 @synthesize nDone ;
@@ -1433,7 +1432,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 }
 
-- (void)prepareAsSheetOnWindow:(NSWindow*)docWindow {
+- (void)prepareAsSheetOnWindow:(NSWindow*)sheetParent {
     [self setButton1IfNeeded] ;
     
     /* Button1 target and action should always be set by setButton1Title: */
@@ -1451,7 +1450,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(parentWindowWillClose:)
                                                  name:NSWindowWillCloseNotification
-                                               object:docWindow] ;
+                                               object:sheetParent] ;
 
     [self doooLayout] ;
     
@@ -1460,8 +1459,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     }
     
     [self setIsDoingModalDialog:YES] ;
-    
-    [self setDocumentWindow:docWindow] ;
 }
 
 - (void)parentWindowWillClose:(NSNotification*)note {
@@ -1478,11 +1475,11 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     }
 }
 
-- (void)runModalSheetOnWindow:(NSWindow*)docWindow
+- (void)runModalSheetOnWindow:(NSWindow*)sheetParent
                 modalDelegate:(id)modalDelegate
                didEndSelector:(SEL)didEndSelector
                   contextInfo:(void*)contextInfo {
-	if (docWindow) {
+	if (sheetParent) {
         NSAssert(((modalDelegate != nil) == (didEndSelector != nil)), @"222 modalDelegate vs. didEndSelector inconsistency.") ;
         if (!modalDelegate) {
             modalDelegate = self ;
@@ -1492,9 +1489,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
             didEndSelector = @selector(sheetDidEnd:returnCode:contextInfo:) ;
         }
         
-        [self prepareAsSheetOnWindow:docWindow];
+        [self prepareAsSheetOnWindow:sheetParent];
 		
-        [docWindow beginSheet:[self window]
+        [sheetParent beginSheet:[self window]
             completionHandler:^void(NSModalResponse modalResponse) {
                 NSWindow* window = [self window] ;
                 NSInvocation* invocation = [NSInvocation invocationWithTarget:modalDelegate
@@ -2122,8 +2119,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
                                                           object:self.window.sheetParent] ;
         }
 
-        [self setDocumentWindow:nil] ;
-        
         if (self.window) {
             [self.window.sheetParent endSheet:self.window
                                    returnCode:[self alertReturn]] ;
@@ -2377,7 +2372,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (void)alertError:(NSError*)error
-		  onWindow:(NSWindow*)documentWindow_
+		  onWindow:(NSWindow*)sheetParent
 	 modalDelegate:(id)modalDelegate
 	didEndSelector:(SEL)didEndSelector
 	   contextInfo:(void*)contextInfo {
@@ -2405,7 +2400,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			didEndSelector = @selector(errorSheetDidEnd:returnCode:contextInfo:) ;
 		}
 		
-		[self runModalSheetOnWindow:documentWindow_
+		[self runModalSheetOnWindow:sheetParent
 					  modalDelegate:modalDelegate
 					 didEndSelector:didEndSelector
 						contextInfo:contextInfo] ;		
@@ -2472,7 +2467,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 + (void)alertError:(NSError*)error
-		  onWindow:(NSWindow*)documentWindow_
+		  onWindow:(NSWindow*)sheetParent
 	 modalDelegate:(id)modalDelegate
 	didEndSelector:(SEL)didEndSelector
 	   contextInfo:(void*)contextInfo {
@@ -2481,7 +2476,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	SSYAlert* alert = [SSYAlert alert] ;
 	
 	[alert alertError:error
-			 onWindow:documentWindow_
+			 onWindow:sheetParent
 		modalDelegate:modalDelegate
 	   didEndSelector:didEndSelector
 		  contextInfo:contextInfo] ;
@@ -2570,7 +2565,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[iconCritical release] ;
 	[buttonPrototype release] ;
 	[wordAlert release] ;
-	[documentWindow release] ;
 	[otherSubviews release] ;
 	[clickTarget release] ;
 	[clickObject release] ;
