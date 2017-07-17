@@ -323,7 +323,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	
 	// The hyperWidth and cancelWidth cannot be adjusted.
 	// The remainder, textAndBarWidth, will be split between textField and progBar	
-	CGFloat requiredTextWidth = [[[self textField] stringValue] widthForHeight:CGFLOAT_MAX
+	CGFloat requiredTextWidth = [[[self textField] stringValue] widthForHeight:FLT_MAX
 																		  font:[[self textField] font]] ;
 	CGFloat textExcessWidth = [self textWidth] - requiredTextWidth ;
 	
@@ -468,7 +468,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	
 	// Make textToDisplay by appending ellipsis to verbToDisplay
 	NSString* text = [textField stringValue] ;
-	CGFloat requiredWidth = [text widthForHeight:CGFLOAT_MAX
+	CGFloat requiredWidth = [text widthForHeight:FLT_MAX
 										  font:[textField font]] ;
 	[textField setWidth:requiredWidth] ;
 	[self sizeToFitTextOnly:NO] ;
