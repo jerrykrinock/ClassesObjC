@@ -19,9 +19,9 @@
  SSYAppSupporter.
  */
 @interface SSYMOCManager : NSObject {
-	NSMutableDictionary* inMemoryMOCDics ;
-	NSMutableDictionary* sqliteMOCDics ;
-	NSMutableDictionary* docMOCDics ;
+    NSMutableDictionary* inMemoryMOCDics ;
+    NSMutableDictionary* sqliteMOCDics ;
+    NSMutableDictionary* docMOCDics ;
 }
 
 /*!
@@ -34,7 +34,7 @@
  @brief    Returns whether or not a persistent (sqlite) store exists
  for a given identifier.
 
- @details  Because +managedObjectContextType::::: creates
+ @details  Because +managedObjectContextType:::::: creates
  a new store if the one you ask for does not exist, you need to use this
  method to determine a store's existence.
  
@@ -85,15 +85,20 @@
  If you do not wish to support multi-hop migration, you may pass nil
  and only Core Data's built-in single-hop automatic migration will
  be used.  For store types other than sqlite, this parameter is ignored.
- @param    error_p  If managed object context could not be created, points to an NSError
+  @param    nukeAndPaveIfCorrupt.  If YES, and if the requested managed object
+ context cannot be created becaus the underlying store file on the disk is
+ corrupt, will silently delete the file and start a new empty one as if nothing
+ bad happened.  Ignored if the storeType is not NSSQLiteStoreType.
+@param    error_p  If managed object context could not be created, points to an NSError
  on output. This should not occur for NSInMemoryStoreType, only NSSQLiteStoreType.
  @result   The new or pre-existing managed object context, or nil if one could not be created.
 */
 + (NSManagedObjectContext*)managedObjectContextType:(NSString*)storeType
-											  owner:(id)owner
-										 identifier:(NSString*)identifier
-										   momdName:(NSString*)momdName
-											error_p:(NSError**)error_p ;
+                                              owner:(id)owner
+                                         identifier:(NSString*)identifier
+                                           momdName:(NSString*)momdName
+                                nukeAndPaveIfCorrupt:(BOOL)nukeAndPaveIfCorrupt
+                                            error_p:(NSError**)error_p ;
 
 /*!
  @brief    Adds a managed object context to the document managed object contexts
@@ -112,14 +117,14 @@
  @param    managedObjectContext  The managed object context to be registered.
 */
 + (void)registerOwnerDocument:(BSManagedDocument*)document
-	   ofManagedObjectContext:(NSManagedObjectContext*)managedObjectContext ;
+       ofManagedObjectContext:(NSManagedObjectContext*)managedObjectContext ;
 
 /*!
  @brief    Returns the owner of a given managed object context, or if it turns out to have not
  been created by this class, the NSPersistentDocument to which it belongs.
 
  @details  This method searches its instance data looking for the owner that was provided when
- a managed object context was returned by the receiver's -managedObjectContextType:::::.
+ a managed object context was returned by the receiver's -managedObjectContextType::::::.
   If none is found, then it seaches the application's NSDocumentController's
  -documents, looking for an NSPersistentDocument subclass which returns a -managedObjectContext
  that matches the given managedObjectCcontext. 
@@ -136,12 +141,12 @@
 + (id)ownerOfManagedObjectContext:(NSManagedObjectContext*)managedObjectContext ;
 
 /*!
- @brief    Removes a managed object context returned by -managedObjectContextType:::::
+ @brief    Removes a managed object context returned by -managedObjectContextType::::::
  from the receiver's instance's data.
 
  @details  This method releases the receiver's retain count on the managed object
  context, if the receiver has a record of it. Send a this message whenever a
- managed object context returned by -managedObjectContextType::::: is no longer
+ managed object context returned by -managedObjectContextType:::::: is no longer
  needed, in order to avoid memory leaks in your program.  To avoid retain cycles,
  don't do it in -dealloc.  Put it in a method which runs prior to -dealloc.
  It is OK to send this message more than once; further invocations will no-op.
