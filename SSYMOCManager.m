@@ -151,6 +151,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 													 identifier:(NSString*)identifier
 													   momdName:(NSString*)momdName
                                                         options:(NSDictionary*)options
+                                           nukeAndPaveIfCorrupt:(BOOL)nukeAndPaveIfCorrupt
 														error_p:(NSError**)error_p {
 	NSPersistentStore* persistentStore = nil ;
 	
@@ -251,22 +252,34 @@ static SSYMOCManager* sharedMOCManager = nil ;
 			   if (!persistentStore) {
 				   BOOL fileExists = [fm fileExistsAtPath:[url path]] ;
 				   if (fileExists) {
-					   // If we did not get a store but file exists, must be a corrupt file.
-					   NSString* msg = [NSString stringWithFormat:@"Click 'Move' to move the unreadable database\n%@\nto your desktop and start a new database.  The item properties in your old database will not be available to %@.",
-										[url path],
-										[[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"]] ;
-					   // We used CFBundleExecutable instead of CFBundleName to get an unlocalized app name.
-					   if (error_p) {
-						   *error_p = [*error_p errorByAddingLocalizedRecoverySuggestion:msg] ;
-						   NSArray* recoveryOptions = [NSArray arrayWithObjects:
-													   [NSString localize:@"move"], 
-													   [NSString localize:@"cancel"],
-													   nil] ;
-						   *error_p = [*error_p errorByAddingLocalizedRecoveryOptions:recoveryOptions] ;
-						   *error_p = [*error_p errorByAddingRecoveryAttempter:[self sharedMOCManager]] ;
-						   *error_p = [*error_p errorByAddingUserInfoObject:url
-																	 forKey:constKeyStoreUrl] ;
-					   }
+                       if (nukeAndPaveIfCorrupt) {
+                           // If we did not get a store but file exists, must be a corrupt file.
+                           [fm removeItemAtURL:url
+                                         error:NULL];
+                           persistentStore = [newPSC addPersistentStoreWithType:NSSQLiteStoreType
+                                                                  configuration:nil
+                                                                            URL:url
+                                                                        options:options
+                                                                          error:error_p] ;
+                       }
+
+                       if (!persistentStore) {
+                           NSString* msg = [NSString stringWithFormat:@"Click 'Move' to move the unreadable database\n%@\nto your desktop and start a new database.  The item properties in your old database will not be available to %@.",
+                                            [url path],
+                                            [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"]] ;
+                           // We used CFBundleExecutable instead of CFBundleName to get an unlocalized app name.
+                           if (error_p) {
+                               *error_p = [*error_p errorByAddingLocalizedRecoverySuggestion:msg] ;
+                               NSArray* recoveryOptions = [NSArray arrayWithObjects:
+                                                           [NSString localize:@"move"],
+                                                           [NSString localize:@"cancel"],
+                                                           nil] ;
+                               *error_p = [*error_p errorByAddingLocalizedRecoveryOptions:recoveryOptions] ;
+                               *error_p = [*error_p errorByAddingRecoveryAttempter:[self sharedMOCManager]] ;
+                               *error_p = [*error_p errorByAddingUserInfoObject:url
+                                                                         forKey:constKeyStoreUrl] ;
+                           }
+                       }
 				   }
 				   else {
 					   NSString* msg = [NSString stringWithFormat:
@@ -326,6 +339,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 										 identifier:(NSString*)identifier
 										   momdName:(NSString*)momdName
                                             options:(NSDictionary*)options
+                               nukeAndPaveIfCorrupt:(BOOL)nukeAndPaveIfCorrupt
 											error_p:(NSError**)error_p {
 	NSManagedObjectContext* managedObjectContext = nil ;
     NSMutableDictionary* mocDics = nil ;
@@ -348,6 +362,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 																					  identifier:identifier
 																						momdName:momdName
                                                                                          options:options
+                                                                            nukeAndPaveIfCorrupt:nukeAndPaveIfCorrupt
 																						 error_p:error_p] ;
 		if (coordinator) {
             managedObjectContext = [[NSManagedObjectContext alloc] init] ;
@@ -494,6 +509,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 										 identifier:(NSString*)identifier
 										   momdName:(NSString*)momdName
                         useLegacyRollbackJournaling:(BOOL)useLegacyRollbackJournaling
+                               nukeAndPaveIfCorrupt:(BOOL)nukeAndPaveIfCorrupt
 											error_p:(NSError**)error_p {
     NSDictionary* options = nil ;
     if ([type isEqualToString:NSSQLiteStoreType]) {
@@ -507,6 +523,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 																		 identifier:identifier
 																		   momdName:momdName
                                                                             options:options
+                                                               nukeAndPaveIfCorrupt:nukeAndPaveIfCorrupt
 																			error_p:error_p] ;
 	return moc ;
 }
@@ -584,6 +601,6 @@ static SSYMOCManager* sharedMOCManager = nil ;
 @end
 
 // Note 1.
-// Because our method +persistentStoreCoordinatorType:identifier:momdName:options:error_p: always creates
+// Because our method +persistentStoreCoordinatorType:::::: always creates
 // a new persistent store coordinator and always adds exactly one persistent
 // store to it, we can just grab its first (and only) store.
