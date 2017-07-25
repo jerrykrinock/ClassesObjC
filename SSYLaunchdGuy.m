@@ -109,10 +109,18 @@ NSString* const SSYLaunchdGuyErrorKeyCommandStderr = @"Command Stderr" ;
  */
 + (BOOL)agentLoadPath:(NSString*)plistPath
 			  error_p:(NSError**)error_p {	
+    // launchctl will log a stupid message to stderr if we tell it to
+    // load a job which is not loaded.
+    BOOL isLoaded = [self isLoadedLabel:[plistPath lastPathComponent]] ;
+
+    if (isLoaded) {
+        return YES ;
+    }
+
 	NSString* subcmd = @"load" ;
 	NSArray* arguments = [NSArray arrayWithObjects:
 						  subcmd,
-						  // The following two lines were added in BookMacster 1.3.2 for Alex Harsha-Strong <aharshas@gmail.com>
+						  // The following two lines were added in BookMacster 1.3.2 for Alex H.
 						  // because he was getting "nothing found to load" errors.  Solution -w was suggested here:
 						  // http://www.cuddletech.com/blog/pivot/entry.php?id=403
 						  // Then I read the documentation and decided to add -F too.
@@ -662,11 +670,30 @@ end:;
 											contents:data
 										  attributes:attributes] ;
 
+    /* Even though the script, above, includes measures to eliminate logging to
+     the console, such as the -f option of rm, and we check to see if services
+     are loaded or unloaded, the script apparently still sometimes produces
+     undesired warnings, in particular:
+
+     • <path>: No such file or directory
+     • <name>: Could not find specified service
+     • <name>: service already loaded
+
+     Maybe this is due to the asynchronism inherent in launching a script.
+     Whatever, to prevent any such crap from appearing in the system console,
+     we attach these two pipes, which we just discard, to the task. */
+    NSPipe* pipeStdout = [[NSPipe alloc] init] ;
+    NSPipe* pipeStderr = [[NSPipe alloc] init] ;
+
     // Run that script file
     NSTask* task = [[NSTask alloc] init] ;
+    [task setStandardOutput:pipeStdout ] ;
+    [task setStandardError: pipeStderr ] ;
     [task setLaunchPath:scriptPath] ;
 	[task launch] ;
-	[task release] ;
+    [pipeStdout release];
+    [pipeStderr release];
+    [task release] ;
 		
 	BOOL ok = YES ;
 	
