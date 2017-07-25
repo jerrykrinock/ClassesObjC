@@ -2088,7 +2088,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (void)display {
-	[self doooLayout] ;
+    [self doooLayout] ;
 	// Next, invoke -display to update subviews and any areas where subviews have
 	// been removed from, which will not necessarily be done
 	// by displaying the window.  To increase efficiency by
