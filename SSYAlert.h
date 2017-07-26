@@ -143,9 +143,6 @@ extern NSString* const SSYAlertDidProcessErrorNotification ;
  different from Apple's method
  attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:
  in which the analagous optionIndex parameter can be any nonnegative integer.
- @param    delegate  
- @param    didRecoverSelector  
- @param    contextInfo  
 */
 - (void)attemptRecoveryFromError:(NSError *)error
 				  recoveryOption:(NSUInteger)recoveryOption
@@ -154,18 +151,14 @@ extern NSString* const SSYAlertDidProcessErrorNotification ;
 					 contextInfo:(void *)contextInfo ;
 
 /*!
- @brief    
-
  @details  Note that this is different from Apple's method
  attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:
  in the 'recoveryOption' parameter.
- @param    error  
  @param    recoveryOption  Should be one of NSAlertFirstButtonReturn,
  NSAlertSecondButtonReturn, or NSAlertThirdButton return.  Note that this is
  different from Apple's method
  attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:
  in which the analagous optionIndex parameter can be any nonnegative integer.
- @result   
 */
 - (BOOL)attemptRecoveryFromError:(NSError *)error
 				  recoveryOption:(NSUInteger)recoveryOption ;
@@ -815,7 +808,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
   
  @param    title  The window title or nil.&nbsp; If nil, title will
  be set to localized "Alert".
- @param    buttons: 0-3 strings which will become the titles of
+ @param    buttons  0-3 strings which will become the titles of
  buttons 1-3, terminated by a nil sentinel.
  If no button titles are passed, dialog will have 1 button titled
  as localized "OK".
@@ -833,7 +826,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  Pass 0-3 button title arguments.
  @param    title  The window title or nil.&nbsp; If nil, title will
  be set to localized "Alert".
- @param    buttonsArray: An array of 0-3 strings which will become
+ @param    buttonsArray  An array of 0-3 strings which will become
  the titles of buttons 1-3.&nbsp; If this parameter is nil or an
  empty array, dialog will have 1 button titled as localized "OK".
  @result   Indicates button clicked by user: NSAlertFirstButtonReturn,

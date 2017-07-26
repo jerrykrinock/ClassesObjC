@@ -1,3 +1,5 @@
+#import <Cocoa/Cocoa.h>
+
 extern NSInteger const SSYShellTaskerErrorFailedLaunch  ;
 extern NSInteger const SSYShellTaskerErrorTimedOut  ;
 extern NSString* const constKeySSYShellTaskerTimeout ;
