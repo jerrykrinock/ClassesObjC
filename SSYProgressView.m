@@ -645,6 +645,9 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	[self rejuvenateProgressBar] ;
 	NSProgressIndicator* progBar = [self progBar] ; // The new one, that is
 	[progBar setIndeterminate:indeterminate] ;
+    /* If CA_ASSERT_MAIN_THREAD_TRANSACTIONS is set to 1 in environment,
+     the following line raises assertion from "CoreAnimation" saying
+     "an implicit transaction wasn't created on a main thread." */
 	[progBar startAnimation:self] ;
 	[progBar setHidden:NO] ;
     self.progressPriority = priority;
