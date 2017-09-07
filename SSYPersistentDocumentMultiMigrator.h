@@ -36,7 +36,18 @@ extern NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotifica
 #define SSYPersistentDocumentMultiMigratorErrorCodeCouldNotRepermitUnwriteableFile 315022
 #define SSYPersistentDocumentMultiMigratorErrorCodeUserCancelledUndisplayableRestore 315023
 
+/*!
+ @brief    Class which provides a method automatically migrating
+ persistent stores in Core Data document-based apps over multiple
+ versions
 
+ @details  Although earlier versions of this class played with apps using
+ NSPersistentDocument, currently it requires that your app is using
+ the open-source BSManagedDocument and not NSPersistentDocument.  There are
+ many good reasons to do this, as explained here:
+ https://github.com/jerrykrinock/BSManagedDocument
+ If you really want to use the notoriously problematic NSPersistentDocument,
+ your fork of this class would only differ in several lines. */
 @interface SSYPersistentDocumentMultiMigrator : NSObject
 
 /*!

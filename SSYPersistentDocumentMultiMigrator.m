@@ -9,11 +9,6 @@
 #import "NSDocument+SSYAutosaveBetter.h"
 #import "BSManagedDocument+SSYMetadata.h"
 #import "NSString+SSYDotSuffix.h"
-#import "BSManagedDocument.h"
-/* BSManagedDocument is a open source replacement for NSPersistentDocument.
- It is recommended for any Core Data document-based app.
- https://github.com/jerrykrinock/BSManagedDocument
- */
 
 NSString* const SSYPersistentDocumentMultiMigratorErrorDomain = @"SSYPersistentDocumentMultiMigratorErrorDomain" ;
 NSString* const SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification = @"SSYPersistentDocumentMultiMigratorDidBeginMigrationNotification" ;
