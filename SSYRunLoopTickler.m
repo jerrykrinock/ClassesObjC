@@ -1,5 +1,4 @@
 #import "SSYRunLoopTickler.h"
-#import "SSY_ARC_OR_NO_ARC.h"
 
 @implementation SSYRunLoopTickler
 
@@ -19,7 +18,7 @@
 		NSLog(@"%s failed to send its message.", __PRETTY_FUNCTION__) ;
 	}
 	
-#if NO_ARC
+#if !__has_feature(objc_arc)
 	[message release] ;
 #endif
     
