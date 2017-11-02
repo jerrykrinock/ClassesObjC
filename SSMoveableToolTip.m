@@ -38,7 +38,7 @@ static SSMoveableToolTip	*sharedToolTip = nil;
         [_window setBackgroundColor:[NSColor colorWithDeviceRed:0.953 green:0.953 blue:0.953 alpha:1.0]];
         [_window setHasShadow:YES];
         [_window setLevel:NSStatusWindowLevel];
-        [_window setReleasedWhenClosed:YES];
+        [_window setReleasedWhenClosed:YES]; // Defensive, since this is default behavior
         [_window orderFront:nil];
         
         _textField = [[ToolTipTextField alloc] initWithFrame:textFieldFrame];
@@ -57,7 +57,7 @@ static SSMoveableToolTip	*sharedToolTip = nil;
 }
 
 - (void) dealloc {
-    [_window release] ;
+    [_window close]; // Also releases, due to `releaseWhenClosed`
     [_textField release] ;  // Memory leak fixed in BookMacster 1.17
 
     [super dealloc];
@@ -105,14 +105,17 @@ static SSMoveableToolTip	*sharedToolTip = nil;
 			origin:(NSPoint)origin
 		  inWindow:(NSWindow*)hostWindow
 {
-    if (sharedToolTip == nil) {
-        sharedToolTip = [[SSMoveableToolTip alloc] init];
+    if (string.length > 0)
+    {
+        if (sharedToolTip == nil) {
+            sharedToolTip = [[SSMoveableToolTip alloc] init];
+        }
+
+        [sharedToolTip setString:string
+                            font:font
+                          origin:origin
+                        inWindow:hostWindow];
     }
-    
-    [sharedToolTip setString:string
-                        font:font
-					  origin:origin
-					inWindow:hostWindow];
 }
 
 + (void) goAway
