@@ -51,7 +51,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
         }
     }
     
-#if NO_ARC
+#if !__has_feature(objc_arc)
     [subs release] ;
     [query release] ;
 #endif
@@ -78,7 +78,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
     [query setAccount:account] ;
 
     BOOL ok = [query deleteItem:error_p] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
     [query release] ;
 #endif
     return ok ;
@@ -103,7 +103,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
     [query setPassword:password] ;
     
     BOOL ok = [query save:error_p] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
     [query release] ;
 #endif
     return ok ;
@@ -124,7 +124,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
     }
     
     NSArray* answer = [query fetchAll:nil] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
     [query release] ;
 #endif
     return answer ;
@@ -164,7 +164,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
 
     NSError* error = nil ;
     NSArray* items = [query fetchAll:&error] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
     [query release] ;
 #endif
     NSArray* accountNames = [items valueForKey:(NSString*)kSecAttrAccount] ;

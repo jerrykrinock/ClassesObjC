@@ -12,7 +12,7 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
 @implementation SSYThreadPauser
 
 - (void)beginWorkWithInfo:(NSDictionary*)info {
-#if NO_ARC
+#if !__has_feature(objc_arc)
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
 #endif
 	NSConditionLock* lock = [info objectForKey:SSYThreadPauserKeyLock] ;
@@ -23,7 +23,7 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
 	[invocation invoke] ;
 	
 	[lock unlockWithCondition:WORK_IS_DONE] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
 	[pool drain] ;
 #endif
 }
@@ -69,7 +69,7 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
     NSThread* workerThread = [[NSThread alloc] initWithTarget:instance
                                                      selector:@selector(beginWorkWithInfo:)
                                                        object:info] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
     [workerThread autorelease] ;
 #endif
     // Name the thread, to help in debugging.
@@ -84,7 +84,7 @@ NSString* const SSYThreadPauserKeyInvocation = @"SSYThreadPauserKeyInvocation" ;
 	}
 	[workerThread cancel] ;
 	
-#if NO_ARC
+#if !__has_feature(objc_arc)
 	[instance release] ;
 	[lock release] ;
 #endif

@@ -29,7 +29,7 @@
     return self ;
 }
 
-#if NO_ARC
+#if !__has_feature(objc_arc)
 - (void)dealloc {
     [_account release] ;
     [_service release] ;
@@ -162,7 +162,7 @@
         *error = [[self class] errorWithCode:status] ;
     }
     
-#if NO_ARC
+#if !__has_feature(objc_arc)
     return [(NSArray*)result autorelease] ;
 #else
     return (__bridge_transfer NSArray*)result ;
@@ -194,7 +194,7 @@
         }
     }
     
-#if NO_ARC
+#if !__has_feature(objc_arc)
     [self setPasswordData:result] ;
     [(NSData*)result autorelease] ;
 #else
@@ -233,7 +233,7 @@
 - (NSString *)password {
     if ([[self passwordData] length] > 0) {
         NSString* word = [[NSString alloc] initWithData:[self passwordData] encoding:NSUTF8StringEncoding] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
         [word autorelease] ;
 #endif
         return word ;
@@ -357,7 +357,7 @@
         }
 #else
         default:
-#if NO_ARC
+#if !__has_feature(objc_arc)
             message = (NSString*)SecCopyErrorMessageString((OSStatus)code, NULL) ;
             [message autorelease] ;
 #else

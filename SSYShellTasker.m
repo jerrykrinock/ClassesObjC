@@ -39,7 +39,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 	// To conserve system resources, therefore, we use a local pool here.
 	// For more info, 
 	//	  http://www.cocoabuilder.com/archive/message/cocoa/2002/11/30/51122
-#if NO_ARC
+#if !__has_feature(objc_arc)
 	NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init] ;
 #endif
 	NSString* command = [info objectForKey:constKeySSYShellTaskerCommand] ;
@@ -79,7 +79,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
             }
         }
         [task setEnvironment:taskEnvironment] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
        [taskEnvironment release] ;
 #endif
     }
@@ -194,7 +194,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 			 forKey:constKeySSYShellTaskerNSError] ;
 	}
 	
-#if NO_ARC
+#if !__has_feature(objc_arc)
 	[pipeStdin release] ;
 	[pipeStdout release] ;
 	[pipeStderr release] ;
@@ -202,7 +202,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 	[[NSNotificationCenter defaultCenter] removeObserver:self
 													name:NSTaskDidTerminateNotification
 												  object:task] ;	
-#if NO_ARC
+#if !__has_feature(objc_arc)
     [task release] ;
 	[pool release] ;
 #endif
@@ -272,7 +272,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 		
 	result = [[info objectForKey:constKeySSYShellTaskerResult] integerValue] ;
 
-#if NO_ARC
+#if !__has_feature(objc_arc)
 	[tasker release] ;
 #endif
     

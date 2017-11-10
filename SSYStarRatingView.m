@@ -78,7 +78,7 @@ NSString* const constKeyRating = @"rating" ;
 #endif
 #endif
 
-#if NO_ARC
+#if !__has_feature(objc_arc)
 -(void)dealloc
 {
     [m_starImage release] ;
