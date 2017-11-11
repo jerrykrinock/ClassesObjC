@@ -1,3 +1,22 @@
+// This fixes the vertical line, but introduces SSYProgressIndicator issues.
+// Do not #define to 1 until issues in SSYProgressIndicator are fixed.
+#define USE_SSYPROGRESSINDICATOR 0
+
+#if USE_SSYPROGRESSINDICATOR
+#define PROGRESSINDICATORCLASS SSYProgressIndicator
+#define BARSTYLE SSYProgressIndicatorStyleBar
+#define CIRCLESTYLE SSYProgressIndicatorStyleCircle
+#else
+#define PROGRESSINDICATORCLASS NSProgressIndicator
+#define BARSTYLE NSProgressIndicatorBarStyle
+#define CIRCLESTYLE NSProgressIndicatorSpinningStyle
+#endif
+
+
+#if USE_SSYPROGRESSINDICATOR
+@class SSYProgressIndicator;
+#endif
+
 @class SSYRolloverButton ;
 
 extern NSString* const constKeyStaticConfigInfo ;
@@ -66,8 +85,8 @@ extern float const SSYProgressPriorityRegular;
  progress bar to disappear until the doubleValue is set or re-set.
 */
 @interface SSYProgressView : NSControl {
-	NSProgressIndicator* _progBar ;
-	NSProgressIndicator* m_spinner ;
+	PROGRESSINDICATORCLASS* _progBar ;
+	PROGRESSINDICATORCLASS* m_spinner ;
 	NSTextField* _textField ;
 	SSYRolloverButton* _hyperButton ;
 	SSYRolloverButton* _cancelButton ;

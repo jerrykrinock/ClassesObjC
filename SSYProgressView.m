@@ -4,6 +4,9 @@
 #endif
 
 #import "SSYProgressView.h"
+#if USE_SSYPROGRESSINDICATOR
+#import "SSYProgressIndicator.h"
+#endif
 #import "NS(Attributed)String+Geometrics.h"
 #import "NSView+Layout.h"
 #import "NSString+LocalizeSSY.h"
@@ -84,7 +87,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 @property (assign) float progressPriority;
 @property (assign) double progressValue ;
 // Don't retain this because it will be retained as a subview
-@property (assign) NSProgressIndicator* spinner ;
+@property (assign) PROGRESSINDICATORCLASS* spinner ;
 
 @end
 
@@ -217,15 +220,15 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 		frame = NSMakeRect(0,1.0,100,[self frame].size.height - 3.0) ;
 		// The y=1.0, h-=3.0 makes it line up with the text nicer.
 	}
-    _progBar = [[NSProgressIndicator alloc] initWithFrame:frame] ;
+    _progBar = [[PROGRESSINDICATORCLASS alloc] initWithFrame:frame] ;
 	[self addSubview:_progBar] ;
 	[_progBar release] ;
-	[_progBar setStyle:NSProgressIndicatorBarStyle] ;
+	[_progBar setStyle:BARSTYLE] ;
 	[_progBar setUsesThreadedAnimation:YES] ; // unreliable pre-Leopard
 	[_progBar setDisplayedWhenStopped:NO] ;
 }
 
-- (NSProgressIndicator*)progBar {
+- (PROGRESSINDICATORCLASS*)progBar {
 	if (_progBar == nil) {
 		[self rejuvenateProgressBar] ;
 	}
@@ -560,7 +563,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 
 
 - (void)unsafeHideProgressBar {
-	NSProgressIndicator* bar = [self progBar] ;
+	PROGRESSINDICATORCLASS* bar = [self progBar] ;
 	[bar stopAnimation:self] ;
 	[bar setHidden:YES] ;
     self.progressPriority = SSYProgressPriorityLowest;
@@ -582,7 +585,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 
 	// Insert the spinner
 	spinnerFrame.size.width = height ;
-	NSProgressIndicator* spinner = [[NSProgressIndicator alloc] initWithFrame:spinnerFrame] ;
+	PROGRESSINDICATORCLASS* spinner = [[PROGRESSINDICATORCLASS alloc] initWithFrame:spinnerFrame] ;
 	// The following is to eliminate this warning from appearing in system console:
 	// "A regular control size progress indicator … with the frame size for small control size detected.  Please use -setControlSize: to explicitly specify NSSmallControlSize"
 	// I'm not sure if this is the correct threshold, but it worked for my application.
@@ -593,7 +596,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	[self addSubview:spinner] ;
 	[spinner release] ;
 	[self setSpinner:spinner] ;
-	[spinner setStyle:NSProgressIndicatorSpinningStyle] ;
+	[spinner setStyle:CIRCLESTYLE] ;
 	[spinner startAnimation:self] ;
 	[spinner display] ;
 }
@@ -641,9 +644,10 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	[textField setStringValue:text] ;
 	
 	[self setTextWidthForText] ;
-	// For NSProgressIndicator Bug
+    // For NSProgressIndicator Bug
+    // Maybe this will be unnecessary with SSYProgressIndicator?
 	[self rejuvenateProgressBar] ;
-	NSProgressIndicator* progBar = [self progBar] ; // The new one, that is
+	PROGRESSINDICATORCLASS* progBar = [self progBar] ; // The new one, that is
 	[progBar setIndeterminate:indeterminate] ;
 	[progBar startAnimation:self] ;
 	[progBar setHidden:NO] ;
@@ -925,7 +929,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	// For NSProgressIndicator Bug
 	[self rejuvenateProgressBar] ;
 
-	NSProgressIndicator* progBar = [self progBar] ;
+	PROGRESSINDICATORCLASS* progBar = [self progBar] ;
 	
 	[progBar setIndeterminate:NO] ;
 	[progBar setMaxValue:value] ;
