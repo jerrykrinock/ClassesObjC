@@ -72,7 +72,7 @@ NSString* const SSYInterappClientErrorDomain = @"SSYInterappClientErrorDomain" ;
         aggrRxData = (__bridge NSData*)cfData ;
         // As always, we are careful not to CFRelease(NULL) ;
         CFRelease(remotePort) ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
         [aggrTxData release] ;
 #endif
         
@@ -98,7 +98,7 @@ NSString* const SSYInterappClientErrorDomain = @"SSYInterappClientErrorDomain" ;
             }
         }
         
-#if NO_ARC
+#if !__has_feature(objc_arc)
         [aggrRxData release] ;
 #endif
     }
@@ -141,7 +141,7 @@ NSString* const SSYInterappClientErrorDomain = @"SSYInterappClientErrorDomain" ;
             txHeaderString = [[NSString alloc] initWithBytes:&txHeaderByte
                                                        length:1
                                                      encoding:NSUTF8StringEncoding] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
             [txHeaderString autorelease] ;
 #endif
         }

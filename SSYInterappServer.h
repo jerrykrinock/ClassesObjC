@@ -25,11 +25,11 @@ extern NSString* const SSYInterappServerErrorDomain ;
  * On macOS 10.9 or earlier
  *      sudo launchctl bstree | grep <fragmentOfYourPortName>
  *    Example:
- *      sudo launchctl bstree | grep sheepsystems
+ *      sudo launchctl bstree | grep Extore
  * On macOS 10.10 or later
  *      sudo launchctl print user/<uid> | grep <fragmentOfYourPortName>
  *    Example:
- *      sudo launchctl print user/501 | grep sheepsystems
+ *      sudo launchctl print user/501 | grep Extore
 
  Here are some search terms, so I can find the above comment later:
  command line, active mach port, active mach ports,

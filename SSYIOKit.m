@@ -208,6 +208,18 @@ CFDataRef CreateMACAddress(io_iterator_t intfIterator)
 	return hashedMACAddress ;
 }
 
++ (NSData*)hashedMACAddressAndShortUserName {
+    NSData* macAddress = [SSYIOKit primaryMACAddressData];
+    NSData* userNameData = [NSUserName() dataUsingEncoding:NSUTF8StringEncoding];
+    NSMutableData* data = [macAddress mutableCopy];
+    [data appendData:userNameData];
+    NSData* hash = [data sha256Digest];
+#if !__has_feature(objc_arc)
+    [data release];
+#endif
+    return hash;
+}
+
 /*
 + (NSData*)machineSerialNumberData {
 	NSString                   *result = @"";

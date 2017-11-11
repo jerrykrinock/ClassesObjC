@@ -39,7 +39,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 	// For more info, 
 	//	  http://www.cocoabuilder.com/archive/message/cocoa/2002/11/30/51122
 #if !__has_feature(objc_arc)
-    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init] ;
+	NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init] ;
 #endif
 	NSString* command = [info objectForKey:constKeySSYShellTaskerCommand] ;
 	NSArray* arguments = [info objectForKey:constKeySSYShellTaskerArguments] ;
@@ -194,7 +194,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 	}
 	
 #if !__has_feature(objc_arc)
-    [pipeStdin release] ;
+	[pipeStdin release] ;
 	[pipeStdout release] ;
 	[pipeStderr release] ;
 #endif
@@ -272,7 +272,7 @@ NSString* const constKeySSYShellTaskerWants = @"wants" ;
 	result = [[info objectForKey:constKeySSYShellTaskerResult] integerValue] ;
 
 #if !__has_feature(objc_arc)
-    [tasker release] ;
+	[tasker release] ;
 #endif
     
 	return result ;

@@ -245,25 +245,31 @@ end:
 			fullPath = [[self browserSupportPathForHomePath:homePath] stringByAppendingPathComponent:pathFromDisk] ;
 		}
 		else {
-			// In this case, pathFromDisk is a base64 encoded alias record
-			NSData* aliasRecord = [pathFromDisk dataBase64Decoded] ;
-			fullPath = [aliasRecord pathFromAliasRecordWithTimeout:3.0
-														   error_p:NULL] ;
-			if (!fullPath) {
-				NSString* appSupportRelativePath = [self appSupportRelativePath] ;
-                NSLog(@"Internal Error 234-5245  Could not get path from alias record in %@ profile %@.\nPossible corruption in %@",
-                      appSupportRelativePath,
-                      profileName,
-                      [self profilesFilePathForHomePath:homePath]) ;
-			}
-		}
+            if ([pathFromDisk hasPrefix:@"/"]) {
+                fullPath = pathFromDisk;
+            }
+            else {
+                /* Well, then, maybe pathFromDisk is a base64 encoded alias
+                 record.  I don't remember this today (20171102), but I must
+                 seen this at one time or I would not have written this code.
+                 So, let's give it a try: */
+                NSData* aliasRecord = [pathFromDisk dataBase64Decoded];
+                fullPath = [aliasRecord pathFromAliasRecordWithTimeout:3.0
+                                                               error_p:NULL];
+                if (!fullPath) {
+                    NSString* appSupportRelativePath = [self appSupportRelativePath] ;
+                    NSLog(@"Internal Error 234-5245  Could not get path from alias record in %@ profile %@.\nPossible corruption in %@",
+                          appSupportRelativePath,
+                          profileName,
+                          [self profilesFilePathForHomePath:homePath]) ;
+                }
+            }
+        }
 		
 		[scanner release] ;
 		[nameLine release] ;
-        
 	}
     else {
-        // Added in BookMacster 1.13.2
         // Make one up.
         fullPath = [self browserSupportPathForHomePath:homePath] ;
         fullPath = [fullPath stringByAppendingPathComponent:@"Profiles"] ;

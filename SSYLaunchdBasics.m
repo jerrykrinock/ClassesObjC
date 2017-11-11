@@ -42,7 +42,7 @@
 	}
 	
 	NSSet* answer = [targetAgentNames copy] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
 	[targetAgentNames release] ;
 	[answer autorelease] ;
 #endif
@@ -66,7 +66,7 @@
 	}
 	
 	NSDictionary* answer = [agents copy] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
 	[agents release] ;
 	[answer autorelease] ;
 #endif

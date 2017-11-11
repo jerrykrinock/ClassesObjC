@@ -26,7 +26,7 @@ static SSYAlertSounder* static_sharedSounder = nil ;
         AudioServicesDisposeSystemSoundID((unsigned int)[soundId longValue]) ;
     }
     
-#if NO_ARC
+#if !__has_feature(objc_arc)
     [m_soundIds release] ;
     
     [super dealloc] ;
@@ -107,7 +107,7 @@ static SSYAlertSounder* static_sharedSounder = nil ;
     
     NSArray* answer = [names copy] ;
     
-#if NO_ARC
+#if !__has_feature(objc_arc)
     [paths release] ;
     [names release] ;
     [answer autorelease] ;

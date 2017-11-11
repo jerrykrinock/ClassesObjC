@@ -5,7 +5,6 @@
 #import "NSError+MyDomain.h"
 
 #if DEBUG
-// Do not ship with this, in particular because it exposes secret method names.
 #if 0
 #warning Logging SSYOperationLinker Operations.  DO NOT SHIP THIS!
 #define LOGGING_SSYOPERATIONLINKER_OPERATIONS 1
@@ -234,9 +233,8 @@
 - (void)main {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
 #if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-	NSLog(@"run op: %p extore=%@ grp=%@ prevErr=%ld nQ=%ld sel=%@ isCnc=%hhd",
+	NSLog(@"run op: %p grp=%@ prevErr=%ld nQ=%ld sel=%@ isCnc=%hhd",
 		  self,
-		  [(Client*)[(Ixporter*)[[self info] objectForKey:constKeyIxporter] client] displayName],
 		  [[self info] objectForKey:constKeySSYOperationGroup],
 		  (long)[[self error] code],
 		  (long)[[[self operationQueue] operations] count], // nQ = number in queue

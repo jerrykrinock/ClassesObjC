@@ -19,7 +19,7 @@
 	}
 	
 #if !__has_feature(objc_arc)
-    [message release] ;
+	[message release] ;
 #endif
     
 	// If I remove the port now, the desired "tickle" causing a

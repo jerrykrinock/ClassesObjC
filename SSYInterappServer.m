@@ -105,7 +105,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
         else {
             outputData = NULL ;
         }
-#if NO_ARC
+#if !__has_feature(objc_arc)
         [responseData release] ;
 #endif
     }
@@ -143,7 +143,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
 		m_port = NULL ;
 	}
 	
-#if NO_ARC
+#if !__has_feature(objc_arc)
 	[super dealloc] ;
 #endif
 }
@@ -240,7 +240,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
 	
 	if (errorCode != 0) {
         // See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
-#if NO_ARC
+#if !__has_feature(objc_arc)
 		[super dealloc] ;
 #endif
 		self = nil ;
@@ -317,7 +317,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
             // Internal Error 713-0192 here, but it was not providing any
             // useful information not already in the error.
 		}
-#if NO_ARC
+#if !__has_feature(objc_arc)
 		[server release] ;
 #endif
 	}

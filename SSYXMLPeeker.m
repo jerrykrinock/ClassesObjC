@@ -16,7 +16,7 @@
 @synthesize targetElement = m_targetElement ;
 @synthesize error = m_error ;
 
-#if NO_ARC
+#if !__has_feature(objc_arc)
 - (void)dealloc {
     [m_parsedValue release] ;
     [m_targetElement release] ;
@@ -39,7 +39,7 @@
     // is done or aborted.
 
     
-#if NO_ARC
+#if !__has_feature(objc_arc)
     [parser release] ;
 #endif
     return [self parsedValue] ;
@@ -55,7 +55,7 @@
         *error_p = [peeker error] ;
     }
     
-#if NO_ARC
+#if !__has_feature(objc_arc)
     [peeker release] ;
 #endif
     
@@ -73,7 +73,7 @@
     if ([elementName isEqualToString:[self targetElement]]) {
         NSMutableString* emptyString = [[NSMutableString alloc] init] ;
         [self setParsedValue:emptyString] ;
-#if NO_ARC
+#if !__has_feature(objc_arc)
         [emptyString release] ;
 #endif
     }
