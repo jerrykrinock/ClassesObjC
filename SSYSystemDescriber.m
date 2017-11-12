@@ -1,5 +1,6 @@
 #import "SSYSystemDescriber.h"
 #import "SSYVersionTriplet.h"
+#import <sys/sysctl.h>
 
 @implementation SSYSystemDescriber
 
@@ -37,6 +38,24 @@
 	return [SSYVersionTriplet versionTripletWithMajor:major
 												minor:minor
 											   bugFix:bugFix] ;
+}
+
+/* Thanks to erkanyildiz.  See https://stackoverflow.com/questions/8299087/getting-the-machine-type-and-other-hardware-details-through-cocoa-api */
++ (NSString *) hardwareModel {
+    size_t len = 0;
+    sysctlbyname("hw.model", NULL, &len, NULL, 0);
+
+    NSString* answer;
+    if (len > 0) {
+        char* model = malloc(len*sizeof(char));
+        sysctlbyname("hw.model", model, &len, NULL, 0);
+        answer = [NSString stringWithUTF8String:model];
+        free(model);
+    } else {
+        answer = @"Could not get Mac model";
+    }
+
+    return answer;
 }
 
 + (NSString*)softwareVersionString {

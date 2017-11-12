@@ -11,6 +11,11 @@
 + (NSString*)softwareVersionString ;
 
 /*!
+ @result   Returns, for example, "MacBookAir6,2"
+ */
++ (NSString*)hardwareModel;
+
+/*!
  @brief    Returns system speed relative to a 2009 Mac Mini with 
  Core 2 Duo processor.
 
