@@ -82,6 +82,8 @@ typedef struct SSYVersionStruct_struct SSYVersionStruct ;
  */
 + (SSYVersionTriplet*)versionTripletFromString:(NSString*)versionString ;
 
++ (SSYVersionTriplet*)versionTripletFromBundle:(NSBundle*)bundle ;
+
 /*!
  @brief    Returns an autoreleased version triplet from a bundle
  @details  Version number string is found as described in 
@@ -89,7 +91,7 @@ typedef struct SSYVersionStruct_struct SSYVersionStruct ;
  as described in versionTripletFromString:
  
  @details  This function is not reliable because it relies on -rawVersionStringFromBundleIdentifier
- which is also not reliable.  If you've got the bundle, use +rawVersionStringFromBundle: instead.
+ which is also not reliable.  If you've got the bundle, use +versionTripletFromBundle: instead.
  @param    bundleIdentifier The bundle identifier of the target bundle
  @result   An autoreleased version triplet, or nil. 
  */
