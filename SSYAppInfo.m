@@ -87,7 +87,7 @@ static SSYAppInfo *sharedInfo = nil ;
     [self setUpgradeState:upgradeState] ;
     if ([self upgradeState] != SSYCurrentRev) {
         // Get a nice, clean, filtered versionString of the form "major.minor.bugFix" using SSVersionTriplet methods
-        SSYVersionTriplet* currentVersionTriplet = [SSYVersionTriplet versionTripletFromBundleIdentifier:[[NSBundle mainAppBundle] bundleIdentifier]] ;
+        SSYVersionTriplet* currentVersionTriplet = [SSYVersionTriplet versionTripletFromBundle:[NSBundle mainAppBundle]] ;
         NSString* currentVersionString = [currentVersionTriplet string] ;
         
         // Record currently-launched version into prefs

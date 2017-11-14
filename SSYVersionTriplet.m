@@ -77,6 +77,11 @@
 	return versionTriplet ;
 }
 
++ (SSYVersionTriplet*)versionTripletFromBundle:(NSBundle*)bundle {
+    NSString* versionString = [self rawVersionStringFromBundle:bundle] ;
+    return [self versionTripletFromString:versionString] ;
+}
+
 + (SSYVersionTriplet*)versionTripletFromBundleIdentifier:(NSString*)bundleIdentifier {
 	NSString* versionString = [self rawVersionStringFromBundleIdentifier:bundleIdentifier] ;
 	return [self versionTripletFromString:versionString] ;
