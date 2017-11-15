@@ -88,21 +88,23 @@ NSString* const constSSYLazyNotificationSelectorName = @"selName" ;
 
 - (void)enqueueNotification:(NSNotification*)note
 					  delay:(NSTimeInterval)delay {
-	NSTimer* existingTimer = [[self fireTimers] objectForKey:[note name]] ;
-	if (existingTimer) {
-		// Modify the new timer to have the same fire date as the existing timer.
-		delay = [[existingTimer fireDate] timeIntervalSinceNow] ;
-		delay = MAX(delay, CGFLOAT_MIN) ;
-		[existingTimer invalidate] ;
-	}
-	NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:delay
-													  target:self
-													selector:@selector(fire:)
-													userInfo:note
-													 repeats:NO] ;
-	// Note that the following will replace the existing timer, if any.
-	[[self fireTimers] setObject:timer
-						  forKey:[note name]] ;
+    @synchronized (self) {
+        NSTimer* existingTimer = [[self fireTimers] objectForKey:[note name]] ;
+        if (existingTimer) {
+            // Modify the new timer to have the same fire date as the existing timer.
+            delay = [[existingTimer fireDate] timeIntervalSinceNow] ;
+            delay = MAX(delay, CGFLOAT_MIN) ;
+            [existingTimer invalidate] ;
+        }
+        NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:delay
+                                                          target:self
+                                                        selector:@selector(fire:)
+                                                        userInfo:note
+                                                         repeats:NO] ;
+        // Note that the following will replace the existing timer, if any.
+        [[self fireTimers] setObject:timer
+                              forKey:[note name]] ;
+    }
 }
 
 - (void)fire:(NSTimer*)timer {
