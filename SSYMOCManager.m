@@ -396,35 +396,37 @@ static SSYMOCManager* sharedMOCManager = nil ;
 
 + (void)registerOwnerDocument:(BSManagedDocument*)document
 	   ofManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
-	NSMutableDictionary* mocDics = [[self sharedMOCManager] docMOCDics] ;
+    @synchronized(self) {
+        NSMutableDictionary* mocDics = [[self sharedMOCManager] docMOCDics] ;
 
-	// Check for an existing entry for this owner.  To make sure we
-	// replace it, we'll use the same key.
-	NSNumber* key = nil ;
-	for (NSNumber* aKey in mocDics) {
-		NSDictionary* mocDic = [mocDics objectForKey:aKey] ;
-		if ([mocDic objectForKey:constKeyOwner] == document) {
-			key = aKey ;
-			break ;
-		}
-	}
-	
-	if (key == nil) {
-		// We need an arbitrary but unique key
-		NSInteger highestUsed = 0 ;
-		for (NSNumber* number in mocDics) {
-			highestUsed = MAX(highestUsed, [number integerValue]) ;
-		}
-		key = [NSNumber numberWithInteger:(highestUsed+1)] ;
-	}
-	
-	NSDictionary* mocDic = [NSDictionary dictionaryWithObjectsAndKeys:
-							managedObjectContext, constKeyMOC,
-							document, constKeyOwner,
-							nil] ;
-	
-	[mocDics setObject:mocDic
-				forKey:key] ;
+        // Check for an existing entry for this owner.  To make sure we
+        // replace it, we'll use the same key.
+        NSNumber* key = nil ;
+        for (NSNumber* aKey in mocDics) {
+            NSDictionary* mocDic = [mocDics objectForKey:aKey] ;
+            if ([mocDic objectForKey:constKeyOwner] == document) {
+                key = aKey ;
+                break ;
+            }
+        }
+
+        if (key == nil) {
+            // We need an arbitrary but unique key
+            NSInteger highestUsed = 0 ;
+            for (NSNumber* number in mocDics) {
+                highestUsed = MAX(highestUsed, [number integerValue]) ;
+            }
+            key = [NSNumber numberWithInteger:(highestUsed+1)] ;
+        }
+
+        NSDictionary* mocDic = [NSDictionary dictionaryWithObjectsAndKeys:
+                                managedObjectContext, constKeyMOC,
+                                document, constKeyOwner,
+                                nil] ;
+
+        [mocDics setObject:mocDic
+                    forKey:key] ;
+    }
 }
 
 
