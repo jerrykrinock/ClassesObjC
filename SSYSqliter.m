@@ -833,15 +833,18 @@ end:
 	    // because sqlite3_wal_checkpoint(NULL, NULL) will crash
 	}
 	
-	NSInteger result ;
-    int nFramesLogged ;
-    int nFramesCheckpointed ;
-	result = sqlite3_wal_checkpoint_v2(
-                                       m_db,  /* Database handle */
-                                       NULL,  /* Name of attached database, NULL for main/only database */
-                                       SQLITE_CHECKPOINT_PASSIVE,
-                                       &nFramesLogged,
-                                       &nFramesCheckpointed) ;
+	NSInteger result = SQLITE_OK;
+    int nFramesLogged = -99;
+    int nFramesCheckpointed = -99;
+    BOOL canWrite = sqlite3_db_readonly(m_db, "main") == 0;
+    if (canWrite) {
+        result = sqlite3_wal_checkpoint_v2(
+                                           m_db,  /* Database handle */
+                                           NULL,  /* Name of attached database, NULL for main/only database */
+                                           SQLITE_CHECKPOINT_PASSIVE,
+                                           &nFramesLogged,
+                                           &nFramesCheckpointed) ;
+    }
     if (result == SQLITE_BUSY) {
         /* I've found that this happens when deallocating an ExtoreFirefox,
          after an export in style 2, which should not even have used an

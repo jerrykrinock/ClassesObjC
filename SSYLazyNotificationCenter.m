@@ -108,16 +108,18 @@ NSString* const constSSYLazyNotificationSelectorName = @"selName" ;
 }
 
 - (void)fire:(NSTimer*)timer {
-	NSNotification* note = [timer userInfo] ;
-	NSString* noteName = [note name] ;
-	[[self fireTimers] removeObjectForKey:noteName] ;
-	NSArray* observations = [[self observations] objectForKey:noteName] ;
-	for (NSDictionary* observation in observations) {
-		id observer = [observation objectForKey:constSSYLazyNotificationCenterObserver] ;
-		SEL selector = NSSelectorFromString([observation objectForKey:constSSYLazyNotificationSelectorName]) ;
-		[observer performSelector:selector
-					   withObject:note] ;
-	}
+    @synchronized(self) {
+        NSNotification* note = [timer userInfo] ;
+        NSString* noteName = [note name] ;
+        [[self fireTimers] removeObjectForKey:noteName] ;
+        NSArray* observations = [[self observations] objectForKey:noteName] ;
+        for (NSDictionary* observation in observations) {
+            id observer = [observation objectForKey:constSSYLazyNotificationCenterObserver] ;
+            SEL selector = NSSelectorFromString([observation objectForKey:constSSYLazyNotificationSelectorName]) ;
+            [observer performSelector:selector
+                           withObject:note] ;
+        }
+    }
 }
 
 - (void)removeObserver:(id)observer {
