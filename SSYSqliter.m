@@ -412,7 +412,40 @@ static NSInteger SSAppSQLiteCallback(void* NotUsed, NSInteger nColumns, char **c
 
 - (BOOL)initDatabaseError_p:(NSError**)error_p {
 	BOOL ok = YES ;
-	NSInteger result = sqlite3_open([[self path] UTF8String], (sqlite3**)&m_db) ;
+    NSInteger result;
+    @synchronized([self class]) {
+        /* When multiple .bmco documents are opened during launch of
+         BookMacster, without the above @synchronized, we get a Thread
+         Sanitizer violation inside sqlite3 at this line of code:
+
+         pTo->xMutexAlloc = pFrom->xMutexAlloc;
+
+         in this call stack:
+
+         #0 sqlite3_initialize sqlite3.c:139153 (Bkmxwork:x86_64+0x6af7f9)
+         #1 openDatabase sqlite3.c:141782 (Bkmxwork:x86_64+0x715932)
+         #2 sqlite3_open sqlite3.c:142101 (Bkmxwork:x86_64+0x71583f)
+         #3 -[SSYSqliter initDatabaseError_p:] SSYSqliter.m:418 (Bkmxwork:x86_64+0x366a04)
+         #4 -[SSYSqliter initWithPath:error_p:] SSYSqliter.m:2082 (Bkmxwork:x86_64+0x373cba)
+         #5 +[BSManagedDocument(SSYMetadata) metadataAtPath:] BSManagedDocument+SSYMetadata.m:17 (Bkmxwork:x86_64+0x5f8cc2)
+         #6 +[BSManagedDocument(SSYMetadata) metadataObjectForKey:path:] BSManagedDocument+SSYMetadata.m:99 (Bkmxwork:x86_64+0x5f96cd)
+         #7 -[BSManagedDocument(SSYMetadata) metadataObjectForKey:] BSManagedDocument+SSYMetadata.m:114 (Bkmxwork:x86_64+0x5f9973)
+         #8 -[BkmxDoc configurePersistentStoreCoordinatorForURL:ofType:modelConfiguration:storeOptions:error:] BkmxDoc.m:1704 (Bkmxwork:x86_64+0x41f2a2)
+         #9 -[BSManagedDocument configurePersistentStoreCoordinatorForURL:ofType:error:] BSManagedDocument.m:256 (Bkmxwork:x86_64+0x3e3f77)
+         #10 -[BSManagedDocument readFromURL:ofType:error:] BSManagedDocument.m:375 (Bkmxwork:x86_64+0x3e512e)
+
+         This stack will run concurrently, on different threads for each
+         document.
+
+         Although this method only runs once for each document, and both
+         parameters (the path and &m_db) are different for each document,
+         using @synchronize(self) or @synchronize([self path]) does not fix the
+         violation.  It looks like the explanation is that, in sqlite3,
+         pTo->MutexAlloc is a global variable.  Therefore, in order to fix the
+         violation, we need to @synchronize on something global ([self class]).
+         Anyhow, doing that cleared the Thread Sanitizer violation. */
+        result = sqlite3_open([[self path] UTF8String], (sqlite3**)&m_db) ;
+    }
 
 	if (result != SQLITE_OK) {
 		if (error_p) {
