@@ -109,6 +109,7 @@ NSString* const constSSYLazyNotificationSelectorName = @"selName" ;
 
 - (void)fire:(NSTimer*)timer {
     @synchronized(self) {
+        /* Note 20171227 1 of 2.  The following line will sometime crash on launch of BookMacster. */
         NSNotification* note = [timer userInfo] ;
         NSString* noteName = [note name] ;
         [[self fireTimers] removeObjectForKey:noteName] ;
