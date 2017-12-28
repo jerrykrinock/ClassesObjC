@@ -9,6 +9,9 @@
 /*!
  @brief    Closes the file of any existing singleton, and 
  creates a new one set to write to a given path
+
+ @details  Creates parent directory path if necessary, deleting any regular
+ file which may exist at the parent directory path
 */
 + (void)setToPath:(NSString*)path ;
 

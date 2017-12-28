@@ -33,8 +33,30 @@ static SSYLinearFileWriter* sharedFileWriter = nil ;
 }
 
 - (void)setPath:(NSString*)path {
-	NSFileManager* fileManager = [NSFileManager defaultManager] ;
-	[fileManager createFileAtPath:path
+	NSFileManager* fileManager = [NSFileManager defaultManager];
+
+    NSString* parentPath = [path stringByDeletingLastPathComponent];
+    BOOL parentDirectoryIsDirectory = NO;
+    BOOL parentDirectoryExists = [fileManager fileExistsAtPath:parentPath
+                                  isDirectory:&parentDirectoryIsDirectory];
+    BOOL needsCreateDirectory = NO;
+    if (parentDirectoryExists) {
+        if (!parentDirectoryIsDirectory) {
+            [fileManager removeItemAtPath:parentPath
+                                    error:NULL];
+            needsCreateDirectory = YES;
+        }
+    } else {
+        needsCreateDirectory = YES;
+    }
+    if (needsCreateDirectory) {
+        [fileManager createDirectoryAtPath:parentPath
+               withIntermediateDirectories:YES
+                                attributes:nil
+                                     error:NULL];
+    }
+
+    [fileManager createFileAtPath:path
 						 contents:[NSData data]
 					   attributes:nil] ;
 	
@@ -56,8 +78,10 @@ static SSYLinearFileWriter* sharedFileWriter = nil ;
 					
 + (void)setToPath:(NSString*)path {
 	if (sharedFileWriter) {
-		[sharedFileWriter release] ;
-		sharedFileWriter = nil ;
+#if !__has_feature(objc_arc)
+        [sharedFileWriter release] ;
+#endif
+        sharedFileWriter = nil ;
 	}
 	[[SSYLinearFileWriter sharedFileWriter] setPath:path] ;
 }
@@ -70,11 +94,13 @@ static SSYLinearFileWriter* sharedFileWriter = nil ;
 	[[SSYLinearFileWriter sharedFileWriter] setFileHandle:nil] ;
 }
 
+#if !__has_feature(objc_arc)
 - (void)dealloc {
     [m_fileHandle release] ;
     
     [super dealloc] ;
 }
+#endif
 
 @end
 
