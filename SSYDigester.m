@@ -16,6 +16,14 @@ NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
                 m_algorithm = SSYDigesterAlgorithmSha1 ;
                 CC_SHA1_Init(&m_context_sha1) ;
 				break;
+            case SSYDigesterAlgorithmSha256:;
+                m_algorithm = SSYDigesterAlgorithmSha256 ;
+                CC_SHA256_Init(&m_context_sha256) ;
+                break;
+            case SSYDigesterAlgorithmSha512:;
+                m_algorithm = SSYDigesterAlgorithmSha512 ;
+                CC_SHA512_Init(&m_context_sha512) ;
+                break;
 		}
 	}
 	
@@ -30,6 +38,12 @@ NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
         case SSYDigesterAlgorithmSha1:
             CC_SHA1_Update(&m_context_sha1, [data bytes], (CC_LONG)[data length]) ;
             break ;
+        case SSYDigesterAlgorithmSha256:
+            CC_SHA256_Update(&m_context_sha256, [data bytes], (CC_LONG)[data length]) ;
+            break ;
+        case SSYDigesterAlgorithmSha512:
+            CC_SHA512_Update(&m_context_sha512, [data bytes], (CC_LONG)[data length]) ;
+            break ;
     }
 }
 
@@ -40,14 +54,15 @@ NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
 		return ;
 	}
 	
-	NSInteger length ;
-	const char* cString = [string cStringUsingEncoding:encoding] ;
+    NSInteger length ;
+	const char* encodedString = [string cStringUsingEncoding:encoding];
+    /* Note: encodedString is not necessarily a null-terminated C string. */
 	if (
 		(encoding == NSASCIIStringEncoding) ||
 		(encoding == NSUTF8StringEncoding)
 		) {
-		if (cString) {
-			length = (strlen(cString)) ;
+		if (encodedString) {
+			length = (strlen(encodedString)) ;
 		}
 		else {
 			length = 0 ;
@@ -65,7 +80,7 @@ NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
         length = 0 ;
 	}
 
-	NSData* data = [NSData dataWithBytes:cString
+    NSData* data = [NSData dataWithBytes:encodedString
 								  length:length] ;
     [self updateWithData:data] ;
 }
@@ -81,9 +96,20 @@ NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
             hash = [[NSMutableData alloc] initWithLength:CC_SHA1_DIGEST_LENGTH] ;
             CC_SHA1_Final([hash mutableBytes], &m_context_sha1) ;
             break ;
+        case SSYDigesterAlgorithmSha256:;
+            hash = [[NSMutableData alloc] initWithLength:CC_SHA256_DIGEST_LENGTH] ;
+            CC_SHA256_Final([hash mutableBytes], &m_context_sha256) ;
+            break ;
+        case SSYDigesterAlgorithmSha512:;
+            hash = [[NSMutableData alloc] initWithLength:CC_SHA512_DIGEST_LENGTH] ;
+            CC_SHA512_Final([hash mutableBytes], &m_context_sha512) ;
+            break ;
     }
 	NSData* answer =  [NSData dataWithData:hash] ;
+#if !__has_feature(objc_arc)
     [hash release] ;
+#endif
+    
     return answer ;
 }
 

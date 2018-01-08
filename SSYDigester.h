@@ -3,19 +3,21 @@
 
 enum SSYDigesterAlgorithm_enum {
 	SSYDigesterAlgorithmMd5,
-	SSYDigesterAlgorithmSha1
+	SSYDigesterAlgorithmSha1,
+    SSYDigesterAlgorithmSha256,
+    SSYDigesterAlgorithmSha512,
 } ;
 typedef enum SSYDigesterAlgorithm_enum SSYDigesterAlgorithm ;
 
 /*!
  @brief    A class for computing message digests incrementally.
-
- @details  
 */
 @interface SSYDigester : NSObject {
     SSYDigesterAlgorithm m_algorithm ;
     CC_MD5_CTX m_context_md5 ;
 	CC_SHA1_CTX m_context_sha1 ;
+    CC_SHA256_CTX m_context_sha256 ;
+    CC_SHA512_CTX m_context_sha512 ;
 }
 
 /*!
