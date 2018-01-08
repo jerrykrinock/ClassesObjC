@@ -109,16 +109,21 @@ NSString* const constSSYLazyNotificationSelectorName = @"selName" ;
 
 - (void)fire:(NSTimer*)timer {
     @synchronized(self) {
-        /* Note 20171227 1 of 2.  The following line will sometime crash on launch of BookMacster. */
-        NSNotification* note = [timer userInfo] ;
-        NSString* noteName = [note name] ;
-        [[self fireTimers] removeObjectForKey:noteName] ;
-        NSArray* observations = [[self observations] objectForKey:noteName] ;
-        for (NSDictionary* observation in observations) {
-            id observer = [observation objectForKey:constSSYLazyNotificationCenterObserver] ;
-            SEL selector = NSSelectorFromString([observation objectForKey:constSSYLazyNotificationSelectorName]) ;
-            [observer performSelector:selector
-                           withObject:note] ;
+        /* Documentation of -[NSTimer userInfo] states:
+         Do not access this property after the timer is invalidated.
+         Indeed, in macOS 10.13.3 Beta 2-3, it causes a crash.  So, we check
+         it before doing anything. */
+        if (timer.isValid) {
+            NSNotification* note = [timer userInfo] ;
+            NSString* noteName = [note name] ;
+            [[self fireTimers] removeObjectForKey:noteName] ;
+            NSArray* observations = [[self observations] objectForKey:noteName] ;
+            for (NSDictionary* observation in observations) {
+                id observer = [observation objectForKey:constSSYLazyNotificationCenterObserver] ;
+                SEL selector = NSSelectorFromString([observation objectForKey:constSSYLazyNotificationSelectorName]) ;
+                [observer performSelector:selector
+                               withObject:note] ;
+            }
         }
     }
 }
