@@ -78,29 +78,35 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 
 - (NSInvocation*)errorRetryInvocation {
 	NSInvocation* answer ;
-	if (m_errorRetryInvocations) {
-		NSArray* frozenInvocations = [[NSArray alloc] initWithArray:m_errorRetryInvocations] ;
-		answer = [NSInvocation invocationWithInvocations:frozenInvocations] ;
-		[frozenInvocations release] ;
-	}
-	else {
-		answer = nil ;
-	}
-	
+    @synchronized(self) {
+        if (m_errorRetryInvocations) {
+            NSArray* frozenInvocations = [[NSArray alloc] initWithArray:m_errorRetryInvocations] ;
+            answer = [NSInvocation invocationWithInvocations:frozenInvocations] ;
+            [frozenInvocations release] ;
+        }
+        else {
+            answer = nil ;
+        }
+    }
+
 	return answer ;
 }
 
 - (void)appendErrorRetryInvocation:(NSInvocation*)invocation {
-	if (!m_errorRetryInvocations) {
-		m_errorRetryInvocations = [[NSMutableArray alloc] init] ;
-	}
-	
-	[m_errorRetryInvocations addObject:invocation] ;
+    @synchronized(self) {
+        if (!m_errorRetryInvocations) {
+            m_errorRetryInvocations = [[NSMutableArray alloc] init] ;
+        }
+
+        [m_errorRetryInvocations addObject:invocation] ;
+    }
 }
 
 - (void)removeAllErrorRetryInvocations {
-	[m_errorRetryInvocations release] ;
-	m_errorRetryInvocations = nil ;
+    @synchronized (self) {
+        [m_errorRetryInvocations release] ;
+        m_errorRetryInvocations = nil ;
+    }
 }
 
 - (id)init {
