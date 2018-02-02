@@ -23,21 +23,29 @@ stringEncodingStated_p:(NSStringEncoding*)stringEncodingStated_p
 	}
 	
 	// Discover and set line endings type (dos, old Mac or unix)
-	NSString* newLinesFound = nil ;
+	NSString* newLinesFound = nil;
 	if (!error) {	
+        NSInteger nLocation = stringASCII ? [stringASCII rangeOfString:@"\n"].location : 0 ;
 		NSInteger rLocation = stringASCII ? [stringASCII rangeOfString:@"\r"].location : 0 ;
-		NSInteger nLocation = stringASCII ? [stringASCII rangeOfString:@"\n"].location : 0 ;
-		
+
 		// Set to whichever occurs first in the file: \r\n, \r or \n
-		if (nLocation == rLocation + 1) {
-			newLinesFound = @"\r\n" ;
-		}			
-		else if (rLocation < nLocation) {
-			newLinesFound = @"\r" ;
-		}
-		else {
-			newLinesFound = @"\n" ;
-		}
+        if (nLocation != NSNotFound) {
+            if (rLocation != NSNotFound) {
+                if (nLocation == rLocation + 1) {
+                    newLinesFound = @"\r\n" ;
+                } else if (nLocation < rLocation) {
+                    newLinesFound = @"\n" ;
+                } else {
+                    newLinesFound = @"\r" ;
+                }
+            } else {
+                newLinesFound = @"\n" ;
+            }
+        } else if (rLocation != NSNotFound) {
+            newLinesFound = @"\r" ;
+        } else {
+            newLinesFound = @"\n" ;
+        }
 	}
 		
 	NSString *utfdash8Key = @"content=\"text/html; charset=utf-8" ;
