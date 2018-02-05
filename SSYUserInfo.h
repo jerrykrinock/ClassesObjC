@@ -47,13 +47,14 @@ __attribute__((visibility("default"))) @interface SSYUserInfo : NSObject {
 */
 + (NSString*)consoleUserNameAndUid_p:(uid_t*)uid_p
 							   gid_p:(gid_t*)gid_p ;
-
 /*!
  @brief    Returns a date object representing the time that the current user
  logged in to the macOS user account currently showing in the GUI
 
- @result   A NSDate, or upon failure, if assertions are not active, nil
+ @param    error_p  Pointer which will, upon return, if an error occurred and
+ said pointer is not NULL, point to an NSError describing said error.
+ @result   A NSDate, or upon failure, nil
  */
-+ (NSDate*)whenThisUserLoggedIn;
++ (NSDate*)whenThisUserLoggedInError_p:(NSError**)error_p ;
 
 @end
