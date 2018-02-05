@@ -33,17 +33,20 @@ __attribute__((visibility("default"))) @interface SSYSemaphorePidKey : NSObject 
  SSYSemaphore features a time limit (timeLimit) to mitigate this
  danger.
  
- SSYSemaphore is implemented by writing a process identifier (pidd) and an
- arbitrary user-defined key into an "info file".
+ SSYSemaphore is implemented by writing a process identifier (pid) and an
+ arbitrary user-defined key into an "info file" (named SSYSemaphore-Info).
  
  Simultaneous access to the info file is limited to one contending process
- by a "lock file", as described in these links…
+ by a "lock file" (named SSYSemaphore-Lock), as described in these links…
  • http://stackoverflow.com/questions/2053679/how-do-i-recover-a-semaphore-when-the-process-that-decremented-it-to-zero-crashe
- •  http://charette.no-ip.com:81/programming/2010-01-13_PosixSemaphores/index.html
+ • http://charette.no-ip.com:81/programming/2010-01-13_PosixSemaphores/index.html
  Those links also explain why I use the "lock file" idea instead of named
  POSIX semaphores.  (Briefly, named POSIX semaphores are not cleaned up by
  macOS if their owning processes crash, which causes a logjam until the
  user logs out and back in.
+
+ Note that the SSYSemaphore-Lock is never deleted from ~/Library/Application
+ Support/<MotherAppName>.  Don't worry about it.  It contains 0 bytes.
  
  When using this class, [NSApp delegate] must conform to protocol
  SSYAppSupporter.
