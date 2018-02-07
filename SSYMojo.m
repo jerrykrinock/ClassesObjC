@@ -50,8 +50,8 @@
 }
 
 - (NSArray*)objectsWithSubpredicates:(NSArray*)subpredicates
-							   type:(NSCompoundPredicateType)type
-							 error_p:(NSError**)error_p {	
+                                type:(NSCompoundPredicateType)type
+                             error_p:(NSError**)error_p {
 	NSPredicate* compoundPredicate = nil ;
 	if (subpredicates) {
 		switch (type) {
@@ -67,7 +67,7 @@
 	}
 	NSError* error = nil ;
 	NSFetchRequest* fetchRequest = [[NSFetchRequest alloc] init] ;
-	NSManagedObjectContext* managedObjectContext = [self managedObjectContext] ;
+    NSManagedObjectContext* managedObjectContext = [self managedObjectContext] ;
 	NSArray* fetches = nil ;
 	if (managedObjectContext) {
 		[fetchRequest setEntity:[NSEntityDescription SSY_entityForName:[self entityName]
@@ -113,10 +113,10 @@
 	else {
 		subpredicates = nil ;
 	}
-	NSArray* objects = [self objectsWithSubpredicates:subpredicates
-											   type:NSAndPredicateType
-											  error_p:error_p] ;
-	return objects ;
+    NSArray* objects = [self objectsWithSubpredicates:subpredicates
+                                                 type:NSAndPredicateType
+                                              error_p:error_p] ;
+    return objects ;
 }	
 
 - (NSManagedObject*)objectWithPredicate:(NSPredicate*)predicate
