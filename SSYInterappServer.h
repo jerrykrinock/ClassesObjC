@@ -34,21 +34,17 @@ extern NSString* const SSYInterappServerErrorDomain ;
  Here are some search terms, so I can find the above comment later:
  command line, active mach port, active mach ports,
 */
-@interface SSYInterappServer : NSObject {
-	CFMessagePortRef m_port ;
-	NSObject <SSYInterappServerDelegate> * __unsafe_unretained m_delegate ;
-	void* m_contextInfo ;
-}
+@interface SSYInterappServer : NSObject {}
 
 /*!
- @brief    The contextInfo which is set in +leaseServerWithPortName::::.
+ @brief    The userInfo which is set in +leaseServerWithPortName::::.
  
  @details  The getter is typically used to retrieve the receiver's
- contextInfo in the delegate method -interappServer:didReceiveHeaderByte:data:.
+ userInfo in the delegate method -interappServer:didReceiveHeaderByte:data:.
  The setter is typically used to re-purpose the receiver to handle a different
  message.
 */
-@property (assign, nonatomic) void* contextInfo ;
+@property (retain) NSDictionary* userInfo ;
 
 /*!
  @brief    An object to which will be sent Objective-C messages whenever
@@ -76,8 +72,8 @@ extern NSString* const SSYInterappServerErrorDomain ;
  @param    delegate  See declaration of the 'delegate' property.  If an
  existing server is returned by this method, its delegate will be overwritten
  with this value.
- @param    contextInfo  A pointer which may be used to pass information to the
- delegate.  If an existing server is returned, its contextInfo will be
+ @param    userInfo  A dictionary which may be used to pass information to the
+ delegate.  If an existing server is returned, its userInfo will be
  overwritten with this value.
  @param    error_p  If the receiver cannot be initialized, will point to an
  error object describing the problem.  You may pass NULL if uninterested in this.
@@ -88,7 +84,7 @@ extern NSString* const SSYInterappServerErrorDomain ;
 */
 + (SSYInterappServer*)leaseServerWithPortName:(NSString*)portName
 									 delegate:(NSObject <SSYInterappServerDelegate> *)delegate
-								  contextInfo:(void*)contextInfo
+                                     userInfo:(NSDictionary*)userInfo
 									  error_p:(NSError**)error_p ;
 
 /*!

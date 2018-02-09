@@ -46,6 +46,8 @@ NSString* const SSYInterappServerErrorDomain = @"SSYInterappServerErrorDomain" ;
 
 @interface SSYInterappServer () 
 
+@property CFMessagePortRef port ;
+
 @end
 
 
@@ -116,35 +118,29 @@ CFDataRef SSYInterappServerCallBackCreateData(
 
 @implementation SSYInterappServer
 
-@synthesize delegate = m_delegate ;
-@synthesize contextInfo = m_contextInfo ;
-
-- (CFMessagePortRef)port {
-	return m_port ;
-}
-
-
-- (void)dealloc {	
+- (void)dealloc {
 	
-	// Defensive programming: Ensure that m_port exists because calling
+	// Defensive programming: Ensure that _port exists because calling
 	// either CFMessagePortInvalidate(NULL) or CFRelease(NULL)
 	// will cause a crash.
-	if (m_port) {
+	if (_port) {
 		// See documentation above for static_portsInUse to understand
 		// what in the world we are doing in here.
 		
-		CFIndex portRetainCount = CFGetRetainCount(m_port) ;
+		CFIndex portRetainCount = CFGetRetainCount(_port) ;
 		if (portRetainCount <= 2) {
-			[static_portsInUse removeObject:[NSValue valueWithPointer:m_port]] ;
-			CFMessagePortInvalidate(m_port) ;
+			[static_portsInUse removeObject:[NSValue valueWithPointer:_port]] ;
+			CFMessagePortInvalidate(_port) ;
 		}
 		
-		CFRelease(m_port) ;
-		m_port = NULL ;
+		CFRelease(_port) ;
+		_port = NULL ;
 	}
 	
 #if !__has_feature(objc_arc)
-	[super dealloc] ;
+    [_userInfo release];
+
+	[super dealloc];
 #endif
 }
 
@@ -162,12 +158,12 @@ CFDataRef SSYInterappServerCallBackCreateData(
 		for (NSValue* portPointer in static_portsInUse) {
 			CFMessagePortRef aPort = [portPointer pointerValue] ;
 			if ([portName isEqualToString:(__bridge NSString*)CFMessagePortGetName(aPort)]) {
-				m_port = aPort ;
+				_port = aPort ;
 				CFRetain(aPort) ;
 			}
 		}
 		
-		if (!m_port) {
+		if (!_port) {
 			CFMessagePortContext context ;
 			context.version = 0 ;
 			context.info = (__bridge void *)(self) ;
@@ -179,13 +175,13 @@ CFDataRef SSYInterappServerCallBackCreateData(
 #define MESSAGE_PORT_CREATE_LOCAL_TIMEOUT 5.0
             NSDate* endDate = [NSDate dateWithTimeIntervalSinceNow:MESSAGE_PORT_CREATE_LOCAL_TIMEOUT] ;
             do {
-                m_port = CFMessagePortCreateLocal(
+                _port = CFMessagePortCreateLocal(
                                                   NULL,
                                                   (__bridge CFStringRef)portName,
                                                   SSYInterappServerCallBackCreateData,
                                                   &context,
                                                   NULL) ;
-                if (m_port) {
+                if (_port) {
                     break ;
                 }
                 if ([endDate timeIntervalSinceNow] < 0.0) {
@@ -194,20 +190,20 @@ CFDataRef SSYInterappServerCallBackCreateData(
                 sleep(1) ;
             } while (YES) ;
 
-			if (m_port) {
+			if (_port) {
 				[self setDelegate:delegate] ;
 				CFRunLoopSourceRef source = CFMessagePortCreateRunLoopSource(
 																			 NULL, 
-																			 m_port,
+																			 _port,
 																			 0) ;
 				CFRunLoopAddSource(
 								   CFRunLoopGetCurrent(),
 								   source, 
 								   kCFRunLoopDefaultMode) ;
-				// Note: Leaking 'source' will also leak m_port in an apparent retain cycle.
+				// Note: Leaking 'source' will also leak _port in an apparent retain cycle.
 				CFRelease(source) ;
 				
-				[static_portsInUse addObject:[NSValue valueWithPointer:m_port]] ;
+				[static_portsInUse addObject:[NSValue valueWithPointer:_port]] ;
 			}
 			else {
 				/* This means that CFMessagePortCreateLocal returned NULL
@@ -284,7 +280,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
 
 + (SSYInterappServer*)leaseServerWithPortName:(NSString*)portName
 									 delegate:(NSObject <SSYInterappServerDelegate> *)delegate
-								  contextInfo:(void*)contextInfo
+                                     userInfo:(NSDictionary*)userInfo
 									  error_p:(NSError**)error_p {	
 	NSError* error = nil ;
 	if (!static_serversInUse) {
@@ -323,7 +319,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
 	}
 	
 	[server setDelegate:delegate] ;
-	[server setContextInfo:contextInfo] ;
+    [server setUserInfo:userInfo] ;
 	
 	if (error && error_p) {
 		*error_p = error ;
