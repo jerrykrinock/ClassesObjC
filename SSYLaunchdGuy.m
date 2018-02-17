@@ -742,8 +742,7 @@ end:;
 	// "no such file or directory".
 
 	// If there were no loaded jobs matching the given glob, then at this
-	// point we will have result=1 (OS X 10.9) or result=0 (earlier OS X
-    // versions??), error=nil, and stderr will be
+	// point we will have result=1 (macOS 10.9+), error=nil, and stderr will be
 	//   launchctl: Couldn't stat("/path/to/*whatever*.plist"):
     //              No such file or directory
 
