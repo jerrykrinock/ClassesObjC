@@ -1,5 +1,7 @@
 #import <Cocoa/Cocoa.h>
 
+extern NSString* const SSYUserInfoErrorDomain;
+extern NSInteger const SSYUserInfoCouldNotGetLoginTimeError;
 
 /*!
  Methods for getting info about the current macOS user, aka "console" user

@@ -5,6 +5,8 @@
 #import <utmpx.h>
 #import <string.h>
 
+NSString* const SSYUserInfoErrorDomain = @"SSYUserInfoErrorDomain";
+NSInteger const SSYUserInfoCouldNotGetLoginTimeError = 948308;
 
 @implementation SSYUserInfo
 
@@ -91,8 +93,8 @@
     endutxent_wtmp();
 
     if (!date && error_p) {
-        NSError* error = [NSError errorWithDomain:@"SSYUserInfoErrorDomain"
-                                             code:948308
+        NSError* error = [NSError errorWithDomain:SSYUserInfoErrorDomain
+                                             code:SSYUserInfoCouldNotGetLoginTimeError
                                          userInfo:@{
                                                     NSLocalizedDescriptionKey: @"SSYUserInfo could not find `%@` console UTX entry",
                                                     @"entries count": [NSNumber numberWithInteger:countOfEntries],
