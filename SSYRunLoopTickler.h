@@ -28,7 +28,7 @@
  James Bucanek
  
 */
-@interface SSYRunLoopTickler : NSObject {
+__attribute__((visibility("default"))) @interface SSYRunLoopTickler : NSObject {
 }
 
 /*!
