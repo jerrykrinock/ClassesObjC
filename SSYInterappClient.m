@@ -42,6 +42,12 @@ NSString* const SSYInterappClientErrorDomain = @"SSYInterappClientErrorDomain" ;
         }
     } while (!remotePort) ;
 
+    /*If the system logs a message like this:
+     "*** CFMessagePort: dropping corrupt reply Mach message (***)"
+     Check out this:
+     https://github.com/opensource-apple/CF/blob/master/CFMessagePort.c
+     to decode the (***) */
+
 	if (!remotePort) {
 		ok = NO ;
 		result = SSYInterappClientErrorCantFindReceiver ;

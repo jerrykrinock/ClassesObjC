@@ -181,6 +181,13 @@ CFDataRef SSYInterappServerCallBackCreateData(
                                                   SSYInterappServerCallBackCreateData,
                                                   &context,
                                                   NULL) ;
+
+                /*If the system logs a message like this:
+                 "*** CFMessagePort: dropping corrupt reply Mach message (***)"
+                 Check out this:
+                 https://github.com/opensource-apple/CF/blob/master/CFMessagePort.c
+                 to decode the (***) */
+
                 if (_port) {
                     break ;
                 }
