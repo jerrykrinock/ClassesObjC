@@ -96,7 +96,7 @@ NSInteger const SSYUserInfoCouldNotGetLoginTimeError = 948308;
         NSError* error = [NSError errorWithDomain:SSYUserInfoErrorDomain
                                              code:SSYUserInfoCouldNotGetLoginTimeError
                                          userInfo:@{
-                                                    NSLocalizedDescriptionKey: @"SSYUserInfo could not find `%@` console UTX entry",
+                                                    NSLocalizedDescriptionKey: @"Could not find UTX entry for console user",
                                                     @"entries count": [NSNumber numberWithInteger:countOfEntries],
                                                     @"user entries count": [NSNumber numberWithInteger:countOfUserEntries ],
                                                     @"console user entries count": [NSNumber numberWithInteger:countOfConsoleUserEntries ],
