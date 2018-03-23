@@ -237,19 +237,15 @@
         case SSYVectorImageStyleMinus:;
             [path setLineWidth:10] ;
             
-            // We also use textDrawingLineWidth as a margin
-            CGFloat halfX = 50.0 ;
-            CGFloat halfY = 46.875 ;
-            
             // Draw the horizontal line
-            [path moveToPoint:NSMakePoint(12.5, halfY)] ;
-            [path lineToPoint:NSMakePoint(87.5, halfY)] ;
+            [path moveToPoint:NSMakePoint(insetPercent, 50.0)] ;
+            [path lineToPoint:NSMakePoint(100.0 - insetPercent, 50.0)] ;
             [path stroke] ;
             
             if (style == SSYVectorImageStylePlus) {
                 // Draw the vertical line
-                [path moveToPoint:NSMakePoint(halfX, 6.25)] ;
-                [path lineToPoint:NSMakePoint(halfX, 87.5)] ;
+                [path moveToPoint:NSMakePoint(50.0, insetPercent)] ;
+                [path lineToPoint:NSMakePoint(50.0, 100.0 - insetPercent)] ;
                 [path stroke] ;
             }
             break ;
@@ -314,7 +310,7 @@
                                                 fattenBy:1.5
                                                    color:color
                                                     fill:(style == SSYVectorImageStyleInfoOn)] ;
-            [glyphImage drawInRect:NSMakeRect(0,0,100,100)
+            [glyphImage drawInRect:NSMakeRect(0.0, 0.0, 100.0,100)
                           fromRect:NSZeroRect
                          operation:NSCompositeCopy
                           fraction:1.0] ;
@@ -336,7 +332,8 @@
                                                 fattenBy:1.3
                                                    color:color
                                                     fill:YES] ;
-            [glyphImage drawInRect:NSMakeRect(0,0,100,100)
+            NSRect frame = NSInsetRect(NSMakeRect(0,0,100,100), insetPercent, insetPercent) ;
+            [glyphImage drawInRect:frame
                           fromRect:NSZeroRect
                          operation:NSCompositeCopy
                           fraction:1.0] ;
@@ -653,8 +650,7 @@
             [path stroke] ;
             break ;
         case SSYVectorImageStyleHexagon:;
-            NSRect wholeFrame = NSMakeRect(0.0, 0.0, wength, wength) ;
-            NSRect frame = NSInsetRect(wholeFrame, insetPercent, insetPercent) ;
+             NSRect frame = NSInsetRect(NSMakeRect(0.0, 0.0, 100.0, 100.0), insetPercent, insetPercent) ;
             CGFloat insize = wength - 2*insetPercent ;
             
             NSPoint A = NSMakePoint(frame.origin.x + insize / 2, frame.origin.y + frame.size.height);
@@ -689,7 +685,6 @@
     NSImage* image ;
     NSImage* rotatedImage ;
     
-    // We must be in macOS 10.8 or later
     image = [NSImage imageWithSize:size
                            flipped:NO
                     drawingHandler:^(NSRect dstRect) {
