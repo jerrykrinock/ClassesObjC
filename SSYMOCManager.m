@@ -575,6 +575,24 @@ static SSYMOCManager* sharedMOCManager = nil ;
 			 isInDic:[[self sharedMOCManager] docMOCDics]] ;
 }
 
++ (NSManagedObjectContext*)scratchManagedObjectContext {
+    NSManagedObjectContext* scratchMOC = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
+    scratchMOC.undoManager = nil;
+    NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainAppBundle]] ;
+    NSManagedObjectModel* mergedMOM = [NSManagedObjectModel mergedModelFromBundles:bundles] ;
+    NSPersistentStoreCoordinator* scratchPSC = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:mergedMOM] ;
+    NSError* unlikelyError = nil;
+    [scratchPSC addPersistentStoreWithType:NSInMemoryStoreType
+                             configuration:nil
+                                       URL:nil
+                                   options:0
+                                     error:&unlikelyError];
+    NSAssert(unlikelyError == nil, @"Internal Error 874-4408 %@", unlikelyError);
+    scratchMOC.persistentStoreCoordinator = scratchPSC;
+    [scratchPSC release];
+
+    return scratchMOC;
+}
 
 
 #if DEBUG

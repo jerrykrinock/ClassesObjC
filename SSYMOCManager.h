@@ -193,6 +193,22 @@ which would be returned by -managedObjectContextType:::::, from the
 + (BOOL)isSqliteMOC:(NSManagedObjectContext*)moc ;
 + (BOOL)isDocMOC:(NSManagedObjectContext*)moc ;
 
+/*!
+ @brief    Returns a managed object context, backed by a in-memory store, using
+ your application's merged managed object models, and nil undo manager
+
+ @details  You can use this to create isolated, temporary managed object(s)
+ which you may need to use their behaviors.  The alternative, creating such
+ objects in one of your application's "real" managed object contexts, and then
+ deleting these objects when done, may have undesired side effects such as
+ triggering notifications.
+
+ To create such a temporary object, alloc a NSManagedObject and then
+ -initWithEntity:insertIntoManagedObjectContext:.
+ */
++ (NSManagedObjectContext*)scratchManagedObjectContext;
+
+
 #if DEBUG
 + (void)logDebugCurrentSqliteMocs ;
 #endif
