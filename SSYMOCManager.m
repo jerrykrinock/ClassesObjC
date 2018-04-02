@@ -590,6 +590,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
     NSAssert(unlikelyError == nil, @"Internal Error 874-4408 %@", unlikelyError);
     scratchMOC.persistentStoreCoordinator = scratchPSC;
     [scratchPSC release];
+    [scratchMOC autorelease];
 
     return scratchMOC;
 }
