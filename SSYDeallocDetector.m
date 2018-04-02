@@ -3,7 +3,7 @@
 
 @implementation SSYDeallocDetector
 
-#if 11
+#if 0
 #warning  Logging retains, releases and deallocs of Dealloc Detector
 #define LOG_RETAINS_RELEASES_AND_DEALLOCS 1
 #endif
