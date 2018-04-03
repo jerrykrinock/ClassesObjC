@@ -848,7 +848,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
                                  wength:64.0
                                   color:[NSColor yellowColor]
                           rotateDegrees:90.0
-                                  inset:0.0] ;
+                                  inset:12.0] ;
     [image lockFocus] ;
     [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
     [badge drawInRect:NSMakeRect(
@@ -874,7 +874,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
                                  wength:64.0
                                   color:[NSColor redColor]
                           rotateDegrees:90.0
-                                  inset:0.0] ;
+                                  inset:12.0] ;
     [image lockFocus] ;
     [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
     [badge drawInRect:NSMakeRect(

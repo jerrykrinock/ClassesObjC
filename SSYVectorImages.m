@@ -650,15 +650,38 @@
             [path stroke] ;
             break ;
         case SSYVectorImageStyleHexagon:;
-             NSRect frame = NSInsetRect(NSMakeRect(0.0, 0.0, 100.0, 100.0), insetPercent, insetPercent) ;
-            CGFloat insize = wength - 2*insetPercent ;
+            NSRect frame = NSInsetRect(NSMakeRect(0.0, 0.0, 100.0, 100.0), insetPercent, insetPercent) ;
+            CGFloat insize = 100 - 2*insetPercent ;
+            /* The vertexInset scalar used here, (2/3 - sqrt(7)/6) = .22570811,
+             gives "half regular, by length, square-filling" hexagon as
+             explained in the header documentation.
+
+             Alternatively, you might use a vertexInset scalar of 0.25 which
+             results in a "half regular, by angle, square-filling" hexagon.
+             In this case, the interior angles would all be 120 degrees, but
+             the two vertical sides would be only 2/5 the length of the four
+             nonvertical sides.
+
+             Actually, the vertexInset scalar can be any value from 0 to 0.5.
+
+             If 0, the vertical sides lengths become 0, the top interior angle
+             becomes 180 degrees so that the vertex disappears, and the sides
+             lines nearest the top become one, and similarly at the bottom, so
+             that the hexagon degenerates to a square with sides on the x and
+             y axes.
+
+             If 0.5, the two vertical sides' lengths go to 0, the four left
+             side vertices combine into one, and similarly on the right side,
+             so that the hexagon degenerates to a square oriented as a
+             diamond shape. */
+            CGFloat vertexInset = insize * .2257081148;
             
             NSPoint A = NSMakePoint(frame.origin.x + insize / 2, frame.origin.y + frame.size.height);
-            NSPoint B = NSMakePoint(frame.origin.x + insize, frame.origin.y + frame.size.height - insize / 4);
-            NSPoint C = NSMakePoint(frame.origin.x + insize, frame.origin.y + insize / 4);
+            NSPoint B = NSMakePoint(frame.origin.x + insize, frame.origin.y + frame.size.height - vertexInset);
+            NSPoint C = NSMakePoint(frame.origin.x + insize, frame.origin.y + vertexInset);
             NSPoint D = NSMakePoint(frame.origin.x + insize / 2, frame.origin.y);
-            NSPoint E = NSMakePoint(frame.origin.x, frame.origin.y + insize / 4);
-            NSPoint F = NSMakePoint(frame.origin.x, frame.origin.y + frame.size.height - insize / 4);
+            NSPoint E = NSMakePoint(frame.origin.x, frame.origin.y + vertexInset);
+            NSPoint F = NSMakePoint(frame.origin.x, frame.origin.y + frame.size.height - vertexInset);
             
             [path moveToPoint:A] ;
             [path lineToPoint:B] ;

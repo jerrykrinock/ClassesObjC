@@ -43,7 +43,21 @@ enum SSYVectorImageStyles_enum
     /* Circle with a single radial line inside of it, like an old fashioned
      radio knob with a pointer inside of it */
     SSYVectorImageStyleRoundRadioKnob,
-    /* Hexagon oriented with a vertex at the top center, vertical side lines */
+    /* A "half regular, by length, square-filling" hexagon, oriented with one
+     vertex at the top center of the square frame, one vertex at the bottom
+     center of the square frame, two vertices on each side of the square frame.
+     I called it "half regular, by length" because it fulfills one of the two
+     requirements of a regular hexagon, namely that the side lengths are
+     equal, but it does not fulfill the other requirement that all interior
+     angles be equal to 120 degrees.  The two interior angles at the top and
+     bottom are 131.41 degrees, while the four interior angles along the sides
+     are 114.30 degrees.
+
+     Note that when a regular hexagon (all sides of equal length and all
+     interior angles equal to 120 degrees) of this orientation is inscribed in
+     a square, the two two vertical lines are inset from the sides of the
+     square, leaving empty space on either side.  Such a regular hexagon is
+     taller than it is wide. */
     SSYVectorImageStyleHexagon
 } ;
 typedef enum SSYVectorImageStyles_enum SSYVectorImageStyle ;
