@@ -63,4 +63,17 @@ BOOL SSYDebugLogObjcClassesByBundleToFile (
                                            NSString* path,
                                            NSError** error_p) ;
 
+/*!
+ @details  For some reason which I've not investigated, in document-based
+ apps, this method does not list further up the chain than a document
+ window controller, even though there are more (its delegate, the document,
+ NSApp, app delegate, document controller) according to the Cocoa Event
+ Handling Guide > Event Architecture > The Responder Chain >
+ Responder Chain for Action Messages
+ https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/EventOverview/EventArchitecture/EventArchitecture.html#//apple_ref/doc/uid/10000060i-CH3-SW9
+ Maybe it's because these upper-level objects don't inherit from NSResponder
+ and are kind of pseudo-responders dependent on special Cocoa magic.
+ */
 void SSYDebugLogResponderChain(void);
+
+void SSYDebugLogObjCMethods(Class clz);

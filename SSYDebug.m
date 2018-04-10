@@ -198,7 +198,7 @@ void SSYDebugLogResponderChain(void) {
     NSWindow *mainWindow = [NSApplication sharedApplication].mainWindow;
 
     NSMutableString* chain = [NSMutableString new];
-    [chain appendString:@"Responder Chain:\n"];
+    [chain appendString:@"Responder Chain (stops at window controller):\n"];
     NSResponder *responder = mainWindow.firstResponder;
     do {
         [chain appendFormat:@"  %@\n", [responder debugDescription]];
@@ -206,4 +206,24 @@ void SSYDebugLogResponderChain(void) {
 
     NSLog(@"%@", chain);
     [chain release];
+}
+
+void SSYDebugLogObjCMethods(Class clz) {
+
+    unsigned int methodCount = 0;
+    Method *methods = class_copyMethodList(clz, &methodCount);
+
+    printf("Found %d methods on '%s'\n\n", methodCount, class_getName(clz));
+
+    for (unsigned int i = 0; i < methodCount; i++) {
+        Method method = methods[i];
+
+        printf("%s\n", sel_getName(method_getName(method)));
+
+        /**
+         *  Or do whatever you need here...
+         */
+    }
+    printf("\n\n");
+    free(methods);
 }
