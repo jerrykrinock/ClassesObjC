@@ -194,3 +194,16 @@ BOOL SSYDebugLogObjcClassesByBundleToFile (
     return ok ;
 }
 
+void SSYDebugLogResponderChain(void) {
+    NSWindow *mainWindow = [NSApplication sharedApplication].mainWindow;
+
+    NSMutableString* chain = [NSMutableString new];
+    [chain appendString:@"Responder Chain:\n"];
+    NSResponder *responder = mainWindow.firstResponder;
+    do {
+        [chain appendFormat:@"  %@\n", [responder debugDescription]];
+    } while ((responder = [responder nextResponder]));
+
+    NSLog(@"%@", chain);
+    [chain release];
+}
