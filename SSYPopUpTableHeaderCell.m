@@ -1,8 +1,6 @@
 #import "SSYPopUpTableHeaderCell.h"
 #import "NS(Attributed)String+Geometrics.h"
 #import "SSYTableHeaderView.h"
-//BAD:
-#import "StarkTableColumn.h"
 
 @interface SSYPopUpTableHeaderCell ()
 
