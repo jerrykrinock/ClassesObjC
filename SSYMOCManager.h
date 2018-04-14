@@ -208,6 +208,9 @@ which would be returned by -managedObjectContextType:::::, from the
  */
 + (NSManagedObjectContext*)scratchManagedObjectContext;
 
++ (NSManagedObjectContext*)pasteboardManagedObjectContext;
+
++ (NSArray <NSManagedObject*>*)deepCopiesForPasteboardObjects:(NSArray <NSManagedObject*> *)objects;
 
 #if DEBUG
 + (void)logDebugCurrentSqliteMocs ;

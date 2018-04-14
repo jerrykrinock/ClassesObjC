@@ -13,11 +13,14 @@
 #import "NSBundle+SSYMotherApp.h"
 #import "NSBundle+MainApp.h"
 #import "NSDictionary+SimpleMutations.h"
+#import "NSManagedObject+SSYCopying.h"
 #import "BSManagedDocument.h"
 /* BSManagedDocument is a open source replacement for NSPersistentDocument.
  It is recommended for any Core Data document-based app.
  https://github.com/jerrykrinock/BSManagedDocument
  */
+
+static NSManagedObjectContext* static_pasteboardManagedObjectContext = nil;
 
 
 NSString* const constKeyMOC = @"moc" ;
@@ -595,6 +598,32 @@ static SSYMOCManager* sharedMOCManager = nil ;
     return scratchMOC;
 }
 
++ (NSManagedObjectContext*)pasteboardManagedObjectContext {
+    @synchronized(self) {
+        if (!static_pasteboardManagedObjectContext) {
+            static_pasteboardManagedObjectContext = [self scratchManagedObjectContext] ;
+        }
+    }
+
+    // No autorelease.  This sticks around forever.
+    return static_pasteboardManagedObjectContext ;
+}
+
++ (NSArray <NSManagedObject*>*)deepCopiesForPasteboardObjects:(NSArray <NSManagedObject*> *)objects {
+    NSMutableArray* copies = [NSMutableArray new];
+    for (NSManagedObject* object in objects) {
+        NSManagedObject* copy = [object deepCopyInManagedObjectContext:[self pasteboardManagedObjectContext]];
+        [copies addObject:copy];
+    }
+
+    NSArray <NSManagedObject*> * answer = [copies copy];
+#if !__has_feature(objc_arc)
+    [copies release];
+    [answer autorelease];
+#endif
+
+    return answer;
+}
 
 #if DEBUG
 + (void)logDebugCurrentSqliteMocs {
