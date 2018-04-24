@@ -579,7 +579,8 @@ static SSYMOCManager* sharedMOCManager = nil ;
 }
 
 + (NSManagedObjectContext*)scratchManagedObjectContext {
-    NSManagedObjectContext* scratchMOC = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSPrivateQueueConcurrencyType];
+    NSManagedObjectContextConcurrencyType concurrencyType = [[NSThread currentThread] isMainThread] ? NSMainQueueConcurrencyType : NSPrivateQueueConcurrencyType;
+    NSManagedObjectContext* scratchMOC = [[NSManagedObjectContext alloc] initWithConcurrencyType:concurrencyType];
     scratchMOC.undoManager = nil;
     NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainAppBundle]] ;
     NSManagedObjectModel* mergedMOM = [NSManagedObjectModel mergedModelFromBundles:bundles] ;

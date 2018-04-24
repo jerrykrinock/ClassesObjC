@@ -205,6 +205,10 @@ which would be returned by -managedObjectContextType:::::, from the
 
  To create such a temporary object, alloc a NSManagedObject and then
  -initWithEntity:insertIntoManagedObjectContext:.
+
+ If you call this method on the main thread, the result will have
+ NSMainQueueConcurrencyType; otherwise, NSPrivateQueueConcurrencyType.  This
+ is so that you can "just use it", wherever you are.
  */
 + (NSManagedObjectContext*)scratchManagedObjectContext;
 
