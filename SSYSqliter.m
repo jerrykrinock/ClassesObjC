@@ -330,7 +330,7 @@ static NSInteger SSAppSQLiteCallback(void* NotUsed, NSInteger nColumns, char **c
 + (NSString*)queryInsertIntoTable:(NSString*)table
 						  columns:(NSArray*)columns
 						   values:(NSArray*)values {
-	return [NSString stringWithFormat:@"InSERT INTO %@ (%@) VALUES %@",
+	return [NSString stringWithFormat:@"INSERT INTO %@ (%@) VALUES %@",
 			table,
 			[columns componentsJoinedByString:@","],
 			[values stringEsquotedSQLValue]] ;
