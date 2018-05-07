@@ -752,12 +752,14 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 								   result, constKeyCompletionResult,
 								   nil] ;
 
-    // Remove any prior completions of same verb (Added BookMacster 1.21)
+    // Remove any prior completions of same verb and same result
     NSArray* completionsCopy = [[self completions] copy] ;
     NSInteger i = [completionsCopy count] - 1 ;
     for (NSDictionary* completion in [completionsCopy reverseObjectEnumerator]) {
         if ([[completion objectForKey:constKeyCompletionVerb] isEqualToString:verb]) {
-            [[self completions] removeObjectAtIndex:i] ;
+            if ([[completion objectForKey:constKeyCompletionResult] isEqualToString:result]) {
+                [[self completions] removeObjectAtIndex:i] ;
+            }
         }
         i-- ;
     }
