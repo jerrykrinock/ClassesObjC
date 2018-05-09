@@ -26,34 +26,34 @@
     NSString* symbol = nil ;
 	switch (action) {
 		case SSYModelChangeActionInsert:
-			symbol = @"+" ;  // I tried a circled + sign, \xe2\x8a\x95, but it was tiny and illegible at 11 pt.
+			symbol = @"+" ;  // + // I tried a circled + sign, \xe2\x8a\x95, but it was tiny and illegible at 11 pt.
 			break;
 		case SSYModelChangeActionModify:
-			symbol = @"\u0394" ; // Greek letter Delta
+			symbol = @"\u0394" ; // Δ // greek letter delta
 			break;
 		case SSYModelChangeActionSort:
-			symbol = @"\u25B2" ; // Black up-pointing triangle
+			symbol = @"\u25B2" ; // ▲ //black up-pointing triangle
 			break;
 		case SSYModelChangeActionMosh:
-			symbol = @"\u2723" ; // Four Balloon-spoked asterisk
+			symbol = @"\u2723" ; // ✣ // four balloon-spoked asterisk
 			break;
 		case SSYModelChangeActionSlosh:
-			symbol = @"\u271B" ; // Open Centre Cross
+			symbol = @"\u271B" ; // ✛ // open centre cross
 			break;
 		case SSYModelChangeActionSlide:
-			symbol = @"\u2195" ; // Up-and-down arrow
+			symbol = @"\u2195" ; // ↕︎ // up-and-down arrow
 			break;
 		case SSYModelChangeActionMerge:
-			symbol = @"\u2295" ;  // Circled Plus Sign
+			symbol = @"\u2295" ;  // ⊕ // circled plus sign
 			break;
 		case SSYModelChangeActionMove:
-			symbol = @"\u2196" ;  // Arrow pointing up and left
+			symbol = @"\u2196" ;  // ↖︎ // north west arrow
 			break;
 		case SSYModelChangeActionReplace:
-			symbol = @"\u21C5" ;  // Upwards arrow leftward of downwards arrow (two arrows) 
+			symbol = @"\u21C5" ;  // ⇅ // upwards arrow leftwards of downwards arrow (two arrows)
 			break;
 		case SSYModelChangeActionRemove:
-			symbol = @"-" ;  // Circled - sign
+			symbol = @"-" ;  // - //
 			break;
 		case SSYModelChangeActionUndefined:
 			symbol = @"" ;  
