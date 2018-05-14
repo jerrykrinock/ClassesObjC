@@ -301,8 +301,12 @@ static SSYMOCManager* sharedMOCManager = nil ;
 		   }
 		   else if ([*error_p involvesCode:SSYPersistentDocumentMultiMigratorErrorCodeNoSourceModel
 									domain:SSYPersistentDocumentMultiMigratorErrorDomain]) {
-			   NSString* originalPath = [url path] ;
-			   NSString* tildefiedPath = [originalPath tildefiedPath] ;
+			   NSString* originalPath = [url path];
+               NSString* originalShmPath = [originalPath stringByAppendingString:@"-shm"];
+               NSString* originalWalPath = [originalPath stringByAppendingString:@"-wal"];
+			   NSString* tildefiedPath = [originalPath tildefiedPath];
+               NSString* tildefiedShmPath = [originalShmPath tildefiedPath];
+               NSString* tildefiedWalPath = [originalWalPath tildefiedPath];
 			   BOOL movedOk = [[NSFileManager defaultManager] moveItemAtPath:originalPath
 																	  toPath:tildefiedPath
 																	   error:NULL] ;
@@ -316,6 +320,14 @@ static SSYMOCManager* sharedMOCManager = nil ;
 				   // Domain=NSCocoaErrorDomain Code=4, containing an underlying error with
 				   // Error Domain=NSPOSIXErrorDomain Code=2.  We ignore it, don't even ask for it.
 			   }
+
+               /* Move -shm and -wal files, if they exist, too */
+               [[NSFileManager defaultManager] moveItemAtPath:originalShmPath
+                                                       toPath:tildefiedShmPath
+                                                        error:NULL] ;
+               [[NSFileManager defaultManager] moveItemAtPath:originalWalPath
+                                                       toPath:tildefiedWalPath
+                                                        error:NULL] ;
 		   }
 	   }
    }
