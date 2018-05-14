@@ -124,7 +124,7 @@ enum {
   didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge {
 	// This method is never invoked under Tiger, but they fixed it in Leopard.
 	// In Tiger, instead of this, they use the default credential set in,
-	// for example -[DeliciousTalker tryPayload].
+	// for example -[DeliPinTalker tryPayload].
 	NSString* username = [self username] ;
 	NSString* password = [self password] ;
 	
