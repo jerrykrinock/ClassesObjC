@@ -615,6 +615,9 @@ static SSYMOCManager* sharedMOCManager = nil ;
     @synchronized(self) {
         if (!static_pasteboardManagedObjectContext) {
             static_pasteboardManagedObjectContext = [self scratchManagedObjectContext] ;
+#if !__has_feature(objc_arc)
+            [static_pasteboardManagedObjectContext retain];
+#endif
         }
     }
 
@@ -622,10 +625,12 @@ static SSYMOCManager* sharedMOCManager = nil ;
     return static_pasteboardManagedObjectContext ;
 }
 
-+ (NSArray <NSManagedObject*>*)deepCopiesForPasteboardObjects:(NSArray <NSManagedObject*> *)objects {
++ (NSArray <NSManagedObject*>*)deepCopiesForPasteboardObjects:(NSArray <NSManagedObject*> *)objects
+                                  doNotEnterRelationshipNames:(NSSet*)relationshipNames {
     NSMutableArray* copies = [NSMutableArray new];
     for (NSManagedObject* object in objects) {
-        NSManagedObject* copy = [object deepCopyInManagedObjectContext:[self pasteboardManagedObjectContext]];
+        NSManagedObject* copy = [object deepCopyInManagedObjectContext:[self pasteboardManagedObjectContext]
+                                           doNotEnterRelationshipNames:relationshipNames];
         [copies addObject:copy];
     }
 

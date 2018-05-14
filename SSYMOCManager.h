@@ -214,7 +214,8 @@ which would be returned by -managedObjectContextType:::::, from the
 
 + (NSManagedObjectContext*)pasteboardManagedObjectContext;
 
-+ (NSArray <NSManagedObject*>*)deepCopiesForPasteboardObjects:(NSArray <NSManagedObject*> *)objects;
++ (NSArray <NSManagedObject*>*)deepCopiesForPasteboardObjects:(NSArray <NSManagedObject*> *)objects
+                                  doNotEnterRelationshipNames:(NSSet <NSString*> *)relationshipNames;
 
 #if DEBUG
 + (void)logDebugCurrentSqliteMocs ;
