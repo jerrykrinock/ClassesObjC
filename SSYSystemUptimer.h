@@ -4,7 +4,7 @@ extern NSString* const SSYSystemUptimerErrorDomain;
 extern NSInteger const SSYSystemUptimerSystemCommandFailedErrorCode;
 extern NSInteger const SSYSystemUptimerCouldNotParseSystemResponse;
 
-@interface SSYSystemUptimer : NSObject
+__attribute__((visibility("default"))) @interface SSYSystemUptimer : NSObject
 
 /*!
  @brief    Returns the last date at which the system woke from sleep
