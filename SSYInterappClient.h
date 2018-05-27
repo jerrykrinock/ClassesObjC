@@ -16,7 +16,7 @@ extern NSString* const SSYInterappClientErrorDomain ;
  @details  Dave Keck has suggested an easier way to do this.  See
  comment at bottom of SSYInterappServer.h.
 */
-@interface SSYInterappClient : NSObject {
+__attribute__((visibility("default"))) @interface SSYInterappClient : NSObject {
 }
 
 /*!
