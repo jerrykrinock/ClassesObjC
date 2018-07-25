@@ -33,6 +33,15 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 		// Make sure that setValue: does not take its early return the 
 		// first time it is invoked…
 		[self setValue:NSNotFound] ;
+
+        // The following is to support some other object binding to the
+        // 'value' binding of a SSYToolbarButton.  We splice ourself in
+        // to observe the action.
+        [super setTarget:self] ;
+        [super setAction:@selector(doDaClick:)] ;
+
+        // In BookMacster, we use the conventional target/action and not
+        // the binding.
 	}
 	
 	return self ;
@@ -51,17 +60,6 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 @synthesize externalTarget = m_externalTarget ;
 @synthesize externalAction = m_externalAction ;
 @synthesize flashDuration = m_flashDuration ;
-
-- (void)awakeFromNib {
-	// The following is to support some other object binding to the
-	// 'value' binding of a SSYToolbarButton.  We splice ourself in
-	// to observe the action.
-	[super setTarget:self] ;
-	[super setAction:@selector(doDaClick:)] ;
-	
-	// In BookMacster, we use the conventional target/action and not
-	// the binding.
-}
 
 - (void)setTarget:(id)target {
 	[self setExternalTarget:target] ;
