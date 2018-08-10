@@ -1,3 +1,4 @@
+#import <objc/message.h>
 #import "SSYPersistentDocumentMultiMigrator.h"
 #import "NSFileManager+SomeMore.h"
 #import "NSString+LocalizeSSY.h"
@@ -33,6 +34,27 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 #warning Simulating model version not available
 #define SIMULATE_MODEL_VERSION_NOT_AVAILABLE 1
 #endif
+
++ (NSBundle*)appBundle {
+    NSBundle* appBundle = nil;
+    SEL mainAppBundleSelector = @selector(mainAppBundle);
+    if ([NSBundle respondsToSelector:mainAppBundleSelector]) {
+        /* Calls to objc_msgSend()  won't compile, by default, or projects
+         "upgraded" by Xcode 8-9, due to fact that Build Setting
+         "Enable strict checking of objc_msgSend Calls" is now ON.  See
+         https://stackoverflow.com/questions/24922913/too-many-arguments-to-function-call-expected-0-have-3
+         The result is, oddly, a Semantic Issue:
+         "Too many arguments to function call, expected 0, have 5"
+         I chose the answer by Sahil Kapoor, which allows me to leave
+         the Build Setting ON and not fight with future Xcode updates. */
+        id (*typed_msgSend)(id, SEL) = (void*)objc_msgSend;
+        appBundle = typed_msgSend([NSBundle class], mainAppBundleSelector);
+    }
+    if (!appBundle) {
+        appBundle = [NSBundle mainBundle];
+    }
+    return appBundle;
+}
 
 + (BOOL)migrateIfNeededStoreAtUrl:(NSURL*)url
 					 storeOptions:(NSDictionary*)storeOptions
@@ -113,9 +135,11 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 	}
     
 	// Read the "VersionInfo" plist.
-	NSString* momdPath = [[NSBundle mainAppBundle] pathForResource:momdName
-														 ofType:@"momd"] ;
-	NSBundle* modelBundle = [NSBundle bundleWithPath:momdPath] ;
+    NSBundle * appBundle = [self appBundle];
+    
+    NSString* momdPath = [appBundle pathForResource:momdName
+                                             ofType:@"momd"];
+ 	NSBundle* modelBundle = [NSBundle bundleWithPath:momdPath];
 	if (!modelBundle) {
 		errorCode = SSYPersistentDocumentMultiMigratorErrorCodeNoModelBundle ;
 		[errorInfo setValue:momdPath
@@ -247,7 +271,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
 		// successful destination the destinModel.
 		NSManagedObjectModel* destinModel = nil ;
 		NSMappingModel* mappingModel = nil ;
-		NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainAppBundle]] ;
+		NSArray* bundles = [NSArray arrayWithObject:appBundle] ;
 		NSString* destinModelVersionName = nil ;
 		for (destinModelVersionName in modelVersionNames) {
 			NSString* modelPath = [modelBundle pathForResource:destinModelVersionName
