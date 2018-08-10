@@ -457,27 +457,32 @@ static SSYMOCManager* sharedMOCManager = nil ;
 }
 
 - (id)ownerOfManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
-	id answer = [self ownerOfManagedObjectContext:managedObjectContext
-									 inDictionary:[self inMemoryMOCDics]] ;
-	
-	if (!answer) {
-		answer = [self ownerOfManagedObjectContext:managedObjectContext
-									  inDictionary:[self sqliteMOCDics]] ;
-	}
-	
-	if (!answer) {
-		answer = [self ownerOfManagedObjectContext:managedObjectContext
-									  inDictionary:[self docMOCDics]] ;
-	}
-	
+    id answer = nil;
+    @synchronized(self) {
+        [self ownerOfManagedObjectContext:managedObjectContext
+                             inDictionary:[self inMemoryMOCDics]] ;
+
+        if (!answer) {
+            answer = [self ownerOfManagedObjectContext:managedObjectContext
+                                          inDictionary:[self sqliteMOCDics]] ;
+        }
+
+        if (!answer) {
+            answer = [self ownerOfManagedObjectContext:managedObjectContext
+                                          inDictionary:[self docMOCDics]] ;
+        }
+    }
+
 	return answer ;
 }
 
 - (void)destroyManagedObjectContextWithIdentifier:(NSString*)identifier {
-	if (identifier) {
-        [[self inMemoryMOCDics] removeObjectForKey:identifier] ;
-        [[self sqliteMOCDics] removeObjectForKey:identifier] ;
-        [[self docMOCDics] removeObjectForKey:identifier] ;
+    @synchronized(self) {
+        if (identifier) {
+            [[self inMemoryMOCDics] removeObjectForKey:identifier] ;
+            [[self sqliteMOCDics] removeObjectForKey:identifier] ;
+            [[self docMOCDics] removeObjectForKey:identifier] ;
+        }
     }
 }
 
@@ -500,18 +505,20 @@ static SSYMOCManager* sharedMOCManager = nil ;
 }	
 
 - (BOOL)destroyManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
-	BOOL didDo = NO ;
-	didDo = [self destroyManagedObjectContext:managedObjectContext
-								inDictionary:[self inMemoryMOCDics]] ;
-	if (!didDo) {
-		didDo = [self destroyManagedObjectContext:managedObjectContext
-									inDictionary:[self sqliteMOCDics]] ;
-	}
-	
-	if (!didDo) {
-		didDo = [self destroyManagedObjectContext:managedObjectContext
-									inDictionary:[self docMOCDics]] ;
-	}
+    BOOL didDo = NO ;
+    @synchronized(self) {
+        didDo = [self destroyManagedObjectContext:managedObjectContext
+                                     inDictionary:[self inMemoryMOCDics]] ;
+        if (!didDo) {
+            didDo = [self destroyManagedObjectContext:managedObjectContext
+                                         inDictionary:[self sqliteMOCDics]] ;
+        }
+
+        if (!didDo) {
+            didDo = [self destroyManagedObjectContext:managedObjectContext
+                                         inDictionary:[self docMOCDics]] ;
+        }
+    }
 
 	return didDo ;
 }
@@ -585,8 +592,13 @@ static SSYMOCManager* sharedMOCManager = nil ;
 }
 
 + (BOOL)isDocMOC:(NSManagedObjectContext*)moc {
-	return [self moc:moc
-			 isInDic:[[self sharedMOCManager] docMOCDics]] ;
+    BOOL answer = NO;
+    @synchronized(self) {
+        answer = [self moc:moc
+                   isInDic:[[self sharedMOCManager] docMOCDics]] ;
+    }
+
+    return answer;
 }
 
 + (NSManagedObjectContext*)scratchManagedObjectContext {
