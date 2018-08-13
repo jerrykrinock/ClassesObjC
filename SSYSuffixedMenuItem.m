@@ -1,5 +1,4 @@
 #import "SSYSuffixedMenuItem.h"
-#import "BkmxBasis+Strings.h"
 
 @implementation SSYSuffixedMenuItem
 
