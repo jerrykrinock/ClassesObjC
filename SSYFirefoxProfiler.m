@@ -61,6 +61,7 @@
                         NSString* pseudonym = [dirName substringFromIndex:location] ;
                         [outbasket addObject:pseudonym] ;
                     }
+                    [innerScanner release];
                 }
             }
         }
