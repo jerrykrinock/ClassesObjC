@@ -458,9 +458,9 @@ static SSYMOCManager* sharedMOCManager = nil ;
 - (id)ownerOfManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
     id answer = nil;
     @synchronized(self) {
-        [self ownerOfManagedObjectContext:managedObjectContext
-                             inDictionary:[self inMemoryMOCDics]] ;
-
+        answer = [self ownerOfManagedObjectContext:managedObjectContext
+                                      inDictionary:[self inMemoryMOCDics]] ;
+        
         if (!answer) {
             answer = [self ownerOfManagedObjectContext:managedObjectContext
                                           inDictionary:[self sqliteMOCDics]] ;
