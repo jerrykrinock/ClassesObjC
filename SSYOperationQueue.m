@@ -49,12 +49,16 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	return YES ;
 }
 
+/* For theory behind the following accessor pair, see
+ http://www.cocoawithlove.com/2009/10/memory-and-thread-safe-custom-property.html
+ */
+
 - (NSError*)error {
 	NSError* error ;
 	@synchronized(self) {
-		error = m_error ; ;
+		error = [m_error retain];
 	}
-	return error ;
+	return [error autorelease];
 }
 
 - (void)setError:(NSError*)error
