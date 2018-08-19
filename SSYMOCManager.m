@@ -470,7 +470,11 @@ static SSYMOCManager* sharedMOCManager = nil ;
             answer = [self ownerOfManagedObjectContext:managedObjectContext
                                           inDictionary:[self docMOCDics]] ;
         }
+
+        [answer retain];
     }
+
+    [answer autorelease];
 
 	return answer ;
 }
