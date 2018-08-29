@@ -17,9 +17,7 @@ enum SSYAlertMode_enum {
 typedef enum SSYAlertMode_enum SSYAlertMode ;
 
 /*!
- @details
- 
- Classic layout is commonly used when button1 = OK, button2 = cancel
+ @details  Classic layout is commonly used when button1 = OK, button2 = cancel
  and button3 = alternate.  It looks like this:
  
  | [2]           [3]  [1] |
@@ -132,12 +130,10 @@ extern NSString* const SSYAlertDidProcessErrorNotification ;
 @interface NSObject (SSYErrorRecoveryAttempting)
 
 /*!
- @brief    
-
  @details  Note that this is different from Apple's method
  attemptRecoveryFromError:optionIndex:delegate:didRecoverSelector:contextInfo:
  in the 'recoveryOption' parameter.
- @param    error  
+ @param    error  The error to be recovered from
  @param    recoveryOption  Should be one of NSAlertFirstButtonReturn,
  NSAlertSecondButtonReturn, or NSAlertAlternate return.  Note that this is
  different from Apple's method
@@ -254,7 +250,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  (These methods invoke -display for you.)</li>
  <li>If running a modal session, send -modalSessionRunning in your modal session loop.</li>
  <li>To end a modal session without causing alert to go away, -endModalSession.</li>
- <li>To get results from a non-modal window, implement clickSelector in your clickTarget.</ol>
+ <li>To get results from a non-modal window, implement clickSelector in your clickTarget.</li>
  <li>Normally, no memory management is required.  An SSYAlert instance will be
  retained by the class until the -goAway message executes, after any completion handler or didEndSelector has run.</li>
  </ol>
@@ -808,10 +804,6 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
   
  @param    title  The window title or nil.&nbsp; If nil, title will
  be set to localized "Alert".
- @param    buttons  0-3 strings which will become the titles of
- buttons 1-3, terminated by a nil sentinel.
- If no button titles are passed, dialog will have 1 button titled
- as localized "OK".
  @result   Indicates button clicked by user: NSAlertFirstButtonReturn,
  NSAlertSecondButtonReturn or NSAlertThirdButtonReturn
  */
@@ -1030,7 +1022,6 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  which look like the receiver's built-in smallTextView.&nbsp;  You
  may add this view in the desired position using
  -addOtherSubview:atIndex:.
- @result   
 */
 - (NSTextView*)smallTextViewPrototype ;
 /*!
@@ -1168,7 +1159,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  button before displaying the sheet.
  
  @param    docWindow  The document window to which to attach the sheet.
- @param    completionHandler  Block which will run when the sheet ends
+ @param    handler  Block which will run when the sheet ends
  */
 - (void)runModalSheetOnWindow:(NSWindow*)docWindow
             completionHandler:(void (^)(NSModalResponse returnCode))handler ;
