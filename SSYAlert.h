@@ -244,7 +244,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  <li>Send configuration messages to show the desired title, message, progress
  bar, checkbox, other subviews, buttons, whatever you want.</li>
  <li>To run as a non-modal window, set a clickTarget, clickSelector and optional clickObject.&nbsp;
- Then, send -show.&nbsp; <i>Then</i>, send -display.&nbsp; Make sure that the SSYAlert
+ Then, send -show.&nbsp; <i>Then</i>, send -display.
  </li>
  <li>To run as modal dialog or modal session, -runModalDialog or -runModalSession.&nbsp;
  (These methods invoke -display for you.)</li>
