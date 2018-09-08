@@ -2198,9 +2198,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 // bottom of the menu bar.
 
 - (id)init {
-	if (!NSApp) {
+    /* Only use SSYAlert in regular, foreground, dock-resident GUI apps … */
+	if (!NSApp || ([NSApp activationPolicy] != NSApplicationActivationPolicyRegular)) {
 		// See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
-        //TODO: Should also go here if process is background type, but API ProcessInformationCopyDictionary() I've used to do that has been deprecated :(
 #if !__has_feature(objc_arc)
 		[super dealloc] ;
 #endif
@@ -2330,8 +2330,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 + (SSYAlert*)alert {
 	SSYAlert* alert ;
-	
-	if (NSApp != nil) {
+    /* Only use SSYAlert in regular, foreground, dock-resident GUI apps … */
+	if ([NSApp activationPolicy] == NSApplicationActivationPolicyRegular) {
 		alert = [[self alloc] init] ;
 #if !__has_feature(objc_arc)
         [alert autorelease] ;
