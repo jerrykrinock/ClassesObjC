@@ -34,7 +34,7 @@ extern NSString* const SSYInterappServerErrorDomain ;
  Here are some search terms, so I can find the above comment later:
  command line, active mach port, active mach ports,
 */
-@interface SSYInterappServer : NSObject {}
+__attribute__((visibility("default"))) @interface SSYInterappServer : NSObject {}
 
 /*!
  @brief    The userInfo which is set in +leaseServerWithPortName::::.
