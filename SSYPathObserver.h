@@ -147,19 +147,16 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  made to a single file.  For that purpose, the kernel queue (kqueue)
  notification system is more appropriate."
  
- This class uses the kqueue notification system.
- 
+ This class uses the kqueue notification system.  However, you can use this
+ class to watch directories.  To do so, pass in a path ending in a slash ("/")
+ and flags SSYPathObserverChangeFlagsData.  You will get a notification
+ whenever any file in the directory is added, removed, or modified.
+
  IMPORTANT: You cannot use a kqueue, and therefore cannot use this class,
- to observe a file which does not exist yet.  If you try, 
+ to observe a file/folder which does not exist yet.  If you try,
  -addPath::::: will an error.
- 
- However, even though the kqueue documentation only discusses watching
- regular files, I've found that this does work to watch directories.
- If I pass in a path ending in a slash ("/") and flags 
- SSYPathObserverChangeFlagsData, I get a notification whenever any
- file in the directory is added, removed, or modified.  Probably
- there is more to it than that but more testing should be done.
- 
+
+
  * Interface
  
  An instance of this class is typically configured to watch one or
@@ -219,7 +216,7 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  @details  If the given path does not currently exist in the filesystem, this
  method will return NO and return error 812002 in error_p.
  @param    path  The path to be watched.  May be nil.
- @param    watchFlags  Bitwise AND of one or more SSYPathObserverChangeFlags
+ @param    watchFlags  Bitwise OR of one or more SSYPathObserverChangeFlags
  constants you wish to receive notifications for.  If 0, will
  default to the three most popular flags:
  *  SSYPathObserverChangeFlagsData
@@ -280,12 +277,11 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  Note that this demo runs in three threads:
  * Main thread, in which main() sits and listens for notifications
  of filesystem changes from SSYPathObserver.
- * Demo Stimulator thread, detached from main thread to execute
- filesystem changes.  This thread is a demo artifact.
- * Watcher thread, detached in SSYPathObserver to camp
- on the kqueue system's kevent() function.  You will always
- have one of these when you instantiate an SSYPathObserver
- in a real app.
+ * Demo Stimulator thread, detached from main thread to make changes to
+ files.  This thread is a demo artifact.
+ * Watcher thread, detached in -[SSYPathObserver init].  This thread camps on
+ the kqueue system's kevent() function.  That is to say: One of these threads
+ is created internally by each SSYPathObserver instance.
  */
 
 /*

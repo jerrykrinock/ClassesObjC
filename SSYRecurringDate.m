@@ -125,6 +125,39 @@ NSString* const constKeyMinute = @"minute" ;
 	return YES ;
 }
 
+- (NSTimeInterval)timeIntervalToNextOccurrence {
+    static NSCalendar* gregorianCalendar = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gregorianCalendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    });
+
+    NSDateComponents* currentComponents = [gregorianCalendar components: NSCalendarUnitWeekday | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond
+                                                               fromDate:[NSDate date]];
+	/* Unfortunately, years ago, I defined my weekdays based on Sunday=0 but
+     NSDateComponents defines based on Sunday=1.  So we must subtract 1. */
+    NSInteger currentWeekday = currentComponents.weekday - 1;
+    NSInteger currentSecondsInDay = 60*60*currentComponents.hour + 60*currentComponents.minute + currentComponents.second;
+    NSInteger targetSecondsInDay = 60*60*self.hour + 60*self.minute;
+
+    NSTimeInterval answer = targetSecondsInDay - currentSecondsInDay;
+
+    if (answer < 0) {
+        NSInteger daysToAdd;
+        if (self.weekday == SSRecurringDateWildcard) {
+            daysToAdd = 1;
+        } else {
+            daysToAdd = self.weekday - currentWeekday;
+            if (daysToAdd < 1) {
+                daysToAdd += 7;
+            }
+        }
+        answer += daysToAdd*24*60*60;
+    }
+
+    return answer;
+}
+
 
 #pragma mark * NSCoding Protocol Conformance
 
