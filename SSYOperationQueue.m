@@ -449,7 +449,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	SSYOperation* op = [[SSYOperation alloc] initWithInfo:doneInfo
                                                    target:self
                                                  selector:@selector(doDone:)
-                                                    owner:nil
+                                                    owner:owner
                                            operationQueue:self
                                               skipIfError:NO] ;
 	[self addAtEndOperation:op] ;

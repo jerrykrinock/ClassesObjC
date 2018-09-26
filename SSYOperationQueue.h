@@ -42,10 +42,10 @@ extern NSString* const SSYOperationQueueDidBeginWorkNotification ;
  
  @details  The notification object is the -owner of the last
  operation which was in the queue, which may be nil if it was
- so set, or if this operation does not respond to selector
+ so set.  But if this operation does not respond to selector
  -owner (as could happen if superclass methods were used to
  add the operation), then the notification object is the
- receiver.
+ sending SSYOperationQueue object.
  
  There is no userInfo dictionary.
 
@@ -220,7 +220,8 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  pass NO, remember to retain the arguments <i>queue</i> and <i>info</i>.
  @param    owner  An object which will be passed as the 'owner' to each of
  the SSYOperations which are manufactured by the receiver during execution
- of this method.  See -[SSYOperation initWithInfo::::::].
+ of this method, including the `done` operation which encasulates the
+ doneThread, doneTarget and doneSelector.
  @param    doneThread  The thread in which a message will be sent after
  the last operation in selectorNames is completed.  If doneThread is nil,
  the default thread assumed will be the currentThread (the thread on which
