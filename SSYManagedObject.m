@@ -131,6 +131,7 @@ NSString* const constKeyObserverContext = @"context" ;
 
 #if 0
 #define TEST_STACK_OVERFLOW_QUESTION_19626858 1
+// See https://stackoverflow.com/questions/19626858/over-optimization-bug-in-10-9-core-data-entity-description-methods
 #endif
 
 + (NSEntityDescription*)entityDescription {
