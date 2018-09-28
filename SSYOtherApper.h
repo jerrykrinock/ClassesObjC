@@ -27,10 +27,24 @@ typedef enum SSYOtherApperProcessState_enum SSYOtherApperProcessState ;
 /*!
  @brief    A class of class methods for observing and controlling other applications.
 
- @detail   Many of the methods in this class work upon a process' ProcessSerialNumber,
- which exists and therefore the methods work only upon "applications", defined as
- "things which can appear in the Dock that are not documents and are launched by the Finder or Dock".
- (See documentation of ProcessSerialNumber).
+ @detail   A couple of notes:
+
+ ## ProcessSerialNumber is only for Apps
+
+ Many of the methods in this class refer to a process' ProcessSerialNumber,
+ which exists and therefore the methods work only upon "applications", defined
+ as "things which can appear in the Dock that are not documents and are
+ launched by the Finder or Dock". (See documentation of
+ ProcessSerialNumber).
+
+ ## Definition of "Executable"
+
+ Many of the methods in this class refer to a process' Executable.  This is the
+ string returned for the "comm" keyword of /bin/ps.  The documentation
+ `man ps` defines this as the "command" of the process, and implies that it
+ is the path to the running executable.  However, for XPC Services, sometimes,
+ and I've seen this occur if the executable has been removed, you get instead
+ the bundle identifier of the XPC Service.
 */
 __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 
@@ -146,7 +160,8 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  In testing, on an admin account, I see that it will return results for processes
  owned by other users, and for processes owned by root.  But I have not confirmed
  this theoretically.  See test code below.
- @param    executableName  The last component of the process' command path.
+ @param    executableName  The last component of the process' command.  See
+ class documentation for definition of "executable".
  @result   The unix process identifier (pid), or 0 if no qualifying process exists.
  */
 + (pid_t)pidOfMyRunningExecutableName:(NSString*)executableName ;
@@ -159,7 +174,8 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  @details  If no such qualified processes exist, or if executableName is nil,
  returns an empty array.
  It launches an NSTask to do this; NSApp is not required.
- @param    executableName  The last component of the process' command path.
+ @param    executableName  The last component of the process' command.  See
+ class documentation for definition of "command" vs. "executable".
  @param    zombies  If YES, results will include any qualifying zombie (Z) 
  and processes, and processes in uninterruptible wait (U or, more typicall, UE
  states.  If NO, will results will ignore these processes.
@@ -224,8 +240,9 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  WindowServer, therefore does not raise an exception if the user is not the console user.
  The disadvantage is that it uses NSTask, and did not work in finding Bookwatchdog
  for a certain user.
- @param    fullExecutablePath  YES to return the full path to each executable as the
- value of the "command" key.  NO to return only the executable name (last path component).
+ @param    fullExecutablePath  YES to return the full path to each executable as
+ the value of the "command" key.  NO to return only the executable name
+ (last path component).  See class documentation for definition of "executable".
  @result   The array of dictionaries.  Each dictionary contains four keys:
  *  SSYOtherApperKeyPid, whose value is an NSNumber
  *  SSYOtherApperKeyUser, whose value is an NSString, the short name of the user
@@ -235,7 +252,9 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  processes which have been running less than 24 hours, "0N-" for processes
  running 1-10 days, presumably "NN-" for process running 10-100 days, presumably
  "NNN-" for processes running 100-1000 days.
- *  SSYOtherApperKeyExecutable, whose value is an NSString, either an executable name or a full path
+ *  SSYOtherApperKeyExecutable, whose value is an NSString, either an
+ executable name or a full path.  See class documentation for definition of
+ "executable".
 */
 + (NSArray*)pidsExecutablesFull:(BOOL)fullExecutablePath ;
 
@@ -244,13 +263,13 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  process path contains one or more given strings, and optionally whose user
  is a given user
  @param    processNames  The set of strings, one of which a process' path must
- contain for it to be included in the results
+ contain for it to be included in the results.  See class documentation
+ definition of "executable".
  @param    user  The short name, that is, the Home directory name, of the user
  whose processes we want to be in results.  Pass NSUserName() for the current
  user.  Pass nil for any user.
  @result   Same as for +pidsExecutablesFull:
  */
-
 + (NSSet*)infosOfProcessesNamed:(NSSet*)processNames
                            user:(NSString*)user ;
 
