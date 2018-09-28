@@ -848,7 +848,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 		answer = [self isProcessRunningPid:pid
 							  thisUserOnly:YES] ;
 		
-		if (!answer) {
+		if (!answer && logAs) {
 			NSLog(@"NSWorkspace says %@ running.  But I can't find its pid %ld.  Ignoring stupid NSWorkspace.", logAs, (long)pid) ;
 		}
 	}
@@ -972,6 +972,34 @@ end:
 }
 */
 
+/* The following two methods, written during different years, could be
+ refactored to use some commone code, if one would want to do the testing. */
+
++ (BOOL)killThisUsersProcessWithPid:(pid_t)pid
+                            timeout:(NSTimeInterval)timeout {
+    NSDate* endDate = [NSDate dateWithTimeIntervalSinceNow:timeout] ;
+    if (pid != 0) {
+        kill(pid, SIGKILL) ;
+
+        while (YES) {
+            if (![self isProcessRunningPid:pid
+                                     logAs:nil]) {
+                return YES ;
+            }
+
+            if ([(NSDate*)[NSDate date] compare:endDate] == NSOrderedDescending) {
+                return NO ;
+            }
+
+            [NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]] ;
+        }
+    }
+
+    /* We return YES because, due to the infinite `while(YES)` above,  the only
+     way we could get here is if the passed-in pid == 0 */
+    return YES;
+}
+
 + (BOOL)killThisUsersAppWithBundleIdentifier:(NSString*)bundleIdentifier
 									 timeout:(NSTimeInterval)timeout {
 	if (!bundleIdentifier) {
@@ -996,6 +1024,9 @@ end:
 		}
 	}
 	
+    /* We return YES because, due to the infinite `while(YES)` above,  the only
+     way we could get here is if pid == 0, which means the relevant app is
+     not running. */
 	return YES ;
 }
 

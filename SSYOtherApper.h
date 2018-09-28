@@ -42,9 +42,13 @@ typedef enum SSYOtherApperProcessState_enum SSYOtherApperProcessState ;
  Many of the methods in this class refer to a process' Executable.  This is the
  string returned for the "comm" keyword of /bin/ps.  The documentation
  `man ps` defines this as the "command" of the process, and implies that it
- is the path to the running executable.  However, for XPC Services, sometimes,
- and I've seen this occur if the executable has been removed, you get instead
- the bundle identifier of the XPC Service.
+ is the path to the running executable.  However, for some XPC Services, and
+ this happens for BkmxAgent which is launched by SMLoginItemSetEnabled(),
+ you get instead the bundle identifier of the XPC Service.  I don't know why.
+ It looks like Arq Agent is similarly a Login Item of Arq (it is located at
+ Arq.app/Library/LoginItems/Arq Agent.app), but its "command" shows in -ps as:
+ /Applications/Arq.app/Contents/Library/LoginItems/Arq Agent.app/Contents/MacOS/Arq Agent,
+ in other words, the path to the executable.
 */
 __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 
@@ -338,6 +342,23 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 					  killAfterTimeout:(BOOL)killAfterTimeout
 						  wasRunning_p:(BOOL*)wasRunning_p
 							   error_p:(NSError**)error_p ;
+
+/*!
+ @brief    Finds a running process, owned by the current user,
+ with a given process identifier (pid), sends it a "kill -9" BSD signal,
+ and returns when the process is killed or timeout occurs, whichever comes
+ first.
+
+ @details  May block its thread up to the timeout.  Sleeps for 0.5
+ seconds between polls.
+ @param    pid  The process identifier of the process to be
+ killed, or nil to no-op
+ @result   YES if the target process was not running, or if it dies within
+ the allowed timeout, or if passed in pid is 0.  NO if process was still
+ running when timeout expired.
+ */
++ (BOOL)killThisUsersProcessWithPid:(pid_t)pid
+                            timeout:(NSTimeInterval)timeout;
 
 /*!
  @brief    Finds a running app, owned by the current user,
