@@ -47,7 +47,7 @@ NSString* SSYDebugBacktrace(void) ;
  Note that this function never returns the caller of this function, since you
  should already know that or can get it by __PRETTY_FUNCTION__.
 */
-NSString* SSYDebugBacktraceDepth(NSInteger depth) ;
+__attribute__((visibility("default"))) NSString* SSYDebugBacktraceDepth(NSInteger depth) ;
 
 /*!
  @brief    Returns a string consisting of the symbol name of the
