@@ -358,6 +358,7 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  running when timeout expired.
  */
 + (BOOL)killThisUsersProcessWithPid:(pid_t)pid
+                                sig:(int)sig
                             timeout:(NSTimeInterval)timeout;
 
 /*!

@@ -976,10 +976,11 @@ end:
  refactored to use some commone code, if one would want to do the testing. */
 
 + (BOOL)killThisUsersProcessWithPid:(pid_t)pid
+                                sig:(int)sig
                             timeout:(NSTimeInterval)timeout {
     NSDate* endDate = [NSDate dateWithTimeIntervalSinceNow:timeout] ;
     if (pid != 0) {
-        kill(pid, SIGKILL) ;
+        kill(pid, sig) ;
 
         while (YES) {
             if (![self isProcessRunningPid:pid
