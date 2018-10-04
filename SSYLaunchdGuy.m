@@ -372,7 +372,7 @@ end:;
 
 + (NSString*)myAgentDirectoryError_p:(NSError**)error_p {
 	NSString* myAgentDirectory = [SSYLaunchdBasics homeLaunchAgentsPath] ;
-	BOOL ok = [[NSFileManager defaultManager] createDirectoryIfNoneExistsAtPath:myAgentDirectory
+	BOOL ok = [[NSFileManager defaultManager] ensureDirectoryAtPath:myAgentDirectory
 																		error_p:error_p] ;
 	if (!ok) {
 		myAgentDirectory = nil ;
