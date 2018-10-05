@@ -248,15 +248,15 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  re-invoke a group of groups in order to get the desired result.
  */
 - (void)queueGroup:(NSString*)group
-			 addon:(BOOL)addon
-	 selectorNames:(NSArray*)selectorNames
-			  info:(NSMutableDictionary*)info
-			 block:(BOOL)block
-			 owner:(id)owner
-		doneThread:(NSThread*)doneThread
-		doneTarget:(id)doneTarget
-	  doneSelector:(SEL)doneSelector
-	   keepWithNext:(BOOL)keepWithNext ;		
+             addon:(BOOL)addon
+     selectorNames:(NSArray*)selectorNames
+              info:(NSMutableDictionary*)info
+             block:(BOOL)block
+             owner:(id)owner
+        doneThread:(NSThread*)doneThread
+        doneTarget:(id)doneTarget
+      doneSelector:(SEL)doneSelector
+      keepWithNext:(BOOL)keepWithNext ;
 
 /*!
  @brief    Returns an invocation which will re-invoke
