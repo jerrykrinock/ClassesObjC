@@ -256,6 +256,52 @@ end:;
 	return YES ;
 }
 
+- (NSString*)availabilityDescription {
+    NSMutableString* availability = [NSMutableString new];
+
+    if ([self isFault]) {
+        [availability appendString:@"N"];
+    } else {
+        [availability appendString:@"Y"];
+    }
+
+    if ([self isDeleted]) {
+        [availability appendString:@"N"];
+    } else {
+        [availability appendString:@"Y"];
+    }
+
+    NSManagedObjectContext* context = [self managedObjectContext] ;
+    if (context == nil) {
+        [availability appendString:@"N"];
+    } else {
+        [availability appendString:@"Y"];
+    }
+
+    NSManagedObjectID* objectID = [self objectID] ;
+    if (objectID == nil) {
+        [availability appendString:@"NN"];
+    } else {
+        [availability appendString:@"Y"];
+
+        NSManagedObject* object = [context objectRegisteredForID:objectID] ;
+        if (!object) {
+            [availability appendString:@"N"];
+        } else {
+            [availability appendString:@"Y"];
+        }
+    }
+
+    NSString* answer = [availability copy];
+
+#if !__has_feature(objc_arc)
+    [availability release];
+    [answer autorelease];
+#endif
+
+    return answer;
+}
+
 - (NSString*)objectUriMakePermanent:(BOOL)makePermanent
 						   document:(NSPersistentDocument*)document {
 	NSManagedObjectID* objectID = [self objectID] ;
