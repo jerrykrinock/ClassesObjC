@@ -8,6 +8,7 @@
 	
 	// Draw the Gear
 	NSImage* image = [NSImage imageNamed:@"NSActionTemplate"] ;
+#warning Check this in Dark Mode
 	[image drawInRect:NSMakeRect(3,
 								 3,
 								 14,

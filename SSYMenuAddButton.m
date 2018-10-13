@@ -10,6 +10,7 @@
     // Draw the "+"
     // The y-axis seems to be flipped in here.
     NSImage* image = [NSImage imageNamed:@"NSAddTemplate"] ;
+#warning Check this in Dark Mode
     [image drawInRect:NSMakeRect(3,
                                  6,
                                  14,

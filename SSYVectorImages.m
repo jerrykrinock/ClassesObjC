@@ -486,8 +486,7 @@
             
             /* Punch a round hole near the top of the bookmark
              This is done by with a separate bezier path which we first
-             *reverse* and then *append* to the bookmark bezier path.
-             (Prior to BookMacster  1.20.1, this was a solid white cirle.) */
+             *reverse* and then *append* to the bookmark bezier path. */
             NSBezierPath* holePath = [NSBezierPath bezierPath] ;
             [holePath setLineWidth:5.0] ;
 #define HOLE_RADIUS 12
@@ -722,6 +721,93 @@
     if (color == nil) {
         [rotatedImage setTemplate:YES] ;
     }
+
+    NSString* name;
+    switch (style) {
+
+        case SSYVectorImageStylePlus:
+            name = @"Plus";
+            break;
+        case SSYVectorImageStyleMinus:
+            name = @"Minus";
+            break;
+        case SSYVectorImageStyleDash:
+            name = @"Dash";
+            break;
+        case SSYVectorImageStyleDot:
+            name = @"Dot";
+            break;
+        case SSYVectorImageStyleTarget:
+            name = @"Target";
+            break;
+        case SSYVectorImageStyleChasingArrows:
+            name = @"ChasingArrows";
+            break;
+        case SSYVectorImageStyleWindowWithSidebar:
+            name = @"WindowWithSidebarr";
+            break;
+        case SSYVectorImageStyleTriangle90:
+            name = @"Triangle90";
+            break;
+        case SSYVectorImageStyleTriangle53:
+            name = @"Triangle53";
+            break;
+        case SSYVectorImageStyleInfoOff:
+            name = @"InfoOff";
+            break;
+        case SSYVectorImageStyleInfoOn:
+            name = @"InfoOn";
+            break;
+        case SSYVectorImageStyleHelp:
+            name = @"Help";
+            break;
+        case SSYVectorImageStyleExclamation:
+            name = @"Exclamation";
+            break;
+        case SSYVectorImageStyleStar:
+            name = @"Star";
+            break;
+        case SSYVectorImageStyleRemoveX:
+            name = @"RemoveX";
+            break;
+        case SSYVectorImageStyleBookmark:
+            name = @"Bookmark";
+            break;
+        case SSYVectorImageStyleHierarchy:
+            name = @"Bookmark";
+            break;
+        case SSYVectorImageStyleFlat:
+            name = @"Flat";
+            break;
+        case SSYVectorImageStyleLineage:
+            name = @"Lineage";
+            break;
+        case SSYVectorImageStyleTag:
+            name = @"Tag";
+            break;
+        case SSYVectorImageStyleCheck1:
+            name = @"Check1";
+            break;
+        case SSYVectorImageStyleCheck2:
+            name = @"Check2";
+            break;
+        case SSYVectorImageStyleBookmarksInFolder:
+            name = @"Folder";
+            break;
+        case SSYVectorImageStyleSettings:
+            name = @"Settings";
+            break;
+        case SSYVectorImageStyleReports:
+            name = @"Reports";
+            break;
+        case SSYVectorImageStyleRoundRadioKnob:
+            name = @"RoundRadioKnow";
+            break;
+        case SSYVectorImageStyleHexagon:
+            name = @"Hexagon";
+            break;
+    }
+    rotatedImage.name = name;
     
     return rotatedImage ;
 }
