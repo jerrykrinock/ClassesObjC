@@ -110,12 +110,53 @@
     [path appendBezierPathWithRect:rect] ;
 }
 
+#if 0
+/* I was going to use this method but then realized I did not need to, yet.
+ This method is based on:
+  http://www.spaceroots.org/documents/ellipse/elliptical-arc.pdf >
+ secs. 2.2-2.2.1, (pages 4-5)
+ and boxed equations at end of sec. 3.4.1 (page 18)
+
+ Like the NSBezierPath `curve` methods, it only produces a counterclockwise
+ path, or equivalently, in the context of this paper, lambda1 < lambda2 is
+ required.
+
+ In our case, we have a circle so a = b = r and theta = 0. */
++ (void)bezierCubicApproximationForCircularArcWithRadius:(CGFloat)r
+                                                  center:(CGPoint)c
+                                              startAngle:(CGFloat)lambda1
+                                                endAngle:(CGFloat)lambda2
+                                           controlPoint1:(CGPoint*)controlPoint1_p
+                                           controlPoint2:(CGPoint*)controlPoint2_p
+                                                endPoint:(CGPoint*)endPoint_p {
+    CGFloat eta1 = atan2(sin(lambda1)/r , cos(lambda1)/r);
+    CGFloat eta2 = atan2(sin(lambda2)/r , cos(lambda2)/r);
+    CGPoint pointP1 = CGPointMake(c.x + r*cos(eta1), c.y + r*sin(eta1));
+    CGPoint pointP2 = CGPointMake(c.x + r*cos(eta2), c.y + r*sin(eta2));
+    CGPoint EPrime1 = CGPointMake(-r*sin(eta1), r*cos(eta1));
+    CGPoint EPrime2 = CGPointMake(-r*sin(eta2), r*cos(eta2));
+    CGFloat alpha = sin(eta2 - eta1) * (sqrt(4 + 3 * pow(tan((eta2-eta1)/2), 2)) - 1.0) / 3.0;
+    CGPoint controlPoint1 = CGPointMake(pointP1.x + alpha*EPrime1.x, pointP1.y - alpha*EPrime1.y);
+    CGPoint controlPoint2 = CGPointMake(pointP2.x + alpha*EPrime2.x, pointP2.y - alpha*EPrime2.y);
+
+    if(controlPoint1_p) {
+        *controlPoint1_p = controlPoint1;
+    }
+    if(controlPoint2_p) {
+        *controlPoint2_p = controlPoint2;
+    }
+    if (endPoint_p) {
+        *endPoint_p = pointP2;
+    }
+}
+#endif
+
 + (void)drawStyle:(SSYVectorImageStyle)style
            wength:(CGFloat)wength
             color:(NSColor *)color
             inset:(CGFloat)inset {
     NSBezierPath* path = [NSBezierPath bezierPath] ;
-    
+
     [color setFill] ;
     [color setStroke] ;
 
@@ -133,11 +174,12 @@
                          yBy:scale] ;
     
     [scaleTransform concat] ;
-    
+
     switch (style) {
-        case SSYVectorImageStyleChasingArrows: {
+        case SSYVectorImageStyleChasingArrows:
+        case SSYVectorImageStyleChasingArrowsFilled: {
             [path setLineWidth:2.0] ;
-            
+
             // The outer radius is 50 - insetPercent
 #define GAP_DEGREES 15.0
 #define ARROW_DEGREES 35.0
@@ -146,11 +188,32 @@
 #define INSIDE_RADIUS 38.0
 #define OUTER_RADIUS 49.0  // = 50 - line thickness
 #define AVERAGE_RADIUS ((OUTER_RADIUS + INSIDE_RADIUS) / 2.0)
-            
-            /* In the following code, the reason why we jump around is because
-             the NSBezierPath method -appendBezierPathWithArcWithCenter::::
-             seems to only go counterclockwise. */
-            
+
+            /* This method:
+             -[NSBezierPath appendBezierPathWithArcWithCenter:radius:startAngle:endAngle:]
+             will only draw in the clockwise direction.  That makes it not
+             handy for drawing each half of a chasing arrow which you want to
+             be able to separately treat as a closed path so you can fill it
+             if the style is SSYVectorImageStyleChasingArrowsFilled.  Think
+             about it.  Either the inner arc or the outer arc must be drawn
+             clockwise.
+
+             To solve this problem, for each arrow we create in tempPath
+             an arc drawn counterclockwise, then reverse it so it is clockwise,
+             then append to the main path.
+
+             I was wondering if this would behave, because there might be a
+             slight gap, at least theoretically, between the end point of the
+             appendee path and the start point of the appended path.  Would
+             Cocoa bridge this gap so that the path would fill properly?
+             Apparently so, because it fills properly.  But if I invoke
+             -closePath, it closes back to the emd point of the appendee which
+             draws a line across the figure.  Solution: Just don't invoke
+             -closePath. */
+             NSBezierPath* tempPath;
+
+            /* Left side arrow */
+
             // Start at the top left shoulder of the left arrow:
             NSPoint leftStart = NSMakePoint(50.0-(OUTER_RADIUS+ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (OUTER_RADIUS+ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180)) ;
             [path moveToPoint:leftStart] ;
@@ -166,9 +229,29 @@
                                          startAngle:(90.0 + ARROW_START_DEGREES)
                                            endAngle:(270.0 - GAP_DEGREES)] ;
             // across the tail
-            [path lineToPoint:NSMakePoint(50.0 - OUTER_RADIUS*sin(GAP_DEGREES*M_PI/180), 50.0 - OUTER_RADIUS*cos(GAP_DEGREES*M_PI/180))] ;
-            
-            // Now jump across the bottom to the right arrow and do the lower right shoulder
+            NSPoint leftArrowOuterTail = NSMakePoint(50.0 - OUTER_RADIUS*sin(GAP_DEGREES*M_PI/180), 50.0 - OUTER_RADIUS*cos(GAP_DEGREES*M_PI/180));
+            NSPoint leftArrowOuterArmpit = NSMakePoint(50.0 - OUTER_RADIUS*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + OUTER_RADIUS*cos(ARROW_START_DEGREES*M_PI/180));
+            [path lineToPoint:leftArrowOuterTail] ;
+            // Outer arc of left arrow
+            tempPath = [NSBezierPath bezierPath];
+            [tempPath moveToPoint:leftArrowOuterArmpit];
+            [tempPath appendBezierPathWithArcWithCenter:CGPointMake(50.0, 50.0)
+                                                 radius:OUTER_RADIUS
+                                             startAngle:(90.0 + ARROW_START_DEGREES)
+                                               endAngle:(270.0 - GAP_DEGREES)];
+            tempPath = [tempPath bezierPathByReversingPath];
+            [path appendBezierPath:tempPath];
+            [path lineToPoint:leftStart];
+            [path stroke];
+            if (style == SSYVectorImageStyleChasingArrowsFilled) {
+                [path fill];
+            }
+
+             /* Right side arrow */
+
+            [path removeAllPoints];
+
+            // Start with lower right shoulder
             NSPoint rightStart = NSMakePoint(50.0+(OUTER_RADIUS+ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 - (OUTER_RADIUS+ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180)) ;
             [path moveToPoint:rightStart] ;
             // to the tip of the arrow
@@ -182,31 +265,26 @@
                                              radius:(INSIDE_RADIUS)
                                          startAngle:(270.0 + ARROW_START_DEGREES)
                                            endAngle:(90.0 - GAP_DEGREES)] ;
-            
+
             // across the tail
-            [path lineToPoint:NSMakePoint(50.0 + OUTER_RADIUS*sin(GAP_DEGREES*M_PI/180), 50.0 + OUTER_RADIUS*cos(GAP_DEGREES*M_PI/180))] ;
-            
-            // Now jump across the top to the left arrow and complete it.
-            [path moveToPoint:leftStart] ;
-            // In to the armpit
-            [path lineToPoint:NSMakePoint(50.0 - OUTER_RADIUS*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + OUTER_RADIUS*cos(ARROW_START_DEGREES*M_PI/180))] ;
-            // Outer arc of left arrow
-            [path appendBezierPathWithArcWithCenter:NSMakePoint(50.0, 50.0)
-                                             radius:(OUTER_RADIUS)
-                                         startAngle:(90.0 + ARROW_START_DEGREES)
-                                           endAngle:(270.0 - GAP_DEGREES)] ;
-            
-            // Now jump across the bottom to the right arrow and complete it.
-            [path moveToPoint:rightStart] ;
-            // In to the armpit
-            [path lineToPoint:NSMakePoint(50.0 + OUTER_RADIUS*sin(ARROW_START_DEGREES*M_PI/180), 50.0 - OUTER_RADIUS*cos(ARROW_START_DEGREES*M_PI/180))] ;
-            // Outer arc of right arrow
-            [path appendBezierPathWithArcWithCenter:NSMakePoint(50.0, 50.0)
-                                             radius:(OUTER_RADIUS)
-                                         startAngle:(270.0 + ARROW_START_DEGREES)
-                                           endAngle:(90.0 - GAP_DEGREES)] ;
-            
-            [path stroke] ;
+            NSPoint rightArrowOuterTail = NSMakePoint(50.0 + OUTER_RADIUS*sin(GAP_DEGREES*M_PI/180), 50.0 + OUTER_RADIUS*cos(GAP_DEGREES*M_PI/180));
+            NSPoint rightArrowOuterArmpit = NSMakePoint(50.0 + OUTER_RADIUS*sin(ARROW_START_DEGREES*M_PI/180), 50.0 - OUTER_RADIUS*cos(ARROW_START_DEGREES*M_PI/180));
+            [path lineToPoint:rightArrowOuterTail] ;
+            // outer arc of right arrow
+            tempPath = [NSBezierPath bezierPath];
+            [tempPath moveToPoint:rightArrowOuterArmpit];
+            [tempPath appendBezierPathWithArcWithCenter:CGPointMake(50.0, 50.0)
+                                                 radius:OUTER_RADIUS
+                                             startAngle:(270.0 + ARROW_START_DEGREES)
+                                               endAngle:(90.0 - GAP_DEGREES )];
+            tempPath = [tempPath bezierPathByReversingPath];
+            [path appendBezierPath:tempPath];
+            [path lineToPoint:rightStart];
+            [path stroke];
+            if (style == SSYVectorImageStyleChasingArrowsFilled) {
+                [path fill];
+            }
+
             break ;
         }
         case SSYVectorImageStyleTarget:
@@ -701,6 +779,7 @@
 + (NSImage*)imageStyle:(SSYVectorImageStyle)style
                 wength:(CGFloat)wength
                  color:(NSColor*)color
+          darkModeView:(NSView*)darkModeView
          rotateDegrees:(CGFloat)rotateDegrees
                  inset:(CGFloat)inset {
     NSSize size = NSMakeSize(wength, wength) ;
@@ -710,12 +789,27 @@
     image = [NSImage imageWithSize:size
                            flipped:NO
                     drawingHandler:^(NSRect dstRect) {
+                        NSColor* colorNow = color;
+                        if (!colorNow) {
+                            BOOL darkMode = NO;
+                            if (@available(macOS 10.14, *)) {
+                                NSAppearanceName basicAppearance = [darkModeView.effectiveAppearance bestMatchFromAppearancesWithNames:@[
+                                                                                                                                         NSAppearanceNameAqua,
+                                                                                                                                         NSAppearanceNameDarkAqua
+                                                                                                                                         ]];
+                                darkMode = [basicAppearance isEqualToString:NSAppearanceNameDarkAqua];
+                            }
+
+                            colorNow = darkMode ? [NSColor whiteColor] : [NSColor blackColor];
+                        }
+
                         [self drawStyle:style
                                  wength:wength
-                                  color:(color ? color : [NSColor blackColor])
+                                  color:colorNow
                                   inset:(CGFloat)inset] ;
                         return YES ;
                     }] ;
+
     rotatedImage = [image imageRotatedByDegrees:rotateDegrees] ;
     
     if (color == nil) {
@@ -742,6 +836,9 @@
             break;
         case SSYVectorImageStyleChasingArrows:
             name = @"ChasingArrows";
+            break;
+        case SSYVectorImageStyleChasingArrowsFilled:
+            name = @"ChasingArrowsFilled";
             break;
         case SSYVectorImageStyleWindowWithSidebar:
             name = @"WindowWithSidebarr";
@@ -808,6 +905,7 @@
             break;
     }
     rotatedImage.name = name;
+    image.name = name;
     
     return rotatedImage ;
 }

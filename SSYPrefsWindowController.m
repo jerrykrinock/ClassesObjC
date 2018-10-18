@@ -201,7 +201,11 @@ Subclasses should over-ride this to provide tooltips for each toobar item
 		
 		// Set up a reasonable tooltip, and image   Note, these aren't localized, but you will likely want to localize many of the item's properties 
 		[toolbarItem setToolTip: [self toolTipForIdentifier:itemIdent]];
-		[toolbarItem setImage: [NSImage imageNamed:itemIdent]];
+        NSImage* image = [self specialImageForTabViewIdentifier:itemIdent];
+        if (!image) {
+            image = [NSImage imageNamed:itemIdent];
+        }
+		[toolbarItem setImage:image];
 		
 		// Tell the item what message to send when it is clicked 
 		[toolbarItem setTarget: self];
@@ -322,6 +326,10 @@ Subclasses should over-ride this to provide tooltips for each toobar item
 
 - (NSString*)localizeString:(NSString*)key {
 	return key ;
+}
+
+- (NSImage*)specialImageForTabViewIdentifier:(NSString*)identifier {
+    return nil;
 }
 
 

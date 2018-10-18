@@ -823,7 +823,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     [image lockFocus] ;
     [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
     CGFloat borderWength = 8.0 ;
-#warning Check this in Dark Mode
     [rawIcon drawInRect:NSMakeRect(
                                    borderWength,
                                    borderWength,
@@ -848,11 +847,11 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     badge = [SSYVectorImages imageStyle:SSYVectorImageStyleHexagon
                                  wength:64.0
                                   color:[NSColor yellowColor]
+                           darkModeView:nil // Ignored since we passed in a constant `color`
                           rotateDegrees:90.0
                                   inset:12.0] ;
     [image lockFocus] ;
     [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
-#warning Check this in Dark Mode
     [badge drawInRect:NSMakeRect(
                                  [image size].width / 2,
                                  0,
@@ -875,11 +874,11 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     badge = [SSYVectorImages imageStyle:SSYVectorImageStyleHexagon
                                  wength:64.0
                                   color:[NSColor redColor]
+                           darkModeView:nil // Ignored since we passed in a constant `color`
                           rotateDegrees:90.0
                                   inset:12.0] ;
     [image lockFocus] ;
     [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
-#warning Check this in Dark Mode
     [badge drawInRect:NSMakeRect(
                                  [image size].width / 2,
                                  0,

@@ -46,16 +46,19 @@ NSString* const constKeyRating = @"rating" ;
 		[self setStarImage:[SSYVectorImages imageStyle:SSYVectorImageStyleStar
 											    wength:starHeight
 												 color:[NSColor lightGrayColor]
+                                          darkModeView:self
                                          rotateDegrees:0.0
                                                  inset:0.0]] ;
 		[self setStarHighlightedImage:[SSYVectorImages imageStyle:SSYVectorImageStyleStar
 														   wength:starHeight
 															color:[NSColor blueColor]
+                                                     darkModeView:self
                                                     rotateDegrees:0.0
                                                             inset:0.0]] ;
 		[self setRemoveXImage:[SSYVectorImages imageStyle:SSYVectorImageStyleRemoveX
 												   wength:(0.9 * starHeight)
 													color:nil
+                                             darkModeView:self
                                             rotateDegrees:0.0
                                                     inset:0.0]] ;
 		[self setEditable:YES] ;

@@ -712,7 +712,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 		NSFont* font = [NSFont systemFontOfSize:11.0] ;
 		NSDictionary* attributes = [NSDictionary dictionaryWithObjectsAndKeys:
 									font, NSFontAttributeName,
-									[NSColor blueColor], NSForegroundColorAttributeName,
+									[NSColor controlTextColor], NSForegroundColorAttributeName,
 									[NSNumber numberWithInteger:NSUnderlineStyleSingle], NSUnderlineStyleAttributeName,
 									nil] ;				
 		NSAttributedString* title = [[NSAttributedString alloc] initWithString:hyperText

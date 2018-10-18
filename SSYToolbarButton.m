@@ -1,5 +1,6 @@
 #import "SSYToolbarButton.h"
 #import "NSImage+Transform.h"
+#import "NSImage+SSYDarkMode.h"
 
 static NSString* const constKeyValue = @"value" ;
 static NSString* const constKeyToolTip = @"toolTip" ;
@@ -50,6 +51,7 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 @synthesize onImage = m_onImage ;
 @synthesize offImage = m_offImage ;
 @synthesize disImage = m_disImage ;
+@synthesize backgroundImage = m_backgroundImage;
 @synthesize originalImage = m_originalImage ;
 @synthesize onLabel = m_onLabel ;
 @synthesize offLabel = m_offLabel ;
@@ -79,7 +81,7 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 	}
 	
 	m_value = value ;
-	
+
 	NSImage* image = nil ;
 	NSString* label = nil ;
 	NSString* toolTip = nil ;
@@ -101,14 +103,18 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 			break ;
 	}
 
-	if (image) {
-		[self setImage:image] ;
-	}
-	
+	if (self.view) {
+        /* Change the image for a view-based button */
+        [self.view setNeedsDisplay:YES];
+    } else {
+        /* Change the image for a image-based button */
+        [self setImage:image] ;
+    }
+
 	if (label) {
 		[self setLabel:label] ;
 	}
-	
+
 	if (toolTip) {
 		[self setToolTip:toolTip] ;
 	}
@@ -147,6 +153,7 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 	[m_onImage release] ;
 	[m_offImage release] ;
 	[m_disImage release] ;
+    [m_backgroundImage release];
     [m_originalImage release] ;
 	[m_onLabel release] ;
 	[m_offLabel release] ;
@@ -156,6 +163,60 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 	[m_disToolTip release] ;
 	
 	[super dealloc] ;
+}
+
+@end
+
+
+@implementation SSYToolbarButtonView
+
+- (void)drawRect:(NSRect)dirtyRect {
+    [super drawRect:dirtyRect];
+
+    NSImage* image = nil;
+    NSString* toolTip = nil;
+    switch (self.toolbarItem.value) {
+        case NSOnState:
+            image = [self.toolbarItem onImage];
+            toolTip = [self.toolbarItem onToolTip];
+            break ;
+        case NSOffState:
+            image = [self.toolbarItem offImage];
+            toolTip = [self.toolbarItem offToolTip];
+            break ;
+        case NSMixedState:
+            image = self.toolbarItem.disImage;
+            toolTip = self.toolbarItem.disToolTip;
+            break ;
+    }
+
+    [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
+    [image drawInRect:NSMakeRect(
+                                 0.0,
+                                 0.0,
+                                 [image size].width,
+                                 [image size].height)
+             fromRect:NSZeroRect
+            operation:NSCompositeSourceOver
+             fraction:1.0];
+
+    [self.toolbarItem.backgroundImage drawInRect:NSMakeRect(
+                                                            0.0,
+                                                            0.0,
+                                                            self.toolbarItem.backgroundImage.size.width,
+                                                            self.toolbarItem.backgroundImage.size.height)
+                                        fromRect:NSZeroRect
+                                       operation:NSCompositeSourceOver
+                                        fraction:1.0];
+
+    if (toolTip) {
+        [self setToolTip:toolTip] ;
+    }
+}
+
+- (void)mouseDown:(NSEvent*)event {
+    /*SSYDBL*/ NSLog(@">> %s", __PRETTY_FUNCTION__) ;
+    [self.toolbarItem doDaClick:self];
 }
 
 @end

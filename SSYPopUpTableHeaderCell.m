@@ -221,7 +221,7 @@
             [path stroke] ;
         }
         
-        [[NSColor blackColor] set] ;
+        [[NSColor controlTextColor] set] ;
 
         if ([self isUserDefined]) {
             // Draw the upper arrow that points up
@@ -246,26 +246,35 @@
         CGFloat xMargin = 1.0 * scaleFactor ;
         CGFloat yMargin = 3.7 * scaleFactor ;
         NSPoint titlePoint = NSMakePoint(NSMinX(cellFrame) + xMargin, yMargin) ;
-        NSAttributedString* attributedTitle ;
+        NSPoint point = cellFrame.origin ;
+        point.x = point.x + [tableView intercellSpacing].width  ;
+        point.y = point.y + [tableView intercellSpacing].height ;
+        NSInteger columnIndex = [tableView columnAtPoint:point];
+        NSFont* font;
+        if (columnIndex != -1) {
+            NSArray <NSTableColumn <SSYPopupTableHeaderSortableColumn>*> * columns = (NSArray <NSTableColumn <SSYPopupTableHeaderSortableColumn>*> *)[tableView tableColumns];
+            NSTableColumn <SSYPopupTableHeaderSortableColumn> * thisColumn = [columns objectAtIndex:columnIndex];
+            font = [thisColumn headerFont];
+        } else {
+            /* This can happen if the window is being resized while loading,
+             but I think it does not matter because we use the system
+             default font anyhow. */
+            font = nil;
+        }
+        NSDictionary* attributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                                    [NSColor controlTextColor], NSForegroundColorAttributeName,
+                                    font, NSFontAttributeName,
+                                    nil] ;
+        NSAttributedString* attributedTitle;
+        NSString* string;
         if ([self fixedNonMenuTitle]) {
-            NSTableView* tableView = [(NSTableHeaderView*)controlView tableView] ;
-            NSPoint point = cellFrame.origin ;
-            point.x = point.x + [tableView intercellSpacing].width  ;
-            point.y = point.y + [tableView intercellSpacing].height ;
-            NSInteger columnIndex = [tableView columnAtPoint:point] ;
-            NSArray <NSTableColumn <SSYPopupTableHeaderSortableColumn>*> * columns = (NSArray <NSTableColumn <SSYPopupTableHeaderSortableColumn>*> *)[tableView tableColumns] ;
-            NSTableColumn <SSYPopupTableHeaderSortableColumn> * thisColumn = [columns objectAtIndex:columnIndex] ;
-            NSFont* font = [thisColumn headerFont] ;
-            NSDictionary* attributes = [NSDictionary dictionaryWithObjectsAndKeys:
-                                        font, NSFontAttributeName,
-                                        nil] ;
-            attributedTitle = [[NSAttributedString alloc] initWithString:[self fixedNonMenuTitle]
-                                                              attributes:attributes] ;
+            string = [self fixedNonMenuTitle];
         }
         else {
-            attributedTitle = [self attributedTitle] ;
-            [attributedTitle retain] ;
+            string = [[self attributedTitle] string];
         }
+        attributedTitle = [[NSAttributedString alloc] initWithString:string
+                                                          attributes:attributes] ;
         NSAttributedString* truncatedTitle = [attributedTitle attributedStringTruncatedToWidth:cellFrame.size.width - xMargin
                                                                                         height:cellFrame.size.height] ;
         [truncatedTitle drawAtPoint:titlePoint] ;

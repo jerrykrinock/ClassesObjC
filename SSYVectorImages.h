@@ -14,6 +14,7 @@ enum SSYVectorImageStyles_enum
      square enclosing the two lines is equal to the wength.  */
     SSYVectorImageStyleTarget,
     SSYVectorImageStyleChasingArrows,
+    SSYVectorImageStyleChasingArrowsFilled,
     SSYVectorImageStyleWindowWithSidebar,
     /* Triangle, horizonal baseline, pointing up, with top vertex 90 degrees.
      This one is shorter and fatter.  */
@@ -73,6 +74,14 @@ typedef enum SSYVectorImageStyles_enum SSYVectorImageStyle ;
  fill and stroke color will be black, and also the result will be a "template
  image".  Otherwise, the result will not be a "template image".  See
  -[NSImage setTemplate:] documentation for more information.
+ @param    darkModeView: If not nil, and if color is nil, and if the effective
+ appearance of darkModeView better matches NSAppearanceNameDarkAqua than
+ NSAppearanceNameAqua at time of drawing, the strokes and fill of the returned
+ template image will be white rather than black.  Use this if the returned
+ image will draw itself to the screen in a custom view or control.  Do not use
+ this if the returned image will be passed in as the image to a NSButton or
+ other Cocoa control because Cocoa will do the luminance inversion based on
+ opacity.
  @param    rotateDegrees  Measure by which the result will be rotated clockwise
  @param    inset  Percent of wength by which to inset the desired shape from the
  given wength on all four edges.  The maximum useful value of inset is 50.0, at
@@ -85,6 +94,7 @@ typedef enum SSYVectorImageStyles_enum SSYVectorImageStyle ;
 + (NSImage*)imageStyle:(SSYVectorImageStyle)style
                 wength:(CGFloat)wength
                  color:(NSColor*)color
+          darkModeView:(NSView*)darkModeView
          rotateDegrees:(CGFloat)rotateDegrees
                  inset:(CGFloat)inset ;
 

@@ -44,4 +44,15 @@
 
 - (BOOL)revealTabViewIdentifier:(NSString*)identifier ;
 
+/*!
+ @brief    Returns a special image for certain tab view items
+
+ @details  Subclasses may override this to provide a special image for
+ certain tab view items, for example if you want to use a home-made vector
+ image.  For other tab view items, return nil and the default
+ [NSImage imageNamed:<item-identifier>] will be used.  The default
+ implementation returns nil regardless of the passed-ib identifier.
+ */
+- (NSImage*)specialImageForTabViewIdentifier:(NSString*)identifier;
+
 @end

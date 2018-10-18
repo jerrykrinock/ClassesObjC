@@ -66,10 +66,11 @@
 			NSRectFill(imageFrame);
 		}
 		
- 		[image drawInvertedIfDarkModeInRect:imageFrame
-                                  operation:NSCompositingOperationPlusDarker
-                                   fraction:1.0
-                             appearanceView:controlView];
+        [image drawInRect:imageFrame
+                operation:NSCompositingOperationPlusDarker
+                 fraction:1.0
+         invertIfDarkMode:YES
+                   inView:controlView];
     }
 	
 	return cellFrame ;

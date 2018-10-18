@@ -1,6 +1,5 @@
 #import <Cocoa/Cocoa.h>
 
-
 /*!
  @brief    A toolbar item which has a tristate 'value' attribute,
  and three each additional images, labels and tooltips which 
@@ -14,6 +13,7 @@
 	NSImage* m_onImage ;
 	NSImage* m_offImage ;
 	NSImage* m_disImage ;
+    NSImage* m_backgroundImage;
     NSImage* m_originalImage ;
 	NSString* m_onLabel ;
 	NSString* m_offLabel ;
@@ -36,22 +36,28 @@
 @property (assign) NSInteger value ;
 
 /*!
- @brief    The image that will be displayed when the receiver's 
- value is set to NSOnState.
+ @brief    The image that will be displayed when the receiver's  value is
+ NSOnState.
 */
 @property (retain) NSImage* onImage ;
 
 /*!
- @brief    The image that will be displayed when the receiver's
- value is set to NSOnState.
+ @brief    The image that will be displayed when the receiver's value is
+ NSOnState.
  */
 @property (retain) NSImage* offImage ;
 
 /*!
- @brief    The image that will be displayed when the receiver's
- value is set to NSMixedState.
+ @brief    The image that will be displayed when the receiver's value is
+ NSMixedState.
  */
 @property (retain) NSImage* disImage ;
+
+/*!
+ @brief    An image that will always be displayed regardless of the  receiver's
+ value.
+ */
+@property (retain) NSImage* backgroundImage;
 
 /*!
  @brief    The string that will be displayed under the button
@@ -116,3 +122,10 @@
 @property (assign) NSTimeInterval flashDuration ;
 
 @end
+
+@interface SSYToolbarButtonView : NSView
+
+@property (weak) SSYToolbarButton* toolbarItem;
+
+@end
+
