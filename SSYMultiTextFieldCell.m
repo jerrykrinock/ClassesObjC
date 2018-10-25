@@ -1,5 +1,6 @@
 #import "SSYMultiTextFieldCell.h"
 #import "NSImage+SSYDarkMode.h"
+#import "NSView+SSYDarkMode.h"
 
 
 @implementation SSYMultiTextFieldCell
@@ -65,9 +66,13 @@
 			[[self backgroundColor] set];
 			NSRectFill(imageFrame);
 		}
-		
+
+		NSCompositingOperation operation = [controlView isDarkMode_SSY]
+        ? NSCompositingOperationPlusLighter
+        : NSCompositingOperationPlusDarker;
+
         [image drawInRect:imageFrame
-                operation:NSCompositingOperationPlusDarker
+                operation:operation
                  fraction:1.0
          invertIfDarkMode:YES
                    inView:controlView];
