@@ -370,7 +370,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
     NSButton* button2 ;
     NSButton* button3 ;
     NSButton* button4 ;
-	NSString* helpAnchorString ;
+	NSString* _helpAddress ;
 	NSError* errorPresenting ;
 	NSImageView* iconInformational ;
     NSImageView* iconWarning ;
@@ -983,16 +983,22 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 - (void)setButton4Enabled:(BOOL)enabled ;
 
 /*!
- @brief    Sets the anchor in the application's Help Book which will
+ @brief    Adds or removes a round question mark help button from the
+ receiver's window, and sets the location of a resource which will be
+ displayed when the user clicks that button.  Sets the anchor in the application's Help Book which will
  be displayed in Help Viewer when the user clicks the question-mark
  "Help" button in the receiver's window.
 
- @details  Passing anchor as nil will remove the button.
- @param    anchor  The desired Help anchor
+ @param    helpAddress  The desired Help location, or nil to remove the Help
+ button.  When the user clicks the receiver's Help button, if this value
+ begins with "http" and can be parsed to a URL, the resource it locates will
+ be displayed in the default web browser.  Otherwise, the value will be
+ considered to be an anchor in the application's Help Book, and the resource
+ at that anchor will be dislayed in Apple Help Viewer.
 */
-- (void)setHelpAnchor:(NSString*)anchor ;
+- (void)setHelpAddress:(NSString*)helpAddress ;
 
-- (NSString*)helpAnchor ;
+- (NSString*)helpAddress ;
 
 /*!
  @brief    Sets the title of the checkbox which will appear above the row of
@@ -1270,7 +1276,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  
  alert = [SSYAlert new] ;
  [alert setTitleText:NSLocalizedString(@"Do the buttons fall off the screen?", nil)] ;
- [alert setHelpAnchor:@"fooHelp"] ;
+ [alert setHelpAddress:@"fooHelp"] ;
  [alert setButton1Title:@"Button 1"] ;
  [alert setButton2Title:@"Button 2"] ;
  [alert setButton3Title:@"Button 3"] ;

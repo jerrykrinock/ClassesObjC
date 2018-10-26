@@ -173,7 +173,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @property (retain) NSButton* button2 ;
 @property (retain) NSButton* button3 ;
 @property (retain) NSButton* button4 ;
-@property (copy) NSString* helpAnchorString ;
 @property (retain) NSError* errorPresenting ;
 @property (retain) NSImageView* iconInformational ;
 @property (retain) NSImageView* iconWarning ;
@@ -368,7 +367,6 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @synthesize button2 ;
 @synthesize button3 ;
 @synthesize button4 ;
-@synthesize helpAnchorString ;
 @synthesize errorPresenting ;
 @synthesize iconInformational ;
 @synthesize iconWarning;
@@ -665,8 +663,17 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (IBAction)help:(id)sender {
-	[[NSHelpManager sharedHelpManager] openHelpAnchor:[self helpAnchorString]
-											   inBook:[[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleHelpBookName"]] ;
+    NSURL* url = [NSURL URLWithString:self.helpAddress];
+    if ([[url scheme] hasPrefix:@"http"]) {
+        [[NSWorkspace sharedWorkspace] openURLs:@[url]
+                        withAppBundleIdentifier:nil
+                                        options:NSWorkspaceLaunchAsync
+                 additionalEventParamDescriptor:nil
+                              launchIdentifiers:NULL];
+    } else {
+        [[NSHelpManager sharedHelpManager] openHelpAnchor:self.helpAddress
+                                                   inBook:[[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleHelpBookName"]];
+    }
 }
 
 - (IBAction)support:(id)sender {
@@ -1198,10 +1205,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     }
 }
 
-- (void)setHelpAnchor:(NSString*)anchor {
+- (void)setHelpAddress:(NSString*)helpAddress {
 	// This one is tricky since we've got two ivars to worry about:
 	// NSButton* helpButton and NSString* helpAnchorString
-	if (anchor) {
+	if (helpAddress) {
 		NSButton* button = [self helpButton] ;
 		if (!button) {
 			NSRect frame = NSMakeRect(0, 0, 21.0, 23.0) ;
@@ -1226,11 +1233,14 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		[[self helpButton] removeFromSuperviewWithoutNeedingDisplay] ;
 		[self setHelpButton:nil] ;
 	}
-	[self setHelpAnchorString:anchor] ;
+
+    [_helpAddress release];
+    _helpAddress = helpAddress;
+    [_helpAddress retain];
 }
 
-- (NSString*)helpAnchor {
-    return [self helpAnchorString] ;
+- (NSString*)helpAddress {
+    return [[_helpAddress copy] autorelease] ;
 }
 	
 - (void)setButton1Enabled:(BOOL)enabled {
@@ -1358,7 +1368,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[self setButton2Title:nil] ;
 	[self setButton3Title:nil] ;
     [self setButton4Title:nil] ;
-	[self setHelpAnchor:nil] ;
+	[self setHelpAddress:nil] ;
 	[self setCheckboxTitle:nil] ;
 	[self setWhyDisabled:nil] ;
 	[self removeAllOtherSubviews] ;
@@ -2287,9 +2297,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	
 	// Set Help Anchor
 	{
-		NSString* helpAnchor = [error helpAnchor] ;
-		if (helpAnchor) {
-			[self setHelpAnchor:helpAnchor] ;
+		NSString* helpAddress = [error helpAnchor] ;
+		if (helpAddress) {
+			[self setHelpAddress:helpAddress] ;
 		}
 	}
 	
@@ -2560,7 +2570,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[button2 release] ;
 	[button3 release] ;
     [button4 release] ;
-	[helpAnchorString release] ;
+	[_helpAddress release] ;
 	[errorPresenting release] ;
 	[iconInformational release] ;
     [iconWarning release] ;
