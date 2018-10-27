@@ -215,7 +215,6 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 }
 
 - (void)mouseDown:(NSEvent*)event {
-    /*SSYDBL*/ NSLog(@">> %s", __PRETTY_FUNCTION__) ;
     [self.toolbarItem doDaClick:self];
 }
 

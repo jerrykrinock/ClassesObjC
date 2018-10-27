@@ -671,8 +671,19 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
                  additionalEventParamDescriptor:nil
                               launchIdentifiers:NULL];
     } else {
-        [[NSHelpManager sharedHelpManager] openHelpAnchor:self.helpAddress
-                                                   inBook:[[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleHelpBookName"]];
+        /* Help Anchors are broken in macOS 10.14, at least, as they are formed
+         in my app's Help Book.  Until I get a workaround that works, I
+         implement in my app delegate displayHelpBookAnchor: which displays
+         the given help anchor in the Help Book on my web page.
+         */
+        SEL selector = NSSelectorFromString(@"displayHelpBookAnchor:");
+        if ((NSAppKitVersionNumber >= 1600.0) && [[NSApp delegate] respondsToSelector:selector]) {
+            [[NSApp delegate] performSelector:selector
+                                   withObject:self.helpAddress];
+        } else {
+            [[NSHelpManager sharedHelpManager] openHelpAnchor:self.helpAddress
+                                                       inBook:[[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleHelpBookName"]];
+        }
     }
 }
 
