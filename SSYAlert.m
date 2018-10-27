@@ -1222,10 +1222,17 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	if (helpAddress) {
 		NSButton* button = [self helpButton] ;
 		if (!button) {
-			NSRect frame = NSMakeRect(0, 0, 21.0, 23.0) ;
-				// because help button in Interface Builder is 21x23
-				// It seems there should be an NSHelpButtonSize constant,
-				// but I can't find any.
+			NSRect frame = NSMakeRect(0, 0, 23.0, 27.0) ;
+            /* A Help button from the Interface Builder library is 21x21
+             in macOS 10.14, 21x23 in earlier macOS versions.  In earlier
+             macOS versions, 21x23 was sufficient to avoid clipping.  But
+             In macOS 10.14, 21x27 is necessary to avoid clipping in an alert
+             created with [SSYAlert new], and 23x25 is necessary to avoid
+             clipping in an alert created with [SSYAlert alertError:].  Since
+             I don't have time to spend on a few pixels, I've not bothered to
+             understand way.  I just set it to the largest needed value and
+             it works.  It seems there should be an NSHelpButtonSize constant
+             but I can't find any. */
 			button = [[NSButton alloc] initWithFrame:frame] ;
 			[button setBezelStyle:NSHelpButtonBezelStyle] ;
 			[button setTarget:self] ;
