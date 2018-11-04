@@ -20,10 +20,6 @@
         backing: [panelInNib backingType]
         defer: NO];
 
-    //	Tweak esthetics, making it all white and with a shadow
-    [panelToDisplay setBackgroundColor: [NSColor whiteColor]];
-    [panelToDisplay setHasShadow: YES];
-
     [panelToDisplay setBecomesKeyOnlyIfNeeded: NO];
 
     //	We want to know if the window is no longer key/main
@@ -109,7 +105,10 @@
 		theText = [[NSMutableAttributedString alloc] initWithString:@"Could not find AboutPanel.rtf\n"] ;
 	}
 
-	return [theText autorelease] ;
+	[theText addAttribute:NSForegroundColorAttributeName
+                    value:NSColor.controlTextColor
+                    range:NSMakeRange(0, theText.length)];
+    return [theText autorelease] ;
 }
 
 //	Load the text to scroll into the scrolling text view. The odd thing here is
