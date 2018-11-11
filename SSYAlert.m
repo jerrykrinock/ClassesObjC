@@ -1010,6 +1010,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	}
 }
 
+- (NSString*)titleText {
+    return [[[[self titleTextView] string] copy] autorelease];
+}
+
 - (void)setTitleToDefaultAlert {
 	[self setTitleText:[self wordAlert]] ;
 }
@@ -1082,7 +1086,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (NSString*)smallText {
-	return [[self smallTextView] string] ;
+	return [[[[self smallTextView] string] copy] autorelease];
 }
 
 - (void)setIconStyle:(NSInteger)iconStyle {

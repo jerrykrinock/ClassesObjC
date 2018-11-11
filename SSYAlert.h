@@ -865,12 +865,10 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 - (void)setShowsProgressBar:(BOOL)showsProgressBar ;
 
 /*!
- @brief    Sets the receiver's Title Text of the receiver to a given string.
- 
- @details  Title Text appears in boldface near the top of the receiver
- window's content view.&nbsp; It is not the window title.
+ @brief    The text that appears in boldface near the top of the receiver
+ window's content view.  It is not the window title.
 */
-- (void)setTitleText:(NSString*)text ;
+@property (copy) NSString* titleText;
 
 
 /*!
@@ -882,18 +880,9 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 - (void)setTitleToDefaultAlert ; 
 
 /*!
- @brief    Sets the receiver's Small Text to the localized word "Alert", stolen from NSGetAlertPanel
-
- @details  Small Text is the text that appears in the window under the Title Text.
+ @brief    The the text that appears in the window under the Title Text.
 */
-- (void)setSmallText:(NSString*)text ;
-
-/*!
- @brief    Returns the receiver's Small Text, which may be nil
-
- @details  This is useful for troubleshooting.
-*/
-- (NSString*)smallText ;
+@property (copy) NSString* smallText;
 
 /*!
  @brief    Sets the icon which will appear in the receiver
