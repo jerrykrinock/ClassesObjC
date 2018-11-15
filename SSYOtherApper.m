@@ -402,7 +402,8 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 			[scanner release] ;
 			scanner = nil ;
 			command = [processInfoString substringFromIndex:commandBeginsAt] ;
-			NSDictionary* processInfoDic = [NSDictionary dictionaryWithObjectsAndKeys:
+
+            NSDictionary* processInfoDic = [NSDictionary dictionaryWithObjectsAndKeys:
 											[NSNumber numberWithInteger:pid], SSYOtherApperKeyPid,
 											user, SSYOtherApperKeyUser,
                                             etimeString, SSYOtherApperKeyEtime,
@@ -436,14 +437,19 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 }
 	
 + (NSArray*)pidsOfMyRunningExecutablesName:(NSString*)executableName
-                                   zombies:(BOOL)zombies {
+                                   zombies:(BOOL)zombies
+                                exactMatch:(BOOL)exactMatch {
 	// The following reverse-engineering emulates the way that ps presents
 	// an executable name when it is a zombie process:
 	NSString* zombifiedExecutableName ;
     if (zombies) {
+        NSInteger length = executableName.length;
+        if (length > 16) {
+            length = 16;
+        }
         zombifiedExecutableName = [NSString stringWithFormat:
            @"(%@)",
-           [executableName substringToIndex:16]] ;
+           [executableName substringToIndex:length]] ;
     }
     else {
         zombifiedExecutableName = nil ;
@@ -455,22 +461,37 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 		NSString* user = [processInfoDic objectForKey:SSYOtherApperKeyUser] ;
 		NSString* command = [processInfoDic objectForKey:SSYOtherApperKeyExecutable] ;
 		if (command) {
-			if (
-				(
-				[executableName isEqualToString:command]
-				||
-				[zombifiedExecutableName isEqualToString:command]
-				)
-				&& 
-				[targetUser isEqualToString:user]
-				) { 
-				NSNumber* pid = [processInfoDic objectForKey:SSYOtherApperKeyPid] ;
-				if (pid) { // Defensive programming
-					[pids addObject:pid] ;
-				}
-			}
-		}
-	}
+            if ([targetUser isEqualToString:user]) {
+                if (exactMatch) {
+                    if (
+                        (
+                         [executableName isEqualToString:command]
+                         ||
+                         [zombifiedExecutableName isEqualToString:command]
+                         )
+                        ) {
+                        NSNumber* pid = [processInfoDic objectForKey:SSYOtherApperKeyPid] ;
+                        if (pid) { // Defensive programming
+                            [pids addObject:pid] ;
+                        }
+                    }
+                } else {
+                    if (
+                        (
+                         ([command rangeOfString:executableName].location != NSNotFound)
+                         ||
+                         ([command rangeOfString:zombifiedExecutableName].location != NSNotFound)
+                         )
+                        ) {
+                        NSNumber* pid = [processInfoDic objectForKey:SSYOtherApperKeyPid] ;
+                        if (pid) { // Defensive programming
+                            [pids addObject:pid] ;
+                        }
+                    }
+                }
+            }
+        }
+    }
 	
 	NSArray* answer = [pids copy] ;
 	[pids release] ;

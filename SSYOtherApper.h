@@ -183,10 +183,14 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  @param    zombies  If YES, results will include any qualifying zombie (Z) 
  and processes, and processes in uninterruptible wait (U or, more typicall, UE
  states.  If NO, will results will ignore these processes.
+ @param    exactMatch  If YES, candidate's executable name must match the
+ given executableName exactly.  Otherwise, candidate's executable name need
+ only contain the givem executableName.
  @result   The unix process identifier (pid), or 0 if no qualifying process exists.
  */
 + (NSArray*)pidsOfMyRunningExecutablesName:(NSString*)executableName
-                                   zombies:(BOOL)zombies ;
+                                   zombies:(BOOL)zombies
+                                exactMatch:(BOOL)exactMatch;
 
 /*!
  @brief    Returns a member of an enumeration which gives the current running
