@@ -261,7 +261,17 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  
  @details  The default value is YES.
  */
-@property (assign) BOOL isWatching ;
+@property (assign) BOOL isWatching;
+
+/*!
+ @brief    Returns a set of strings, each one representing a path that is
+ currently being watched
+
+ @details  If .isWatching is NO, or if no paths are currently being watched,
+ returns an empty set.
+
+ */
+- (NSSet*)currentlyWatchedPaths;
 
 @end
 
