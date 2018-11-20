@@ -4,10 +4,6 @@
 #import "NSError+LowLevel.h"
 
 
-#if KQUEUES_WATCHER_THREAD_NEEDS_KILL_TO_EXIT
-pthread_t pthread_self() ;
-#endif
-
 NSString* const SSYPathObserverErrorDomain        = @"SSYPathObserverErrorDomain" ;
 NSString* const SSYPathObserverChangeNotification = @"SSYPathObserverChangeNotification" ;
 NSString* const SSYPathObserverPathKey            = @"Path" ;
@@ -17,10 +13,7 @@ NSString* const SSYPathObserverUserInfoKey        = @"UserInfo" ;
 NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 
 /*!
- @brief    Encapsulates a file system path, some userInfo, and
- a file descriptor
- 
- @details  Typically used privately inside SSYPathObserver.
+ @brief    Encapsulates attributes of a path watch within SSYPathObserver
  */
 @interface SSYPathWatch : NSObject {
 	NSString* m_path ;
@@ -74,25 +67,14 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 
 @property (retain) NSMutableSet* pathWatches ;
 @property (assign) uint32_t kqueueFileDescriptor ;
-#if KQUEUES_WATCHER_THREAD_NEEDS_KILL_TO_EXIT
-@property (assign) pthread_t threadId ;
-#endif
 
 @end
 
-#if KQUEUES_WATCHER_THREAD_NEEDS_KILL_TO_EXIT
-void handleUSR1(NSInteger signum) {
-	// Do not exit() here, or the whole app will exit.
-}
-#endif
 
 @implementation SSYPathObserver
 
 @synthesize pathWatches = m_pathWatches ;
 @synthesize kqueueFileDescriptor = m_kqueueFileDescriptor ;  // file descriptor for the kqueue
-#if KQUEUES_WATCHER_THREAD_NEEDS_KILL_TO_EXIT
-@synthesize threadId = m_threadId ;
-#endif
 
 /*
  Note that this method is always invoked by the watcher
@@ -104,7 +86,7 @@ void handleUSR1(NSInteger signum) {
 	[super dealloc] ;
 }
 
-- (void)watchAndWaitObserver:(SSYPathObserver*)pathObserver {
+- (void)watchAndWait {
 	/* Note that, in macOS 10.5, we may kill this thread in -release.
 	 In Apple's Threading Programming Guide > Terminating a Thread,
 	 killing a thread is "strongly discouraged" because memory or other
@@ -126,26 +108,8 @@ void handleUSR1(NSInteger signum) {
 		NSAutoreleasePool* pool1 = [[NSAutoreleasePool alloc] init] ;
 		
 		[[NSThread currentThread] setName:SSYPathObserverWatcherThread] ;
-		
-#if KQUEUES_WATCHER_THREAD_NEEDS_KILL_TO_EXIT
-		if (NSAppKitVersionNumber < 1000.0) {
-			// Support for the fact that sending close() to a file
-			// descriptor on Mac OS 10.5 does not cause a camping
-			// kevent() watching said file descriptor to return,
-			// as it does in Mac OS 10.6.
-			
-			// Install a signal handler.  Otherwise the whole app will exit
-			// when the signal is received.
-			(void)signal(SIGUSR1, handleUSR1) ;
-			// Note: handleUSR1() is a no-op.
-			
-			// Check back in and report threadId
-			pthread_t threadId = pthread_self() ;
-			[pathObserver setThreadId:threadId] ;
-		}
-#endif
-		
-		fileDescriptor = [pathObserver kqueueFileDescriptor] ;
+
+		fileDescriptor = [self kqueueFileDescriptor] ;
 		
 		[pool1 release] ;
 	}
@@ -252,9 +216,9 @@ void handleUSR1(NSInteger signum) {
 		}
 		else {
 			[self setKqueueFileDescriptor:kqueueFileDescriptor] ;
-			[NSThread detachNewThreadSelector:@selector(watchAndWaitObserver:)
+			[NSThread detachNewThreadSelector:@selector(watchAndWait)
 									 toTarget:self
-								   withObject:self] ;
+								   withObject:nil] ;
 			m_isAlive = YES ;
 		}
 	}
@@ -386,7 +350,6 @@ void handleUSR1(NSInteger signum) {
 - (oneway void)release {
 	// The default behavior of -release is to decrement retainCount if
 	// retainCount is greater than 1, and otherwise invoke -dealloc.
-	// (The Apple documentation of -release is wrong.  See
 	//
 	// However, we need to break a little retain cycle.  The problem
 	// is that the watcher thread which we detached in -init has retained
@@ -396,8 +359,7 @@ void handleUSR1(NSInteger signum) {
 	// put the following code in -dealloc, we would not force that
 	// thread to exit until we are deallocced.  The solution, copied
 	// from UKKqueue, is to force that thread to exit here, when
-	// the retain count is 3. (Uli used 2, because his watcher thread
-	// only retained once).
+	// the retain count is 2.
 	
 	// After spending a fewe hours considering how best to do this,
 	// I decided that Uli's method was best.  The next best alternative
@@ -412,7 +374,7 @@ void handleUSR1(NSInteger signum) {
 	// watcher thread.  Of course, these last two times, the if()
 	// block will not execute and it will immediately invoke super.
 	@synchronized(self) {
-		if (([self retainCount] == 3) && m_isAlive) {
+		if (([self retainCount] == 2) && m_isAlive) {
 			m_isAlive = NO ;
 			
 			// Close any file descriptors which might still be open
@@ -423,23 +385,11 @@ void handleUSR1(NSInteger signum) {
 				if (result != 0) {
 				}
 			}
-			
-			
-#if KQUEUES_WATCHER_THREAD_NEEDS_KILL_TO_EXIT
-			// For 10.5.8, AppKit version number is 949.54.  For 10.6.4 it's 1038.32.
-			if (NSAppKitVersionNumber < 1000.0) {
-				pthread_t threadId = [self threadId] ;
-				if (threadId != 0) {
-					pthread_kill(threadId, SIGUSR1) ;
-				}
-			}
-#endif
-			
+
 			uint32_t kqfd = [self kqueueFileDescriptor] ;
 			
-			// The following causes the watcher thread to exit in Mac OS 10.6,
-			// but not in Mac OS 10.5.
-			close (kqfd) ;	
+			// The following causes the watcher thread to exit.
+			close (kqfd) ;
 		}
 	}
 

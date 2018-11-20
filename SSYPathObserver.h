@@ -6,11 +6,6 @@
 // constants.
 #import <sys/event.h>
 
-
-// See class documentation 
-#define KQUEUES_WATCHER_THREAD_NEEDS_KILL_TO_EXIT ((MAC_OS_X_VERSION_MAX_ALLOWED < 1060) || (MAC_OS_X_VERSION_MIN_REQUIRED < 1060))
-
-
 /*!
  @brief    Error domain for the SSYPathObserver class
  */
@@ -168,17 +163,6 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  
  This class requires macOS 10.5 or later.
  
- * Hack to kill kqueue watcher thread for macOS 10.5
- 
- When this class is compiled using the Mac OS 10.5 SDK, the constant
- KQUEUES_WATCHER_THREAD_NEEDS_KILL_TO_EXIT is set to 1, which causes
- inclusion of some extra code which works around the fact that in this
- SDK a camped kevent() call does not return when the file descriptor
- of its kqueue is closed, and we need to kill its thread by sending
- it a signal.  With the Mac OS 10.6 SDK, the camped kevent() does
- return when its kqueue is closed, so this hack is not needed. See:
- http://lists.apple.com/archives/darwin-kernel/2010/Aug/msg00040.html
-
 * Acknowledgements
  
  Thanks to Uli Kusterer for publishing UKKQueue,
@@ -203,9 +187,6 @@ extern NSString* const SSYPathObserverUserInfoKey ;
 	NSMutableSet* m_pathWatches ;
 	BOOL m_isWatching ;
 	BOOL m_isAlive ;
-#if KQUEUES_WATCHER_THREAD_NEEDS_KILL_TO_EXIT
-	pthread_t m_threadId ;
-#endif
 }
 
 
