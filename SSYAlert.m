@@ -1811,7 +1811,12 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[self.titleTextView sizeHeightToFitAllowShrinking:self.allowsShrinking] ;
 	[self.smallTextScrollView sizeHeightToFitAllowShrinking:self.allowsShrinking] ;
 	for (subview in self.otherSubviews) {
-		[(NSView*)subview sizeHeightToFitAllowShrinking:self.allowsShrinking] ;
+        if ([subview isKindOfClass:[NSSearchField class]]) {
+            [(NSSearchField*)subview sizeToFit];
+            // For SSYSearchField, -sizeToFit is a no-op, as we desire
+        } else {
+            [(NSView*)subview sizeHeightToFitAllowShrinking:self.allowsShrinking] ;
+        }
 	}
 	
 	// The height of the contentView
