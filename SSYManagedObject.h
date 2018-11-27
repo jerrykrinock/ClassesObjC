@@ -136,19 +136,20 @@ extern NSString* const constKeyNewValue ;
 - (BOOL)isAvailable ;
 
 /*!
- @brief    Returns a 5-character string indicating in what ways the receiver is
- available or not available
+ @brief    Returns a 5-character string indicating in what respects the
+ receiver is available or not
 
  @details  This is intended for debugging.
 
- @result   A string of five "Y" and/or "N" characters, as follows:
+ @result   A string of five "Y" and/or "N" characters.  A result "YYYYY"
+ indicates that the receiver is available in all five respects.  In detail,
  First Y/N is N if receiver is a fault.
  Second Y/N is N if receiver is deleted.
  Third Y/N is N if receiver has nil managed object context.
  Fourth Y/N is N if receiver has nil object ID.
  Fifth Y/N is N if receiver's managed object context does not
- return anything for the receiver's object ID, or if the receiver has nil
- managed object context or object ID.
+ return anything for the receiver's object ID, which will of course be the case
+ if either the third or fourth Y/N are N.
  */
 - (NSString*)availabilityDescription;
 
