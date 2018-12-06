@@ -8,6 +8,7 @@
 #if 0
 #warning Logging SSYOperationLinker Operations.  DO NOT SHIP THIS!
 #define LOGGING_SSYOPERATIONLINKER_OPERATIONS 1
+#import "BkmxBasis.h"
 #endif	
 #endif
 
@@ -233,13 +234,16 @@
 - (void)main {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
 #if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-	NSLog(@"run op: %p grp=%@ prevErr=%ld nQ=%ld sel=%@ isCnc=%hhd",
-		  self,
-		  [[self info] objectForKey:constKeySSYOperationGroup],
-		  (long)[[self error] code],
-		  (long)[[[self operationQueue] operations] count], // nQ = number in queue
-		  NSStringFromSelector([self selector]),
-		  [self isCancelled]) ;
+    NSString* msg = [NSString stringWithFormat:
+                     @"RunOp: %p grp=%@ prevErr=%ld nQ=%ld sel=%@ isCnc=%hhd owr=%p",
+                     self,
+                     [[self info] objectForKey:constKeySSYOperationGroup],
+                     (long)[[self error] code],
+                     (long)[[[self operationQueue] operations] count], // nQ = number in queue
+                     NSStringFromSelector([self selector]),
+                     [self isCancelled],
+                     [self owner]];
+    [[BkmxBasis sharedBasis] logMessage:msg];
 #endif
 	
 	if (![self isCancelled]) {
@@ -270,19 +274,19 @@
 				// Chain operations have been aborted.
 				// This method becomes a no-op.
 #if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-				NSLog(@"   No-op due to err") ;
+                [[BkmxBasis sharedBasis] logMessage:@"RunOp: Skipping %@ cuz error owr=%p", NSStringFromSelector([self selector]), [self owner]];
 #endif
 			}
 		}
 		else {
 #if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-			NSLog(@"   No-op due to group skip") ;
+            [[BkmxBasis sharedBasis] logMessage:@"RunOp: Skipping %@ cuz skip group %@ owr=%p", NSStringFromSelector([self selector]), [[self info] objectForKey:constKeySSYOperationGroup], [self owner]];
 #endif
 		}
 	}
 	else {
 #if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-		NSLog(@"   No-op due to cancelled") ;
+        [[BkmxBasis sharedBasis] logMessage:@"RunOp: Skipping %@ cuz cancelled owr=%p", NSStringFromSelector([self selector]), [self owner]];
 #endif
 	}		
 
