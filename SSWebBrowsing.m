@@ -160,26 +160,6 @@
             NSBeep();
         }
 	}
-	
-	//	openURLs
-	//	NSString* source ;
-	//	NSDictionary* errorDic ;
-	//	NSAppleScript* script ;
-	//
-	//	if (activate) {
-	//		source = [[NSString alloc] initWithFormat:@"tell application \"Safari\"\nactivate\nend tell"] ;
-	//		script = [[NSAppleScript alloc] initWithSource:source] ;
-	//		[script executeAndReturnError:&errorDic] ;
-	//		[NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.2]] ;
-	//		[source release] ;
-	//		[script release] ;
-	//	}
-	//
-	//	source = [[NSString alloc] initWithFormat:@"tell application \"Safari\"\nmake new document\nset URL of result to \"%@\"\nend tell", url] ;
-	//	script = [[NSAppleScript alloc] initWithSource:source] ;
-	//	[script executeAndReturnError:&errorDic] ;
-	//	[source release] ;
-	//	[script release] ;
 }
 
 + (NSImage*)faviconForDomain:(NSString*)domain {
