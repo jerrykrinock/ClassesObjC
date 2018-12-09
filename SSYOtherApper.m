@@ -5,6 +5,7 @@
 #import "NSFileManager+SomeMore.h"
 #import "NSRunningApplication+SSYHideReliably.h"
 #import "NSError+InfoAccess.h"
+#import "SSYAppleScripter.h"
 
 NSString* const SSYOtherApperErrorDomain = @"SSYOtherApperErrorDomain" ;
 NSString* const SSYOtherApperKeyPid = @"pid" ;
@@ -81,194 +82,78 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 					 activate:(BOOL)activate
                 hideGuardTime:(NSTimeInterval)hideGuardTime
 					  error_p:(NSError**)error_p {
-    BOOL ok = YES ;
-    NSInteger errorCode = 0 ;
-	NSError* underlyingError = nil ;
+    NSMutableArray* arguments = [[NSMutableArray alloc] initWithObjects:
+                                 @"-a",
+                                 path,
+                                 nil];
+    if (!activate) {
+        [arguments addObject:@"-gj"];
+        /* I don't understand from the `man open` the reason for both -g and
+         -j.  In macOS 10.14.2, -g is sufficient.  I added -j for extra oomph,
+         since I've had so much trouble with this in the past (see
+         Apple Bug 19070101). */
+    }
 
-    NSBundle* bundle = [NSBundle bundleWithPath:path] ;
-    NSString* bundleIdentifier = [bundle bundleIdentifier] ;
-    NSArray* apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleIdentifier] ;
-    NSRunningApplication* currentlyRunningApp = [apps lastObject] ;
-    NSString* runningBundlePath = [[currentlyRunningApp bundleURL] path] ;
-    BOOL currentlyRunning = ([path isEqualToString:runningBundlePath]) ;
-    BOOL currentlyActive = currentlyRunning ? [currentlyRunningApp isActive] : NO ;
+    NSTask* task = [[NSTask alloc] init];
+    task.launchPath = @"/usr/bin/open";
+    task.arguments = arguments;
+#if !__has_feature(objc_arc)
+   [arguments release];
+#endif
+    [task launch];
+    [task waitUntilExit];
+    NSInteger status = task.terminationStatus;
+    BOOL ok = (status == 0);
 
-    NSURL* url = nil ;
-    if (currentlyRunning) {
-        if (currentlyActive != activate) {
-            if (activate) {
-                [currentlyRunningApp unhide] ;
+	/* The following section is for apps such as Google Chrome which do not
+     seem to obey the -g or -j options of /usr/bin/open. */
+    if (!activate && ok && (hideGuardTime > 0.0)) {
+        dispatch_queue_t aSerialQueue = dispatch_queue_create(
+                                                              "SSYOtherApper.HideLaunchedApp",
+                                                              DISPATCH_QUEUE_SERIAL
+                                                              );
+        dispatch_async(aSerialQueue, ^{
+            NSArray* runningApps = [[NSWorkspace sharedWorkspace] runningApplications];
+            NSMutableSet* appsToHide = [[NSMutableSet alloc] init];
+            for (NSRunningApplication* app in runningApps) {
+                NSString* executablePath = app.executableURL.path;
+                if ([executablePath hasPrefix:path]) {
+                    [appsToHide addObject:app];
+                    /* Don't break here because app could have helper executables
+                     running, so we may have just hidden a helper.  Instead, we
+                     want to hide apps whose executablePath has prefix `path`. */
+                }
             }
-            else {
-                [currentlyRunningApp hideReliably] ;
+
+            for (NSRunningApplication* app in appsToHide) {
+                [app hideReliablyWithGuardInterval:hideGuardTime];
             }
-        }
-    }
-    else {
-        url = [NSURL fileURLWithPath:path] ;
-    }
-    
-    if (url) {
-        LSLaunchFlags launchFlags = 0 ;
-        if (!activate) {
-            launchFlags += kLSLaunchDontSwitch ;
-            launchFlags += kLSLaunchAndHide ;
-        }
-        LSLaunchURLSpec launchSpec ;
-        launchSpec.appURL = (CFURLRef)url ;
-        launchSpec.itemURLs = NULL ;
-        launchSpec.passThruParams = NULL ;
-        launchSpec.launchFlags = launchFlags ;
-        launchSpec.asyncRefCon = NULL ;
-        
-        OSStatus err = LSOpenFromURLSpec(
-                                         &launchSpec,
-                                         NULL
-                                         ) ;
-
-		if (err != noErr) {
-            ok = NO ;
-            errorCode = 494986 ;
-            underlyingError = [NSError errorWithMacErrorCode:err] ;
-        }
+#if !__has_feature(objc_arc)
+            [appsToHide release];
+#endif
+        });
     }
 
-    if (ok && !activate && hideGuardTime > 0) {
-        NSBundle* bundle = [NSBundle bundleWithPath:path] ;
-        NSString* bundleIdentifier = [bundle bundleIdentifier] ;
-        
-        NSTimeInterval doneTime = [NSDate timeIntervalSinceReferenceDate] + hideGuardTime ;
-        do {
-            NSArray* apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleIdentifier] ;
-            NSRunningApplication* app = [apps lastObject] ;
-            [app hide] ;
-            usleep(100000) ;
-        } while ([NSDate timeIntervalSinceReferenceDate] < doneTime) ;
+    if (!ok && error_p) {
+        NSString* errorDesc = task.standardError;
+        if (!errorDesc) {
+            errorDesc = @"Unknown Error";
+        }
+        *error_p = [NSError errorWithDomain:SSYOtherApperErrorDomain
+                                             code:398626
+                                         userInfo:@{
+                                                    NSLocalizedDescriptionKey : errorDesc,
+                                                    @"Path" : path
+                                                    }];
     }
 
-	if (!ok && error_p) {
-		NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
-								  @"Could not launch app", NSLocalizedDescriptionKey,
-								  path, @"Path",
-								  underlyingError, NSUnderlyingErrorKey,  // may be nil sentinel
-								  nil] ;
-		
-		*error_p = [NSError errorWithDomain:SSYOtherApperErrorDomain
-									   code:errorCode
-								   userInfo:userInfo] ;
-	}
-	
+#if !__has_feature(objc_arc)
+    [task release];
+#endif
+
 	return ok ;
 }
 
-+ (BOOL)launchAsHiddenAppPath:(NSString*)path
-                launchTimeout:(NSTimeInterval)launchTimeout
-                hideGuardTime:(NSTimeInterval)hideGuardTime
-                      error_p:(NSError**)error_p {
-    NSError* error = nil ;
-    BOOL ok = YES ;
-    if (!path) {
-        error = [NSError errorWithDomain:SSYOtherApperErrorDomain
-                                    code:494089
-                                userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-                                          @"App path cannot be nil", NSLocalizedDescriptionKey,
-                                          nil]] ;
-        ok = NO ;
-    }
-    
-    NSBundle* bundle = [NSBundle bundleWithPath:path] ;
-    
-    if (ok) {
-        if (!bundle) {
-            error = [NSError errorWithDomain:SSYOtherApperErrorDomain
-                                        code:494090
-                                    userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-                                              @"No bundle found at path", NSLocalizedDescriptionKey,
-                                              path, @"Path",
-                                              nil]] ;
-            ok = NO ;
-        }
-    }
-    
-    NSString* bundleIdentifier = [bundle bundleIdentifier] ;
-    
-    /*  I wish we could use /usr/bin/open for this.  See Apple Bug 19070101. */
-    if (ok) {
-        NSString* source = [NSString stringWithFormat:
-                            @" try\n"
-                            @"  tell application \"%@\"\n"
-                            @"  end tell\n"
-                            @" end try\n",
-                            path] ;
-        dispatch_queue_t aSerialQueue = dispatch_queue_create("com.sheepsystems.SSYOtherApper.launchAsHidden", DISPATCH_QUEUE_SERIAL) ;
-        dispatch_async(aSerialQueue, ^{
-            NSAppleScript* script = [[NSAppleScript alloc] initWithSource:source] ;
-            [script executeAndReturnError:NULL] ;
-            /* The above method will return and allow this secondary thread to
-             exit when
-             a)  The launched app activates, or,
-             b)  The launched app quits, or,
-             c)  The built-in NSAppleScript timeout of 120 seconds,
-             whichever comes first.  According to this answer:
-             http://stackoverflow.com/questions/22932419/timeout-has-no-effect-in-nsapplescript
-             We could get it to exit fast if we wrapped the script source
-             with a 'with timeout 0.1 seconds' block *and* wrote it to a
-             temporary file and then executed the script from the file.
-             Then, we wouldn't need to do wrap it in a dispatch_async() to
-             avoid blocking for up to 120 seconds.  But this is good enough. */
-            [script release] ;
-        }) ;
-#if !__has_feature(objc_arc)
-        dispatch_async(aSerialQueue, ^{
-            dispatch_release(aSerialQueue) ;
-        }) ;
-#endif
-    }
-    
-    if (ok && (launchTimeout > 0.0)) {
-        NSTimeInterval doneTime = [NSDate timeIntervalSinceReferenceDate] + launchTimeout ;
-        // Wait for app to launch
-        BOOL isLaunched = NO ;
-        do {
-            NSArray* apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleIdentifier] ;
-            NSRunningApplication* app = [apps lastObject] ;
-            if (app) {
-                isLaunched = YES ;
-                break ;
-            }
-            usleep(1000000) ;
-        } while ([NSDate timeIntervalSinceReferenceDate] < doneTime) ;
-        if (!isLaunched) {
-            error = [NSError errorWithDomain:SSYOtherApperErrorDomain
-                                        code:494091
-                                    userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-                                              @"App failed to launch in timeout", NSLocalizedDescriptionKey,
-                                              path, @"Path",
-                                              [NSNumber numberWithDouble:launchTimeout], @"Launch Timeout",
-                                              nil]] ;
-            ok = NO ;
-        }
-    }
-    
-    if (ok && (hideGuardTime > 0.0)) {
-        NSTimeInterval doneTime = [NSDate timeIntervalSinceReferenceDate] + hideGuardTime ;
-        do {
-            NSArray* apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleIdentifier] ;
-            NSRunningApplication* app = [apps lastObject] ;
-            if ([app isActive]) {
-                [app hideReliably] ;
-                break ;
-            }
-            usleep(100000) ;
-        } while ([NSDate timeIntervalSinceReferenceDate] < doneTime) ;
-    }
-    
-    if (error_p && error) {
-        *error_p = error ;
-    }
-    
-    return ok ;
-}
 
 + (NSImage*)iconForAppWithBundleIdentifier:(NSString*)bundleIdentifier {
 	NSString* path = [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleIdentifier] ;
@@ -661,37 +546,6 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	return answer ;
 }
 
-+ (BOOL)runAppleScriptSource:(NSString*)source
-					 error_p:(NSError**)error_p {
-	NSAppleScript* script = [[NSAppleScript alloc] initWithSource:source] ;
-	NSDictionary* errorDic = nil ;
-	BOOL spuriousError = NO ;
-	NSAppleEventDescriptor* descriptor = [script executeAndReturnError:&errorDic] ;
-	if (!descriptor && error_p) {
-		NSNumber* errorNumber = [errorDic objectForKey:NSAppleScriptErrorNumber] ;
-		if ([errorNumber respondsToSelector:@selector(integerValue)]) {
-			if ([errorNumber integerValue] == errAENoSuchObject) {
-				// App with given bundleIdentifier is probably
-				// not installed on the system.  English 
-				// NSAppleScriptErrorMessage is probably:
-				// "Can't get application id \"given.bundle.identifier\"."
-				// Since we don't need to quit an app which is not installed
-				// on the system, this is not an error.
-				spuriousError = YES ;
-			}
-		}
-		
-		if (!spuriousError) {
-			*error_p = [NSError errorWithAppleScriptErrorDictionary:errorDic] ;
-		}
-	}
-	[script release] ;
-	
-	BOOL ok = (descriptor != nil) || spuriousError ;
-	
-	return ok ;
-}
-
 + (BOOL)quitThisUsersAppWithBundlePath:(NSString*)bundlePath
                           closeWindows:(BOOL)closeWindows
 						  wasRunning_p:(BOOL*)wasRunning_p
@@ -719,8 +573,14 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
         }
         source = [source stringByAppendingString:@"quit\nend tell"] ;
 
-		ok = [self runAppleScriptSource:source
-								error_p:&error] ;
+        BOOL __block ok;
+        [SSYAppleScripter executeScriptSource:source
+                              ignoreKeyPrefix:nil
+                                     userInfo:nil
+                         blockUntilCompletion:YES
+                            completionHandler:^(id  _Nullable payload, id  _Nullable userInfo, NSError * _Nullable scriptError) {
+                                ok = (error == nil);
+                            }];
 	}
     
     if (error_p && error) {
@@ -729,36 +589,6 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	
 	return ok ;
 }
-
-#if 0
-// This method worked but is no longer used
-+ (BOOL)quitThisUsersAppWithBundleIdentifier:(NSString*)bundleIdentifier
-									 error_p:(NSError**)error_p {
-	NSString* source = [NSString stringWithFormat:
-						@"tell application \"System Events\"\n"
-						@"  set runCount to count (every process whose bundle identifier is \"%@\")\n"
-						@"end tell\n"
-						@"if runCount is greater than 0 then\n"
-						@"  tell application id \"%@\"\n"
-						@"    close windows\n"
-						@"    quit\n"
-						@"  end tell\n"
-						@"end if",
-						bundleIdentifier,
-                        applicationId] ;
-	// The 'close windows' improves the reliability of this script,
-	// thanks to Shane Stanley <sstanley@myriad-com.com.au>
-	// 'AppleScriptObjC Explored' <www.macosxautomation.com/applescript/apps/>
-	// See http://lists.apple.com/archives/applescript-users/2011/Jun/threads.html  June 8
-	// But this caused the app to launch even if it was not running!!
-	// So I got the runCount idea from modifying John Gruber's idea…
-	// http://daringfireball.net/2006/10/how_to_tell_if_an_app_is_running
-	// to use the bundle identifier as suggested here:
-	// http://macscripter.net/viewtopic.php?id=24569
-	return [self runAppleScriptSource:source
-							  error_p:error_p] ;
-}
-#endif
 
 + (NSString*)descriptionOfPid:(pid_t)pid {
 	NSArray* args = [NSArray arrayWithObjects:

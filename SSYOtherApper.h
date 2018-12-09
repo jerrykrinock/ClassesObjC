@@ -58,37 +58,11 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  /path/to/SomeApp.app) and optionally activates it (brings to to the
  front)
 
- @details  The newer method
- +launchAsHiddenAppPath:launchTimeout:hideGuardTime:error_p: is recommended
- instead of this one when activate = NO because it more reliably launches
- the app to be completely hidden (no windows open), not even for milliseconds.
-
- TODO:  Combine that method into this one, and use it to launch both Firefox
- and Chromy.  I have not done that yet because (a) for Firefox, I could only
- use it for the 99% of users who have only one Firefox profile and thus do not
- need a -profile command-line argument passed to Firefox, and (b) it will not
- work for Chrome anyhow because Chrome always opens a window even if you
- launch it as "hidden", for example with this Applescript that is supposed to 
- open apps hidden:
- . with timeout of 8.0 seconds
- . try
- .  tell application "/Applications/Google Chrome.app"
- .   set x to frontmost
- .    do shell script "x > /dev/null"
- .   end tell
- . 	end try
- . end timeout
- 
  @param    activate  If the specified application is not already
  launched, the newly-launched application is activated if YES, and
  if NO is not activated.  If the specified application is already
  launched, this parameter will activate or deactivate it.
- @param    hideGuardTime  I have seen apps show windows after they have been
- launched as hidden.  I think this may be due to windows being restored in
- macOS 10.7+.  If hideGuardTime is > 0 and activate is NO, after the target
- app launches, this method will repeatedly send its NSRunningApplication a
- -hide message for an additional hideGuardTime seconds.  If activate is YES,
- hideGuardTime is ignored.
+ @param    hideGuardTime
  @param    error_p  If not NULL and if an error occurs, upon return,
            will point to an error object encapsulating the error.
  @result   YES if the method completed successfully, otherwise NO
@@ -97,32 +71,6 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 					 activate:(BOOL)activate
                 hideGuardTime:(NSTimeInterval)hideGuardTime
 					  error_p:(NSError**)error_p ;
-
-/*!
- @brief    Launches an app hidden, showing no windows, and blocks until after
- the app is running, and possibly for an additional "guard" time after that,
- during which it ensures that the launched app stays hidden
- 
- @details  Most reliably launches an app as hidden, without any windows
- showing even for milliseconds, because it launches the app with the only
- known technique for launching and hiding: AppleScript 'tell application'.
- Unfortunately, this does not work for Google Chrome because Chrome always
- throws up a window even if you launch it as hidden with this AppleScript:
- . with timeout of 8.0 seconds
- . try
- .  tell application "/Applications/Google Chrome.app"
- .   set x to frontmost
- .    do shell script "x > /dev/null"
- .   end tell
- . 	end try
- . end timeout
- */
-+ (BOOL)launchAsHiddenAppPath:(NSString*)path
-                launchTimeout:(NSTimeInterval)launchTimeout
-                hideGuardTime:(NSTimeInterval)hideGuardTime
-                      error_p:(NSError**)error_p ;
-
-
 
 + (NSImage*)iconForAppWithBundleIdentifier:(NSString*)bundleIdentifier ;
 
@@ -322,20 +270,28 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  @param    bundle path  The bundle path of the application to be
  quit, or nil to no-op.
  @param    closeWindows  If YES, will tell the subject app to 'close windows'
- before quitting.  This improves the probability that the quitting will work, 
+ before quitting.
+
+ Affirming closeWindows improves the probability that the quitting will work,
  and has been found to be effective with Google Chrome and Firefox in
  particular (June 2011).  It was suggested by Shane Stanley…
  http://lists.apple.com/archives/applescript-implementors/2011/Jun/msg00010.html
- But with some apps, for example Roccat, it will cause open tabs,
- which should be remembered for the next launch, to be forgotten, which is
- not acceptable.
+
+ With most apps, closeWindows will stop the state restoration of macOS from
+ re-opening the closed windows upon relaunch.
+
+ With some apps, for example Roccat, closeWindows will cause open tabs,
+ which should be remembered for the next launch, to be forgotten.
+
  @param    killAfterTimeout  This parameter was added in BookMacster 1.9.8
  after I found Google Chrome in a state where it wouldn't quit, not even if
  you activated it and clicked "Quit" in its menu.  Then, I found that this only
  happened maybe 2/100 times.  Weird.
+
  @param    wasRunning_p  If not nil, on return, will point to a value
  indicating whether or not the target app was indeed running and needed
  to be quit, or NO if the given bundle path was nil
+
  @result   YES if the target app was not running, or if it quit within
  the allowed timeout, or if bundleIdentifier was nil.  NO if app was
  still running when timeout expired.
