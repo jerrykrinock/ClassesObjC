@@ -48,9 +48,18 @@ FourCharCode AppleScriptSubroutineName = 'snam';
 
                 if ([parm isKindOfClass:[NSString class]]) {
                     parmDescriptor = [NSAppleEventDescriptor descriptorWithString:(NSString*)parm];
+                } else if ([parm isKindOfClass:[NSNull class]]) {
+                    parmDescriptor = [NSAppleEventDescriptor nullDescriptor];
+                    /* This branch does not work as expected.
+                     See Note WhyEmptyString-WhyNotNull in SSYAppleScripter.h*/
+
+
+                    /*  TODO add more else if branches to support more classes
+                     (NSNumber, etc.) here. */
+
                 } else {
                     NSString* errorDesc = [NSString stringWithFormat:
-                                           @"Unsupported handler parameter class %@ at index %ld  You can probably fix this code easily.",
+                                           @"Unsupported handler parameter class %@ at index %ld.  Easy to fix by adding a new branch to above code([parm isKindOfClass:[NSString class]]) {.",
                                            [parm className],
                                            (i-1)
                                            ];

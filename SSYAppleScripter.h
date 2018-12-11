@@ -11,6 +11,20 @@ NS_ASSUME_NONNULL_BEGIN
 
  @details  This is a wrapper around NSAppleScriptTask.
 
+ TODO: Add support for more handler parameter types.  See string in source
+ code: "Unsupported handler parameter class…".
+
+ Note WhyEmptyString-WhyNotNull
+
+ Using +[NSAppleDescriptor nullDescriptor] to represent a nil value (which
+ in AppleScript parlance should be `missing value`) in a parameter list to an
+ AppleScript handler does not work as expected.  When the receiving app gets
+ the NSScriptCommand and sends it the message -evaluatedArguments, the
+ value of that key in the returned dictionary is not a NSNull but is instead,
+ at least in my test case. the name of the sending process!  I have not tried
+ to explain that.  In general, I would say that the value is "not what you
+ expect".  So, for nil strings, I send an empty string instead.
+
  I did not add a timeout feature because you can get that effect by wrapping
  your script's commands in a *with timeout …" block.
 
@@ -73,12 +87,30 @@ NS_ASSUME_NONNULL_BEGIN
                                        NSError* _Nullable scriptError))completionHandler;
 
 /*!
- @brief    Same as executeSriptWithUrl:::::::, except executes a script file
+ @brief    Same as -executeSriptWithUrl:::::::, except executes a script file
  created by writing given source code to a temporary file
 
  @details  This is replacement for -[NSAppleScript executeAndReturnError:],
  which does not work between applications in macOS 10.14.  Except, of course,
  this method can be asynchronous if you pass NO to blockUntilCompletion.
+
+ Although I don't know how significant the difference is, this method must
+ be considerably slower than -executeSriptWithUrl:::::::.  I conclude this
+ because this method requires three preparatory steps:
+
+ (1) Write the source text to a file.
+ (2) Read the source text back to NSUserAppleScriptTask
+ (3) Compile the script.
+
+ but -executeSriptWithUrl::::::: only needs to do step (3).
+
+ By the way, I was expecting that an additional step between (1) and (2)
+ would be required, to *compile* the script with an NSTask calling
+ /usr/bin/osacompile.  However, to my surprise, that is not necessary.
+ Apparently, -[NSUserAppleScriptTask initWithURL:error:] recognizes if a .scpt
+ file whose URL it is passed contains plain text, and if so, compiles it,
+ and if the .scpt file is a real already-compiled script file, it does not!
+ The documentation says merely that you must pass it a "script file".  ???
 
  @param    userInfo  Same as in executeScriptWithUrl:::::::.
  @param    blockUntilCompletion  Same as in executeScriptWithUrl:::::::.
