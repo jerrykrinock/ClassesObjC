@@ -39,10 +39,10 @@
 @end
 
 
-NSString* const constKeyLabelView = @"labelView" ;
-NSString* const constKeyScrollView = @"scrollView" ;
-NSString* const constKeyChoices = @"choices" ;
-NSString* const constKeyCellTextAttributes = @"cellTextAttributes" ;
+NSString* const constKeySSYLabelledListLabelView = @"labelView" ;
+NSString* const constKeySSYLabelledListScrollView = @"scrollView" ;
+NSString* const constKeySSYLabelledListChoices = @"choices" ;
+NSString* const constKeySSYLabelledListCellTextAttributes = @"cellTextAttributes" ;
 
 @interface SSYLabelledList ()
 
@@ -334,19 +334,19 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
 - (void)encodeWithCoder:(NSCoder *)coder {
     [super encodeWithCoder:coder] ;
     
-	[coder encodeObject:labelView forKey:constKeyLabelView] ;
-    [coder encodeObject:scrollView forKey:constKeyScrollView] ;
-	[coder encodeObject:choices forKey:constKeyChoices] ;
-	[coder encodeObject:cellTextAttributes forKey:constKeyCellTextAttributes] ;
+	[coder encodeObject:labelView forKey:constKeySSYLabelledListLabelView] ;
+    [coder encodeObject:scrollView forKey:constKeySSYLabelledListScrollView] ;
+	[coder encodeObject:choices forKey:constKeySSYLabelledListChoices] ;
+	[coder encodeObject:cellTextAttributes forKey:constKeySSYLabelledListCellTextAttributes] ;
 }
 
 - (id)initWithCoder:(NSCoder *)coder {
     self = [super initWithCoder:coder] ;
 	
-	labelView = [[coder decodeObjectForKey:constKeyLabelView] retain] ;
-	scrollView = [[coder decodeObjectForKey:constKeyScrollView] retain] ;
-	choices = [[coder decodeObjectForKey:constKeyChoices] retain] ;
-	cellTextAttributes = [[coder decodeObjectForKey:constKeyCellTextAttributes] retain] ;
+	labelView = [[coder decodeObjectForKey:constKeySSYLabelledListLabelView] retain] ;
+	scrollView = [[coder decodeObjectForKey:constKeySSYLabelledListScrollView] retain] ;
+	choices = [[coder decodeObjectForKey:constKeySSYLabelledListChoices] retain] ;
+	cellTextAttributes = [[coder decodeObjectForKey:constKeySSYLabelledListCellTextAttributes] retain] ;
 	return self ;
 }
 
