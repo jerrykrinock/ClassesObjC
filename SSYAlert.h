@@ -53,6 +53,9 @@ enum SSYAlertRecovery_enum {
 	SSYAlertRecoveryErrorIsHidden            = 104,
 	SSYAlertRecoveryUserCancelledPreviously  = 105,
     SSYAlertRecoveryInternalError            = 106,
+    SSYAlertFirstButtonReturn                = NSAlertFirstButtonReturn,  // 1000
+    SSYAlertSecondButtonReturn               = NSAlertSecondButtonReturn, // 1001
+    SSYAlertThirdButtonReturn                = NSAlertThirdButtonReturn,  // 1002
     SSYAlertFourthButtonReturn               = 1003
 } ;
 typedef enum SSYAlertRecovery_enum SSYAlertRecovery ;
