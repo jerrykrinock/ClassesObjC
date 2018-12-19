@@ -57,7 +57,9 @@
 
  @details  Designated initializer for SSYOperation
  @param    info  Dictionary of information which the operation can
- access to do its work
+ access to do its work.  This dictionary is retained but, to reduce
+ susceptibility to retain cycles, it is released when the receiver's
+ execution is completed or cancelled, because it is no longer needed.
  @param    target  An optional target which will be sent the given selector,
  with no argument, when the receiver is executed.  If nil, the effective target will
  be the receiver itself, and it will be sent the given selector with one
@@ -172,8 +174,6 @@
 - (void)unlockLock ;
 
 /*!
- @brief    Unlocks the receiver's condition lock.
- 
  @details  This method may be used in special cases where an error or other
  unexpected event might cause -prepareLock to be re-run before -unlockLock,
  when some operation is retried.  If this method returns YES, you should skip

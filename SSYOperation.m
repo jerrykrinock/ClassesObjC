@@ -70,13 +70,15 @@
 
 - (void)cancel {
 	[[self cancellor] invoke] ;
+    [self setInfo:nil];
 	[super cancel] ;
 }
 
 - (void)dealloc {
+    ssyDebugGlobalInteger--;
     [m_info release] ;
-	[m_cancellor release] ;
-	[m_target release] ;
+    [m_cancellor release] ;
+    [m_target release] ;
     [m_lock release] ;
 	
     [super dealloc] ;
@@ -90,6 +92,7 @@
 	   skipIfError:(BOOL)skipIfError {
 	self = [super init] ;
     if (self) {
+        ssyDebugGlobalInteger++;
 		[self setInfo:info] ;
 		[self setSelector:selector] ;
 		[self setTarget:target] ;
@@ -288,7 +291,9 @@
 #if LOGGING_SSYOPERATIONLINKER_OPERATIONS
         [[BkmxBasis sharedBasis] logMessage:@"RunOp: Skipping %@ cuz cancelled owr=%p", NSStringFromSelector([self selector]), [self owner]];
 #endif
-	}		
+	}
+
+    [self setInfo:nil];
 
 	[pool release] ;
 }

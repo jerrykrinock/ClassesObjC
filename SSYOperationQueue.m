@@ -379,7 +379,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	// cycles, but all Extore and BkmxDoc instances seem to dealloc as expected.
 	NSMutableDictionary* originalInfo = [NSMutableDictionary dictionary] ; //WithDictionary:info] ;
 	for (NSString* key in [info allKeys]) {
-		if ([key isEqualToString:@"Export Info Leak Detector"]) {
+		if ([key hasSuffix:@"Leak Detector"]) {
 			continue ;
 		}
 		
