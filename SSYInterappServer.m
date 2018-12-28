@@ -76,6 +76,9 @@ CFDataRef SSYInterappServerCallBackCreateData(
         SSYInterappServer* server = (__bridge SSYInterappServer*)info ;
 
         NSObject <SSYInterappServerDelegate> * delegate = [server delegate] ;
+        /* We temporarily retain the delegate in case the delegate in case
+         external actors release it too soon. */
+        [delegate retain];
         [delegate interappServer:server
             didReceiveHeaderByte:headerByte
                             data:rxPayload] ;
@@ -84,6 +87,7 @@ CFDataRef SSYInterappServerCallBackCreateData(
         NSMutableData* responseData ;
         char responseHeaderByte = [delegate responseHeaderByte] ;
         NSData* responsePayload = [delegate responsePayload] ;
+        [delegate release];
         if (responseHeaderByte || responsePayload) {
             responseData = [[NSMutableData alloc] init] ;
             if (responseHeaderByte != 0) {
