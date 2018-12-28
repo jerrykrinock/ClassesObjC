@@ -222,6 +222,16 @@ end:;
 	return [SSYMOCManager ownerOfManagedObjectContext:[self managedObjectContext]] ;
 }
 
+- (id)allocOwner {
+    id owner;
+    @autoreleasepool {
+        owner = [SSYMOCManager ownerOfManagedObjectContext:[self managedObjectContext]];
+        [owner retain];
+    }
+
+    return owner;
+}
+
 - (BOOL)isAvailable {
 	if ([self isDeleted]) {
 		return NO ;	
@@ -498,10 +508,8 @@ end:;
 #warning Testing snapshot events
 
 + (NSCountedSet*)awakenedObjects {
-    NSCountedSet* awakenedObjects = ssyDebugGlobalObject ;
     if (!awakenedObjects) {
         awakenedObjects = [[NSCountedSet alloc] init] ;
-        ssyDebugGlobalObject = awakenedObjects ;
         NSLog(@"awakenedObjects = %p", awakenedObjects) ;
     }
     

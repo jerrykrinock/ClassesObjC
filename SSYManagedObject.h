@@ -123,7 +123,28 @@ extern NSString* const constKeyNewValue ;
  method in subclasses.  The implementation simply returns super's owner.
  @result   The owner of the receiver
 */
-- (id)owner ;
+- (id)owner;
+
+/*!
+ @brief    Same as -owner, except returns the owner with a retain count of 1
+ that is not in the autorelease pool – the caller "owns" it
+
+ @details  This method is recommended instead of -owner whenever the owner is
+ a transient object which may not be deallocced due to retain cycles with the
+ receiver.  Keep in mind that Core Data can be quite  anal-retentive:
+
+ https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/CoreData/MO_Lifecycle.html
+
+ The reason for the prefix 'alloc' is that, of the four prefixes which
+ tell the clang objective-c static analyzer that this method returns an object
+ which the caller "owns", as explained here
+
+https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/MemoryMgmt/Articles/mmRules.html
+
+ 'alloc' is the least nonsensical for this case.
+ */
+
+- (id)allocOwner;
 
 /*!
  @brief    Returns whether or not a retained managed object is
