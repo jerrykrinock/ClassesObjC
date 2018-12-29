@@ -121,6 +121,8 @@ extern NSString* const constKeyNewValue ;
  and definition of "owner".  If the owner must be of a specific type or
  conform to a certain formal protocol, you can re-declare and override this
  method in subclasses.  The implementation simply returns super's owner.
+
+ UPDATE 2018-12-28.  This method is not recommended.  Use -allocOwner instead.
  @result   The owner of the receiver
 */
 - (id)owner;
@@ -130,10 +132,14 @@ extern NSString* const constKeyNewValue ;
  that is not in the autorelease pool – the caller "owns" it
 
  @details  This method is recommended instead of -owner whenever the owner is
- a transient object which may not be deallocced due to retain cycles with the
- receiver.  Keep in mind that Core Data can be quite  anal-retentive:
+ a transient object which may not be deallocced for a long time due to the
+ unpredictable release of the autoreleased owner.  This may be exacerbated by
+ the anal-retentive nature of Core Data, some of which is explained in here.
 
  https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/CoreData/MO_Lifecycle.html
+
+ Note that the problem being solved here is an artifact of autorelease pools.
+ The problem would be moot if we were using Automatic Reference Counting (ARC).
 
  The reason for the prefix 'alloc' is that, of the four prefixes which
  tell the clang objective-c static analyzer that this method returns an object

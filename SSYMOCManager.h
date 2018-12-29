@@ -14,6 +14,10 @@
  which the owner is desired turns out to not be one of this class's creations.
  This class itself is instantiated as an app-wide
  singleton and no public instance methods are available.
+
+ UPDATE 2018-12-28.  I do not recommend using this class, which I wrote I
+ think in 2009, any more, because it is easy to cause retain cycles which are
+ tricky to unravel.
  
  When using this class, [NSApp delegate] must conform to protocol 
  SSYAppSupporter.

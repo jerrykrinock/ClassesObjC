@@ -284,4 +284,14 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
 
 - (void)doDone:(NSDictionary*)doneInfo ;
 
+/*!
+ @brief    Removes an internal observer which observes the owner of the first
+ operation in the receiver's queue.
+
+ @details  To prevent crashes, you should send this prior to the owner of the
+ receiver's operations being deallocced.
+ */
+
+- (void)tearDown;
+
 @end

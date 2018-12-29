@@ -20,6 +20,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 @interface SSYOperationQueue ()
 
 @property (retain) id noAppNapActivity ;
+@property (assign) BOOL didTearDown;
 
 @end
 
@@ -128,11 +129,18 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	return self ;
 }
 
+- (void)tearDown {
+    if (!self.didTearDown) {
+        [self removeObserver:self
+                  forKeyPath:@"operations"];
+        self.didTearDown = YES;
+    }
+}
+
 - (void)dealloc {
-	// Probably this is not necessary but I'm paranoid about KVO.
-	[self removeObserver:self
-			  forKeyPath:@"operations"] ;
-	
+    /* This should have already been done, but in case not… */
+    [self tearDown];
+
 	[m_error release] ;
 	[m_scriptCommand release] ;
 	[m_scriptResult release] ;
