@@ -261,6 +261,17 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 + (NSString*)descriptionOfPid:(pid_t)pid ;
 
 /*!
+ @brief    Returns the elapsed time since the process with a given process
+ identifier (pid) was launched, in a human readable English form
+
+ @result   Examples:
+ 2 days 3 hours 35 minutes 11 seconds
+ 23 minutes 8 seconds
+ 5 seconds
+ */
++ (NSString*)humanReadableElapsedRunningTimeOfPid:(pid_t)pid;
+
+/*!
  @brief    Finds a running app, owned by the current user,
  with a given bundle path, sends it a "quit application" Apple Event message,
  and returns when the app is quit or timeout occurs, whichever comes first.
