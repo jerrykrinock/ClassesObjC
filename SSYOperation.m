@@ -60,14 +60,6 @@
 @synthesize skipIfError = m_skipIfError ;
 @synthesize lock = m_lock ;
 
-- (id)owner {
-	return m_owner ;
-}
-
-- (void)setOwner:(id)owner {
-	m_owner = owner ;
-}
-
 - (void)cancel {
 	[[self cancellor] invoke] ;
     [self setInfo:nil];
@@ -87,7 +79,6 @@
 - (id)initWithInfo:(NSMutableDictionary*)info
 			target:(id)target
 		  selector:(SEL)selector
-			 owner:(id)owner
 	operationQueue:(SSYOperationQueue*)operationQueue
 	   skipIfError:(BOOL)skipIfError {
 	self = [super init] ;
@@ -96,7 +87,6 @@
 		[self setInfo:info] ;
 		[self setSelector:selector] ;
 		[self setTarget:target] ;
-		[self setOwner:owner] ;
 		[self setOperationQueue:operationQueue] ;
 		[self setSkipIfError:skipIfError] ;
 	}
@@ -238,14 +228,13 @@
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
 #if LOGGING_SSYOPERATIONLINKER_OPERATIONS
     NSString* msg = [NSString stringWithFormat:
-                     @"RunOp: %p grp=%@ prevErr=%ld nQ=%ld sel=%@ isCnc=%hhd owr=%p",
+                     @"RunOp: %p grp=%@ prevErr=%ld nQ=%ld sel=%@ isCnc=%hhd",
                      self,
                      [[self info] objectForKey:constKeySSYOperationGroup],
                      (long)[[self error] code],
                      (long)[[[self operationQueue] operations] count], // nQ = number in queue
                      NSStringFromSelector([self selector]),
-                     [self isCancelled],
-                     [self owner]];
+                     [self isCancelled]];
     [[BkmxBasis sharedBasis] logMessage:msg];
 #endif
 	
@@ -277,19 +266,19 @@
 				// Chain operations have been aborted.
 				// This method becomes a no-op.
 #if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-                [[BkmxBasis sharedBasis] logMessage:@"RunOp: Skipping %@ cuz error owr=%p", NSStringFromSelector([self selector]), [self owner]];
+                [[BkmxBasis sharedBasis] logMessage:@"RunOp: Skipping %@ cuz error op=%p", NSStringFromSelector([self selector]), self];
 #endif
 			}
 		}
 		else {
 #if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-            [[BkmxBasis sharedBasis] logMessage:@"RunOp: Skipping %@ cuz skip group %@ owr=%p", NSStringFromSelector([self selector]), [[self info] objectForKey:constKeySSYOperationGroup], [self owner]];
+            [[BkmxBasis sharedBasis] logMessage:@"RunOp: Skipping %@ cuz skip group %@ op=%p", NSStringFromSelector([self selector]), [[self info] objectForKey:constKeySSYOperationGroup], self];
 #endif
 		}
 	}
 	else {
 #if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-        [[BkmxBasis sharedBasis] logMessage:@"RunOp: Skipping %@ cuz cancelled owr=%p", NSStringFromSelector([self selector]), [self owner]];
+        [[BkmxBasis sharedBasis] logMessage:@"RunOp: Skipping %@ cuz cancelled op=%p", NSStringFromSelector([self selector]), self];
 #endif
 	}
 

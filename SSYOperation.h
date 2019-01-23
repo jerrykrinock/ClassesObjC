@@ -1,5 +1,4 @@
 #import <Cocoa/Cocoa.h>
-#import "SSYOwnee.h"
 
 @class SSYOperationQueue ;
 
@@ -26,11 +25,10 @@
  if these two values are equal as judged by +[SSYOperationQueue 
  operationGroupsDifferInfo:otherInfo:],
  */
-@interface SSYOperation : NSOperation <SSYOwnee> {
+@interface SSYOperation : NSOperation {
 	NSMutableDictionary* m_info ;
 	SEL m_selector ;
 	id m_target ;
-	id m_owner ; // weak
 	SSYOperationQueue* m_operationQueue ;  // weak
 	NSInvocation* m_cancellor ;
 	BOOL m_skipIfError ;
@@ -76,7 +74,6 @@
 - (id)initWithInfo:(NSMutableDictionary*)info
 			target:(id)target
 		  selector:(SEL)selector
-			 owner:(id)owner
 	operationQueue:(SSYOperationQueue*)operationQueue
 	   skipIfError:(BOOL)abortIfError ;
 

@@ -12,12 +12,7 @@ extern NSString* const constKeySSYOperationQueueDoneSelectorName ;
  @brief    Name of a notification, enqueued on the main thread, when the
  number of tasks in the receiver's queue increases from 0.
 
- @details  The notification object is the -owner of the first
- operation in the queue, which may be nil if it was
- so set, or if this operation does not respond to selector
- -owner (as could happen if superclass methods were used to
- add the operation), then the notification object is the
- receiver.
+ @details  The notification object is the receiver.
  
  There is no userInfo dictionary.
  
@@ -40,12 +35,7 @@ extern NSString* const SSYOperationQueueDidBeginWorkNotification ;
  @brief    Name of a notification, enqueued on the main thread, when the
  number of tasks in the receiver's queue decreases to 0.
  
- @details  The notification object is the -owner of the last
- operation which was in the queue, which may be nil if it was
- so set.  But if this operation does not respond to selector
- -owner (as could happen if superclass methods were used to
- add the operation), then the notification object is the
- sending SSYOperationQueue object.
+ @details  The notification object is the receiver.
  
  There is no userInfo dictionary.
 
@@ -56,7 +46,7 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
 @interface SSYOperationQueue : NSOperationQueue {
 	// Note that we do not enter the doneTarget, doneSelector and
 	// doneThread as instance variables, because they may be different
-	// for each group of operations entered with queueGroup:::::::::.
+	// for each group of operations entered with queueGroup::::::::.
 	// But the following instance variables are common to all groups...
 	NSError* m_error ;	
 	NSScriptCommand* m_scriptCommand ;
@@ -218,10 +208,6 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  immediately, after queueing the operations.  This method simply sends 
  -waitUntilAllOperationsAreFinished to your <i>queue</i>.  Again, if you
  pass NO, remember to retain the arguments <i>queue</i> and <i>info</i>.
- @param    owner  An object which will be passed as the 'owner' to each of
- the SSYOperations which are manufactured by the receiver during execution
- of this method, including the `done` operation which encasulates the
- doneThread, doneTarget and doneSelector.
  @param    doneThread  The thread in which a message will be sent after
  the last operation in selectorNames is completed.  If doneThread is nil,
  the default thread assumed will be the currentThread (the thread on which
@@ -252,7 +238,6 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
      selectorNames:(NSArray*)selectorNames
               info:(NSMutableDictionary*)info
              block:(BOOL)block
-             owner:(id)owner
         doneThread:(NSThread*)doneThread
         doneTarget:(id)doneTarget
       doneSelector:(SEL)doneSelector
@@ -285,13 +270,10 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
 - (void)doDone:(NSDictionary*)doneInfo ;
 
 /*!
- @brief    Removes an internal observer which observes the owner of the first
- operation in the receiver's queue.
+ @brief    Removes an internal observer which observes the receiver itself.
 
  @details  To prevent crashes, you should send this prior to the owner of the
  receiver's operations being deallocced.
  */
-
-- (void)tearDown;
 
 @end

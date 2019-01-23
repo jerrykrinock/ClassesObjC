@@ -20,7 +20,6 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 @interface SSYOperationQueue ()
 
 @property (retain) id noAppNapActivity ;
-@property (assign) BOOL didTearDown;
 
 @end
 
@@ -129,17 +128,9 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	return self ;
 }
 
-- (void)tearDown {
-    if (!self.didTearDown) {
-        [self removeObserver:self
-                  forKeyPath:@"operations"];
-        self.didTearDown = YES;
-    }
-}
-
 - (void)dealloc {
-    /* This should have already been done, but in case not… */
-    [self tearDown];
+    [self removeObserver:self
+              forKeyPath:@"operations"];
 
 	[m_error release] ;
 	[m_scriptCommand release] ;
@@ -177,9 +168,9 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	return NO ;
 }
 
-- (void)postQueueDidBeginWorkForObject:(id)object {
+- (void)postQueueDidBeginWork {
 	NSNotification* notification = [NSNotification notificationWithName:SSYOperationQueueDidBeginWorkNotification
-																 object:object] ;
+																 object:self] ;
 	[[NSNotificationQueue defaultQueue] enqueueNotification:notification
 											   postingStyle:NSPostNow
 											   coalesceMask:(NSNotificationCoalescingOnName|NSNotificationCoalescingOnSender)
@@ -187,9 +178,9 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	// See header doc regarding notifications for posting style explanation
 }
 
-- (void)postQueueDidEndWorkForObject:(id)object {
+- (void)postQueueDidEndWork {
 	NSNotification* notification = [NSNotification notificationWithName:SSYOperationQueueDidEndWorkNotification
-																 object:object] ;
+																 object:self] ;
 	[[NSNotificationQueue defaultQueue] enqueueNotification:notification
 											   postingStyle:NSPostWhenIdle
 											   coalesceMask:(NSNotificationCoalescingOnName|NSNotificationCoalescingOnSender)
@@ -238,15 +229,6 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 			[scriptCommand resumeExecutionWithResult:[self scriptResult]] ;
 			[self setScriptCommand:nil] ;
 			
-			NSOperation <SSYOwnee> * operation = [oldOperations objectAtIndex:0] ;
-			id owner ;
-			if ([operation respondsToSelector:@selector(owner)]) {
-				owner = [operation owner] ;
-			}
-			else {
-				owner = self ;
-			}
-            
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
             // Being built with macOS 10.9 or later SDK
             id activity = [self noAppNapActivity] ;
@@ -267,8 +249,8 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 			// introduction, not in -operations) that KVO notifications
 			// for -operations can occur on any thread.  However, our
 			// notifications are expected to be sent on the main thread…
-			[self performSelectorOnMainThread:@selector(postQueueDidEndWorkForObject:)
-								   withObject:owner
+			[self performSelectorOnMainThread:@selector(postQueueDidEndWork)
+								   withObject:nil
 								waitUntilDone:NO] ; // as in NO deadlocks :)
 			
 			[self setSkipOperationsExceptGroups:nil] ;
@@ -279,7 +261,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 			// array, the above condition *must* mean that the *count* 
 			// has just changed from 0 to some positive number.
 			// Actually, even though I add operations one at a time in
-			// queueGroup:::::::::, I see that I get one notification
+			// queueGroup:::::::, I see that I get one notification
 			// when the count jumps from 0 to, say, 5.  Apparently,
 			// KVO notifications are coalesced.
 
@@ -310,21 +292,12 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
             }
 #endif
             
-			NSOperation <SSYOwnee> * operation = [[self operations] objectAtIndex:0] ;
-			id owner ;
-			if ([operation respondsToSelector:@selector(owner)]) {
-				owner = [operation owner] ;
-			}
-			else {
-				owner = self ;
-			}
-			
 			// It is stated in the documentation of NSOperationQueue (in the
 			// introduction, not in -operations) that KVO notifications
 			// for -operations can occur on any thread.  However, our
 			// notifications are expected to be sent on the main thread…
-			[self performSelectorOnMainThread:@selector(postQueueDidBeginWorkForObject:)
-								   withObject:owner
+			[self performSelectorOnMainThread:@selector(postQueueDidBeginWork)
+								   withObject:nil
 								waitUntilDone:NO] ; // as in NO deadlocks :)
 		}
 	}
@@ -333,7 +306,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 - (void)doDone:(NSDictionary*)doneInfo {
 	NSError* error = [self error] ;
 	
-	// Note that if the doneTarget provided to queueGroup:::::::::
+	// Note that if the doneTarget provided to queueGroup::::::::
 	// was nil or the doneSelector was NULL, doneThread will be nil
 	// and the following statements will return nil.
 	NSThread* doneThread = [doneInfo objectForKey:constKeySSYOperationQueueDoneThread] ;
@@ -359,7 +332,6 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	 selectorNames:(NSArray*)selectorNames
 			  info:(NSMutableDictionary*)info
 			 block:(BOOL)block
-			 owner:(id)owner
 		doneThread:(NSThread*)doneThread
 		doneTarget:(id)doneTarget
 	  doneSelector:(SEL)doneSelector
@@ -403,7 +375,6 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 										  &selectorNames,
 										  &originalInfo,
 										  &block,
-										  &owner,
 										  &doneThread,
 										  &doneTarget,
 										  &doneSelector,
@@ -413,24 +384,17 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	[info setObject:group
 			 forKey:constKeySSYOperationGroup] ;
 	
-	// Create an array of operations from the array of selector names
-	NSMutableArray* operations = [[NSMutableArray alloc] init] ;
 	for (NSString* selectorName in selectorNames) {
 		SEL selector = NSSelectorFromString(selectorName) ;
 		SSYOperation* op = [[SSYOperation alloc] initWithInfo:info
 													   target:nil
 													 selector:selector
-														owner:owner
 											   operationQueue:self
 												  skipIfError:YES] ;
-		// Note that operation is double-retained.  We'll release it in the next loop.
-		[operations addObject:op] ;
 		[self addAtEndOperation:op] ;
 		[op release] ;
 	}
-	
-	[operations release] ;
-	
+
 	// Create a final operation which will be the 'done' invocation
 	// and add it to the queue.
 	NSMutableDictionary* doneInfo = [NSMutableDictionary dictionaryWithObjectsAndKeys:
@@ -447,8 +411,7 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 					 forKey:constKeySSYOperationQueueDoneTarget] ;
 		[doneInfo setObject:NSStringFromSelector(doneSelector)
 					 forKey:constKeySSYOperationQueueDoneSelectorName] ;
-		// Added in BookMacster 1.11, for no purpose other than 
-		// filling out -[SSYOperation description] …
+		// This is to fill out -[SSYOperation description] …
 		[doneInfo setObject:group
 					 forKey:constKeySSYOperationGroup] ;
 	}	
@@ -457,7 +420,6 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 	SSYOperation* op = [[SSYOperation alloc] initWithInfo:doneInfo
                                                    target:self
                                                  selector:@selector(doDone:)
-                                                    owner:owner
                                            operationQueue:self
                                               skipIfError:NO] ;
 	[self addAtEndOperation:op] ;
