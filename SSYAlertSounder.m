@@ -3,8 +3,9 @@
 #import "NSBundle+MainApp.h"
 #import "SSY_ARC_OR_NO_ARC.h"
 
-
 static SSYAlertSounder* static_sharedSounder = nil ;
+
+NSString* SSYAlertSounderCustomSoundPrefix = @"SSYAlertSounderCustom-";
 
 @interface SSYAlertSounder ()
 
@@ -31,6 +32,13 @@ static SSYAlertSounder* static_sharedSounder = nil ;
     
     [super dealloc] ;
 #endif
+}
+
+- (void)forgetCache {
+#if !__has_feature(objc_arc)
+    [m_soundIds release];
+#endif
+    m_soundIds = nil;
 }
 
 - (NSMutableDictionary*)soundIds {
@@ -128,38 +136,60 @@ static SSYAlertSounder* static_sharedSounder = nil ;
     
     NSString* path ;
     
-    // If not found, look in the current application's bundle
     if (!soundId) {
-        path = [[NSBundle mainAppBundle] pathForResource:name
-                                                  ofType:@"aiff"] ;
-        
-        soundId = [self soundIdForPath:path
-                            rememberAs:name] ;
-        // If not found, look in current user's library
+        NSString* key = [[self class] userDefaultsKeyForCustomSoundPathForName:name];
+        SEL betterSelector = NSSelectorFromString(@"syncAndGetMainAppValueForKey:");
+        if ([[NSUserDefaults standardUserDefaults] respondsToSelector:betterSelector]) {
+            path = [[NSUserDefaults standardUserDefaults] performSelector:betterSelector
+                                                               withObject:key];
+        } else {
+	        path = [[NSUserDefaults standardUserDefaults] stringForKey:key];
+        }
+        if (path) {
+            if ([path hasPrefix:@"~"]) {
+                path = [path substringFromIndex:1];
+                path = [NSHomeDirectory() stringByAppendingPathComponent:path];
+            }
+            soundId = [self soundIdForPath:path
+                                rememberAs:name];
+        }
+        // If not found, look in the current application's bundle
         if (!soundId) {
-            path = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Sounds"] ;
-            path = [path stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"aiff"]] ;
-            
+            path = [[NSBundle mainAppBundle] pathForResource:name
+                                                      ofType:@"aiff"] ;
+
             soundId = [self soundIdForPath:path
                                 rememberAs:name] ;
-            
-            // If not found, look in system's library
+            // If not found, look in current user's library
             if (!soundId) {
-                path = @"/System/Library/Sounds" ;
+                path = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Sounds"] ;
                 path = [path stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"aiff"]] ;
-                
+
                 soundId = [self soundIdForPath:path
                                     rememberAs:name] ;
-            }		
-        }		
+
+                // If not found, look in system's library
+                if (!soundId) {
+                    path = @"/System/Library/Sounds" ;
+                    path = [path stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"aiff"]] ;
+
+                    soundId = [self soundIdForPath:path
+                                        rememberAs:name] ;
+                }
+            }
+        }
     }
-    
+
     if (soundId) {
         AudioServicesPlayAlertSound(soundId) ;
     }
     else {
         NSBeep() ;
     }
+}
+
++ (NSString*)userDefaultsKeyForCustomSoundPathForName:(NSString*)name {
+    return [SSYAlertSounderCustomSoundPrefix stringByAppendingString:name];
 }
 
 @end
