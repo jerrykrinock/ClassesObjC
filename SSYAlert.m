@@ -790,6 +790,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
  run loop cycle.
  */
 - (IBAction)clickedButton:(id)sender {
+#if !__has_feature(objc_arc)
+    [self retain];  // Needed for macOS 10.11
+#endif
 	// For classic button layout
 	// Button1 --> tag=NSAlertFirstButtonReturn
 	// Button2 --> tag=NSAlertSecondButtonReturn
@@ -815,6 +818,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     if (!m_dontGoAwayUponButtonClicked) {
         [self goAway] ;
     }
+
+#if !__has_feature(objc_arc)
+    [self release];  // Needed for macOS 10.11
+#endif
 }
 
 - (void)setTargetActionForButton:(NSButton*)button {
