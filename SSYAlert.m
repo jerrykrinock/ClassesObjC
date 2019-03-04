@@ -99,7 +99,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 - (id <NSCoding>)simpleDeepCopy {
 	NSData* archive ;
-	id copy ;
+	id copy = nil;
 	@try {
 		if (![self respondsToSelector:@selector(encodeWithCoder:)]) {
 			NSException* ex = [NSException exceptionWithName:@"Can't copy"
@@ -108,10 +108,15 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			[ex raise] ;
 		}
 		archive = [NSKeyedArchiver archivedDataWithRootObject:self] ;		
-		copy = [NSKeyedUnarchiver unarchiveObjectWithData:archive] ;
+        if (archive) {
+            copy = [NSKeyedUnarchiver unarchiveObjectWithData:archive] ;
+        } else {
+            NSLog(@"Error[1]: %@: Returning self since could not archive/copy %@", NSStringFromSelector(_cmd), self) ;
+            copy = self;
+        }
 	}
 	@catch (NSException* ex) {
-		NSLog(@"Error: %@: Exception: %@.  Returning self since could not archive/copy %@", NSStringFromSelector(_cmd), ex, self) ;
+		NSLog(@"Error[2]: %@: Exception: %@.  Returning self since could not un/archive %@", NSStringFromSelector(_cmd), ex, self) ;
 		copy = self ;
 	}
 	@finally { }

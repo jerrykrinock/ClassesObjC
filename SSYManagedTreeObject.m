@@ -372,8 +372,11 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 					childrenNodeIds_p:(NSSet**)childrenNodeIds_p
 							  error_p:(NSError**)error_p {
 	NSError* error = nil ;
-	NSDictionary* dic = [NSKeyedUnarchiver unarchiveObjectSafelyWithData:dataRepresentation
-																error_p:&error] ;
+    NSDictionary* dic = nil;
+    if (dataRepresentation) {
+	    dic = [NSKeyedUnarchiver unarchiveObjectSafelyWithData:dataRepresentation
+                                                       error_p:&error] ;
+    }
 	if (!dic) {
 		if (error_p) {
 			*error_p = SSYMakeError(65108, @"Could not unarchive object") ;
