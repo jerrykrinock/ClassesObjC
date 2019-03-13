@@ -137,7 +137,7 @@ BOOL SSYDebugLogObjcClassesByBundleToFile (
     NSMutableDictionary* results = [NSMutableDictionary new] ;
     
     int numberOfClasses = objc_getClassList(NULL, 0);
-    Class *classes = calloc(sizeof(Class), numberOfClasses);
+    Class* classes = (Class*)calloc(sizeof(Class), numberOfClasses);
     numberOfClasses = objc_getClassList(classes, numberOfClasses);
     for (int i = 0; i < numberOfClasses; ++i) {
         Class class = classes[i] ;
@@ -205,7 +205,9 @@ void SSYDebugLogResponderChain(void) {
     } while ((responder = [responder nextResponder]));
 
     NSLog(@"%@", chain);
+#if !__has_feature(objc_arc)
     [chain release];
+#endif
 }
 
 void SSYDebugLogObjCMethods(Class clz) {
