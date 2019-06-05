@@ -35,48 +35,10 @@ static NSInteger scheduledGroupSequenceNumber = 1 ;
 
 @synthesize managedObjectContext = m_managedObjectContext ;
 
-- (void)coupleToManagedObjectContext:(NSManagedObjectContext*)managedObjectContext {
-    [managedObjectContext setUndoManager:(id)self] ;
-    [self setManagedObjectContext:managedObjectContext] ;
-}
-
-
-- (void)coupleToDocument:(NSDocument*)document {
-    //	[self setGroupsByEvent:NO] ;  // Causes all hell to break loose with Core Data.
-    
-    /* The following line has no effect if document defines its
-     -setUndoManager method to be a noop.  Check with your document class :)
-
-     We cast to an id since the compiler expects these to methods
-     to get something which inherits from NSUndoManager, which
-     GCUndoManager does not. */
-    [document setUndoManager:(id)self] ; // Causes moc to be created, which causes persisten store to be created ??
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(endAnyUndoGroupings:)
-                                                 name:SSYUndoManagerDocumentWillSaveNotification
-                                               object:document] ;
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(endAnyUndoGroupings:)
-                                                 name:SSYUndoManagerDocumentWillCloseNotification
-                                               object:document] ;
-}
-
 - (void)dealloc {
 	[[NSNotificationCenter defaultCenter] removeObserver:self] ;
 	
 	[super dealloc] ;
-}
-
-+ (SSYDooDooUndoManager*)makeUndoManagerForDocument:(BSManagedDocument*)document {
-	SSYDooDooUndoManager* undoManager = [[SSYDooDooUndoManager alloc] init] ;
-    /* The following line has no effect if document defines its
-     -setUndoManager method to be a noop.  Check with your document class :)
-. */
-    [undoManager coupleToDocument:document] ;
-    [undoManager coupleToManagedObjectContext:[document managedObjectContext]] ;
-    [undoManager autorelease] ;
-    return undoManager ;
 }
 
 - (void)beginManualUndoGrouping {

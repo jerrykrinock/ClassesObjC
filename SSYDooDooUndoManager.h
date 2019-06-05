@@ -100,45 +100,6 @@ extern NSString* const SSYUndoManagerDocumentWillSaveNotification ;
 }
 
 /*!
- @brief    Gets a newSSYDooDooUndoManager instance and assigns it
- to a given document and its managed object context.
-
- @details  The document is required for three reasons:
- * The returned SSYDooDooUndoManager instance is set as its undo manager.
- * The returned SSYDooDooUndoManager instance is set as its 
- managed object context's undo manager.
- * The returned SSYDooDooUndoManager begins observing it for
- SSYUndoManagerDocumentWillSaveNotification.
- * A weak reference to the document's undo manager is kept
- in order to -processPendingChanges before ending an undo group.
- 
- Although the document could possibly be obtained by iterating
- through the shared NSDocumentController's documents, that will fail
- if you invoke this method during document initialization, before it
- has been added to NSDocumentController, which you usually do.
- 
- Note that NSDocument creates an NSUndoManager and assigns it during
- its initialization.  Thus, the document you pass will probably already
- have an undo manager.  That's OK, though.  We just set our own
- instead, and the original NSUndoManager instance is discarded.
- 
- We access the managed object context of the given document by
- sending -managedObjectContext to it.  If the document has never
- has never before had its managed object context accessed in this
- way, this will cause one to be created.  Thus, if your document
- did not have a managed object context prior to being passed to 
- this method, it will have one after this method executes.
- It needs one sooner or later anyhow.
- 
- @param    document  The document to be associated with the new
- SSYDooDooUndoManager instance.
- @result   The new SSYDooDooUndoManager instance.  Typically, you
- don't need this.  You can always get it later by sending -undoManager
- to your document.
-*/
-+ (SSYDooDooUndoManager*)makeUndoManagerForDocument:(NSDocument*)document ;
-
-/*!
  @brief    Begins an undo grouping which is highly resistant to
  being screwed up by Core Data and closes itself automatically.
  
@@ -188,18 +149,6 @@ extern NSString* const SSYUndoManagerDocumentWillSaveNotification ;
  SSYUndoManagerDidCloseUndoGroupNotification after invoking super.
 */
 - (void)endUndoGrouping ;
-
-/*!
- @brief    Performs operations necessary to make the receiver act as the undo
- manager for a given document
- @details  You typically send this after initializing the receiver, if the
- receiver is to be the undo manager for a document.  This method does not
- associate a document's managed object context, if any. For Core Data documents,
- you must also -coupleToManagedObjectContext:.
- */
-- (void)coupleToDocument:(NSDocument*)document ;
-
-- (void)coupleToManagedObjectContext:(NSManagedObjectContext*)managedObjectContext ;
 
 @end
 
