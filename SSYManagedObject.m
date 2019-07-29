@@ -233,13 +233,13 @@ end:;
 }
 
 - (BOOL)isAvailable {
+    NSManagedObjectContext* context = [self managedObjectContext] ;
+    if (context == nil) {
+        return NO ;
+    }
+
 	if ([self isDeleted]) {
 		return NO ;	
-	}
-	
-	NSManagedObjectContext* context = [self managedObjectContext] ;
-	if (context == nil) {
-		return NO ;
 	}
 	
 	/* The next two tests are probably unnecessary.  I wrote to David Riggle:
