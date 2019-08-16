@@ -235,7 +235,7 @@
                      (long)[[[self operationQueue] operations] count], // nQ = number in queue
                      NSStringFromSelector([self selector]),
                      [self isCancelled]];
-    [[BkmxBasis sharedBasis] logMessage:msg];
+    [[BkmxBasis sharedBasis] logFormat:msg];
 #endif
 	
 	if (![self isCancelled]) {
@@ -266,19 +266,19 @@
 				// Chain operations have been aborted.
 				// This method becomes a no-op.
 #if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-                [[BkmxBasis sharedBasis] logMessage:@"RunOp: Skipping %@ cuz error op=%p", NSStringFromSelector([self selector]), self];
+                [[BkmxBasis sharedBasis] logFormat:@"RunOp: Skipping %@ cuz error op=%p", NSStringFromSelector([self selector]), self];
 #endif
 			}
 		}
 		else {
 #if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-            [[BkmxBasis sharedBasis] logMessage:@"RunOp: Skipping %@ cuz skip group %@ op=%p", NSStringFromSelector([self selector]), [[self info] objectForKey:constKeySSYOperationGroup], self];
+            [[BkmxBasis sharedBasis] logFormat:@"RunOp: Skipping %@ cuz skip group %@ op=%p", NSStringFromSelector([self selector]), [[self info] objectForKey:constKeySSYOperationGroup], self];
 #endif
 		}
 	}
 	else {
 #if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-        [[BkmxBasis sharedBasis] logMessage:@"RunOp: Skipping %@ cuz cancelled op=%p", NSStringFromSelector([self selector]), self];
+        [[BkmxBasis sharedBasis] logFormat:@"RunOp: Skipping %@ cuz cancelled op=%p", NSStringFromSelector([self selector]), self];
 #endif
 	}
 
