@@ -61,6 +61,11 @@ NS_ASSUME_NONNULL_BEGIN
  @param    blockUntilCompletion  If YES, this method returns immediately.  If
  NO, this method blocks until the script returns and, if you pass in a
  completion handler, after your completion handler returns too.
+ 
+ @param    failSafeTimeout  Maximum time to wait after which this method will
+ return even if script is still executing.  Passing 0.0 is interpreted as
+ no timeout wait forever.  You msy wish to instead, or in addition, enclose
+ failure-prone script code within an AppleScript "with timeout" block.
 
  @param    completionHandler  Function to be run asynchronously when script
  returns.  It gets the following parameters:
@@ -81,13 +86,14 @@ NS_ASSUME_NONNULL_BEGIN
              ignoreKeyPrefix:(NSString* _Nullable)ignoreKeyPrefix
                     userInfo:(NSObject* _Nullable)userInfo
         blockUntilCompletion:(BOOL) blockUntilCompletion
+             failSafeTimeout:(NSTimeInterval)failSafeTimeout
            completionHandler:(void (^ _Nullable)(
                                        id _Nullable payload,
                                        id _Nullable userInfo,
                                        NSError* _Nullable scriptError))completionHandler;
 
 /*!
- @brief    Same as -executeSriptWithUrl:::::::, except executes a script file
+ @brief    Same as -executeSriptWithUrl::::::::, except executes a script file
  created by writing given source code to a temporary file
 
  @details  This is replacement for -[NSAppleScript executeAndReturnError:],
@@ -112,18 +118,20 @@ NS_ASSUME_NONNULL_BEGIN
  and if the .scpt file is a real already-compiled script file, it does not!
  The documentation says merely that you must pass it a "script file".  ???
 
- @param    userInfo  Same as in executeScriptWithUrl:::::::.
- @param    blockUntilCompletion  Same as in executeScriptWithUrl:::::::.
- @param    completionHandler  Same as in executeScriptWithUrl:::::::.
+ @param    userInfo  Same as in executeScriptWithUrl::::::::.
+ @param    blockUntilCompletion  Same as in executeScriptWithUrl::::::::.
+ @param    failSafeTimeout  Same as in executeScriptWithUrl::::::::.
+ @param    completionHandler  Same as in executeScriptWithUrl::::::::.
  */
 + (void)executeScriptSource:(NSString* _Nonnull)source
-             ignoreKeyPrefix:(NSString* _Nullable)ignoreKeyPrefix
-                    userInfo:(NSObject* _Nullable)userInfo
-        blockUntilCompletion:(BOOL) blockUntilCompletion
-           completionHandler:(void (^ _Nullable)(
-                                                 id _Nullable payload,
-                                                 id _Nullable userInfo,
-                                                 NSError* _Nullable scriptError))completionHandler;
+            ignoreKeyPrefix:(NSString* _Nullable)ignoreKeyPrefix
+                   userInfo:(NSObject* _Nullable)userInfo
+       blockUntilCompletion:(BOOL) blockUntilCompletion
+            failSafeTimeout:(NSTimeInterval)failSafeTimeout
+          completionHandler:(void (^ _Nullable)(
+                                                id _Nullable payload,
+                                                id _Nullable userInfo,
+                                                NSError* _Nullable scriptError))completionHandler;
 
 @end
 

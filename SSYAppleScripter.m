@@ -13,6 +13,7 @@ FourCharCode AppleScriptSubroutineName = 'snam';
              ignoreKeyPrefix:(NSString* _Nullable)ignoreKeyPrefix
                     userInfo:(NSObject* _Nullable)userInfo
         blockUntilCompletion:(BOOL) blockUntilCompletion
+             failSafeTimeout:(NSTimeInterval)failSafeTimeout
            completionHandler:(void (^)(
                                        id payload,
                                        id _Nullable userInfo,
@@ -148,7 +149,11 @@ FourCharCode AppleScriptSubroutineName = 'snam';
                         }
                     }];
         if (semaphore) {
-            dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+            dispatch_time_t timeoutTime = (failSafeTimeout > 0.0) ? dispatch_time(DISPATCH_TIME_NOW, failSafeTimeout * NSEC_PER_SEC) : DISPATCH_TIME_FOREVER;
+            dispatch_semaphore_wait(
+                                    semaphore,
+                                    timeoutTime
+                                    );
 #if !__has_feature(objc_arc)
             dispatch_release(semaphore);
 #endif
@@ -163,6 +168,7 @@ FourCharCode AppleScriptSubroutineName = 'snam';
             ignoreKeyPrefix:(NSString* _Nullable)ignoreKeyPrefix
                    userInfo:(NSObject* _Nullable)userInfo
        blockUntilCompletion:(BOOL) blockUntilCompletion
+            failSafeTimeout:(NSTimeInterval)failSafeTimeout
           completionHandler:(void (^ _Nullable)(
                                                 id _Nullable payload,
                                                 id _Nullable userInfo,
@@ -203,6 +209,7 @@ FourCharCode AppleScriptSubroutineName = 'snam';
                    ignoreKeyPrefix:ignoreKeyPrefix
                           userInfo:userInfo
               blockUntilCompletion:blockUntilCompletion
+                   failSafeTimeout:failSafeTimeout
                  completionHandler:^(id  _Nullable payload, id  _Nullable userInfo, NSError * _Nullable scriptError) {
                      completionHandler(payload, userInfo, scriptError);
                      [[NSFileManager defaultManager] removeItemAtURL:scriptUrl

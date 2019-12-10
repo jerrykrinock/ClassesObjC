@@ -578,6 +578,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
                               ignoreKeyPrefix:nil
                                      userInfo:nil
                          blockUntilCompletion:YES
+                              failSafeTimeout:16.666
                             completionHandler:^(id  _Nullable payload, id  _Nullable userInfo, NSError * _Nullable scriptError) {
                                 ok = (error == nil);
                             }];
