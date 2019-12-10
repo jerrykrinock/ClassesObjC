@@ -143,21 +143,24 @@ BOOL SSYDebugLogObjcClassesByBundleToFile (
         Class class = classes[i] ;
         NSString* className = NSStringFromClass(class) ;
         if (![className isEqualToString:@"NSViewServiceApplication"]) {
-            NSBundle* bundle = [NSBundle bundleForClass:class] ;
-            NSString* bundleIdentifier = bundle.bundleIdentifier ;
-            if (bundleIdentifier) {
-                if (className) {
-                    NSMutableArray* classNames = [results objectForKey:bundleIdentifier] ;
-                    if (!classNames) {
-                        classNames = [NSMutableArray new] ;
-                        [results setObject:classNames
-                                    forKey:bundleIdentifier] ;
+            if (![className isEqualToString:@"UINSServiceViewController"]) {
+                // This this caused a "no such selector" method in macOS 10.15.2 Beta 4, I think
+                NSBundle* bundle = [NSBundle bundleForClass:class] ;
+                NSString* bundleIdentifier = bundle.bundleIdentifier ;
+                if (bundleIdentifier) {
+                    if (className) {
+                        NSMutableArray* classNames = [results objectForKey:bundleIdentifier] ;
+                        if (!classNames) {
+                            classNames = [NSMutableArray new] ;
+                            [results setObject:classNames
+                                        forKey:bundleIdentifier] ;
 #if !__has_feature(objc_arc)
-                        [classNames release] ;
+                            [classNames release] ;
 #endif
+                        }
+                        
+                        [classNames addObject:className] ;
                     }
-                    
-                    [classNames addObject:className] ;
                 }
             }
         }
