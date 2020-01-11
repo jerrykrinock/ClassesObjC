@@ -697,7 +697,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 + (void)supportError:(NSError*)error {
-	NSString* appName = [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"] ;
+	NSString* presenterExecutableName = [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"] ;
 	// Note: If you'd prefer the app name to be localized, use "CFBundleName" instead.
 	NSString* appVersion = [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleVersion"] ;
 	NSString* appVersionString = [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"] ;
@@ -731,7 +731,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 							  @"From the contextual menu which appears, click 'Compress...' "
 							  @"A new file with a name ending in .zip will appear.\n\n"
 							  @"Please send the .zip file to our support team.  Thank you for helping us to support",
-							  appName,
+							  presenterExecutableName,
 							  appVersion,
 							  appVersionString,
 							  systemDescription,
@@ -773,7 +773,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 	NSMutableString* body = [NSMutableString stringWithFormat:@"%@\n\n\n\n%@ %@ (%@)\n%@\n\n%@",
 							 NSLocalizedString(@"Please insert any additional information regarding what happened that might help us to investigate this problem:", nil),
-							 appName,
+							 presenterExecutableName,
 							 appVersionString,
 							 appVersion,
 							 systemDescription,
@@ -782,7 +782,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[SSYMailto emailTo:[SSYAlert supportEmailString]
 			   subject:[NSString stringWithFormat:
 						@"%@ Error %ld",
-						appName,
+						presenterExecutableName,
 						(long)[error code]]
 				  body:body] ;
 }
