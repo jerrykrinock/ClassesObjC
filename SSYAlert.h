@@ -228,6 +228,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  <li>  Can be run as a regular non-modal window, modal session, or modal dialog.</li>
  <li>  Same alert can be reconfigured on the fly to show progress of cascaded or nested processes, which looks much better than having alerts rapidly appear and disappear.</li>
  <li>  Provides a replacement for -[NSError presentError:].  Use +alertError: or +alertError:::::</li>
+ <li>  User resizeable (so far implemented only for sheets, but with a little code could work be added for dialogs)</li>
  </ul>
  </p>
  
@@ -805,31 +806,35 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  This method also posts an SSYAlertDidProcessErrorNotification, unless 
  the error -isOnlyInformational.
   
+ Note: If one had a need, one could add a `resizeable` parameter to this method
+ and it should work, since -doooLayout now supports resizeability.
+
  @param    title  The window title or nil.&nbsp; If nil, title will
  be set to localized "Alert".
  @result   Indicates button clicked by user: NSAlertFirstButtonReturn,
  NSAlertSecondButtonReturn or NSAlertThirdButtonReturn
  */
 + (NSInteger)runModalDialogTitle:(NSString*)title
-				   message:(NSString*)msg
-				   buttons:(NSString*)button1Title, ... ;
+                         message:(NSString*)msg
+                         buttons:(NSString*)button1Title, ... ;
 
 /*!
  @brief    Runs a modal dialog with a message and 1-3 buttons
  
  @details  Blocks the current thread.
- Pass 0-3 button title arguments.
+ Note: If one had a need, one could add a `resizeable` parameter to this method
+ and it should work, since -doooLayout now supports resizeability.
  @param    title  The window title or nil.&nbsp; If nil, title will
  be set to localized "Alert".
  @param    buttonsArray  An array of 0-3 strings which will become
- the titles of buttons 1-3.&nbsp; If this parameter is nil or an
+ the titles of buttons 1-3.  If this parameter is nil or an
  empty array, dialog will have 1 button titled as localized "OK".
  @result   Indicates button clicked by user: NSAlertFirstButtonReturn,
  NSAlertSecondButtonReturn or NSAlertThirdButtonReturn
  */
 + (NSInteger)runModalDialogTitle:(NSString*)title
-				   message:(NSString*)msg
-			  buttonsArray:(NSArray*)buttonsArray ;
+                         message:(NSString*)msg
+                    buttonsArray:(NSArray*)buttonsArray ;
 
 
 #pragma mark * Public Methods For Setting Views
@@ -1126,13 +1131,16 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  with an invocation to maintain backward compatibility, and should thus continue
  to work until Apple gets tired of blocks and moves on to some other new fad,
  we recommend using the new direct method
- -runModalSheetOnWindow:completionHandler: instead of this old one.
+ -runModalSheetOnWindow:resizeable:completionHandler: instead of this old one.
  
  If the receiver has not had any button titles yet, and if the receiver has not
  had dontAddOkButton set, this method adds a default "OK" button before
  displaying the sheet.
  
  @param    docWindow  The document window to which to attach the sheet.
+ @param    resizeable  Pass YES to make the sheet resizeable larger by the
+ user.  Resizing smaller is is always disabled because SSYAlert is laid out
+ by -doooLayout to the minimum workable size.
  @param    modalDelegate  The object which will receive and must respond to
  the didEndSelector, or nil if you want the receiver to handle it.  If the
  receiver handles it, its alertReturn will be set to the NSAlertReturn value
@@ -1144,6 +1152,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  third element of the didEndSelector.
 */
 - (void)runModalSheetOnWindow:(NSWindow*)docWindow
+                   resizeable:(BOOL)resizeable
 				modalDelegate:(id)modalDelegate
 			   didEndSelector:(SEL)didEndSelector
 				  contextInfo:(void*)contextInfo ;
@@ -1157,9 +1166,13 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  button before displaying the sheet.
  
  @param    docWindow  The document window to which to attach the sheet.
+ @param    resizeable  Pass YES to make the sheet resizeable larger by the
+ user.  Resizing smaller is is always disabled because SSYAlert is laid out
+ by -doooLayout to the minimum workable size.
  @param    handler  Block which will run when the sheet ends
  */
 - (void)runModalSheetOnWindow:(NSWindow*)docWindow
+                   resizeable:(BOOL)resizeable
             completionHandler:(void (^)(NSModalResponse returnCode))handler ;
 
 /*!

@@ -1511,9 +1511,17 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     [self goAway] ;
 }
 
+- (void)makeResizeable {
+    self.window.styleMask |= NSWindowStyleMaskResizable;
+}
+
 - (void)runModalSheetOnWindow:(NSWindow*)docWindow
+                   resizeable:(BOOL)resizeable
             completionHandler:(void (^)(NSModalResponse returnCode))handler {
     if (docWindow) {
+        if (resizeable) {
+            [self makeResizeable];
+        }
         [self prepareAsSheetOnWindow:docWindow];
         
         [docWindow beginSheet:[self window]
@@ -1522,6 +1530,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 }
 
 - (void)runModalSheetOnWindow:(NSWindow*)sheetParent
+                   resizeable:(BOOL)resizeable
                 modalDelegate:(id)modalDelegate
                didEndSelector:(SEL)didEndSelector
                   contextInfo:(void*)contextInfo {
@@ -1535,10 +1544,13 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
             didEndSelector = @selector(sheetDidEnd:returnCode:contextInfo:) ;
         }
         
+        if (resizeable) {
+            [self makeResizeable];
+        }
         [self prepareAsSheetOnWindow:sheetParent];
 		
         [sheetParent beginSheet:[self window]
-            completionHandler:^void(NSModalResponse modalResponse) {
+              completionHandler:^void(NSModalResponse modalResponse) {
                 NSWindow* window = [self window] ;
                 NSInvocation* invocation = [NSInvocation invocationWithTarget:modalDelegate
                                                                      selector:didEndSelector
@@ -1969,12 +1981,13 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
         }
 	}
 	
-	// Next, we'll resize the window's contentView
-	// First, make sure that none of the subviews will move 
-	// due to autoresizing.  (If this window were resizable, we'd
-	// store the autoresize mask values in an array, to restore later)
-	e = [[self.window.contentView subviews] objectEnumerator] ;
-	while ((subview = [e nextObject])) {
+    /* Next, we'll resize the window's contentView.  To do this, we must
+     temporarily set autoresize masks such that none of the subviews will move
+     due to autoresizing.  We shall restore the original autoresize mask values
+     later. */
+    NSMutableArray<NSNumber*>* originalAutoresizeMasks = [[NSMutableArray alloc] initWithCapacity:self.window.contentView.subviews.count];
+    for (NSView* subview in self.window.contentView.subviews) {
+        [originalAutoresizeMasks addObject:@(subview.autoresizingMask)];
 		[subview setAutoresizingMask:NSViewNotSizable] ;
 	}
 	[(NSView*)[[self window] contentView] setWidth:contentWidth] ;
@@ -2049,7 +2062,42 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
     [self.window setFrame:frame display:NO] ; // This "display" is only "ifNeeded"
 	
-	// This took me a couple hours to figure out...
+    NSInteger i = 0;
+    for (NSView* subview in self.window.contentView.subviews) {
+        subview.autoresizingMask = [originalAutoresizeMasks objectAtIndex:i].integerValue;
+        i++;
+    }
+    [originalAutoresizeMasks release];
+
+    /* The following are necessary in case our window or sheet is resizeable.
+     Otherwise, they do no harm.  Not all have been tested!  So, if you
+     find one that does not behave correctly, fix it! */
+    self.button1.autoresizingMask |= NSViewMinXMargin;  // tested
+    self.button1.autoresizingMask |= NSViewMaxYMargin;  // tested
+    self.button2.autoresizingMask |= NSViewMinXMargin;
+    self.button2.autoresizingMask |= NSViewMaxYMargin;
+    self.button3.autoresizingMask |= NSViewMinXMargin;
+    self.button3.autoresizingMask |= NSViewMaxYMargin;
+    self.button4.autoresizingMask |= NSViewMinXMargin;
+    self.button4.autoresizingMask |= NSViewMaxYMargin;
+    self.checkbox.autoresizingMask |= NSViewMaxXMargin;
+    self.checkbox.autoresizingMask |= NSViewWidthSizable;
+    self.checkbox.autoresizingMask |= NSViewMaxYMargin;
+    self.helpButton.autoresizingMask |= NSViewMaxXMargin;
+    self.helpButton.autoresizingMask |= NSViewMaxYMargin;
+    self.icon.autoresizingMask |= NSViewMaxXMargin;  // tested
+    self.icon.autoresizingMask |= NSViewMinYMargin;  // tested
+    self.smallTextScrollView.autoresizingMask |= NSViewWidthSizable;
+    self.smallTextScrollView.autoresizingMask |= NSViewHeightSizable;
+    self.supportButton.autoresizingMask |= NSViewMaxXMargin;
+    self.supportButton.autoresizingMask |= NSViewMinYMargin;
+    /* Autoresize masks of otherSubviews should be set by the caller. */
+    
+    /* Because we have just painstakingly laid out this view to the minimum
+     workable size, do not allow the user to make it smaller. */
+    self.window.minSize = self.window.frame.size;
+
+    // This took me a couple hours to figure out...
 	// If you send an NSProgressIndicator -startAnimation:, and then
 	// run through the above methods, which probably reframes it, and
 	// then send -startAnimation: again, it won't animate.  Possibly
@@ -2419,6 +2467,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
     [self doLayoutError:error] ;
     [self runModalSheetOnWindow:window
+                     resizeable:NO
               completionHandler:completionHandler] ;
 }
 
@@ -2452,6 +2501,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		}
 		
 		[self runModalSheetOnWindow:sheetParent
+                         resizeable:NO
 					  modalDelegate:modalDelegate
 					 didEndSelector:didEndSelector
 						contextInfo:contextInfo] ;		
