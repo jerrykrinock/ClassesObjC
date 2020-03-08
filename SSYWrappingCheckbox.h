@@ -1,12 +1,15 @@
 #import <Cocoa/Cocoa.h>
 
+@interface SSYPassMouseEventsToSiblingTextField : NSTextField;
+@end
+
 /*!
  @brief    This class provides a checkbox for which text wrapping actually works.
  
  @details  Under the hood, uses an NSTextField to replace the title of the checkbox.
  */
 @interface SSYWrappingCheckbox : NSControl {
-	NSTextField* m_textField ;
+	SSYPassMouseEventsToSiblingTextField* m_textField ;
 	NSButton* m_checkbox ;
 	CGFloat m_maxWidth ;
 }
@@ -18,7 +21,7 @@
  @details  Since self retains this as a subview, we only need a weak, 
  i.e. (assign) reference
 */
-@property (assign) NSTextField* textField ;
+@property (assign) SSYPassMouseEventsToSiblingTextField* textField ;
 
 /*!
  @brief    The NSButton which does the work, except that its title

@@ -7,6 +7,45 @@ static NSString* const constKeyTextField = @"TextField" ;
 static NSString* const constKeyCheckbox = @"Checkbox" ;
 static NSString* const constKeyMaxWidth = @"MaxWidth" ;
 
+@implementation SSYPassMouseEventsToSiblingTextField
+
+- (NSView*)sibling {
+    NSArray* siblings = [[self superview] subviews];
+    for (NSView* sibling in siblings) {
+        if (sibling != self) {
+            return sibling;
+        }
+    }
+    
+    return nil;
+}
+
+- (NSEvent*)eventTranslated:(NSEvent*)event
+                  toSibling:(NSView*)sibling{
+    NSPoint offset = NSMakePoint(NSMinX(self.superview.frame), NSMinY(self.superview.frame));
+    return [NSEvent mouseEventWithType:event.type
+                              location:NSMakePoint(offset.x + NSMidX(sibling.frame), offset.y + NSMidY(sibling.frame))
+                         modifierFlags:event.modifierFlags
+                             timestamp:event.timestamp
+                          windowNumber:event.windowNumber
+                               context:event.context
+                           eventNumber:event.eventNumber
+                            clickCount:event.clickCount
+                              pressure:event.pressure];
+}
+
+- (void)mouseDown:(NSEvent *)event {
+    [[self sibling] mouseDown:[self eventTranslated:event
+                                          toSibling:[self sibling]]];
+}
+
+- (void)mouseUp:(NSEvent *)event {
+    [[self sibling] mouseUp:[self eventTranslated:event
+                                        toSibling:[self sibling]]];
+}
+
+@end
+
 @interface SSYWrappingCheckbox ()
 
 @end
@@ -40,14 +79,6 @@ static NSString* const constKeyMaxWidth = @"MaxWidth" ;
 	return [[self checkbox] state] ;
 }
 
-/*
- To mimic the behavior of a regular checkbox, which 
- also changes state when you click on the title.
- */
-- (void)mouseDown:(NSEvent*)theEvent {
-	[[self checkbox] mouseDown:theEvent] ;
-}
-
 - (void)sizeHeightToFitAllowShrinking:(BOOL)allowShrinking {
 	[[self textField] sizeHeightToFitAllowShrinking:allowShrinking] ;
 	[self setHeight:[[self textField] height]] ;
@@ -66,7 +97,7 @@ CGFloat static const constTextMarginX = 0.0 ;
 CGFloat static const constTextMarginY = 5.0 ;
 
 - (void)sizeToFit {
-	NSTextField* textField = [self textField] ;
+	SSYPassMouseEventsToSiblingTextField* textField = [self textField] ;
 	NSString* title = [textField stringValue] ;
 	CGFloat maxWidth = [self maxWidth] ;
 	
@@ -135,7 +166,7 @@ CGFloat static const constTextMarginY = 5.0 ;
 		// Create text field
 		// We just set its frame to the zero rect for now, because the only one
 		// of the four parms we know for sure at this time is the position.x.
-		NSTextField* textField = [[NSTextField alloc] initWithFrame:NSZeroRect] ;
+		SSYPassMouseEventsToSiblingTextField* textField = [[SSYPassMouseEventsToSiblingTextField alloc] initWithFrame:NSZeroRect] ;
 		[textField setBordered:NO] ;
 		[textField setDrawsBackground:NO] ;
 		NSFont* font = [SSYAlert smallTextFont] ;
