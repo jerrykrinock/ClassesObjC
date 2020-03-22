@@ -437,60 +437,6 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
     return processState ;
 }
 
-+ (NSInteger)majorVersionOfBundlePath:(NSString*)bundlePath {
-	NSString* infoPlistPath = [bundlePath stringByAppendingPathComponent:@"Contents"] ;
-	infoPlistPath = [infoPlistPath stringByAppendingPathComponent:@"Info.plist"] ;
-	NSData* data = [NSData dataWithContentsOfFile:infoPlistPath] ;
-	NSDictionary* infoDic = nil ;
-    if (data) {
-        NSError* error = nil ;
-        infoDic = [NSPropertyListSerialization propertyListWithData:data
-                                                            options:NSPropertyListImmutable
-                                                             format:NULL
-                                                              error:&error] ;
-        // Documentation of this method is vague, but it appears to be
-        // better to check for error != nil than infoDic == nil.
-        if (error) {
-            NSLog(@"Internal Error 425-2349 %@", error) ;
-        }
-    }
-    
-	NSString* string ;
-	NSInteger majorVersion ;
-	if (infoDic) {
-		string = [infoDic objectForKey:@"CFBundleShortVersionString"] ;
-		majorVersion = [string majorVersion] ;
-		
-		if (majorVersion == 0) {
-			string = [infoDic objectForKey:@"CFBundleVersion"] ;
-			majorVersion = [string majorVersion] ;
-		}
-	}
-	else {
-		// This scheme was the only one used until BookMacster 1.6.5.
-		// It was found that this gives an outdated answer when Firefox is updated,
-		// until Firefox was launched and quit again.
-		// This is due to the same bug that plagues Path Finder.
-		// Actually, the bug is documented, in +[NSBundle bundleWithPath],
-		// "This method allocates and initializes the returned object if there is no
-		// existing NSBundle associated with fullPath, in which case it returns the
-		// existing object" (which, if bundlePath has been updated since this
-		// app launched, is going to be the old bundle).  So now we only
-		// use this scheme if all else has failed.
-		NSBundle* bundle = [NSBundle bundleWithPath:bundlePath] ;
-		
-		string = [bundle objectForInfoDictionaryKey:@"CFBundleVersion"] ;
-		majorVersion = [string majorVersion] ;
-		
-		if (majorVersion == 0) {
-			string = [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"] ;
-			majorVersion = [string majorVersion] ;
-		}
-	}
-
-	return majorVersion ;
-}
-
 + (pid_t)pidOfProcessNamed:(NSString*)processName
 					  user:(NSString*)user {
 	NSArray* infos = [self pidsExecutablesFull:NO] ;
@@ -932,7 +878,7 @@ end:
 */
 
 /* The following two methods, written during different years, could be
- refactored to use some commone code, if one would want to do the testing. */
+ refactored to use some common code, if one would want to do the testing. */
 
 + (BOOL)killThisUsersProcessWithPid:(pid_t)pid
                                 sig:(int)sig
