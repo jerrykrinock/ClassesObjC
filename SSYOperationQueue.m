@@ -219,17 +219,28 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
 			}
 			
 			NSScriptCommand* scriptCommand = [self scriptCommand] ;
-			NSError* error = [self error] ;
-			if (error) {
-				[scriptCommand setScriptErrorNumber:(int)[error code]] ;
-				[scriptCommand setScriptErrorString:[error localizedDescription]] ;
-			}		
-			[self setError:nil
-				 operation:nil] ;
-			[scriptCommand resumeExecutionWithResult:[self scriptResult]] ;
-			[self setScriptCommand:nil] ;
+            if (scriptCommand) {
+                NSError* error = [self error] ;
+                if (error) {
+                    [scriptCommand setScriptErrorNumber:(int)[error code]] ;
+                    [scriptCommand setScriptErrorString:[error localizedDescription]] ;
+                }
+                [self setError:nil
+                     operation:nil] ;
+                /* On 2020-03-31, macOS 10.15.4, when repetedly running the
+                 Safari/run.sh test AppleScript, I found that sometimes
+                 there would be a crash EXC_BAD_ACCESS at the call to
+                 -resumeresumeExecutionWithResult:, below.  I cannot figure
+                 out why, except for maybe in the documentation of that
+                 method, the yellow "Important" box says something about not
+                 not sending this message too quickly.  I don't quite
+                 understand it, but since adding the following sleep,
+                 it has not crashed. */
+                sleep(1);
+                [scriptCommand resumeExecutionWithResult:[self scriptResult]] ;
+                [self setScriptCommand:nil] ;
+            }
 			
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1090
             // Being built with macOS 10.9 or later SDK
             id activity = [self noAppNapActivity] ;
             if (activity) {
@@ -238,12 +249,9 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
                 // responds to -beginActivityWithOptions:reason:,
                 // which means that it should also respond to -endActivity:
                 if ([[NSProcessInfo processInfo] respondsToSelector:@selector(endActivity:)]) {
-#pragma deploymate push "ignored-api-availability" // Skip this until matching "pop"
                     [[NSProcessInfo processInfo] endActivity:activity] ;
-#pragma deploymate pop
                 }
             }
-#endif
 
 			// It is stated in the documentation of NSOperationQueue (in the
 			// introduction, not in -operations) that KVO notifications
