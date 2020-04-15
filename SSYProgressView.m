@@ -1007,6 +1007,21 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	[self setDoubleValue:newProgressValue] ;
 }	
 
+- (void)incrementAndRunDoubleValueBy:(double)delta  {
+    double newProgressValue = [self progressValue] + delta ;
+    [self setProgressValue:newProgressValue] ;
+    NSTimeInterval secondsNow = [NSDate timeIntervalSinceReferenceDate] ;
+    if (secondsNow > [self nextProgressUpdate]) {
+        [self setNextProgressUpdate:(secondsNow + PROGRESS_UPDATE_PERIOD)] ;
+        [NSInvocation invokeOnMainThreadTarget:self
+                                  selector:@selector(unsafeSetDoubleValue:)
+                           retainArguments:YES
+                             waitUntilDone:YES
+                         argumentAddresses:&newProgressValue] ;
+        [[NSRunLoop mainRunLoop] runUntilDate:[NSDate date]];
+    }
+}
+
 - (void)incrementDoubleValueByObject:(NSNumber*)value {
 	[self incrementDoubleValueBy:[value doubleValue]] ;
 }	

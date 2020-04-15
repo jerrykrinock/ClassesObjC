@@ -193,6 +193,16 @@ extern float const SSYProgressPriorityRegular;
 - (void)incrementDoubleValueBy:(double)value ;
 
 /*!
+ @brief    Sets the receiver to show a progress bar, increments
+ its doubleValue (the progress value) by a given value, and runs the
+ main run loop.
+ 
+ @details  This is useful if you want the receiver's view to update
+ before long-running operations continue on the main therad.
+*/
+- (void)incrementAndRunDoubleValueBy:(double)value ;
+
+/*!
  @brief    Sets the receiver to show a progress bar, and increments
  its doubleValue (the progress value) by a given value wrapped in
  an NSNumber.
