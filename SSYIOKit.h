@@ -3,7 +3,7 @@
 
 @interface SSYIOKit : NSObject
 
-+ (NSData*)primaryMACAddressData;
++ (NSData*)primaryMACAddressOrMachineSerialNumberData;
 + (NSData*)hashedMACAddress;
 + (NSData*)hashedMACAddressAndShortUserName;
 

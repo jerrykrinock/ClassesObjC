@@ -21,8 +21,6 @@
  */
 
 #import "SSYIOKit.h"
-#import <AddressBook/ABAddressBook.h>
-#import <AddressBook/ABMultiValue.h>
 #include <IOKit/network/IOEthernetInterface.h>
 #include <IOKit/network/IONetworkInterface.h>
 #include <IOKit/network/IOEthernetController.h>
@@ -162,7 +160,7 @@ CFDataRef CreateMACAddress(io_iterator_t intfIterator)
 
 @implementation SSYIOKit
 
-+ (NSData*)primaryMACAddressData {
++ (NSData*)primaryMACAddressOrMachineSerialNumberData {
     kern_return_t	kernResult = KERN_SUCCESS; // on PowerPC this is an int (4 bytes)
 	/*
 	 *	error number layout as follows (see mach/error.h and IOKit/IOReturn.h):
@@ -177,7 +175,7 @@ CFDataRef CreateMACAddress(io_iterator_t intfIterator)
     CFDataRef MACAddressData = NULL ;
 	
     if (KERN_SUCCESS != kernResult) {
-		NSLog(@"+[SSYIOKit primaryMACAddressData]: FindEthernetInterfaces returned error, 0x%08lx", (long)kernResult) ;
+		NSLog(@"+[SSYIOKit primaryMACAddressOrMachineSerialNumberData]: FindEthernetInterfaces returned error, 0x%08lx", (long)kernResult) ;
     }
     else {
 		MACAddressData = CreateMACAddress(intfIterator);
@@ -186,30 +184,86 @@ CFDataRef CreateMACAddress(io_iterator_t intfIterator)
 	(void) IOObjectRelease(intfIterator);	// Release the iterator.
 	
 	if (MACAddressData == nil) {
-		// May be a Hackintosh.  Use email instead.
-		// Starting with macOS 10.8, -[ABAddressBook me] will produce an ugly warning
-		// asking if it's OK for your app to access Contacts, and will block until
-		// user dismisses the dialog.  But I figure that if someone
-		// is using a Hackintosh, they should expect stuff like that.
-		ABPerson* me = [[ABAddressBook sharedAddressBook] me] ;		
-		ABMultiValue *emails = [me valueForProperty:kABEmailProperty]; 
-		NSString* email = [emails valueAtIndex:[emails indexForIdentifier:[emails primaryIdentifier]]];
-		if ((email != nil) && ([email length] > 7)) {
-			MACAddressData = (CFDataRef)[[email dataUsingEncoding:NSUTF8StringEncoding] retain] ;
-		}
+		/* May be a Hackintosh.  Use email instead.  Until 2020-Apr-17 I used
+         the email address of the primary user:
+         ABPerson* me = [[ABAddressBook sharedAddressBook] me] ;
+         ABMultiValue *emails = [me valueForProperty:kABEmailProperty];
+         NSString* email = [emails valueAtIndex:[emails indexForIdentifier:[emails primaryIdentifier]]];
+         if ((email != nil) && ([email length] > 7)) {
+             MACAddressData = (CFDataRef)[[email dataUsingEncoding:NSUTF8StringEncoding] retain] ;
+         }
+         But then I started to get depracation warnings on AddressBook … use
+         Contacts instead.  But after 15 minutes of research I cannot find
+         any equivalent method in Contacts which would get the Contacts record
+         of the logged-in user.  And even if there was such a method, I am sure
+         it would be protected by a bunch of security hoops and/or roadblocks.
+         
+         So I decided to do this instead – get the machine serial number.  I
+         remember reading somewhere that this was not a good idea for some
+         reason – maybe if the motherboard is replaced.  But as a fallback
+         in extreme edge cases, I think it is good enough.
+         
+         Instead of using two NSTasks as below, the following code could read
+         in the whole ioRegTask output and filter for the desired line using
+         Cocoa methods.  I tried that, and [task launch] hung.  This is
+         probably too much data got put into the pipe (the output of ioReg -l
+         is maybe thousnds of lines), and the pipe plugged up and stalled – I
+         forget what the exact terminology is.  There is probably a way to deal
+         with it, as I recall doing in Chromessenger, but it makes the
+         following two-task method simpler: */
+        NSTask* ioRegTask = [[NSTask alloc] init];
+        NSTask* grepTask = [[NSTask alloc] init];
+
+        [ioRegTask setLaunchPath: @"/usr/sbin/ioreg"];
+        [grepTask setLaunchPath: @"/usr/bin/grep"];
+
+        [ioRegTask setArguments: [NSArray arrayWithObjects: @"-l", nil]];
+        [grepTask setArguments: [NSArray arrayWithObjects: @"IOPlatformSerialNumber", nil]];
+
+        /* Connect the pipes */
+        NSPipe *pipeBetween = [NSPipe pipe];
+        [ioRegTask setStandardOutput: pipeBetween];
+        [grepTask setStandardInput: pipeBetween];
+        NSPipe *pipeToMe = [NSPipe pipe];
+        [grepTask setStandardOutput: pipeToMe];
+
+        NSFileHandle *grepOutput = [pipeToMe fileHandleForReading];
+
+        [ioRegTask launch];
+        [grepTask launch];
+        [grepTask waitUntilExit];
+        
+        NSData *data = [grepOutput readDataToEndOfFile];
+        [ioRegTask release];
+        [grepTask release];
+        NSString* targetLine = [[NSString alloc] initWithData:data
+                                                     encoding:NSUTF8StringEncoding];
+        if (targetLine.length > 0) {
+            NSScanner* scanner = [[NSScanner alloc] initWithString:targetLine];
+            NSString* serialString = nil;
+            [scanner scanUpToString:@"=" intoString:NULL];
+            [scanner scanUpToString:@"\"" intoString:NULL];
+            scanner.scanLocation = scanner.scanLocation + 1;
+            [scanner scanUpToString:@"\"" intoString:&serialString];
+            [scanner release];
+            NSData* data = [serialString dataUsingEncoding:NSUTF8StringEncoding];
+            [data retain];
+            MACAddressData = (CFDataRef)data;
+        }
+        [targetLine release];
 	}
 			
 	return [(NSData*)MACAddressData autorelease] ;
 }	
 
 + (NSData*)hashedMACAddress {
-	NSData* macAddress = [SSYIOKit primaryMACAddressData] ;
+	NSData* macAddress = [SSYIOKit primaryMACAddressOrMachineSerialNumberData] ;
 	NSData* hashedMACAddress = [macAddress sha1Digest] ;
 	return hashedMACAddress ;
 }
 
 + (NSData*)hashedMACAddressAndShortUserName {
-    NSData* macAddress = [SSYIOKit primaryMACAddressData];
+    NSData* macAddress = [SSYIOKit primaryMACAddressOrMachineSerialNumberData];
     NSData* userNameData = [NSUserName() dataUsingEncoding:NSUTF8StringEncoding];
     NSMutableData* data = [macAddress mutableCopy];
     [data appendData:userNameData];
