@@ -137,6 +137,7 @@ NSString* SSYAlertSounderCustomSoundPrefix = @"SSYAlertSounderCustom-";
     NSString* path ;
     
     if (!soundId) {
+        /* Look for custom sound */
         NSString* key = [[self class] userDefaultsKeyForCustomSoundPathForName:name];
         SEL betterSelector = NSSelectorFromString(@"syncAndGetMainAppValueForKey:");
         if ([[NSUserDefaults standardUserDefaults] respondsToSelector:betterSelector]) {
@@ -153,30 +154,15 @@ NSString* SSYAlertSounderCustomSoundPrefix = @"SSYAlertSounderCustom-";
             soundId = [self soundIdForPath:path
                                 rememberAs:name];
         }
-        // If not found, look in the current application's bundle
+
+        /* If no custom sound was specified or specified but not found, look in
+         the current application's bundle for default (non-custom) sound */
         if (!soundId) {
             path = [[NSBundle mainAppBundle] pathForResource:name
                                                       ofType:@"aiff"] ;
 
             soundId = [self soundIdForPath:path
                                 rememberAs:name] ;
-            // If not found, look in current user's library
-            if (!soundId) {
-                path = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Sounds"] ;
-                path = [path stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"aiff"]] ;
-
-                soundId = [self soundIdForPath:path
-                                    rememberAs:name] ;
-
-                // If not found, look in system's library
-                if (!soundId) {
-                    path = @"/System/Library/Sounds" ;
-                    path = [path stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"aiff"]] ;
-
-                    soundId = [self soundIdForPath:path
-                                        rememberAs:name] ;
-                }
-            }
         }
     }
 
