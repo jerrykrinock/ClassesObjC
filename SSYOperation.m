@@ -111,8 +111,8 @@
 }
 
 - (void)setAllGroupsError:(NSError*)error {
-        [[self operationQueue] setError:error
-                              operation:nil] ;
+    [[self operationQueue] setError:error
+                          operation:nil] ;
 }
 
 
