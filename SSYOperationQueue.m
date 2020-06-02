@@ -230,13 +230,17 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
                 /* On 2020-03-31, macOS 10.15.4, when repetedly running the
                  Safari/run.sh test AppleScript, I found that sometimes
                  there would be a crash EXC_BAD_ACCESS at the call to
-                 -resumeresumeExecutionWithResult:, below.  I cannot figure
+                 -resumeExecutionWithResult:, below.  I cannot figure
                  out why, except for maybe in the documentation of that
                  method, the yellow "Important" box says something about not
                  not sending this message too quickly.  I don't quite
-                 understand it, but since adding the following sleep,
-                 it has not crashed. */
-                sleep(1);
+                 understand it, but since adding the following sleep(1),
+                 it has not crashed.
+                 
+                 Sorry, on 20200601, again while running the Safari/run.sh test
+                 AppleScript, it crashed again.  So I increased the sleep time
+                 to 2. */
+                sleep(2);
                 [scriptCommand resumeExecutionWithResult:[self scriptResult]] ;
                 [self setScriptCommand:nil] ;
             }
