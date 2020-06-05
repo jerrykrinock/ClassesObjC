@@ -6,9 +6,11 @@
 
 #if DEBUG
 #if 0
-#warning Logging SSYOperationLinker Operations.  DO NOT SHIP THIS!
-#define LOGGING_SSYOPERATIONLINKER_OPERATIONS 1
-#import "BkmxBasis.h"
+#warning Logging running of operations in SSYOperation.  DO NOT SHIP THIS!
+/* For this to work, you must set the file path of the singleton
+ SSYLinearFileWriter object before beginning operations. */
+#define LOG_RUNNING_OF_OPERATIONS 1
+#import "SSYLinearFileWriter.h"
 #endif	
 #endif
 
@@ -226,7 +228,7 @@
 
 - (void)main {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
-#if LOGGING_SSYOPERATIONLINKER_OPERATIONS
+#if LOG_RUNNING_OF_OPERATIONS
     NSString* msg = [NSString stringWithFormat:
                      @"RunOp: %p grp=%@ prevErr=%ld nQ=%ld sel=%@ isCnc=%hhd",
                      self,
@@ -235,7 +237,7 @@
                      (long)[[[self operationQueue] operations] count], // nQ = number in queue
                      NSStringFromSelector([self selector]),
                      [self isCancelled]];
-    [[BkmxBasis sharedBasis] logFormat:msg];
+    [SSYLinearFileWriter writeLine:msg];
 #endif
 	
 	if (![self isCancelled]) {
@@ -265,20 +267,26 @@
 			else {
 				// Chain operations have been aborted.
 				// This method becomes a no-op.
-#if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-                [[BkmxBasis sharedBasis] logFormat:@"RunOp: Skipping %@ cuz error op=%p", NSStringFromSelector([self selector]), self];
+#if LOG_RUNNING_OF_OPERATIONS
+                NSString* msg = [[NSString alloc] initWithFormat:@"RunOp: Skipping %@ cuz error op=%p", NSStringFromSelector([self selector]), self];
+                [SSYLinearFileWriter writeLine:msg];
+                [msg release];
 #endif
 			}
 		}
 		else {
-#if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-            [[BkmxBasis sharedBasis] logFormat:@"RunOp: Skipping %@ cuz skip group %@ op=%p", NSStringFromSelector([self selector]), [[self info] objectForKey:constKeySSYOperationGroup], self];
+#if LOG_RUNNING_OF_OPERATIONS
+            NSString* msg = [[NSString alloc] initWithFormat:@"RunOp: Skipping %@ cuz skip group %@ op=%p", NSStringFromSelector([self selector]), [[self info] objectForKey:constKeySSYOperationGroup], self];
+            [SSYLinearFileWriter writeLine:msg];
+            [msg release];
 #endif
 		}
 	}
 	else {
-#if LOGGING_SSYOPERATIONLINKER_OPERATIONS
-        [[BkmxBasis sharedBasis] logFormat:@"RunOp: Skipping %@ cuz cancelled op=%p", NSStringFromSelector([self selector]), self];
+#if LOG_RUNNING_OF_OPERATIONS
+        NSString* msg = [[NSString alloc] initWithFormat:@"RunOp: Skipping %@ cuz cancelled op=%p", NSStringFromSelector([self selector]), self];
+        [SSYLinearFileWriter writeLine:msg];
+        [msg release];
 #endif
 	}
 
