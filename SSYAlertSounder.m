@@ -126,6 +126,19 @@ NSString* SSYAlertSounderCustomSoundPrefix = @"SSYAlertSounderCustom-";
 
 
 - (void)playAlertSoundNamed:(NSString*)name {
+    /* In macOS 10.16 aka macOS 11, the "Submarine" sound has been replaced
+     by a similar sound, "Submerge".  Why, oh Apple, why ?? */
+    if (@available(macOS 10.16, *)) {
+        if ([name isEqualToString:@"Submarine"]) {
+            name = @"Submerge";
+        }
+    }
+    else {
+        if ([name isEqualToString:@"Submerge"]) {
+            name = @"Submarine";
+        }
+    }
+
     if (!name) {
         return ;
     }

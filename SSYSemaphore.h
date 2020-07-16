@@ -245,7 +245,7 @@ float randomPeriod(float min, float max) {
             // there is a BUG in SSYSemaphore.  The whole idea of SSYSemaphore
             // is to prevent such collisions!
             NSLog(@"COLLISION!!  Expected:%@  Read:%@", [self key], readKey) ;
-            [[NSSound soundNamed:@"Submarine"] play] ;
+            [[NSSound soundNamed:@"Submerge"] play] ;
         }
         
         [readKey release] ;
