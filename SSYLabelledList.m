@@ -41,13 +41,19 @@
 
 NSString* const constKeySSYLabelledListLabelView = @"labelView" ;
 NSString* const constKeySSYLabelledListScrollView = @"scrollView" ;
+NSString* const constKeySSYLabelledListTableView = @"tableView";
 NSString* const constKeySSYLabelledListChoices = @"choices" ;
 NSString* const constKeySSYLabelledListCellTextAttributes = @"cellTextAttributes" ;
 
 @interface SSYLabelledList ()
 
+/* Comment in August 2020: I think that all of the subviews below could be
+ assign instead of retain.  There is no reason to retain subviews because
+ superviews retain them.  But I don't want to spend any more time on this
+ old code that works. */
 @property (retain) NSTextField* labelView ;
-@property (retain) NSScrollView* scrollView ;
+@property (assign) NSScrollView* scrollView ;
+@property (retain) NSTableView* tableView ;
 @property (retain) NSView* allOrNoneView ;
 @property (retain) NSArray* choices ;
 @property (retain) NSArray* toolTips ;
@@ -61,15 +67,12 @@ NSString* const constKeySSYLabelledListCellTextAttributes = @"cellTextAttributes
 
 @synthesize labelView ;
 @synthesize scrollView ;
+@synthesize tableView;
 @synthesize allOrNoneView ;
 @synthesize choices ;
 @synthesize toolTips = m_toolTips ;
 @synthesize cellTextAttributes ;
 @synthesize maxTableHeight ;
-
-- (NSTableView*)tableView {
-	return [[self scrollView] documentView] ;
-}
 
 - (void)setSelectedIndexes:(NSIndexSet*)selectedIndexes {
 	[[self tableView] selectRowIndexes:selectedIndexes
@@ -96,20 +99,50 @@ NSString* const constKeySSYLabelledListCellTextAttributes = @"cellTextAttributes
 	[[self tableView] sizeHeightToFitAllowShrinking:allowShrinking] ;
     [self.allOrNoneView sizeHeightToFitAllowShrinking:NO] ;
 	NSRect frame = [[self tableView] frame] ;
-	// The scroll view needs to be a little taller than the table
-	// lest scrollers will appear unnecessarily.
-	frame.size.height += 3.0 ;
-	frame.size.height = MIN([self maxTableHeight], frame.size.height) ;
-	[[self scrollView] setFrame:frame] ;
-	
+    NSView* scrableView;  // either a scroll view or a table view
+    if (frame.size.height < [self maxTableHeight]) {
+        /* All Rows ill fit without scrolling.  Just add the table view
+         as a subview.  Do not create a scroll view. */
+        scrableView = [self tableView];
+        [self addSubview:scrableView];
+        /* Removing the scroll view is defensive programming, in case
+         anyone ever modifies this class in such a way as to allow the
+         number of choices to be modified after init, or in case row
+         height somehow changes, or some other weird thing. */
+        [[self scrollView] removeFromSuperviewWithoutNeedingDisplay];
+        [self setScrollView:nil];
+    } else {
+        /* Create and add a scroll view, and stitch the table view into
+         it. */
+        frame.size.height = [self maxTableHeight];
+        scrableView = self.scrollView;
+        if (!scrableView) {
+            scrableView = [[NSScrollView alloc] initWithFrame:frame];
+            [self addSubview:scrableView];
+            [scrableView release];
+            self.scrollView = (NSScrollView*)scrableView;
+        }
+        self.scrollView.hasVerticalScroller = YES;
+        self.scrollView.borderType = NSNoBorder;
+        self.scrollView.autohidesScrollers = YES;
+        self.scrollView.documentView = self.tableView;
+        // Next line looks weird.  I suppose it makes sense, if there is only
+        // one control in the keyboard loop at this level??
+        [self.scrollView setNextKeyView:self.scrollView];
+
+        scrableView = [self scrollView];
+    }
+    [scrableView setFrame:frame];
+    [scrableView setAutoresizingMask:NSViewWidthSizable] ;
+
 	// Set y positions
     CGFloat y = 0.0 ;
     if (self.allOrNoneView) {
         y += [self.allOrNoneView height] ;
         y += SPACE_BETWEEN/4 ;
     }
-    [[self scrollView] setBottom:y] ;
-    y += [[self scrollView] height] ;
+    [scrableView setBottom:y] ;
+    y += [scrableView height] ;
 	y += SPACE_BETWEEN ;
 	[[self labelView] setBottom:y] ;
 	y += [[self labelView] height] ;
@@ -147,32 +180,15 @@ NSString* const constKeySSYLabelledListCellTextAttributes = @"cellTextAttributes
 		// Todo: The following should be parameterized
 		[tableView_ setHeaderView:nil] ;
 		[tableView_ setDelegate:self] ;
-        CGFloat iThinkAppleLeavesTooMuchSpaceFactor ;
-#if (MAC_OS_X_VERSION_MAX_ALLOWED < 101000)
-        // 10.9 or earlier
-        iThinkAppleLeavesTooMuchSpaceFactor = 0.75 ;
-#else
-        // 10.10 or later
-        iThinkAppleLeavesTooMuchSpaceFactor = 0.95 ;
-#endif
-        [tableView_ setRowHeight:iThinkAppleLeavesTooMuchSpaceFactor*[[SSYLabelledList tableFont] boundingRectForFont].size.height] ;
+        [tableView_ setRowHeight:[[SSYLabelledList tableFont] boundingRectForFont].size.height] ;
 		
 		NSTableColumn *column = [[SSYLabelledListTableColumn alloc] initWithIdentifier:@"choices"];        
 		// Todo: The following should be parameterized
 		[column setEditable:NO] ;
         [tableView_ addTableColumn:column] ;
         [column release] ;
-        
-		NSScrollView* scrollView_ = [[NSScrollView alloc] initWithFrame:nominalFrame] ;
-        [scrollView_ setHasVerticalScroller:YES] ;
-        [scrollView_ setBorderType:NSNoBorder] ;
-        [scrollView_ setAutohidesScrollers:YES] ;
-        [scrollView_ setDocumentView:tableView_] ;
-		[tableView_ release] ;
-		
-		[self setScrollView:scrollView_] ;
-		[self addSubview:scrollView_] ;
-		[scrollView_ release] ;
+        self.tableView = tableView_;
+        [tableView_ release] ;
 				
 		NSTextField* textField ;
 		textField = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 0, [SSYAlert smallTextHeight])] ;
@@ -226,7 +242,6 @@ NSString* const constKeySSYLabelledListCellTextAttributes = @"cellTextAttributes
 		// then set to track future changes to self's width
 		[self setWidth:[textField width]] ;
 		[[self labelView] setAutoresizingMask:NSViewWidthSizable] ;
-		[[self scrollView] setAutoresizingMask:NSViewWidthSizable] ;
         [[self allOrNoneView] setAutoresizingMask:NSViewWidthSizable] ;
 		
 		// Note that the final layout is done later, when
@@ -234,11 +249,7 @@ NSString* const constKeySSYLabelledListCellTextAttributes = @"cellTextAttributes
 		// That's because the height of the labelView will depend on
 		// the width of the labelView (words must fit), and we don't
 		// know the final width yet.
-		
-		// This looks weird.  I suppose it makes sense, if there is only
-		// one field in the keyboard loop at this level??
-		[scrollView_ setNextKeyView:scrollView_] ;
-		
+        
 		NSMutableParagraphStyle *ps = [[NSParagraphStyle defaultParagraphStyle] mutableCopy] ;
 		[ps setLineBreakMode:lineBreakMode];
 		[self setCellTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:
@@ -251,7 +262,14 @@ NSString* const constKeySSYLabelledListCellTextAttributes = @"cellTextAttributes
 }
 
 - (void)setNextKeyView:(NSView*)view {
-	[[self scrollView] setNextKeyView:view] ;
+    NSView* scrableView;
+    if (self.scrollView) {
+        scrableView = self.scrollView;
+    } else {
+        scrableView = self.tableView;
+    }
+    
+    [scrableView setNextKeyView:view];
 }
 
 - (BOOL)becomeFirstResponder {
@@ -276,9 +294,9 @@ NSString* const constKeySSYLabelledListCellTextAttributes = @"cellTextAttributes
 	return [instance autorelease] ;
 }
 
-- (void) dealloc {
+- (void)dealloc {
 	[labelView release] ;
-	[scrollView release] ;
+    [tableView release];
     [allOrNoneView release] ;
 	[choices release] ;
 	[m_toolTips release] ;
@@ -336,6 +354,7 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
     
 	[coder encodeObject:labelView forKey:constKeySSYLabelledListLabelView] ;
     [coder encodeObject:scrollView forKey:constKeySSYLabelledListScrollView] ;
+    [coder encodeObject:tableView forKey:constKeySSYLabelledListTableView] ;
 	[coder encodeObject:choices forKey:constKeySSYLabelledListChoices] ;
 	[coder encodeObject:cellTextAttributes forKey:constKeySSYLabelledListCellTextAttributes] ;
 }
@@ -344,7 +363,8 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
     self = [super initWithCoder:coder] ;
 	
 	labelView = [[coder decodeObjectForKey:constKeySSYLabelledListLabelView] retain] ;
-	scrollView = [[coder decodeObjectForKey:constKeySSYLabelledListScrollView] retain] ;
+	scrollView = [coder decodeObjectForKey:constKeySSYLabelledListScrollView] ;
+    tableView = [[coder decodeObjectForKey:constKeySSYLabelledListTableView] retain];
 	choices = [[coder decodeObjectForKey:constKeySSYLabelledListChoices] retain] ;
 	cellTextAttributes = [[coder decodeObjectForKey:constKeySSYLabelledListCellTextAttributes] retain] ;
 	return self ;
