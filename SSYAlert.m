@@ -2297,9 +2297,9 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 // bottom of the menu bar.
 
 - (id)init {
-    /* Only use SSYAlert in regular, foreground, dock-resident GUI apps … */
-	if (!NSApp || ([NSApp activationPolicy] != NSApplicationActivationPolicyRegular)) {
-		// See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
+    /* See Note ActivationPolicy. */
+	if (!NSApp || ([NSApp activationPolicy] == NSApplicationActivationPolicyProhibited)) {
+
 #if !__has_feature(objc_arc)
 		[super dealloc] ;
 #endif
@@ -2429,8 +2429,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 + (SSYAlert*)alert {
 	SSYAlert* alert ;
-    /* Only use SSYAlert in regular, foreground, dock-resident GUI apps … */
-	if ([NSApp activationPolicy] == NSApplicationActivationPolicyRegular) {
+    // See Note ActivationPolicy.
+	if ([NSApp activationPolicy] != NSApplicationActivationPolicyProhibited) {
 		alert = [[self alloc] init] ;
 #if !__has_feature(objc_arc)
         [alert autorelease] ;
@@ -2681,3 +2681,25 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
 
 @end
+
+/* Note ActivationPolicy
+ Windows are allowed only in apps with Regular or Accessory activation
+ policy.  Supposedly, the reason why I felt it necessary to hard-code
+ so that opening a SSYAlert in such a process would never even be attempted
+ is explained here:
+ http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html
+ Unfortunately, that archive is gone today (2020-08-28), and I cannot find
+ that thread in mail-archive.com either.  However, as I vaguely recall, it
+ was causing some very bad behavior which took me quite some time to reproduce
+ and fix.  However, today, I changed this because it looks like I over reacted
+ back in 2008 and went too far.  There are in fact 3 app activation states
+ in macOS:
+ 
+ #1 NSActivationPolicyRegular (normal GUI app)
+ #2 NSActivationPolicyAccessory (LSUIElement in Info.plist)
+ #3 NSActivationPolicyProhibited (LSBackgroundOnly in Info.plist)
+ 
+ Prior to today, SSYAlert initialized as nil for either #2 or #3.  Starting
+ today (to fix BookMacster running as LSUIElement aka "in background"), it
+ only initializes to nil for #3. */
+ 
