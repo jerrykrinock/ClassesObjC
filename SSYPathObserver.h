@@ -127,8 +127,7 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  @brief    A Cocoa wrapper around the kqueue path-watching
  notification system which will watch a set of filesystem items.
  
- @details
- 
+@details
  * Background
  
  Although File system events (FSEvents) became available
@@ -218,7 +217,7 @@ extern NSString* const SSYPathObserverUserInfoKey ;
  */
 - (BOOL)addPath:(NSString*)path
 	 watchFlags:(uint32_t)watchFlags
-   notifyThread:(NSThread*)notifeeThread
+   notifyThread:(NSThread*)notifyThread
 	   userInfo:(id)userInfo
 		error_p:(NSError**)error_p ;
 

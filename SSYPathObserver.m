@@ -19,7 +19,7 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 	NSString* m_path ;
 	id m_userInfo ;
 	uint32_t m_fileDescriptor ;
-	NSThread* m_notifyThread ;
+	__unsafe_unretained NSThread* m_notifyThread ;
 }
 
 @property (retain) NSString* path ;
@@ -53,12 +53,14 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 	return ([[otherPathWatch path] isEqualToString:[self path]]) ;
 }
 
+#if !__has_feature(objc_arc)
 - (void)dealloc {
 	[m_path release] ;
 	[m_userInfo release] ;
 	
 	[super dealloc] ;
 }
+#endif
 
 @end
 
@@ -76,6 +78,7 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 @synthesize pathWatches = m_pathWatches ;
 @synthesize kqueueFileDescriptor = m_kqueueFileDescriptor ;  // file descriptor for the kqueue
 
+#if !__has_feature(objc_arc)
 /*
  Note that this method is always invoked by the watcher
  thread, not the main thread.  See commments in -release.
@@ -85,6 +88,7 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 	
 	[super dealloc] ;
 }
+#endif
 
 - (void)watchAndWait {
 	/* Note that, in macOS 10.5, we may kill this thread in -release.
@@ -105,13 +109,11 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 	
 	int fileDescriptor ;
 	@synchronized(self) {
-		NSAutoreleasePool* pool1 = [[NSAutoreleasePool alloc] init] ;
-		
-		[[NSThread currentThread] setName:SSYPathObserverWatcherThread] ;
-
-		fileDescriptor = [self kqueueFileDescriptor] ;
-		
-		[pool1 release] ;
+        @autoreleasepool {
+            [[NSThread currentThread] setName:SSYPathObserverWatcherThread] ;
+            
+            fileDescriptor = [self kqueueFileDescriptor] ;
+        }
 	}
 
 	
@@ -128,63 +130,66 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 								  ) ;
 		if (result != -1) {
 			if(event.filter == EVFILT_VNODE ) {
-				SSYPathWatch* pathWatch = (SSYPathWatch*)event.udata ;
+                SSYPathWatch* pathWatch = (__bridge SSYPathWatch*)event.udata ;
 				
 				@synchronized(self) {
-					NSAutoreleasePool* pool2 = [[NSAutoreleasePool alloc] init] ;
-					// Retain pathWatch here, in case of the unlikely event that
-					// pathWatch has just been removed on another thread
-					[pathWatch retain] ;
-                    NSString* path = [pathWatch path];
-                    NSDictionary* pathWatchUserInfo = [pathWatch userInfo];
-                    NSThread* notifyThread = [pathWatch notifyThread];
-					if ([self isWatching]) {
-						NSNumber* filterFlags = [NSNumber numberWithInteger:event.fflags] ;
-						NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
-												  filterFlags, SSYPathObserverChangeFlagsKey,
-												  path, SSYPathObserverPathKey,
-												  [NSNumber numberWithInteger:[pathWatch fileDescriptor]], SSYPathObserverFileDescriptorKey,
-												  pathWatchUserInfo, SSYPathObserverUserInfoKey,  // may be nil
-												  nil] ;
-						NSNotification* note = [NSNotification notificationWithName:SSYPathObserverChangeNotification
-																			 object:self
-																		   userInfo:userInfo] ;
-						[[NSNotificationCenter defaultCenter] performSelector:@selector(postNotification:)
-																	 onThread:notifyThread
-																   withObject:note
-																waitUntilDone:NO] ;
-					}
-
-					/* In some cases, I think if the event we re no processing was
-                     caused by an external actor *replacing* the file at the watched
-                     path with a new file, our path watch will be watching the old file
-                     which no longer exists, and therefore we will not get any subsequent
-                     events when the *new* file at the watched path is touched.  Although I
-                     have not verified that such file replacement is the cause, I have
-                     definitely seen kqueues "die" like this.  I think it's a good theory,
-                     and in at least one reproducible case, the following code, which
-                     removes the "used" path watch adds back a new one) fixed the problem.
-                     I theorize this is due to the fact that destroying the path watch
-                     closes its (watched) file descriptor, and creating a new path
-                     watch opens a new file descriptor.  I did verify that the new file
-                     descriptor integer value is the same as the old one; presumably
-                     the system uses the lowest unused file descriptor which is the old
-                     one that was just released. */
-                    BOOL ok;
-                    NSError* error = nil;
-                    ok = [self removePath:path
-                                  error_p:&error];
-                    NSAssert(ok, @"Error removing used path from kqueue : %@", error);
-                    uint32_t watchFlags = pathWatch.watchFlags;
-                    [pathWatch release] ;
-                    [self addPath:path
-                       watchFlags:watchFlags
-                     notifyThread:notifyThread
-                         userInfo:pathWatchUserInfo
-                          error_p:&error];
-                    NSAssert(ok, @"Error renewing used path from kqueue : %@", error);
-
-					[pool2 release] ;
+                    @autoreleasepool {
+                        // Retain pathWatch here, in case of the unlikely event that
+                        // pathWatch has just been removed on another thread
+#if !__has_feature(objc_arc)
+                        [pathWatch retain] ;
+#endif
+                        NSString* path = [pathWatch path];
+                        NSDictionary* pathWatchUserInfo = [pathWatch userInfo];
+                        NSThread* notifyThread = [pathWatch notifyThread];
+                        if ([self isWatching]) {
+                            NSNumber* filterFlags = [NSNumber numberWithInteger:event.fflags] ;
+                            NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
+                                                      filterFlags, SSYPathObserverChangeFlagsKey,
+                                                      path, SSYPathObserverPathKey,
+                                                      [NSNumber numberWithInteger:[pathWatch fileDescriptor]], SSYPathObserverFileDescriptorKey,
+                                                      pathWatchUserInfo, SSYPathObserverUserInfoKey,  // may be nil
+                                                      nil] ;
+                            NSNotification* note = [NSNotification notificationWithName:SSYPathObserverChangeNotification
+                                                                                 object:self
+                                                                               userInfo:userInfo] ;
+                            [[NSNotificationCenter defaultCenter] performSelector:@selector(postNotification:)
+                                                                         onThread:notifyThread
+                                                                       withObject:note
+                                                                    waitUntilDone:NO] ;
+                        }
+                        
+                        /* In some cases, I think if the event we re no processing was
+                         caused by an external actor *replacing* the file at the watched
+                         path with a new file, our path watch will be watching the old file
+                         which no longer exists, and therefore we will not get any subsequent
+                         events when the *new* file at the watched path is touched.  Although I
+                         have not verified that such file replacement is the cause, I have
+                         definitely seen kqueues "die" like this.  I think it's a good theory,
+                         and in at least one reproducible case, the following code, which
+                         removes the "used" path watch adds back a new one) fixed the problem.
+                         I theorize this is due to the fact that destroying the path watch
+                         closes its (watched) file descriptor, and creating a new path
+                         watch opens a new file descriptor.  I did verify that the new file
+                         descriptor integer value is the same as the old one; presumably
+                         the system uses the lowest unused file descriptor which is the old
+                         one that was just released. */
+                        BOOL ok;
+                        NSError* error = nil;
+                        ok = [self removePath:path
+                                      error_p:&error];
+                        NSAssert(ok, @"Error removing used path from kqueue : %@", error);
+                        uint32_t watchFlags = pathWatch.watchFlags;
+#if !__has_feature(objc_arc)
+                        [pathWatch release] ;
+#endif
+                        [self addPath:path
+                           watchFlags:watchFlags
+                         notifyThread:notifyThread
+                             userInfo:pathWatchUserInfo
+                              error_p:&error];
+                        NSAssert(ok, @"Error renewing used path from kqueue : %@", error);
+                    }
 				}
 			}
 		}
@@ -211,7 +216,9 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 		if (kqueueFileDescriptor == -1) {
 			NSLog(@"Internal Error 153-9092.  Failed creating kqueue") ;
 			// See http://lists.apple.com/archives/Objc-language/2008/Sep/msg00133.html ...
+#if !__has_feature(objc_arc)
 			[super dealloc] ;
+#endif
 			self = nil ;
 		}
 		else {
@@ -302,7 +309,7 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
             actionFlags,                    // flags
             fflags,                         // fflags
             0,                              // data
-            pathWatch                       // udata, user data, aka "context info"
+            (__bridge void *)pathWatch                       // udata, user data, aka "context info"
 			) ;
 	
 #if DEBUG_LOG_KQUEUE_SETTINGS
@@ -347,6 +354,7 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 	return ok ;
 }
 
+#if !__has_feature(objc_arc)
 - (oneway void)release {
 	// The default behavior of -release is to decrement retainCount if
 	// retainCount is greater than 1, and otherwise invoke -dealloc.
@@ -396,6 +404,7 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 	[super release] ;
 	return ;
 }
+#endif
 
 #if 0
 - (id)autorelease {
@@ -431,28 +440,29 @@ NSString* const SSYPathObserverWatcherThread      = @"SSYPathObserverWatcher" ;
 		}
 
 		ok = NO ;
-		goto end ;
 	}
 
-	// Create pathWatch
-	SSYPathWatch* pathWatch = [[SSYPathWatch alloc] init] ;
-	[pathWatch setPath:path] ;
-	[pathWatch setUserInfo:userInfo] ;
-	[pathWatch setFileDescriptor:fileDescriptor] ;
-	[pathWatch setNotifyThread:(notifyThread ? notifyThread : [NSThread mainThread])] ;
-	@synchronized(self) {
-		[[self pathWatches] addObject:pathWatch] ;
-		[pathWatch release] ;
-		
-		// Register kqueue for it
-		ok = [self kqueueRegisterPathWatch:pathWatch
-									 doAdd:YES
-									 flags:watchFlags
-								   error_p:error_p] ;
-	}
-	
-end:
-	return ok ;
+    if (ok) {
+        // Create pathWatch
+        SSYPathWatch* pathWatch = [[SSYPathWatch alloc] init] ;
+        [pathWatch setPath:path] ;
+        [pathWatch setUserInfo:userInfo] ;
+        [pathWatch setFileDescriptor:fileDescriptor] ;
+        [pathWatch setNotifyThread:(notifyThread ? notifyThread : [NSThread mainThread])] ;
+        @synchronized(self) {
+            [[self pathWatches] addObject:pathWatch] ;
+#if !__has_feature(objc_arc)
+            [pathWatch release] ;
+#endif
+            // Register kqueue for it
+            ok = [self kqueueRegisterPathWatch:pathWatch
+                                         doAdd:YES
+                                         flags:watchFlags
+                                       error_p:error_p] ;
+        }
+    }
+
+    return ok ;
 }
 
 - (BOOL)removePath:(NSString*)path
@@ -499,9 +509,11 @@ end:
     }
 
     NSSet* answer = [paths copy];
+#if !__has_feature(objc_arc)
     [paths release];
     [answer autorelease];
-
+#endif
+    
     return answer;
 }
 
