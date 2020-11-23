@@ -135,10 +135,17 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
     }
 
     if (!ok && error_p) {
-        NSString* errorDesc = task.standardError;
-        if (!errorDesc) {
-            errorDesc = @"Unknown Error";
+        NSString* errorDesc;
+        id rawErrorDesc = task.standardError;
+        if ([rawErrorDesc isKindOfClass:[NSString class]]) {
+            errorDesc = rawErrorDesc;
+        } else {
+            errorDesc = [rawErrorDesc description];
+            if (![errorDesc isKindOfClass:[NSString class]]) {
+                errorDesc = @"Unknown Error";
+            }
         }
+
         *error_p = [NSError errorWithDomain:SSYOtherApperErrorDomain
                                              code:398626
                                          userInfo:@{
