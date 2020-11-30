@@ -127,5 +127,14 @@
 
 @property (weak) SSYToolbarButton* toolbarItem;
 
+/*!
+ @brief    Workaround for the fact that intrinsicContentSize is not a property
+ of NSToolbarItem
+
+ @details  Oddly, although it does not change the size, this value affects
+ the centering of the image in macOS 10.11.
+*/
+@property (assign) NSSize ssyIntrinsicContentSize ;
+
 @end
 

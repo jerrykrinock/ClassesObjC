@@ -170,6 +170,13 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 
 @implementation SSYToolbarButtonView
 
+/* The following implementation is only to silence runtime warnings when
+ the toolbar displays in a product built with Xcode 12.  The numbers (32)
+ do not matter. */
+- (NSSize)intrinsicContentSize {
+    return self.ssyIntrinsicContentSize;
+}
+
 - (void)drawRect:(NSRect)dirtyRect {
     [super drawRect:dirtyRect];
 
