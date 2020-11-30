@@ -3,6 +3,33 @@
 
 @implementation SSYVectorImages
 
+#if TARGET_OS_IPHONE
++ (CGRect)boundsForCharacter:(UniChar)character
+                        font:(CTFontRef)font {
+    UniChar chars[1] ;
+    chars[0] = character ;
+    
+    NSDictionary* attrs = [NSDictionary dictionaryWithObjectsAndKeys:
+                           (__bridge UIFont*)font, NSFontAttributeName,
+                           nil] ;
+    /* Note on the following mess.  I tried a more direc method, using
+     CTFontGetGlyphsForCharacters(), then CTFontGetOpticalBoundsForGlyphs().
+     But this gave quite a bit bigger rect.  Apparently, "optical bounds" is
+     not the "bounds" I want. */
+    CFStringRef string = CFStringCreateWithCharacters(kCFAllocatorDefault,
+                                                      chars,
+                                                      1) ;
+    CFAttributedStringRef attributedString = CFAttributedStringCreate(kCFAllocatorDefault,
+                                                                      string,
+                                                                      (CFDictionaryRef)attrs) ;
+    CFRelease(string) ;
+    CTLineRef line = CTLineCreateWithAttributedString(attributedString);
+    CFArrayRef runsArray = CTLineGetGlyphRuns(line);
+    CTRunRef run = CFArrayGetValueAtIndex(runsArray, 0) ;
+    return CTRunGetImageBounds(run, NULL, CFRangeMake(0,1)) ;
+}
+#endif
+
 + (void)glyphOnPath:(NSBezierPath*)path
           character:(UniChar)character
           halfWidth:(CGFloat)halfWidth {
@@ -15,7 +42,12 @@
                                  characters,
                                  glyphs,
                                  1) ;
+#if TARGET_OS_IPHONE
+    NSRect glyphRect = [self boundsForCharacter:character font:(__bridge CTFontRef)font] ;
+#elif TARGET_OS_MAC
+    // -boundRectForGlyph is available in NSFont but not UIFont
     NSRect glyphRect = [font boundingRectForGlyph:glyphs[0]] ;
+#endif
     CGFloat offsetX = NSMidX(glyphRect) - halfWidth ;
     CGFloat offsetY = NSMidY(glyphRect) - 50 ;
     [path moveToPoint:NSMakePoint(-offsetX,-offsetY)] ;
@@ -49,12 +81,12 @@
     image = [NSImage imageWithSize:size
                            flipped:NO
                     drawingHandler:^(NSRect dstRect) {
-                        [self drawCharacter:character
-                                       size:size
-                                      color:color
-                                       fill:fill] ;
-                        return YES ;
-                    }] ;
+        [self drawCharacter:character
+                       size:size
+                      color:color
+                       fill:fill] ;
+        return YES ;
+    }] ;
     
     return image ;
 }
@@ -87,40 +119,42 @@
 }
 
 + (void)grooveOnPath:(NSBezierPath*)path
-                midX:(CGFloat)midX {
-#define GROOVE_TOP 100
-#define GROOVE_BOTTOM 0
-#define GROOVE_WIDTH 8
+                midX:(CGFloat)midX
+                minY:(CGFloat)minY
+                maxY:(CGFloat)maxY
+               width:(CGFloat)width {
     NSRect rect ;
     NSBezierPath* aPath ;
+    CGFloat lineWidth = path.lineWidth;
     
-    rect = NSMakeRect(midX-(GROOVE_WIDTH/2), GROOVE_BOTTOM, GROOVE_WIDTH, GROOVE_TOP - GROOVE_BOTTOM) ;
+    rect = NSMakeRect(midX-(width/2), minY+lineWidth/2, width, maxY - lineWidth - minY) ;
     aPath = [NSBezierPath bezierPathWithRoundedRect:rect
-                                            xRadius:(GROOVE_WIDTH/2)
-                                            yRadius:(GROOVE_WIDTH/2)] ;
+                                            xRadius:(width/2)
+                                            yRadius:(width/2)] ;
     [path appendBezierPath:aPath] ;
 }
 
 + (void)handleOnPath:(NSBezierPath*)path
                 midX:(CGFloat)midX
-                midY:(CGFloat)midY {
-#define HANDLE_HEIGHT 10
-#define HANDLE_WIDTH 20
-    NSRect rect = NSMakeRect(midX-(HANDLE_WIDTH/2), midY - HANDLE_HEIGHT/1, HANDLE_WIDTH, HANDLE_HEIGHT) ;
+                midY:(CGFloat)midY
+         scaleFactor:(CGFloat)scaleFactor {
+    CGFloat handleHeight = 11.9 * scaleFactor;
+    CGFloat handleWidth = 23.9 * scaleFactor;
+    NSRect rect = NSMakeRect(midX-(handleWidth/2), midY - handleHeight/2, handleWidth, handleHeight) ;
     [path appendBezierPathWithRect:rect] ;
 }
 
 #if 0
 /* I was going to use this method but then realized I did not need to, yet.
  This method is based on:
-  http://www.spaceroots.org/documents/ellipse/elliptical-arc.pdf >
+ http://www.spaceroots.org/documents/ellipse/elliptical-arc.pdf >
  secs. 2.2-2.2.1, (pages 4-5)
  and boxed equations at end of sec. 3.4.1 (page 18)
-
+ 
  Like the NSBezierPath `curve` methods, it only produces a counterclockwise
  path, or equivalently, in the context of this paper, lambda1 < lambda2 is
  required.
-
+ 
  In our case, we have a circle so a = b = r and theta = 0. */
 + (void)bezierCubicApproximationForCircularArcWithRadius:(CGFloat)r
                                                   center:(CGPoint)c
@@ -138,7 +172,7 @@
     CGFloat alpha = sin(eta2 - eta1) * (sqrt(4 + 3 * pow(tan((eta2-eta1)/2), 2)) - 1.0) / 3.0;
     CGPoint controlPoint1 = CGPointMake(pointP1.x + alpha*EPrime1.x, pointP1.y - alpha*EPrime1.y);
     CGPoint controlPoint2 = CGPointMake(pointP2.x + alpha*EPrime2.x, pointP2.y - alpha*EPrime2.y);
-
+    
     if(controlPoint1_p) {
         *controlPoint1_p = controlPoint1;
     }
@@ -156,39 +190,42 @@
             color:(NSColor *)color
             inset:(CGFloat)inset {
     NSBezierPath* path = [NSBezierPath bezierPath] ;
-
+    
     [color setFill] ;
     [color setStroke] ;
-
+    
     [[NSGraphicsContext currentContext] saveGraphicsState] ;
-
+    
     /* The idea here is that all images have a normalized size of 100 x 100.
      Makes it easier to mentally write the code.
      Do NOT use radius, wength or inset.
-     Instead, use 50, 100 and insetPercent. */
-
+     Instead, use 50, 100, insetPercent and maybe insetScaleFactor. */
+    
+    
     CGFloat scale = wength / 100.0 ;
     CGFloat insetPercent = inset * 100 / wength ;
+    CGFloat insetScaleFactor = (100.0 - 2*insetPercent)/100.0;
     NSAffineTransform* scaleTransform = [NSAffineTransform transform] ;
     [scaleTransform scaleXBy:scale
                          yBy:scale] ;
     
     [scaleTransform concat] ;
-
+    
     switch (style) {
         case SSYVectorImageStyleChasingArrows:
         case SSYVectorImageStyleChasingArrowsFilled: {
-            [path setLineWidth:2.0] ;
-
+            CGFloat lineWidth = 2.0;
+            [path setLineWidth:lineWidth] ;
+            
             // The outer radius is 50 - insetPercent
 #define GAP_DEGREES 15.0
 #define ARROW_DEGREES 35.0
 #define ARROW_START_DEGREES (GAP_DEGREES + ARROW_DEGREES)
-#define ARROW_SHOULDER 12.0
-#define INSIDE_RADIUS 38.0
-#define OUTER_RADIUS 49.0  // = 50 - line thickness
+#define ARROW_SHOULDER (12.0 * insetScaleFactor)
+#define INSIDE_RADIUS (38.0 * insetScaleFactor)
+#define OUTER_RADIUS ((50.0 - lineWidth/2) * insetScaleFactor)
 #define AVERAGE_RADIUS ((OUTER_RADIUS + INSIDE_RADIUS) / 2.0)
-
+            
             /* This method:
              -[NSBezierPath appendBezierPathWithArcWithCenter:radius:startAngle:endAngle:]
              will only draw in the clockwise direction.  That makes it not
@@ -197,11 +234,11 @@
              if the style is SSYVectorImageStyleChasingArrowsFilled.  Think
              about it.  Either the inner arc or the outer arc must be drawn
              clockwise.
-
+             
              To solve this problem, for each arrow we create in tempPath
              an arc drawn counterclockwise, then reverse it so it is clockwise,
              then append to the main path.
-
+             
              I was wondering if this would behave, because there might be a
              slight gap, at least theoretically, between the end point of the
              appendee path and the start point of the appended path.  Would
@@ -210,10 +247,10 @@
              -closePath, it closes back to the emd point of the appendee which
              draws a line across the figure.  Solution: Just don't invoke
              -closePath. */
-             NSBezierPath* tempPath;
-
+            NSBezierPath* tempPath;
+            
             /* Left side arrow */
-
+            
             // Start at the top left shoulder of the left arrow:
             NSPoint leftStart = NSMakePoint(50.0-(OUTER_RADIUS+ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 + (OUTER_RADIUS+ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180)) ;
             [path moveToPoint:leftStart] ;
@@ -246,11 +283,11 @@
             if (style == SSYVectorImageStyleChasingArrowsFilled) {
                 [path fill];
             }
-
-             /* Right side arrow */
-
+            
+            /* Right side arrow */
+            
             [path removeAllPoints];
-
+            
             // Start with lower right shoulder
             NSPoint rightStart = NSMakePoint(50.0+(OUTER_RADIUS+ARROW_SHOULDER)*sin(ARROW_START_DEGREES*M_PI/180), 50.0 - (OUTER_RADIUS+ARROW_SHOULDER)*cos(ARROW_START_DEGREES*M_PI/180)) ;
             [path moveToPoint:rightStart] ;
@@ -265,7 +302,7 @@
                                              radius:(INSIDE_RADIUS)
                                          startAngle:(270.0 + ARROW_START_DEGREES)
                                            endAngle:(90.0 - GAP_DEGREES)] ;
-
+            
             // across the tail
             NSPoint rightArrowOuterTail = NSMakePoint(50.0 + OUTER_RADIUS*sin(GAP_DEGREES*M_PI/180), 50.0 + OUTER_RADIUS*cos(GAP_DEGREES*M_PI/180));
             NSPoint rightArrowOuterArmpit = NSMakePoint(50.0 + OUTER_RADIUS*sin(ARROW_START_DEGREES*M_PI/180), 50.0 - OUTER_RADIUS*cos(ARROW_START_DEGREES*M_PI/180));
@@ -284,7 +321,7 @@
             if (style == SSYVectorImageStyleChasingArrowsFilled) {
                 [path fill];
             }
-
+            
             break ;
         }
         case SSYVectorImageStyleTarget:
@@ -338,7 +375,7 @@
         case SSYVectorImageStyleWindowWithSidebar: {
 #define SIDEBAR_WIDTH 40.0
 #define SIDEBAR_HALF_LINE_WIDTH 4.0
-
+            
             CGFloat mainWidth = 100.0 - SIDEBAR_WIDTH;
             CGRect mainRect = NSMakeRect(
                                          0.0,
@@ -347,14 +384,14 @@
                                          100.0) ;
             [path appendBezierPathWithRect:mainRect] ;
             [path fill];
-
+            
             [path moveToPoint:NSMakePoint(mainWidth, SIDEBAR_HALF_LINE_WIDTH)];
             [path lineToPoint:NSMakePoint(100.0 - SIDEBAR_HALF_LINE_WIDTH, SIDEBAR_HALF_LINE_WIDTH)];
             [path lineToPoint:NSMakePoint(100.0 - SIDEBAR_HALF_LINE_WIDTH, 100.0 - SIDEBAR_HALF_LINE_WIDTH)];
             [path lineToPoint:NSMakePoint(mainWidth, 100.0 - SIDEBAR_HALF_LINE_WIDTH)];
             [path setLineWidth:SIDEBAR_HALF_LINE_WIDTH * 2.0];
             [path stroke] ;
-
+            
             break ;
         }
         case SSYVectorImageStyleTriangle90:
@@ -617,37 +654,40 @@
                                 x:45] ;
             break ;
         case SSYVectorImageStyleBookmarksInFolder:;
-#define BOX_MARGIN 1.5
-#define BOX_WIDTH (100 - 2.0*BOX_MARGIN)
-#define BOX_HEIGHT 100
-#define BOOKMARK_WIDTH 25
+            CGFloat boxLineWidth = 5.0;
+            CGFloat boxMargin = boxLineWidth/2 + insetPercent;
+            CGFloat boxWidth = (100 - 2.0 * boxMargin);
+            CGFloat boxHeight = 100 - 2.0 * insetPercent;
+            CGFloat bookmarkWidth =  25 * (100 - insetPercent)/100;
 #define COUNT_OF_BOOKMARKS 2
-#define BOX_AIR_WIDTH (BOX_WIDTH - COUNT_OF_BOOKMARKS * BOOKMARK_WIDTH)
-#define BOOKMARK_SPACING BOX_AIR_WIDTH/(COUNT_OF_BOOKMARKS + 1)
-#define BOOKMARK_TOP_MARGIN 15.0
-#define BOOKMARK_BOTTOM_MARGIN 10.0
-#define BOOKMARK_PITCH (BOOKMARK_SPACING + BOOKMARK_WIDTH)
+            CGFloat boxAirWidth = (boxWidth - COUNT_OF_BOOKMARKS * bookmarkWidth);
+            CGFloat bookmarkSpacing = boxAirWidth/(COUNT_OF_BOOKMARKS + 1);
+            CGFloat bookmarkTopMargin = 15.0 * (100 - insetPercent)/100;
+            CGFloat bookmarkBottomMargin =  10.0 * (100 - insetPercent)/100;
+            CGFloat bookmarkPitch = (bookmarkSpacing + bookmarkWidth);
+            
 #define LITTLE_HOLE_RADIUS 4.0
-            [path moveToPoint:NSMakePoint(BOX_MARGIN, BOX_MARGIN + BOX_HEIGHT)] ;
-            [path lineToPoint:NSMakePoint(BOX_MARGIN, BOX_MARGIN)] ;
-            [path lineToPoint:NSMakePoint(100 - BOX_MARGIN, BOX_MARGIN)] ;
-            [path lineToPoint:NSMakePoint(100 - BOX_MARGIN, BOX_MARGIN + BOX_HEIGHT)] ;
+            [path moveToPoint:NSMakePoint(boxMargin, boxMargin + boxHeight)] ;
+            [path lineToPoint:NSMakePoint(boxMargin, boxMargin)] ;
+            [path lineToPoint:NSMakePoint(100 - boxMargin, boxMargin)] ;
+            [path lineToPoint:NSMakePoint(100 - boxMargin, boxMargin + boxHeight)] ;
             [[NSColor blackColor] set] ;
-            [path setLineWidth:3.0] ;
+            [path setLineWidth:boxLineWidth] ;
             [path stroke] ;
             [path removeAllPoints] ;
             
-            CGFloat xbb = BOX_MARGIN + BOOKMARK_SPACING + BOOKMARK_WIDTH/2.0 ;
+            CGFloat bookmarkLineWidth = 4.0;
+            CGFloat xbb = boxMargin + bookmarkSpacing + bookmarkWidth/2.0 ;
             for (NSInteger i=0; i<COUNT_OF_BOOKMARKS; i++) {
-                CGFloat bottom = (BOX_MARGIN + BOOKMARK_BOTTOM_MARGIN) ;
-                CGFloat height = (BOX_HEIGHT - BOX_MARGIN - BOOKMARK_TOP_MARGIN - BOOKMARK_BOTTOM_MARGIN) ;
+                CGFloat bottom = (boxMargin + bookmarkBottomMargin) ;
+                CGFloat height = boxHeight - bookmarkTopMargin - bookmarkBottomMargin;
                 [self bookmarkOnPath:path
                                 midX:xbb
-                               width:BOOKMARK_WIDTH
+                               width:bookmarkWidth
                               bottom:bottom
                               height:height
                               inseam:0.35] ;
-                [path setLineWidth:2.0] ;
+                [path setLineWidth:bookmarkLineWidth] ;
                 [path stroke] ;
                 [path removeAllPoints] ;
                 
@@ -658,11 +698,11 @@
                                                  radius:LITTLE_HOLE_RADIUS
                                              startAngle:0.0
                                                endAngle:360.0] ;
-                [path setLineWidth:2.0] ;
+                [path setLineWidth:bookmarkLineWidth] ;
                 [path stroke] ;
                 [path removeAllPoints] ;
                 
-                xbb += BOOKMARK_PITCH ;
+                xbb += bookmarkPitch ;
             }
             
             [path stroke] ;
@@ -670,50 +710,59 @@
             break ;
         case SSYVectorImageStyleSettings:;
 #define COUNT_OF_SLIDERS 3
-#define SLIDER_PITCH (100.0/COUNT_OF_SLIDERS)
+            CGFloat sliderPitch = (100.0 - 2*insetPercent)/COUNT_OF_SLIDERS;
             CGFloat handlePositions[COUNT_OF_SLIDERS] ;
-            handlePositions[0] = 70 ;
-            handlePositions[1] = 25 ;
-            handlePositions[2] = 55 ;
-            CGFloat xs = SLIDER_PITCH/2 ;
+            handlePositions[0] = 70*insetScaleFactor+insetPercent;
+            handlePositions[1] = 25*insetScaleFactor+insetPercent;
+            handlePositions[2] = 55*insetScaleFactor+insetPercent;
+            CGFloat xs = insetPercent + sliderPitch/2 ;
+            [path setLineWidth:2.0];
             for (NSInteger i=0; i<COUNT_OF_SLIDERS; i++) {
                 [self grooveOnPath:path
-                              midX:xs] ;
-                [path setLineWidth:2.0] ;
+                              midX:xs
+                              minY:insetPercent
+                              maxY:(100-insetPercent)
+                             width:8.0*insetScaleFactor] ;
                 [path stroke] ;
                 [path removeAllPoints] ;
                 
                 [self handleOnPath:path
                               midX:xs
-                              midY:handlePositions[i]] ;
+                              midY:handlePositions[i]
+                       scaleFactor:insetScaleFactor] ;
                 
-                xs += SLIDER_PITCH ;
+                xs += sliderPitch ;
             }
             
             [path stroke] ;
             break ;
         case SSYVectorImageStyleReports:;
-#define TITLE_HEIGHT 15
-#define TITLE_WIDTH 80
-#define TITLE_EXTRA_VERTICAL_MARGIN 10
-#define REPORT_ITEM_HEIGHT 6.0
-#define COUNT_OF_REPORT_ITEMS 5
-#define LINE_PITCH ((100 - TITLE_HEIGHT - TITLE_EXTRA_VERTICAL_MARGIN)/COUNT_OF_REPORT_ITEMS)
-            NSRect rect ;
+            CGFloat lineWidth = 2.0;
+            CGFloat titleHeight = 12 * insetScaleFactor;
+            CGFloat titleInsetFromItems = 8;
+            CGFloat titleWidth = 100 - 2*(insetPercent + titleInsetFromItems + lineWidth);
+            CGFloat titleExtraVerticalMargin = 8 * insetScaleFactor;
+            CGFloat countOfReportItems = 5;
+            CGFloat itemPitch = (100.0 - 2*insetPercent - lineWidth - titleHeight - titleExtraVerticalMargin)/countOfReportItems;
+            CGFloat reportItemHeight = itemPitch - 2*lineWidth;
+            NSRect rect;
+            // Make the title (actually it is just a rectangle)
             rect = NSMakeRect(
-                              (100 - TITLE_WIDTH)/2,
-                              100 - TITLE_HEIGHT,
-                              TITLE_WIDTH,
-                              TITLE_HEIGHT) ;
+                              100 - insetPercent - titleInsetFromItems - titleWidth - lineWidth,
+                              100 - titleHeight - insetPercent - lineWidth/2,
+                              titleWidth,
+                              titleHeight) ;
             [path appendBezierPathWithRect:rect] ;
             
-            for (NSInteger i=0; i<COUNT_OF_REPORT_ITEMS; i++) {
-                rect = NSMakeRect(0, i*LINE_PITCH, 100, REPORT_ITEM_HEIGHT) ;
-                [path appendBezierPathWithRect:rect] ;
+            CGFloat y = insetPercent+lineWidth/2;
+            for (NSInteger i=0; i<countOfReportItems; i++) {
+                rect = NSMakeRect(0+insetPercent+lineWidth/2, y, 100-2*insetPercent-lineWidth, reportItemHeight) ;
+                [path appendBezierPathWithRect:rect];
+                y+= itemPitch;
             }
             
             [[NSColor blackColor] set] ;
-            [path setLineWidth:2] ;
+            [path setLineWidth:lineWidth] ;
             [path stroke] ;
             break ;
         case SSYVectorImageStyleRoundRadioKnob:;
@@ -732,21 +781,21 @@
             /* The vertexInset scalar used here, (2/3 - sqrt(7)/6) = .22570811,
              gives "half regular, by length, square-filling" hexagon as
              explained in the header documentation.
-
+             
              Alternatively, you might use a vertexInset scalar of 0.25 which
              results in a "half regular, by angle, square-filling" hexagon.
              In this case, the interior angles would all be 120 degrees, but
              the two vertical sides would be only 2/5 the length of the four
              nonvertical sides.
-
+             
              Actually, the vertexInset scalar can be any value from 0 to 0.5.
-
+             
              If 0, the vertical sides lengths become 0, the top interior angle
              becomes 180 degrees so that the vertex disappears, and the sides
              lines nearest the top become one, and similarly at the bottom, so
              that the hexagon degenerates to a square with sides on the x and
              y axes.
-
+             
              If 0.5, the two vertical sides' lengths go to 0, the four left
              side vertices combine into one, and similarly on the right side,
              so that the hexagon degenerates to a square oriented as a
@@ -789,36 +838,35 @@
     image = [NSImage imageWithSize:size
                            flipped:NO
                     drawingHandler:^(NSRect dstRect) {
-                        NSColor* colorNow = color;
-                        if (!colorNow) {
-                            BOOL darkMode = NO;
-                            if (@available(macOS 10.14, *)) {
-                                NSAppearanceName basicAppearance = [darkModeView.effectiveAppearance bestMatchFromAppearancesWithNames:@[
-                                                                                                                                         NSAppearanceNameAqua,
-                                                                                                                                         NSAppearanceNameDarkAqua
-                                                                                                                                         ]];
-                                darkMode = [basicAppearance isEqualToString:NSAppearanceNameDarkAqua];
-                            }
-
-                            colorNow = darkMode ? [NSColor whiteColor] : [NSColor blackColor];
-                        }
-
-                        [self drawStyle:style
-                                 wength:wength
-                                  color:colorNow
-                                  inset:(CGFloat)inset] ;
-                        return YES ;
-                    }] ;
-
+        NSColor* colorNow = color;
+        if (!colorNow) {
+            BOOL darkMode = NO;
+            if (@available(macOS 10.14, *)) {
+                NSAppearanceName basicAppearance = [darkModeView.effectiveAppearance bestMatchFromAppearancesWithNames:@[
+                    NSAppearanceNameAqua,
+                    NSAppearanceNameDarkAqua
+                ]];
+                darkMode = [basicAppearance isEqualToString:NSAppearanceNameDarkAqua];
+            }
+            
+            colorNow = darkMode ? [NSColor whiteColor] : [NSColor blackColor];
+        }
+        
+        [self drawStyle:style
+                 wength:wength
+                  color:colorNow
+                  inset:(CGFloat)inset] ;
+        return YES ;
+    }] ;
+    
     rotatedImage = [image imageRotatedByDegrees:rotateDegrees] ;
     
     if (color == nil) {
         [rotatedImage setTemplate:YES] ;
     }
-
+    
     NSString* name;
     switch (style) {
-
         case SSYVectorImageStylePlus:
             name = @"Plus";
             break;
