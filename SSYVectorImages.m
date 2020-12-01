@@ -653,7 +653,7 @@
             [self checkmarkOnPath:path
                                 x:45] ;
             break ;
-        case SSYVectorImageStyleBookmarksInFolder:;
+        case SSYVectorImageStyleBookmarksInBox: {
             CGFloat boxLineWidth = 5.0;
             CGFloat boxMargin = boxLineWidth/2 + insetPercent;
             CGFloat boxWidth = (100 - 2.0 * boxMargin);
@@ -708,7 +708,48 @@
             [path stroke] ;
             
             break ;
-        case SSYVectorImageStyleSettings:;
+        }
+        case SSYVectorImageStyleBookmarksNoBox: {
+            CGFloat bookmarkLineWidth = 4.0;
+            CGFloat bookmarkSpacing = 10.0;
+            CGFloat bookmarkWidth = (100 - 2*insetPercent - (COUNT_OF_BOOKMARKS-1)*bookmarkSpacing)/COUNT_OF_BOOKMARKS - bookmarkLineWidth/2;
+            CGFloat bookmarkPitch = (bookmarkSpacing + bookmarkWidth);
+            
+#define LITTLE_HOLE_RADIUS 4.0
+            [[NSColor blackColor] set] ;
+            
+            CGFloat xbb = insetPercent + bookmarkWidth/2.0 + bookmarkLineWidth/2;
+            for (NSInteger i=0; i<COUNT_OF_BOOKMARKS; i++) {
+                CGFloat height = 100 - 2*insetPercent - 2*bookmarkLineWidth;
+                [self bookmarkOnPath:path
+                                midX:xbb
+                               width:bookmarkWidth
+                              bottom:insetPercent + 1.5*bookmarkLineWidth
+                              height:height
+                              inseam:0.35] ;
+                [path setLineWidth:bookmarkLineWidth] ;
+                [path stroke] ;
+                [path removeAllPoints] ;
+                
+                NSPoint holeCenter = NSMakePoint(xbb, insetPercent + 0.85 * height) ;
+                NSPoint holeEdge = NSMakePoint(xbb + LITTLE_HOLE_RADIUS, holeCenter.y) ;
+                [path moveToPoint:holeEdge] ;
+                [path appendBezierPathWithArcWithCenter:holeCenter
+                                                 radius:LITTLE_HOLE_RADIUS
+                                             startAngle:0.0
+                                               endAngle:360.0] ;
+                [path setLineWidth:bookmarkLineWidth] ;
+                [path stroke] ;
+                [path removeAllPoints] ;
+                
+                xbb += bookmarkPitch ;
+            }
+            
+            [path stroke] ;
+            
+            break ;
+        }
+        case SSYVectorImageStyleSettings: {
 #define COUNT_OF_SLIDERS 3
             CGFloat sliderPitch = (100.0 - 2*insetPercent)/COUNT_OF_SLIDERS;
             CGFloat handlePositions[COUNT_OF_SLIDERS] ;
@@ -736,15 +777,16 @@
             
             [path stroke] ;
             break ;
+        }
         case SSYVectorImageStyleReports:;
-            CGFloat lineWidth = 2.0;
+            CGFloat lineWidth = 3.0;
             CGFloat titleHeight = 12 * insetScaleFactor;
             CGFloat titleInsetFromItems = 8;
             CGFloat titleWidth = 100 - 2*(insetPercent + titleInsetFromItems + lineWidth);
             CGFloat titleExtraVerticalMargin = 8 * insetScaleFactor;
-            CGFloat countOfReportItems = 5;
+            CGFloat countOfReportItems = 4;
             CGFloat itemPitch = (100.0 - 2*insetPercent - lineWidth - titleHeight - titleExtraVerticalMargin)/countOfReportItems;
-            CGFloat reportItemHeight = itemPitch - 2*lineWidth;
+            CGFloat reportItemHeight = itemPitch - 3*lineWidth;
             NSRect rect;
             // Make the title (actually it is just a rectangle)
             rect = NSMakeRect(
@@ -936,8 +978,11 @@
         case SSYVectorImageStyleCheck2:
             name = @"Check2";
             break;
-        case SSYVectorImageStyleBookmarksInFolder:
-            name = @"Folder";
+        case SSYVectorImageStyleBookmarksInBox:
+            name = @"BookmarksInBox";
+            break;
+        case SSYVectorImageStyleBookmarksNoBox:
+            name = @"BookmarksNoBox";
             break;
         case SSYVectorImageStyleSettings:
             name = @"Settings";

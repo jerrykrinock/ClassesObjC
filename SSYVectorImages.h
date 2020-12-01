@@ -38,7 +38,8 @@ enum SSYVectorImageStyles_enum
     SSYVectorImageStyleTag,
     SSYVectorImageStyleCheck1,
     SSYVectorImageStyleCheck2,
-    SSYVectorImageStyleBookmarksInFolder,
+    SSYVectorImageStyleBookmarksInBox,
+    SSYVectorImageStyleBookmarksNoBox,
     SSYVectorImageStyleSettings,
     SSYVectorImageStyleReports,
     /* Circle with a single radial line inside of it, like an old fashioned
