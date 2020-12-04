@@ -697,15 +697,17 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	NSTextField* textField = [self textField] ;
 	[[textField cell] setLineBreakMode:NSLineBreakByTruncatingMiddle] ;
 	[textField setStringValue:text] ;
-	CGFloat requiredTextWidth = [text widthForHeight:CGFLOAT_MAX
-												font:[textField font]] ;
-	[textField setWidth:requiredTextWidth] ;
+    NSPoint origin = textField.frame.origin;
+    NSSize size;
+    size.height = textField.frame.size.height;
+    [textField sizeToFit];
+    size.width = textField.frame.size.width;
+    textField.frame = NSMakeRect(origin.x, origin.y, size.width, size.height);
 
 	if (hyperText == nil) {
 		hyperText = @"" ;
 	}
 	SSYRolloverButton* hyperButton = [self hyperButton] ;
-	CGFloat hyperWidth ;
 	if ([hyperText length] > 0) {		
 		[hyperButton setTarget:target] ;
 		[hyperButton setAction:action] ;
@@ -717,14 +719,18 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 									nil] ;				
 		NSAttributedString* title = [[NSAttributedString alloc] initWithString:hyperText
 																	attributes:attributes] ;
-		[hyperButton setAttributedTitle:title] ;
-		hyperWidth = [title widthForHeight:100.0] ;
+		[hyperButton setAttributedTitle:title];
+        NSPoint origin = hyperButton.frame.origin;
+        NSSize size;
+        size.height = hyperButton.frame.size.height;
+        [hyperButton sizeToFit];
+		size.width = hyperButton.frame.size.width;
         [title release] ;
+        hyperButton.frame = NSMakeRect(origin.x, origin.y, size.width, size.height);
 	}
 	else {
-		hyperWidth = 0.0 ;
+        [hyperButton setWidth:0.0] ;
 	}
-	[hyperButton setWidth:hyperWidth] ;	
 
 	[self unsafeHideProgressBar] ;
 
