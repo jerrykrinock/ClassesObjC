@@ -43,6 +43,8 @@ NSString* constKeyTimeoutSelectorName = @"timeoutSelectorName"  ;
     }
 }
 
+/* This method is invoked by a -performSelector: call in method
+ +beginDanceToGetOwnershipOfMenuBar: */
 + (void)dance {
     NSRunningApplication* dancePartnerApp = nil ;
     NSString* dancePartnerAppBundleIdentifier = nil ;
