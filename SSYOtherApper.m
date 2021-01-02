@@ -522,7 +522,10 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
                             @"tell application \"%@\"\n",
                             bundlePath] ;
         if (closeWindows) {
-            source = [source stringByAppendingString:@"close windows\n"] ;
+            /* We enclose 'close windows' in a 'try' block because some apps,
+             such as iCab 6 running in macOS 10.11.2, throw an AppleScript
+             error when told to 'close windows'. */
+            source = [source stringByAppendingString:@"try\nclose windows\nend try\n"] ;
         }
         source = [source stringByAppendingString:@"quit\nend tell"] ;
 
