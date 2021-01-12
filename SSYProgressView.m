@@ -412,7 +412,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 		[[self textField] setToolTip:nil] ;
 	}
 	
-	[self setNeedsDisplay:YES] ;
+    self.needsDisplay = YES;
 }
 
 - (void)unsafeSetHasCancelButtonWithTarget:(id)target

@@ -147,7 +147,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// The next two lines are very important.  Took me many months to learn that,
 	// by default, NSTextViews will resize themselves automatically to accomodate
 	// a changed text size, and what's even more confusing is that they do so
-	// when you (or a superview) invoke -setNeedsDisplay: or -display on them.
+	// when you (or a superview) sets their `needsDisplay` property to YES.
 	// When used in SSYAlert, SSYAlert wants to set their size manually, in its
 	// -display method.  In particular, if SSYAlert's ivar allowsShrinking is set
 	// to NO, in fact we want them to maintain their height when automatic resizing
@@ -206,7 +206,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @implementation SSYAlertWindow
 
 - (NSInteger)checkboxState {
-    NSInteger state = NSMixedState ; // default answer in case we can't find checkbox
+    NSInteger state = NSControlStateValueMixed ; // default answer in case we can't find checkbox
     BOOL didFindCheckbox = NO ;
     for (NSView* view in [[self contentView] subviews]) {
         if ([view isKindOfClass:[SSYWrappingCheckbox class]]) {
@@ -219,7 +219,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
     
     if (!didFindCheckbox) {
         // Until BookMacster 1.22.4, logged Internal Error 624-9382
-        state = NSOffState ;
+        state = NSControlStateValueOff ;
     }
     
     return state ;
@@ -816,7 +816,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
                                              object:self] ;
 	}
     
-    if ([self checkboxState] == NSOnState) {
+    if ([self checkboxState] == NSControlStateValueOn) {
         [[self checkboxInvocation] invoke] ;
     }
     

@@ -112,7 +112,7 @@
          to controlView, but decided that, since I don't understand what
          Apple is doing or not doing with controlView, it would be safer
          to use a private property. */
-        [self.headerView setNeedsDisplay:YES] ;
+        self.headerView.needsDisplay=YES;
     }
 }
 

@@ -249,8 +249,8 @@ typedef enum SSYSidebarControllerExpansionDirection_enum SSYSidebarControllerExp
         [self.sidebarView setFrame:sidebarFrame];
     }
 
-    [self.mainView setNeedsDisplay: YES];
-    [self.sidebarView setNeedsDisplay:YES];
+    self.mainView.needsDisplay = YES;
+    self.sidebarView.needsDisplay = YES;
 }
 
 
