@@ -86,17 +86,17 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 	NSString* label = nil ;
 	NSString* toolTip = nil ;
 	switch (value) {
-		case NSOnState:
+		case NSControlStateValueOn:
 			image = [self onImage] ;
 			label = [self onLabel] ;
 			toolTip = [self onToolTip] ;
 			break ;
-		case NSOffState:
+		case NSControlStateValueOff:
 			image = [self offImage] ;
 			label = [self offLabel] ;
 			toolTip = [self offToolTip] ;
 			break ;
-		case NSMixedState:
+		case NSControlStateValueMixed:
 			image = [self disImage] ;
 			label = [self disLabel] ;
 			toolTip = [self disToolTip] ;
@@ -105,7 +105,7 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 
 	if (self.view) {
         /* Change the image for a view-based button */
-        [self.view setNeedsDisplay:YES];
+        self.view.needsDisplay=YES;
     } else {
         /* Change the image for a image-based button */
         [self setImage:image] ;
@@ -142,7 +142,7 @@ static NSString* const constKeyToolTip = @"toolTip" ;
         [self setFlashTimer:timer] ;
     }
     
-	//[self setValue:([self value] == NSOnState) ? NSOffState : NSOnState] ;
+	//[self setValue:([self value] == NSControlStateValueOn) ? NSControlStateValueOff : NSControlStateValueOn] ;
 	[[self externalTarget] performSelector:[self externalAction]
 								withObject:self] ;
 }
@@ -183,15 +183,15 @@ static NSString* const constKeyToolTip = @"toolTip" ;
     NSImage* image = nil;
     NSString* toolTip = nil;
     switch (self.toolbarItem.value) {
-        case NSOnState:
+        case NSControlStateValueOn:
             image = [self.toolbarItem onImage];
             toolTip = [self.toolbarItem onToolTip];
             break ;
-        case NSOffState:
+        case NSControlStateValueOff:
             image = [self.toolbarItem offImage];
             toolTip = [self.toolbarItem offToolTip];
             break ;
-        case NSMixedState:
+        case NSControlStateValueMixed:
             image = self.toolbarItem.disImage;
             toolTip = self.toolbarItem.disToolTip;
             break ;

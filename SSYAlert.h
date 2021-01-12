@@ -1231,7 +1231,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  @brief    Returns the state of the receiver's checkbox
 
  @details  Message is forwarded directly to the checkbox.
- @result   NSOnState, NSOffState or NSMixedState
+ @result   NSControlStateValueOn, NSControlStateValueOff or NSControlStateValueMixed
 */
 - (NSCellStateValue)checkboxState ;
 

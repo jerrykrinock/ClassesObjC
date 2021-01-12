@@ -28,8 +28,8 @@
 }
 
 /*!
- @brief    An internal variable, generally NSOnState,
- NSOffState or NSMixedState.
+ @brief    An internal variable, generally NSControlStateValueOn,
+ NSControlStateValueOff or NSControlStateValueMixed.
 
  @details  This is KVO-compliant and is also exposed as a binding.
 */
@@ -37,19 +37,19 @@
 
 /*!
  @brief    The image that will be displayed when the receiver's  value is
- NSOnState.
+ NSControlStateValueOn.
 */
 @property (retain) NSImage* onImage ;
 
 /*!
  @brief    The image that will be displayed when the receiver's value is
- NSOnState.
+ NSControlStateValueOn.
  */
 @property (retain) NSImage* offImage ;
 
 /*!
  @brief    The image that will be displayed when the receiver's value is
- NSMixedState.
+ NSControlStateValueMixed.
  */
 @property (retain) NSImage* disImage ;
 
@@ -61,7 +61,7 @@
 
 /*!
  @brief    The string that will be displayed under the button
- when the receiver's value is set to NSOnState.  This value
+ when the receiver's value is set to NSControlStateValueOn.  This value
  defaults to nil, and if it is nil when the receiver's value 
  is changed to this state, the label does not change.  Thus,
  for a fixed, constant label, use super's -setLabel:
@@ -70,7 +70,7 @@
 
 /*!
  @brief    The string that will be displayed under the button
- when the receiver's value is set to NSOnState.  This value
+ when the receiver's value is set to NSControlStateValueOn.  This value
  defaults to nil, and if it is nil when the receiver's value 
  is changed to this state, the label does not change.  Thus,
  for a fixed, constant label, use super's -setLabel:
@@ -80,7 +80,7 @@
 
 /*!
  @brief    The string that will be displayed under the button
- when the receiver's value is set to NSMixedState.  This value
+ when the receiver's value is set to NSControlStateValueMixed.  This value
  defaults to nil, and if it is nil when the receiver's value 
  is changed to this state, the label does not change.  Thus,
  for a fixed, constant label, use super's -setLabel:
@@ -90,7 +90,7 @@
 
 /*!
  @brief    The receiver's toolTip
- when the receiver's value is set to NSOnState.  This value
+ when the receiver's value is set to NSControlStateValueOn.  This value
  defaults to nil, and if it is nil when the receiver's value 
  is changed to this state, the label does not change.  Thus,
  for a fixed, constant toolTip, use super's -setToolTip:
@@ -99,7 +99,7 @@
 
 /*!
  @brief    The receiver's toolTip
- when the receiver's value is set to NSOnState.  This value
+ when the receiver's value is set to NSControlStateValueOn.  This value
  defaults to nil, and if it is nil when the receiver's value 
  is changed to this state, the label does not change.  Thus,
  for a fixed, constant toolTip, use super's -setToolTip:
@@ -108,7 +108,7 @@
 
 /*!
  @brief    The receiver's toolTip
- when the receiver's value is set to NSMixedState.  This value
+ when the receiver's value is set to NSControlStateValueMixed.  This value
  defaults to nil, and if it is nil when the receiver's value 
  is changed to this state, the label does not change.  Thus,
  for a fixed, constant toolTip, use super's -setToolTip: 
