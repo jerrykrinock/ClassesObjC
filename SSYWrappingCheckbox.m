@@ -157,7 +157,7 @@ CGFloat static const constTextMarginY = 5.0 ;
 		NSRect checkboxFrame = NSMakeRect(0.0, 0.0, constCheckboxWidth, constCheckboxHeight) ;
 		NSButton* checkbox = [[NSButton alloc] initWithFrame:checkboxFrame] ;
 		[checkbox setTitle:@""] ;
-		[checkbox setButtonType:NSSwitchButton] ;
+		[checkbox setButtonType:NSButtonTypeSwitch] ;
 		[checkbox setAutoresizingMask:NSViewNotSizable] ;
 		[self addSubview:checkbox] ;
 		[checkbox release] ;

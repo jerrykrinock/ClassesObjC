@@ -152,7 +152,7 @@ NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredic
         SSYReplacePredicateCheckbox* button = [[SSYReplacePredicateCheckbox alloc] initWithFrame:NSMakeRect(0.0, 2.0, 68.0, 18.0)] ;
         button.predicateEditorRowTemplate = self ;
         button.attributeKey = self.attributeKey ;
-        [button setButtonType:NSSwitchButton] ;
+        [button setButtonType:NSButtonTypeSwitch] ;
         [button setTitle:NSLocalizedString(@"Replace", @"Title of a checkbox, associated with 'Find', which user activates to indication that the associated finding should be replaced with some other text or data")] ;
         [button setTarget:self.replacer] ;
         [button setFont:[NSFont systemFontOfSize:11.0]] ;
