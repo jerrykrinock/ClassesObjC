@@ -43,7 +43,7 @@
 /*!
  @brief    The state of the receiver's checkbox
 */
-@property (assign) NSCellStateValue state ;
+@property (assign) NSControlStateValue state ;
 
 /*!
  @brief    Designated initializer for SSYWrappingCheckbox.

@@ -71,11 +71,11 @@ static NSString* const constKeyMaxWidth = @"MaxWidth" ;
 	[self sizeToFit] ;
 }
 
-- (void)setState:(NSCellStateValue)state {
+- (void)setState:(NSControlStateValue)state {
 	[[self checkbox] setState:state] ;
 }
 
-- (NSCellStateValue)state {
+- (NSControlStateValue)state {
 	return [[self checkbox] state] ;
 }
 

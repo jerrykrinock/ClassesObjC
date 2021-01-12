@@ -1387,7 +1387,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	[[self smallTextView] setAlignment:alignment] ;
 }
 
-- (void)setCheckboxState:(NSCellStateValue)state {
+- (void)setCheckboxState:(NSControlStateValue)state {
 	[[self checkbox] setState:state] ;
 }
 
@@ -2279,7 +2279,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	return running ;	
 }
 
-- (NSCellStateValue)checkboxState {
+- (NSControlStateValue)checkboxState {
 	return [[self checkbox] state] ;
 }
 

@@ -1086,7 +1086,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
 
  @param    state  The state to be set.
  */
-- (void)setCheckboxState:(NSCellStateValue)state ;
+- (void)setCheckboxState:(NSControlStateValue)state ;
 	
 	
 # pragma mark * Layout
@@ -1233,7 +1233,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  @details  Message is forwarded directly to the checkbox.
  @result   NSControlStateValueOn, NSControlStateValueOff or NSControlStateValueMixed
 */
-- (NSCellStateValue)checkboxState ;
+- (NSControlStateValue)checkboxState ;
 
 @end
 
