@@ -48,7 +48,7 @@
 		[textField setFont:[NSFont systemFontOfSize:11.0]] ;
 		// A newly-created NSTextField has string value "Field".
 		[textField setStringValue:[verb ellipsize]] ;
-		[textField setAlignment:NSCenterTextAlignment] ;
+		[textField setAlignment:NSTextAlignmentCenter] ;
 		[[self contentView] addSubview:textField] ;
         [textField release] ;
 		

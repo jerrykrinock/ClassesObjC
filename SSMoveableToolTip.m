@@ -47,7 +47,7 @@ static SSMoveableToolTip	*sharedToolTip = nil;
         [_textField setBezeled:NO];
         [_textField setBordered:NO];
         [_textField setDrawsBackground:NO];
-        [_textField setAlignment:NSLeftTextAlignment];
+        [_textField setAlignment:NSTextAlignmentLeft];
         [_textField setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [[_window contentView] addSubview:_textField];
         

@@ -243,7 +243,7 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	if (!_hyperButton) {
 		_hyperButton = [[SSYRolloverButton alloc] initWithFrame:NSMakeRect(0,0,0,[self frame].size.height)] ;
 		[_hyperButton setBordered:NO] ;
-		[_hyperButton setAlignment:NSCenterTextAlignment] ;
+		[_hyperButton setAlignment:NSTextAlignmentCenter] ;
 		[self addSubview:_hyperButton] ;
 	}
 	

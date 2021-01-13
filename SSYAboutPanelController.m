@@ -127,7 +127,7 @@
 	/*
 	NSAttributedString	*horizontalLine;
 	NSMutableParagraphStyle* psCentered = [[[NSMutableParagraphStyle alloc] init] autorelease];
-	[psCentered setAlignment:NSCenterTextAlignment] ;
+	[psCentered setAlignment:NSTextAlignmentCenter] ;
 	NSDictionary* dicCentered = [NSDictionary dictionaryWithObjectsAndKeys: psCentered, @"NSParagraphStyleAttributeName", nil] ;
     horizontalLine = [[[NSAttributedString alloc] initWithString: @"______________________________\n" attributes:dicCentered] autorelease];
     newline = [[[NSAttributedString alloc] initWithString: @"\n." attributes:dicCentered] autorelease];
