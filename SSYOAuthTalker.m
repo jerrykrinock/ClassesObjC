@@ -296,7 +296,7 @@ end:
 		}
 		if (info_p) {
 			NSString* string = [NSString stringWithDataUTF8:data] ;
-			*info_p = [string queryDictionaryUsingEncoding:NSUTF8StringEncoding] ;
+			*info_p = [string queryDictionary] ;
 		}
 	}
 	else {
@@ -449,7 +449,7 @@ end:;
  */
 - (void)processOAuthInfo:(NSNotification*)note {
 	NSString* query = [note object] ;
-	NSDictionary* info = [query queryDictionaryUsingEncoding:NSUTF8StringEncoding] ;
+	NSDictionary* info = [query queryDictionary] ;
 	// Note: moreInfo also contains the oauth_token, but we already got that in the
 	// response during getUnauthorizedRequestInfo:: and have stored it in an ivar.
 	NSString* verifier = [info objectForKey:constKeyOAuthVerifier] ;
