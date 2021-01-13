@@ -42,7 +42,7 @@ NSString* SSYArrayControllerRowsType = @"SSYArrayControllerRowsType" ;
 	// Register for drag and drop
 	NSArray* draggedTypes = [NSArray arrayWithObjects:
 							 SSYArrayControllerRowsType,
-							 NSURLPboardType,
+							 NSPasteboardTypeURL,
 							 nil] ;
     [tableView registerForDraggedTypes:draggedTypes] ;
     [tableView setAllowsMultipleSelection:YES] ;
