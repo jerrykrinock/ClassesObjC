@@ -16,7 +16,7 @@
     //	Programmatically create the new panel
     panelToDisplay = [[NSFancyPanel alloc]
         initWithContentRect: [[panelInNib contentView] frame]
-        styleMask: NSBorderlessWindowMask
+        styleMask: NSWindowStyleMaskBorderless
         backing: [panelInNib backingType]
         defer: NO];
 

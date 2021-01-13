@@ -174,7 +174,7 @@ static SSYHintArrow* static_helpArrow = nil ;
     NSRect contentRect = NSMakeRect(0.0, 0.0, m_size.width, m_size.height) ;
     contentRect.size = m_size ;
     if ((self = [super initWithContentRect:contentRect 
-								 styleMask:NSBorderlessWindowMask 
+								 styleMask:NSWindowStyleMaskBorderless 
 								   backing:NSBackingStoreBuffered 
 									 defer:NO])) {
 		// Parameters for displaying the fat blue arrow.

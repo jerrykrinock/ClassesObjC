@@ -2313,7 +2313,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// is to make [window center] think it is a tall window and place it up
 	// fairly high on the screen.
 	NSWindow* window = [[SSYAlertWindow alloc] initWithContentRect:initialRect
-														 styleMask:NSTitledWindowMask
+														 styleMask:NSWindowStyleMaskTitled
 														   backing:NSBackingStoreBuffered
 															 defer:NO] ;
     /* NSWindow has nonstandard memory management.  Note that, under non-ARC,

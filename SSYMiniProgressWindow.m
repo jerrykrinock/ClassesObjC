@@ -11,7 +11,7 @@
 	point.y -= SSY_MINI_PROGRESS_WINDOW_HEIGHT ;
     NSRect rect = NSMakeRect(0.0, 0.0, SSY_MINI_PROGRESS_WINDOW_WIDTH, SSY_MINI_PROGRESS_WINDOW_HEIGHT) ;
     self = [super initWithContentRect:rect 
-							styleMask:NSBorderlessWindowMask 
+							styleMask:NSWindowStyleMaskBorderless 
 							  backing:NSBackingStoreBuffered 
 								defer:NO] ;
 	if (self) {

@@ -29,7 +29,7 @@ static SSMoveableToolTip	*sharedToolTip = nil;
         
         _window = [[NSWindow alloc]
                     initWithContentRect:    contentRect
-                              styleMask:    NSBorderlessWindowMask
+                              styleMask:    NSWindowStyleMaskBorderless
                                 backing:    NSBackingStoreBuffered
                                   defer:    YES];
         
