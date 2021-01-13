@@ -859,7 +859,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
                                    [image size].width - 2 * borderWength,
                                    [image size].height - 2 * borderWength)
                fromRect:NSZeroRect
-              operation:NSCompositeSourceOver
+              operation:NSCompositingOperationSourceOver
                fraction:1.0] ;
     [image unlockFocus] ;
     
@@ -888,7 +888,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
                                  [image size].width / 2,
                                  [image size].height / 2)
              fromRect:NSZeroRect
-            operation:NSCompositeSourceOver
+            operation:NSCompositingOperationSourceOver
              fraction:0.75] ;
     [image unlockFocus] ;
     iconView = [[NSImageView alloc] initWithFrame:frame] ;
@@ -915,7 +915,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
                                  [image size].width / 2,
                                  [image size].height / 2)
              fromRect:NSZeroRect
-            operation:NSCompositeSourceOver
+            operation:NSCompositingOperationSourceOver
              fraction:0.75] ;
     [image unlockFocus] ;
     iconView = [[NSImageView alloc] initWithFrame:frame] ;

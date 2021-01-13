@@ -204,7 +204,7 @@ static NSString* const constKeyToolTip = @"toolTip" ;
                                  [image size].width,
                                  [image size].height)
              fromRect:NSZeroRect
-            operation:NSCompositeSourceOver
+            operation:NSCompositingOperationSourceOver
              fraction:1.0];
 
     [self.toolbarItem.backgroundImage drawInRect:NSMakeRect(
@@ -213,7 +213,7 @@ static NSString* const constKeyToolTip = @"toolTip" ;
                                                             self.toolbarItem.backgroundImage.size.width,
                                                             self.toolbarItem.backgroundImage.size.height)
                                         fromRect:NSZeroRect
-                                       operation:NSCompositeSourceOver
+                                       operation:NSCompositingOperationSourceOver
                                         fraction:1.0];
 
     if (toolTip) {

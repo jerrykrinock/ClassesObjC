@@ -167,7 +167,7 @@ NSString* const constKeyRating = @"rating" ;
 	CGFloat removeXTweak = -1.0 ;
 	[[self removeXImage] drawAtPoint:NSMakePoint([self horizontalMargin], (self.bounds.size.height - removeXSize.height)/2.0 + removeXTweak)
 							fromRect:NSMakeRect(0.0, 0.0, removeXSize.width, removeXSize.height)
-						   operation:NSCompositeSourceOver
+						   operation:NSCompositingOperationSourceOver
 							fraction:1.0] ;
 	
 	// Draw stars
@@ -178,7 +178,7 @@ NSString* const constKeyRating = @"rating" ;
         [[self starImage] drawAtPoint:[self pointOfStarAtPosition:i
 													  highlighted:YES]
 							 fromRect:NSMakeRect(0.0, 0.0, starSize.width, starSize.height)
-							operation:NSCompositeSourceOver
+							operation:NSCompositingOperationSourceOver
 							 fraction:1.0] ;
         if( i < [[self rating] floatValue])
         {
@@ -207,7 +207,7 @@ NSString* const constKeyRating = @"rating" ;
                     [pathClip addClip];
 
             }
-            [[self starHighlightedImage] drawAtPoint:starPoint fromRect:NSMakeRect(0.0, 0.0, starHighlightedSize.width, starHighlightedSize.height) operation:NSCompositeSourceOver fraction:1.0];
+            [[self starHighlightedImage] drawAtPoint:starPoint fromRect:NSMakeRect(0.0, 0.0, starHighlightedSize.width, starHighlightedSize.height) operation:NSCompositingOperationSourceOver fraction:1.0];
         
             [NSGraphicsContext restoreGraphicsState];
         }   
