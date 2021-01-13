@@ -982,8 +982,8 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		if (!progressBar_) {
 			// Add progress bar
 			progressBar_ = [[NSProgressIndicator alloc] initWithFrame:NSZeroRect] ;
-			[progressBar_ setControlSize:NSSmallControlSize] ;
-			[progressBar_ setStyle:NSProgressIndicatorBarStyle] ;
+			[progressBar_ setControlSize:NSControlSizeSmall] ;
+			[progressBar_ setStyle:NSProgressIndicatorStyleBar] ;
 			[progressBar_ sizeToFit] ;
 			[progressBar_ setUsesThreadedAnimation:YES] ;
 			[self setProgressBar:progressBar_] ;

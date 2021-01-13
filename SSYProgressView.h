@@ -8,8 +8,8 @@
 #define CIRCLESTYLE SSYProgressIndicatorStyleCircle
 #else
 #define PROGRESSINDICATORCLASS NSProgressIndicator
-#define BARSTYLE NSProgressIndicatorBarStyle
-#define CIRCLESTYLE NSProgressIndicatorSpinningStyle
+#define BARSTYLE NSProgressIndicatorStyleBar
+#define CIRCLESTYLE NSProgressIndicatorStyleSpinning
 #endif
 
 

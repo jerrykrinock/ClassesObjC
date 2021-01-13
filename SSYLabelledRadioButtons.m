@@ -216,7 +216,7 @@ CGFloat static const constTextCenteringTweak = -0.0 ;
 		// We assume this order when accessing the subviews later.
 		
 		NSButtonCell* cell = [[NSButtonCell alloc] initTextCell:NSLocalizedString(@"proto", nil)] ;
-		[cell setButtonType:NSRadioButton] ;
+		[cell setButtonType:NSButtonTypeRadio] ;
 		[cell setTitle:@""] ;
 		NSMatrix* matrix  = [[NSMatrix alloc] initWithFrame:NSZeroRect
 													   mode:NSRadioModeMatrix

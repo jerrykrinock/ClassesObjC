@@ -587,11 +587,11 @@ NSString* constKeyCompletionShowtime = @"shtm" ;
 	spinnerFrame.size.width = height ;
 	PROGRESSINDICATORCLASS* spinner = [[PROGRESSINDICATORCLASS alloc] initWithFrame:spinnerFrame] ;
 	// The following is to eliminate this warning from appearing in system console:
-	// "A regular control size progress indicator … with the frame size for small control size detected.  Please use -setControlSize: to explicitly specify NSSmallControlSize"
+	// "A regular control size progress indicator … with the frame size for small control size detected.  Please use -setControlSize: to explicitly specify NSControlSizeSmall"
 	// I'm not sure if this is the correct threshold, but it worked for my application.
-	// Also, apparently, there should be a threshold for NSMiniControlSize, but I haven't run into that yet. 
+	// Also, apparently, there should be a threshold for NSControlSizeMini, but I haven't run into that yet. 
 	if (height < 17.0) {
-		[spinner setControlSize:NSSmallControlSize] ;
+		[spinner setControlSize:NSControlSizeSmall] ;
 	}
 	[self addSubview:spinner] ;
 	[spinner release] ;

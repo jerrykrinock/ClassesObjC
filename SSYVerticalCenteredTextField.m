@@ -12,13 +12,13 @@
 	if (newFontSize != oldFontSize) {
 		NSControlSize newControlSize ;
 		if (newFontSize > 13) {
-			newControlSize = NSRegularControlSize ;
+			newControlSize = NSControlSizeRegular ;
 		}
 		else if (newFontSize > 10) {
-			newControlSize = NSSmallControlSize ;
+			newControlSize = NSControlSizeSmall ;
 		}
 		else {
-			newControlSize = NSMiniControlSize ;
+			newControlSize = NSControlSizeMini ;
 		}
 		[[self cell] setControlSize:newControlSize] ;
 

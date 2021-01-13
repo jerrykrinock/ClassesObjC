@@ -37,7 +37,7 @@
 - (id)init {
 	if (self = [super init]) {
         // Set up the popup cell attributes
-		[self setControlSize:NSMiniControlSize] ;
+		[self setControlSize:NSControlSizeMini] ;
 		[self setBordered:NO] ;
 		[self setBezeled:NO] ;
 		[self setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]] ;
