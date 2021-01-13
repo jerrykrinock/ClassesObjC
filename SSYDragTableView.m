@@ -25,7 +25,7 @@
 - (void)keyDown:(NSEvent*)event {
 	NSString *s = [event charactersIgnoringModifiers] ;
 	NSUInteger modifierFlags = [event modifierFlags] ;
-	BOOL cmdKeyDown = ((modifierFlags & NSCommandKeyMask) != 0) ;
+	BOOL cmdKeyDown = ((modifierFlags & NSEventModifierFlagCommand) != 0) ;
 	unichar keyChar = 0 ;
 	BOOL didHandle = NO ;
 	if ([s length] == 1) {

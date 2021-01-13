@@ -90,7 +90,7 @@ extern NSString* const SSYShortcutActuatorDidChangeShortcutsNotification ;
  @param    keyCode  The key code for the new handler, or -1
  to remove the handler
  @param    modifierFlags  The Cocoa modifier keys for the new handler, for
- example NSShiftKeyMask+NSCommandKeyMask+NSAlternateKeyMask+NSControlKeyMask
+ example NSEventModifierFlagShift+NSEventModifierFlagCommand+NSEventModifierFlagOption+NSEventModifierFlagControl
  @param    selectorName  The name of the selector of the message which
  will be sent to [NSApp delegate], if it responds, when the user
  presses the shortcut.  This selector's signature must take 0 parameters.

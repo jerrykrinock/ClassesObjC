@@ -336,13 +336,13 @@ static SSYHintArrow* static_helpArrow = nil ;
 + (void)removeIfEvent:(NSEvent*)event {
 	NSEventType eventType = [event type] ;
 	if (
-		(eventType == NSLeftMouseDown)
+		(eventType == NSEventTypeLeftMouseDown)
 		||
-		(eventType == NSRightMouseDown)
+		(eventType == NSEventTypeRightMouseDown)
 		||
 		(eventType == NSOtherMouseDown)
 		||
-		(eventType == NSKeyDown)
+		(eventType == NSEventTypeKeyDown)
 		) {
 		[static_helpArrow endWithNote:nil] ;
 	}

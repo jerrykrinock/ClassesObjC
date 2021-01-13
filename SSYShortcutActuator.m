@@ -171,10 +171,10 @@ OSStatus SSYShortcutActuate(
 
 + (NSString*)descriptionOfModifiers:(NSUInteger)modifiers {
 	NSMutableString* string = [[NSMutableString alloc] init] ;
-	if (modifiers & NSCommandKeyMask) [string appendString:@"cmnd+"] ;
-	if (modifiers & NSAlternateKeyMask) [string appendString:@"optn+"] ;
-	if (modifiers & NSControlKeyMask) [string appendString:@"ctrl+"] ;
-	if (modifiers & NSShiftKeyMask) [string appendString:@"shft+"] ;
+	if (modifiers & NSEventModifierFlagCommand) [string appendString:@"cmnd+"] ;
+	if (modifiers & NSEventModifierFlagOption) [string appendString:@"optn+"] ;
+	if (modifiers & NSEventModifierFlagControl) [string appendString:@"ctrl+"] ;
+	if (modifiers & NSEventModifierFlagShift) [string appendString:@"shft+"] ;
 	if (modifiers & NSFunctionKeyMask) [string appendString:@"func+"] ;
 	
 	NSString* answer = [NSString stringWithString:string] ;
@@ -335,9 +335,9 @@ OSStatus SSYShortcutActuate(
         // keys: command, control, option.  An argument could be made that
         // the option key by itself is not good enough, but we led that
         // one slide.
-        if (!(modifiers & NSCommandKeyMask)) {
-            if (!(modifiers & NSControlKeyMask)) {
-                if (!(modifiers & NSAlternateKeyMask)) {
+        if (!(modifiers & NSEventModifierFlagCommand)) {
+            if (!(modifiers & NSEventModifierFlagControl)) {
+                if (!(modifiers & NSEventModifierFlagOption)) {
                     return NO ;
                 }
             }

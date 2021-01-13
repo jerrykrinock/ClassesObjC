@@ -36,13 +36,13 @@
 - (void) sendEvent:(NSEvent *) theEvent
 {
     //	Offer key-down events to the delegats
-    if ([theEvent type] == NSKeyDown)
+    if ([theEvent type] == NSEventTypeKeyDown)
         if ([[self delegate] respondsToSelector: @selector(handlesKeyDown:inWindow:)])
             if ([(id)[self delegate] handlesKeyDown: theEvent  inWindow: self])
                 return;
 
     //	Offer mouse-down events (lefty or righty) to the delegate
-    if ( ([theEvent type] == NSLeftMouseDown) || ([theEvent type] == NSRightMouseDown) )
+    if ( ([theEvent type] == NSEventTypeLeftMouseDown) || ([theEvent type] == NSEventTypeRightMouseDown) )
         if ([[self delegate] respondsToSelector: @selector(handlesMouseDown:inWindow:)])
             if ([(id)[self delegate] handlesMouseDown: theEvent  inWindow: self])
                 return;

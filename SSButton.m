@@ -147,7 +147,7 @@
 	if ([self keyEquivalentWithOrWithoutAltKey]) {
 		tweakedEvent = [NSEvent keyEventWithType:[event type]
 										location:[event locationInWindow]
-								   modifierFlags:[event modifierFlags] & ~NSAlternateKeyMask
+								   modifierFlags:[event modifierFlags] & ~NSEventModifierFlagOption
 									   timestamp:[event timestamp]
 									windowNumber:[event windowNumber]
 										 context:[event context]

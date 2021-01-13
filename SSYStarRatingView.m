@@ -244,7 +244,7 @@ NSString* const constKeyRating = @"rating" ;
     if( ![self editable] )
         return;
     
-    if ([theEvent type] == NSLeftMouseDown) {
+    if ([theEvent type] == NSEventTypeLeftMouseDown) {
         
         NSPoint pointInView   = [self convertPoint:[theEvent locationInWindow] fromView:nil];
         

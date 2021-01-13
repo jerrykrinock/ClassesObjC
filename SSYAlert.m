@@ -231,7 +231,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 // broken in a programmatically-created window.
 /* - (void)sendEvent:(NSEvent *)event {
 	int tab = 0 ;
-	if ([event type] == NSKeyDown) {
+	if ([event type] == NSEventTypeKeyDown) {
 		unichar character = [[event characters] characterAtIndex:0] ;
 		if (character == 9) {
 			tab = 1 ;
