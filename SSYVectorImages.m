@@ -427,7 +427,7 @@
                                                     fill:(style == SSYVectorImageStyleInfoOn)] ;
             [glyphImage drawInRect:NSMakeRect(0.0, 0.0, 100.0,100)
                           fromRect:NSZeroRect
-                         operation:NSCompositeCopy
+                         operation:NSCompositingOperationCopy
                           fraction:1.0] ;
             break ;
         }
@@ -438,7 +438,7 @@
                                                     fill:NO] ;
             [glyphImage drawInRect:NSMakeRect(0,0,100,100)
                           fromRect:NSZeroRect
-                         operation:NSCompositeCopy
+                         operation:NSCompositingOperationCopy
                           fraction:1.0] ;
             break ;
         }
@@ -450,7 +450,7 @@
             NSRect frame = NSInsetRect(NSMakeRect(0,0,100,100), insetPercent, insetPercent) ;
             [glyphImage drawInRect:frame
                           fromRect:NSZeroRect
-                         operation:NSCompositeCopy
+                         operation:NSCompositingOperationCopy
                           fraction:1.0] ;
             break ;
         }
