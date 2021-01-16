@@ -103,7 +103,7 @@ NSString* const constKeyRating = @"rating" ;
 	m_rating = rating ;
 	[m_rating retain] ;
 
-	[self setNeedsDisplay];
+	self.needsDisplay = YES;
 }
 
 - (NSNumber*)rating {
@@ -113,7 +113,7 @@ NSString* const constKeyRating = @"rating" ;
 -(void)setDisplayMode:(SSYStarRatingViewDisplayMode)dispMode
 {
     m_displayMode = dispMode ;
-    [self setNeedsDisplay];
+    self.needsDisplay = YES;
 }
 
 #pragma mark -
@@ -256,7 +256,7 @@ NSString* const constKeyRating = @"rating" ;
 						forKey:constKeyRating] ;
 
         
-		[self setNeedsDisplay];
+		self.needsDisplay = YES;
     }
 
 }
@@ -268,7 +268,7 @@ NSString* const constKeyRating = @"rating" ;
     
     NSPoint pointInView   = [self convertPoint:[theEvent locationInWindow] fromView:nil];
     [self setRating:[NSNumber numberWithInteger:[self starsForPoint:pointInView]]] ;
-    [self setNeedsDisplay];
+    self.needsDisplay = YES;
 }
 
 -(void)mouseUp:(NSEvent *)theEvent

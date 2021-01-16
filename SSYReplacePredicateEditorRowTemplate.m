@@ -80,7 +80,7 @@ NSString* SSYReplacePredicateCheckboxWillGoAwayNotification = @"SSYReplacePredic
     NSRect newFrame = self.frame ;
     newFrame.origin.x += deltaWidth ;
     self.frame = newFrame ;
-    [self setNeedsDisplay] ;
+    self.needsDisplay = YES;
 }
 #endif
 

@@ -1280,25 +1280,25 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 - (void)setButton1Enabled:(BOOL)enabled {
 	NSButton* button = [self button1] ;
 	[button setEnabled:enabled] ;
-	[button setNeedsDisplay] ;
+	button.needsDisplay = YES;
 }
 
 - (void)setButton2Enabled:(BOOL)enabled {
 	NSButton* button = [self button2] ;
 	[button setEnabled:enabled] ;
-	[button setNeedsDisplay] ;
+	button.needsDisplay = YES;
 }
 
 - (void)setButton3Enabled:(BOOL)enabled {
 	NSButton* button = [self button3] ;
 	[button setEnabled:enabled] ;
-	[button setNeedsDisplay] ;
+	button.needsDisplay = YES;
 }
 
 - (void)setButton4Enabled:(BOOL)enabled {
     NSButton* button = [self button4] ;
     [button setEnabled:enabled] ;
-    [button setNeedsDisplay] ;
+    button.needsDisplay = YES;
 }
 
 - (void)setCheckboxTitle:(NSString*)title {
