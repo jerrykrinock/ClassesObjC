@@ -2297,15 +2297,25 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 // bottom of the menu bar.
 
 - (id)init {
+    BOOL ok = YES;
+    
     /* See Note ActivationPolicy. */
 	if (!NSApp || ([NSApp activationPolicy] == NSApplicationActivationPolicyProhibited)) {
-
-#if !__has_feature(objc_arc)
-		[super dealloc] ;
-#endif
-		return nil ;
+        ok = NO;
 	}
-	
+
+    if (![[NSThread currentThread] isMainThread]) {
+        NSLog(@"Failing attempt to init SSYAlert on non-main thread");
+        ok = NO;
+    }
+    
+    if (!ok) {
+#if !__has_feature(objc_arc)
+        [super dealloc] ;
+#endif
+        return nil ;
+    }
+    
 	// Create window
 	NSRect initialRect = NSMakeRect(0, 0, WINDOW_PROTOTYPE_WIDTH, WINDOW_PROTOTYPE_HEIGHT) ;
 	// WINDOW_PROTOTYPE_WIDTH is because: If I use NSZeroRect, [window center] places
