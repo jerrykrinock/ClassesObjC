@@ -45,18 +45,7 @@ enum SSYSynchronousHttpErrorDomainErrorCodes {
  @brief    A wrapper around the Apple URL Loading System which blocks
  the invoking thread until a response is received, or timeout occurs.
 
- @details  Although it is possible to use
- +[NSURLConnection sendSynchronousRequest:returningResponse:error:] and 
- embed a username and password in the url in the form
- http://username:password@xxx.zzz, the NSErrors that you get from
- this method are not documented.  For example, if you give it a wrong
- username/password combination, you get NSURLErrorUserCancelledAuthentication = -1012.
- Apparently this is an implementation detail, that when it receives an
- authentication challenge, it cancels.  With this bad API, you're leaving
- the policy decisions to Apple instead of making them yourself, and
- since they are not documented, Apple may change them at any time.
- 
- @param    url  
+ @param    url
  @param    httpMethod  
  @param    headers  A dictionary of additional headers which will be added
  to the request.  These should be percent-escape encoded, but because of the
@@ -79,7 +68,6 @@ enum SSYSynchronousHttpErrorDomainErrorCodes {
  or one of the HTTP Status Codes defined in the IETF's RFC 2616,
  http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html  (100-199).
  @result   YES if the operation completed successfully, otherwise NO.
- 
  */
 + (BOOL)SSYSynchronousHttpUrl:(NSString*)urlString
 				   httpMethod:(NSString*)httpMethod

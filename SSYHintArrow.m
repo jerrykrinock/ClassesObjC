@@ -340,7 +340,7 @@ static SSYHintArrow* static_helpArrow = nil ;
 		||
 		(eventType == NSEventTypeRightMouseDown)
 		||
-		(eventType == NSOtherMouseDown)
+		(eventType == NSEventTypeOtherMouseDown)
 		||
 		(eventType == NSEventTypeKeyDown)
 		) {
