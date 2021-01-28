@@ -9,21 +9,9 @@
 		subject:(NSString*)subject
 		   body:(NSString*)body {
 	NSString* mailtoString = [NSString stringWithFormat:@"mailto:%@?subject=%@&body=%@",
-							  (NSString*)[(NSString*)CFURLCreateStringByAddingPercentEscapes(
-																							 NULL,
-																							 (CFStringRef)address,
-																							 NULL,
-																							 CFSTR("&"),
-																							 kCFStringEncodingUTF8) autorelease],
-							  (NSString*)[(NSString*)CFURLCreateStringByAddingPercentEscapes(NULL,
-																							 (CFStringRef)subject,
-																							 NULL, CFSTR("&"),
-																							 kCFStringEncodingUTF8) autorelease],
-							  (NSString*)[(NSString*)CFURLCreateStringByAddingPercentEscapes(NULL,
-																							 (CFStringRef)body,
-																							 NULL,
-																							 CFSTR("&"),
-																							 kCFStringEncodingUTF8) autorelease]] ;
+                              [address stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]],
+                              [subject stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]],
+                              [body stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]] ;
 	
 	// Create an email message in user's default email client
 	NSURL* mailtoURL = [NSURL URLWithString:mailtoString] ;
