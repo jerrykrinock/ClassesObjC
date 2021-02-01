@@ -175,7 +175,7 @@ OSStatus SSYShortcutActuate(
 	if (modifiers & NSEventModifierFlagOption) [string appendString:@"optn+"] ;
 	if (modifiers & NSEventModifierFlagControl) [string appendString:@"ctrl+"] ;
 	if (modifiers & NSEventModifierFlagShift) [string appendString:@"shft+"] ;
-	if (modifiers & NSFunctionKeyMask) [string appendString:@"func+"] ;
+	if (modifiers & NSEventModifierFlagFunction) [string appendString:@"func+"] ;
 	
 	NSString* answer = [NSString stringWithString:string] ;
 	[string release] ;

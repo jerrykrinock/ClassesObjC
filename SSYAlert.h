@@ -186,7 +186,7 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  has additional features.
 
  <p>
- The basic look is similar to Apple's alert.&nbsp; There are two columns, left and right.&nbsp;
+ The basic look is similar to Apple's alert prior in macOS 10.15 and earlier.&nbsp; There are two columns, left and right.&nbsp;
  The left column may have, from top to bottom:
  <ul>
  <li>  An icon</li>

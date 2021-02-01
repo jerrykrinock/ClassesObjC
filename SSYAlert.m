@@ -504,7 +504,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 + (NSButton*)makeButton {
 	NSButton* button = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 49, 49)] ;
 	[button setFont:[NSFont systemFontOfSize:13]] ;
-	[button setBezelStyle:NSRoundedBezelStyle] ;
+	[button setBezelStyle:NSBezelStyleRounded] ;
 #if !__has_feature(objc_arc)
     [button autorelease] ;
 #endif
@@ -943,7 +943,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 			// However, testing shows that we need 38.  Oh, well.
 			NSRect frame = NSMakeRect(0, 0, 38.0, 38.0) ;
 			button = [[NSButton alloc] initWithFrame:frame] ;
-			[button setBezelStyle:NSRegularSquareBezelStyle] ;
+			[button setBezelStyle:NSBezelStyleRegularSquare] ;
 			[button setTarget:self] ;
 			[button setAction:@selector(support:)] ;
 			NSString* imagePath = [[NSBundle mainAppBundle] pathForResource:@"support"
@@ -1250,7 +1250,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
              it works.  It seems there should be an NSHelpButtonSize constant
              but I can't find any. */
 			button = [[NSButton alloc] initWithFrame:frame] ;
-			[button setBezelStyle:NSHelpButtonBezelStyle] ;
+			[button setBezelStyle:NSBezelStyleHelpButton] ;
 			[button setTarget:self] ;
 			[button setAction:@selector(help:)] ;
 			[button setTitle:@""] ;
