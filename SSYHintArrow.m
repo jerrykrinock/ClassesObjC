@@ -142,13 +142,12 @@ static SSYHintArrow* static_helpArrow = nil ;
     // Call NSWindow's implementation of -setBackgroundColor: because we override 
     // it in this class to let us set the entire background image of the window 
     // as an NSColor patternImage.
-    NSDisableScreenUpdates() ;
     [super setBackgroundColor:[self backgroundColorPatternImage]] ;
+    /*SSYDBL*/ NSLog(@"Updating hint arrow background") ;
     if ([self isVisible]) {
         [self display] ;
         [self invalidateShadow] ;
     }
-    NSEnableScreenUpdates() ;
 }
 
 - (void)redisplay {
@@ -157,10 +156,9 @@ static SSYHintArrow* static_helpArrow = nil ;
     }
     
     m_isResizingLockout = YES ;
-    NSDisableScreenUpdates() ;
+    /*SSYDBL*/ NSLog(@"Redisplaying hint arrow") ;
     [self updateGeometry] ;
     [self updateBackground] ;
-    NSEnableScreenUpdates() ;
     m_isResizingLockout = NO ;
 }
 
