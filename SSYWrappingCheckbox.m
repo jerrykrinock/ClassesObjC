@@ -28,7 +28,7 @@ static NSString* const constKeyMaxWidth = @"MaxWidth" ;
                          modifierFlags:event.modifierFlags
                              timestamp:event.timestamp
                           windowNumber:event.windowNumber
-                               context:event.context
+                               context:nil
                            eventNumber:event.eventNumber
                             clickCount:event.clickCount
                               pressure:event.pressure];
