@@ -89,8 +89,10 @@
     //	Suck the contents of the rich text file into a mutable “attributed string”.
 	NSMutableAttributedString* theText ;
 	if (path) {
-		theText = [[NSMutableAttributedString alloc] initWithPath: path
-												documentAttributes: NULL] ;
+        theText = [[NSMutableAttributedString alloc] initWithURL:[NSURL fileURLWithPath:path]
+                                                         options:@{}
+                                              documentAttributes:NULL
+                                                           error:NULL];
 		//	Make up one newline
 		NSAttributedString* newline = [[[NSAttributedString alloc] initWithString: @"\n"] autorelease];
 		

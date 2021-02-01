@@ -27,7 +27,7 @@
 	
 	if ([self color] != nil) {
 		[[[self color] colorWithAlphaComponent:0.9] set];
-		NSRectFillUsingOperation(cellFrame, NSCompositePlusDarker);
+		NSRectFillUsingOperation(cellFrame, NSCompositingOperationPlusDarker);
 	}
 }
 	
@@ -150,7 +150,7 @@
 								   modifierFlags:[event modifierFlags] & ~NSEventModifierFlagOption
 									   timestamp:[event timestamp]
 									windowNumber:[event windowNumber]
-										 context:[event context]
+										 context:nil
 									  characters:[event characters]
 					 charactersIgnoringModifiers:[event charactersIgnoringModifiers]
 									   isARepeat:[event isARepeat]

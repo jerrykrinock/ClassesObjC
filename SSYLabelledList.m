@@ -207,7 +207,7 @@ NSString* const constKeySSYLabelledListCellTextAttributes = @"cellTextAttributes
             NSView* allOrNoneView_ = [[NSView alloc] initWithFrame:NSZeroRect] ;
             NSButton* allButton = [[NSButton alloc] initWithFrame:NSZeroRect] ;
             [allButton setFont:[NSFont systemFontOfSize:13]] ;
-            [allButton setBezelStyle:NSSmallSquareBezelStyle] ;
+            [allButton setBezelStyle:NSBezelStyleSmallSquare] ;
             [allButton setTitle:NSLocalizedString(@"All", nil)] ;
             [allButton sizeToFit] ;
             [allButton setTarget:tableView_] ;
@@ -217,7 +217,7 @@ NSString* const constKeySSYLabelledListCellTextAttributes = @"cellTextAttributes
             if (allowsEmptySelection) {
                 NSButton* noneButton = [[NSButton alloc] initWithFrame:NSZeroRect] ; ;
                 [noneButton setFont:[NSFont systemFontOfSize:13]] ;
-                [noneButton setBezelStyle:NSSmallSquareBezelStyle] ;
+                [noneButton setBezelStyle:NSBezelStyleSmallSquare] ;
                 [noneButton setTitle:NSLocalizedString(@"None", nil)] ;
                 [noneButton sizeToFit] ;
                 [noneButton setTarget:tableView_] ;
