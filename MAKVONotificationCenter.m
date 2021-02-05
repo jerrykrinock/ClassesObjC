@@ -7,7 +7,7 @@
 
 #import "MAKVONotificationCenter.h"
 
-#import <libkern/OSAtomic.h>
+#import <stdatomic.h>
 #import <objc/message.h>
 
 #if (MAC_OS_X_VERSION_MAX_ALLOWED >= 1060) 
@@ -119,37 +119,12 @@ static char MAKVONotificationMagicContext;
 
 + (id)defaultCenter
 {
-	static MAKVONotificationCenter *center = nil;
-	if(!center)
-	{
-		// Do a bit of clever atomic setting to make this thread safe.
-		// If two threads try to set simultaneously, one will fail
-		// and the other will set things up so that the failing thread
-		// gets the shared center...
-		
-		MAKVONotificationCenter *newCenter = [[self alloc] init];
-		// objc_atomicCompareAndSwapGlobalBarrier() is not documented.  We
-		// assume it behaves as OSAtomicCompareAndSwapPtrBarrier(), with the
-		// same signature.  The first argument, 'predicate', is interpreted
-		// to the the "pre-existing" value or '__oldValue' of
-		// OSAtomicCompareAndSwapPtrBarrier().
-		// In our usage, either method supposedly compares center to nil,
-		//    if center is nil, sets center to newCenter and returns true
-		//       Note that this whole code block is if(!center).
-		//       This is thus the normal behavior when no thread race occurs
-		//    if center is not nil, does nothing and returns false
-		//       This will happen if another thread snuck in and set it.
-
-        // Mike's original code, does not support Garbage Collection but works
-        // in 10.5 and earlier
-        BOOL weWon = OSAtomicCompareAndSwapPtrBarrier(nil, newCenter, (void *)&center) ;
-        if (!weWon) {
-            // Thread race has occurred and we lost
-			// center has previously been set to newCenter by another thread
-			[newCenter release];
-		}
-	}
-	return center;
+    static MAKVONotificationCenter* center = nil;
+    static dispatch_once_t onceToken = 0;
+        dispatch_once(&onceToken, ^ {
+        center = [[MAKVONotificationCenter alloc] init];
+    });
+    return center;
 }
 
 - (id)init
