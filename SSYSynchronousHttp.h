@@ -32,13 +32,15 @@ enum SSYSynchronousHttpErrorDomainErrorCodes {
 } ;
 
 
-@interface SSYSynchronousHttp : NSObject {
+@interface SSYSynchronousHttp : NSObject <NSURLSessionDelegate> {
 	NSString* m_username ;
 	NSString* m_password ;
 	NSHTTPURLResponse* m_response ;
 	NSMutableData* m_responseData ;
 	NSError* m_underlyingError ;
 	NSInteger m_connectionState ;
+    dispatch_semaphore_t m_semaphore;
+    NSURLSession* m_session;
 }
 
 /*!
@@ -77,58 +79,13 @@ enum SSYSynchronousHttpErrorDomainErrorCodes {
 					 password:(NSString*)password
 					  timeout:(NSTimeInterval)timeout 
 					userAgent:(NSString*)userAgent
-				   response_p:(NSHTTPURLResponse**)response_p 
-				receiveData_p:(NSData**)receiveData_p 
+				   response_p:(NSHTTPURLResponse**)response_p
+				receiveData_p:(NSData**)receiveData_p
 					  error_p:(NSError**)error_p ;
-
+/*
+ completionHandler:(void (^_Nonnull)(
+                                     NSURLResponse* _Nullable response,
+                                     NSData* _Nullable data,
+                                     NSError* _Nullable error))completionHandler;
+*/
 @end
-
-#if 0
-// Test code for SSYSynchronousHttp
-
-int main(int argc, const char *argv[]) {
-	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init] ;
-	
-	NSString* urlString = @"http://api.del.icio.us/posts/update" ;
-	NSString* username = @"jerrykrinock2" ;
-	NSString* password = @"sheep2" ;
-	NSTimeInterval timeout = 5.0 ;
-	NSHTTPURLResponse* response ;
-	NSData* receiveData ;
-	NSError* error = nil  ;
-	
-	NSLog(@"269: Beginning synchronous connection") ;
-	BOOL ok = [SSYSynchronousHttp SSYSynchronousHttpUrl:urlString
-											 httpMethod:@"GET"
-												headers:nil
-											 bodyString:nil 
-											   username:username
-											   password:password
-												timeout:timeout
-											  userAgent:nil
-											 response_p:&response 
-										  receiveData_p:&receiveData 
-												error_p:&error] ;
-	
-	NSLog(@"Received %ld bytes", (long)[receiveData length]) ;
-	if (ok) {
-		NSLog(@"Request succeeded") ;
-	}
-	else {
-		NSLog(@"Error: %@", [error longDescription]) ;
-		NSLog(@"%@", [error localizedDescription]) ;
-		NSLog(@"Error Code: %ld", (long)[error code]) ;
-	}
-	
-	if ([receiveData length] > 0) {
-		[receiveData writeToFile:[NSHomeDirectory() stringByAppendingPathComponent:@"Desktop/SSYSynchronousHttp.rxData"]
-						 options:0
-						   error:NULL] ;
-	}
-	
-	[pool release] ;
-	
-	return 0 ;
-}
-
-#endif

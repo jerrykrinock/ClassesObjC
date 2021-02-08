@@ -1,8 +1,4 @@
 #import "SSYSynchronousHttp.h"
-#import "NSError+InfoAccess.h"
-#import "NSString+Data.h"
-#import "NSString+LocalizeSSY.h"
-#import "NSString+MorePaths.h"
 
 NSString* const SSYSynchronousHttpErrorDomain = @"SSYSynchronousHttpErrorDomain" ;
 
@@ -20,15 +16,22 @@ enum {
 	constEnumSynchronousHttpDone
 } ;
 
+#if 11
+#warning Debug logging is on in SSYSynchronousHttp
+#define SSY_SYNCHRONOUS_HTTP_DEBUG_LOGGING 1
+#endif
 
 @interface SSYSynchronousHttp ()
 
 @property (copy) NSString* username ;
 @property (copy) NSString* password ;
+@property (retain) dispatch_semaphore_t semaphore;
 @property (retain) NSHTTPURLResponse* response ;
-@property (retain) NSMutableData* responseData ;
+@property (retain) NSData* responseData ;
 @property (retain) NSError* underlyingError ;
 @property (assign) NSInteger connectionState ;
+@property (assign) BOOL isFinished;
+@property (retain) NSURLSession* session;
 
 @end
 
@@ -42,130 +45,117 @@ enum {
 @synthesize underlyingError = m_underlyingError ;
 @synthesize connectionState = m_connectionState ;
 
+#if !__has_feature(objc_arc)
 - (void)dealloc {
+    if (m_semaphore) {
+        dispatch_release(m_semaphore);
+    }
 	[m_username release] ;
 	[m_password release] ;
 	[m_response release] ;
 	[m_responseData release] ;
 	[m_underlyingError release] ;
-	
+
 	[super dealloc] ;
 }
+#endif
 
-- (void)endConnection:(NSURLConnection*)connection {
-	[connection cancel] ;
-	[connection unscheduleFromRunLoop:[NSRunLoop currentRunLoop]
-							  forMode:NSDefaultRunLoopMode] ;
-}
-
-- (void)  connection:(NSURLConnection*)connection
-  didReceiveResponse:(NSURLResponse*)response {
-	// It would be nice to read Content-Length here, but unfortunately I always get -1 when
-	// talking to del.icio.us.  I presume this is because they don't put a
-	// "Content-Length" in their header.  Oh, well.
-    if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
-		[self setResponse:(NSHTTPURLResponse*)response] ;
-	}
-	else {
-		[self setConnectionState:SSYSynchronousHttpStateResponseNotHTTP] ;
-		[self endConnection:connection] ;
-	}
-
-	[[self responseData] setLength:0] ;
-}
-
-- (void)connection:(NSURLConnection *)connection
-	didReceiveData:(NSData *)data {
-	[[self responseData] appendData:data] ;
-}
-
-- (void)connection:(NSURLConnection*)connection
-  didFailWithError:(NSError*)error {
-	[self setResponse:nil] ;
+- (void)URLSession:(NSURLSession *)session
+didBecomeInvalidWithError:(NSError *)error {
+    [self setResponse:nil] ;
 	// The following was commented out in BookMacster 1.7/1.6.8, because when
 	// Diigo sends a throttling error it puts a "message" in the response data.
 	// [self setResponseData:nil] ;
 	[self setUnderlyingError:error] ;
-	[self setConnectionState:SSYSynchronousHttpStateConnectionFailed] ;
-	[self endConnection:connection] ;	
+	[self setConnectionState:SSYSynchronousHttpStateConnectionFailed];
+    [self finish];
 }
 
--(void)connectionDidFinishLoading:(NSURLConnection *)connection {
-	if ([[self response] statusCode] >= 300) {
+- (void)URLSession:(NSURLSession *)session
+              task:(NSURLSessionTask *)task
+didCompleteWithError:(NSError *)error {
+    /*SSYDBL*/ NSLog(@"Did complete with status code %ld error %@", ((NSHTTPURLResponse*)task.response).statusCode, error) ;
+	if (((NSHTTPURLResponse*)task.response).statusCode >= 300) {
 		[self setConnectionState:SSYSynchronousHttpStateResponseOver299] ;
 	}
 	else {
 		[self setConnectionState:SSYSynchronousHttpStateSucceeded] ;
 	}
 	
-	[self endConnection:connection] ;
+	[self finish] ;
 }
 
-// Added in BookMacster 1.22.2 to eliminate spurious logging in macOS 10.9.3.
-// See Apple Bug ID 16728139.
-- (BOOL)connectionShouldUseCredentialStorage:(NSURLConnection*)connection {
-    return NO ;
+- (void)       URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task
+willPerformHTTPRedirection:(NSHTTPURLResponse *)response
+               newRequest:(NSURLRequest *)request
+        completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler {
+    /*SSYDBL*/ NSLog(@"Will perform redirect");
+    if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+        // Probably this will be overwritten when connectionDidFinishLoading:
+        // with the response from the redirect, but maybe in case the
+        // redirect fails, this would be useful.  I don't know.
+        [self setResponse:(NSHTTPURLResponse*)response] ;
+    }
+    if (completionHandler) {
+        completionHandler(request);
+    }
 }
 
--(NSURLRequest *)connection:(NSURLConnection *)connection
-			willSendRequest:(NSURLRequest *)request
-		   redirectResponse:(NSURLResponse *)redirectResponse {
-    if ([redirectResponse isKindOfClass:[NSHTTPURLResponse class]]) {
-		// Probably this will be overwritten when connectionDidFinishLoading:
-		// with the response from the redirect, but maybe in case the
-		// redirect fails, this would be useful.  I don't know.
-		[self setResponse:(NSHTTPURLResponse*)redirectResponse] ;
-	}
-	
-	return request ;
+- (void)    URLSession:(NSURLSession *)session
+   didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
+     completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler {
+    
+    NSURLProtectionSpace* protectionSpace = challenge.protectionSpace;
+    NSURLSessionAuthChallengeDisposition disposition = NSURLSessionAuthChallengePerformDefaultHandling;
+    NSURLCredential* credential = nil;
+    if (protectionSpace.authenticationMethod ==  NSURLAuthenticationMethodServerTrust) {
+        //protectionSpace.host.contains("example.com")
+        disposition = NSURLSessionAuthChallengePerformDefaultHandling;
+    } else {
+        NSString* username = [self username] ;
+        NSString* password = [self password] ;
+        
+        if ([challenge previousFailureCount] > 2) {
+            // Obviously our username+password is no good, so bail out.
+            [self setConnectionState:SSYSynchronousHttpStateCredentialNotAccepted] ;
+            [session invalidateAndCancel];
+        }
+        else if (username && password) {
+            // NSLog(@"Responding to challenge with new credential.  username:%@ password:%@", username, password) ;
+            NSURLCredential* credential = [NSURLCredential credentialWithUser:username
+                                                                     password:password
+                                                                  persistence:NSURLCredentialPersistenceNone] ;
+            // Note: If persistence is set to NSURLCredentialPersistenceForSession, you'll never get this message
+            // again and thus be unable to change the account for any given realm/protectionSpace without
+            // relaunching the app.
+            
+            [[challenge sender] useCredential:credential
+                   forAuthenticationChallenge:challenge] ;
+        }
+        else {
+            // We don't handle an authentication challenge; we simply
+            // return the fact and let our invoker handle it.  This is
+            // the logical thing to do because, for example, when
+            // requesting data or uploading with Google, sometimes we get
+            // an authentication challenge and sometimes we don't,
+            // depending on the request, and we have to detect the
+            // need for login by other means.
+            [self setConnectionState:SSYSynchronousHttpStateNeedUsernamePasswordToMakeCredential] ;
+            [self finish];
+        }
+    }
+    
+    completionHandler(disposition, credential);
 }
 
-- (void)                 connection:(NSURLConnection *)connection
-  didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge {
-	// This method is never invoked under Tiger, but they fixed it in Leopard.
-	// In Tiger, instead of this, they use the default credential set in,
-	// for example -[DeliPinTalker tryPayload].
-	NSString* username = [self username] ;
-	NSString* password = [self password] ;
-	
-	if ([challenge previousFailureCount] > 2) {
-		// Obviously our username+password is no good, so bail out.
-		[self setConnectionState:SSYSynchronousHttpStateCredentialNotAccepted] ;
-		[self endConnection:connection] ;
-	}
-	else if (username && password) {
-		// NSLog(@"Responding to challenge with new credential.  username:%@ password:%@", username, password) ;
-		NSURLCredential* credential = [NSURLCredential credentialWithUser:username
-																 password:password
-															  persistence:NSURLCredentialPersistenceNone] ;
-		// Note: If persistence is set to NSURLCredentialPersistenceForSession, you'll never get this message
-		// again and thus be unable to change the account for any given realm/protectionSpace without
-		// relaunching the app.
-		
-		[[challenge sender] useCredential:credential
-			   forAuthenticationChallenge:challenge] ;
-	}
-	else {
-		// We don't handle an authentication challenge; we simply
-		// return the fact and let our invoker handle it.  This is
-		// the logical thing to do because, for example, when
-		// requesting data or uploading with Google, sometimes we get 
-		// an authentication challenge and sometimes we don't,
-		// depending on the request, and we have to detect the
-		// need for login by other means.
-		[self setConnectionState:SSYSynchronousHttpStateNeedUsernamePasswordToMakeCredential] ;
-		[self endConnection:connection] ;
-	}	
-}
-
-
-- (void)               connection:(NSURLConnection *)connection
- didCancelAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge {
-}
-
--(NSCachedURLResponse *)connection:(NSURLConnection *)connection
-				 willCacheResponse:(NSCachedURLResponse *)cachedResponse {
-	return cachedResponse ;
+- (void)finish {
+    /*SSYDBL*/ NSLog(@"Finished") ;
+    if (self.semaphore) {
+        dispatch_semaphore_signal(self.semaphore);
+        self.semaphore = nil;
+    }
+    [self.session invalidateAndCancel];
+    self.session = nil;
 }
 
 + (BOOL)SSYSynchronousHttpUrl:(NSString*)urlString
@@ -180,8 +170,8 @@ enum {
 				receiveData_p:(NSData**)receiveData_p 
 					  error_p:(NSError**)error_p {
 	NSInteger connectionState = SSYSynchronousHttpStateInitial ;
-	SSYSynchronousHttp *instance = nil ;
-    NSMutableURLRequest *mutableRequest = nil ;
+	SSYSynchronousHttp* instance = nil ;
+    NSMutableURLRequest* mutableRequest = nil ;
 
 	// Apply the Johannnes Fahrenkrug workaround: Append a "#".  See:
 	// http://www.springenwerk.com/2008/11/i-am-currently-building-iphone.html
@@ -190,16 +180,15 @@ enum {
 	// it impossible to log out from a service such as del.icio.us and then log
 	// back in as a different user.  You remain as the old user until you quit the
 	// app/process.  It was very frustrating.
-#if 0
+#if 11
 #warning Bypassing Johannnes Fahrenkrug workaround in SSYSynchronousHttp
 #else
 	urlString = [urlString stringByAppendingString:@"#"] ;
 #endif
 	NSURL* url = [NSURL URLWithString:urlString] ;
 	if (!url) {
-		connectionState = SSYSynchronousHttpStateBadUrlString ;
-		goto end ;
-	}	
+		return SSYSynchronousHttpStateBadUrlString ;
+	}
 	
 	//[url setProperty:[self userAgent] forKey:@"User-Agent"]; 
 	// The above line does not seem to work; when I ask for "Safari", 
@@ -208,7 +197,11 @@ enum {
 	NSURLRequest* request = [NSURLRequest requestWithURL:url
 											 cachePolicy:NSURLRequestReloadIgnoringCacheData
 										 timeoutInterval:timeout] ;
-	
+    if (!request) {
+        return SSYSynchronousHttpStateCouldNotCreateRequestObject ;
+    }
+
+
 	mutableRequest = [request mutableCopy] ;
 	if (userAgent) {
 		[mutableRequest setValue:userAgent
@@ -234,21 +227,14 @@ enum {
 	// Possibly the above line is not needed since YES is probably default
 	// But the default behavior is not documented.
 	
-#if 0
-#warning Logging SSYSynchronousHttp request details
+#if SSY_SYNCHRONOUS_HTTP_DEBUG_LOGGING
 	NSLog(@"Request URL:\n%@", [[mutableRequest URL] absoluteString]) ;
 	NSLog(@"HTTP Method: %@", [mutableRequest HTTPMethod]) ;
 	NSLog(@"All HTTP Request Headers:\n%@", [mutableRequest allHTTPHeaderFields]) ;
-	NSLog(@"Request Body:\n%@", [NSString stringWithDataUTF8:[mutableRequest HTTPBody]]) ;
 #endif
 
 	instance = [[SSYSynchronousHttp alloc] init] ;
 	
-	if (!mutableRequest) {
-		connectionState = SSYSynchronousHttpStateCouldNotCreateRequestObject ;
-		goto end ;
-	}
-
 	[instance setUsername:username] ;
 	[instance setPassword:password] ;
 	
@@ -260,56 +246,113 @@ enum {
 	// So our run loop will not exit immediately,
 	[instance setConnectionState:SSYSynchronousHttpStateWaiting] ;
 	
-	// Make the connection
-	NSRunLoop* runLoop = [NSRunLoop currentRunLoop] ;
-	
-	NSURLConnection * connection = [[NSURLConnection alloc] initWithRequest:mutableRequest
-																   delegate:instance
-														   startImmediately:NO] ;
-	if (!connection) {
-		[instance setConnectionState:SSYSynchronousHttpStateCouldNotCreateConnectionObject] ;
-		goto end ;
-	}
-	
-	[connection scheduleInRunLoop:runLoop
-						  forMode:constRunLoopModeSSYSynchronousHttp] ;
-	[connection start] ;
-	while (
-		   ([instance connectionState] == SSYSynchronousHttpStateWaiting)
-		   &&
-		   [runLoop runMode:constRunLoopModeSSYSynchronousHttp      
-				 beforeDate:[NSDate distantFuture]]
-		   ) {
-	}
-	
-	[connection release] ;
-	
+    instance.semaphore = dispatch_semaphore_create(0);
+    NSURLSession* session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]
+                                                          delegate:instance
+                                                     delegateQueue:nil];
+    /* Of course, the actual work needs to be done on a secondary thread since
+     we are going to block this thread with dispatch_semaphore_wait(). */
+    dispatch_queue_t aSerialQueue = dispatch_queue_create(
+                                                          "SSYSynchronousHttp Worker",
+                                                          DISPATCH_QUEUE_SERIAL
+                                                          ) ;
+
+    dispatch_async(aSerialQueue, ^{
+        /*SSYDBL*/ NSLog(@"Creating task with request %@", request) ;
+        NSURLSessionDataTask* task = [session dataTaskWithRequest:mutableRequest
+                                                completionHandler:^(NSData * _Nullable data,
+                                                                    NSURLResponse * _Nullable response,
+                                                                    NSError * _Nullable error) {
+#if SSY_SYNCHRONOUS_HTTP_DEBUG_LOGGING
+            NSLog(@"Completion Handler got:\n*** response: %@\n*** error: %@\n*** data: %@", response, error, data);
+#endif
+            instance.response = (NSHTTPURLResponse*)response;
+            instance.responseData = data;
+
+            if (((NSHTTPURLResponse*)response).statusCode >= 300) {
+                [instance setConnectionState:SSYSynchronousHttpStateResponseOver299] ;
+            }
+            else {
+                [instance setConnectionState:SSYSynchronousHttpStateSucceeded] ;
+            }
+
+            if (!error) {
+                if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
+                    [instance setResponse:(NSHTTPURLResponse*)response] ;
+                }
+                else {
+                    [instance setConnectionState:SSYSynchronousHttpStateResponseNotHTTP] ;
+                }
+            } else {
+                [instance setResponse:nil] ;
+                // The following was commented out in BookMacster 1.7/1.6.8, because when
+                // Diigo sends a throttling error it puts a "message" in the response data.
+                // [self setResponseData:nil] ;
+                [instance setUnderlyingError:error] ;
+                [instance setConnectionState:SSYSynchronousHttpStateConnectionFailed] ;
+            }
+            
+            [instance finish];
+        }];
+        [task resume];
+        /*SSYDBL*/ NSLog(@"Did resume task %@", task) ;
+    });
+    
+    NSTimeInterval semaphoreTimeoutSeconds = (timeout + 2.0);
+    dispatch_time_t semaphoreTimeout = dispatch_time(
+                                                     DISPATCH_TIME_NOW,
+                                                     semaphoreTimeoutSeconds * NSEC_PER_SEC);
+    long result = dispatch_semaphore_wait(
+                                          instance.semaphore,
+                                          semaphoreTimeout);
+    if (result != 0) {
+        NSLog(@"Error 382-9773 Result=%ld indicates timeout after %0.2f secs.  Session timeout of %0.2f should have timed out first",
+              result,
+              semaphoreTimeoutSeconds,
+              timeout);
+    }
+
+#if !__has_feature(objc_arc)
+    dispatch_release(instance.semaphore) ;
+    [mutableRequest release] ;  // Prior to 20100312, was -autorelease
+#endif
+    
+    
 	// Set output variables and exit
 	if (response_p) {
-		*response_p = [[[instance response] retain] autorelease] ;
-		// The retain] autorelease] above actually does something!
-		// Note that *hdlResponse is "owned" by instance, which we
-		// are going to release before the end of this method.
-		// It is not in the autorelease pool, and therefore will 
-		// disappear when we release instance.
+#if !__has_feature(objc_arc)
+        [[[instance response] retain] autorelease];
+#endif
+        // The retain] autorelease] above actually does something!
+        // Note that *hdlResponse is "owned" by instance, which we
+        // are going to release before the end of this method.
+        // It is not in the autorelease pool, and therefore will
+        // disappear when we release instance.
+		*response_p = [instance response];
 		
-		connectionState = [instance connectionState] ;
+		connectionState = [instance connectionState];
 	}
 	if (receiveData_p) {
 		NSData* responseData = [instance responseData] ;
 		if ([responseData length] > 0) {
-			*receiveData_p = [[responseData copy] autorelease] ;
-			// copy to make it immutable, and also to put it into the
-			// autorelease pool so it does not go away when we release 'instance',
-			// which is its only owner
+            *receiveData_p = [responseData copy] ;
+#if !__has_feature(objc_arc)
+            [*receiveData_p autorelease];
+            // copy to make it immutable, and also to put it into the
+            // autorelease pool so it does not go away when we release 'instance',
+            // which is its only owner
+#endif
 		}
 		
 		connectionState = [instance connectionState] ;
 	}
 
 end:;
+    
+#if !__has_feature(objc_arc)
 	[mutableRequest release] ;
-	
+#endif
+    
 	BOOL serverError = NO ;
 
 	if (
@@ -329,13 +372,16 @@ end:;
 				cuz = @"We could not create a valid URL from given string." ;
 				break ;
 			case SSYSynchronousHttpStateNeedUsernamePasswordToMakeCredential:
-				cuz = [NSString localize:@"accountInfoMissing"] ;
+				cuz = NSLocalizedString(@"accountInfoMissing", nil) ;
 				break ;
-			case SSYSynchronousHttpStateCredentialNotAccepted:
-				cuz = [NSString localizeFormat:
-					   @"accountInfoBadX",
-					   username] ;
+            case SSYSynchronousHttpStateCredentialNotAccepted:
+            {
+                NSString* format = NSLocalizedString(@"accountInfoBadX", nil);
+                cuz = [NSString stringWithFormat:
+                       format,
+                       username];
 				break ;
+            }
 			case SSYSynchronousHttpStateResponseNotHTTP:
 				cuz = @"Response received was not an HTTP response." ;
 				break ;
@@ -349,6 +395,7 @@ end:;
 				cuz = @"The connection was cancelled before it completed." ;
 				break ;
 			case SSYSynchronousHttpStateResponseOver299:
+            {
 				connectionState = [[instance response] statusCode] ;
 				if (connectionState >= 500) {
 					serverError = YES ;
@@ -363,6 +410,7 @@ end:;
 						   @"in the standards published by the Internet Engineering Task Force."] ;
 				}
 				break ;
+            }
 			case SSYSynchronousHttpStateConnectionFailed:
 				cuz = @"The connection failed." ;
 				connectionState = [[instance underlyingError] code] ;
@@ -490,55 +538,69 @@ end:;
 				cuz = [NSString stringWithFormat:@"The connection terminated in an unknown state=%ld.", (long)connectionState] ;
 				break ;
 		}
-		NSString* host = [url host] ;
-		NSString* toHost = @"" ;
-		if (host) {
-			toHost = [NSString stringWithFormat:@" to %@", host] ;
-		}
 		
-		NSString* desc = [NSString localizeFormat:
-						  @"failedX",
-						  [NSString stringWithFormat:
-						   @"HTTP Request%@",
-						   toHost]] ;
-		
-		*error_p = [NSError errorWithDomain:SSYSynchronousHttpErrorDomain
-									   code:connectionState
-								   userInfo:nil] ;
-		*error_p = [*error_p errorByAddingLocalizedDescription:desc] ;
-		*error_p = [*error_p errorByAddingLocalizedFailureReason:cuz] ;
-		*error_p = [*error_p errorByAddingUserInfoObject:urlString
-												  forKey:SSYSynchronousHttpRequestUrlErrorKey] ;
-		*error_p = [*error_p errorByAddingUserInfoObject:httpMethod
-												  forKey:SSYSynchronousHttpRequestHttpMethodErrorKey] ;
-		*error_p = [*error_p errorByAddingUserInfoObject:bodyString
-												  forKey:SSYSynchronousHttpRequestBodyErrorKey] ;
-		*error_p = [*error_p errorByAddingUserInfoObject:[NSNumber numberWithDouble:timeout]
-												  forKey:SSYSynchronousHttpRequestTimeoutErrorKey] ;
-		*error_p = [*error_p errorByAddingUnderlyingError:[instance underlyingError]] ;
-		// Some people, e.g. Yahoo/Delicious, put error information into the
-		// receive data when the response is, e.g., 401 or 999.
-		*error_p = [*error_p errorByAddingUserInfoObject:[instance responseData]
-												  forKey:SSYSynchronousHttpReceivedDataErrorKey] ;
+        NSMutableDictionary* userInfo = [NSMutableDictionary new];
+    
+        NSString* host = [url host] ;
+        NSString* toHost = @"" ;
+        if (host) {
+            toHost = [NSString stringWithFormat:@" to %@", host] ;
+        }
+        NSString* desc = [NSString stringWithFormat:
+                          @"SSYSynchronousHTTP Request%@ failed",
+                          toHost];
+        [userInfo setObject:desc
+                     forKey:NSLocalizedDescriptionKey];
+        [userInfo setValue:cuz
+                    forKey:NSLocalizedFailureReasonErrorKey];
+        [userInfo setValue:urlString
+                    forKey:SSYSynchronousHttpRequestUrlErrorKey];
+        [userInfo setValue:httpMethod
+                     forKey:SSYSynchronousHttpRequestHttpMethodErrorKey];
+        [userInfo setValue:bodyString
+                    forKey:SSYSynchronousHttpRequestBodyErrorKey];
+        [userInfo setValue:[NSNumber numberWithDouble:timeout]
+                    forKey:SSYSynchronousHttpRequestTimeoutErrorKey];
+        [userInfo setValue:[instance underlyingError]
+                    forKey:NSUnderlyingErrorKey];
+        // Some people, e.g. Yahoo/Delicious, put error information into the
+        // receive data when the response is, e.g., 401 or 999.
+        [userInfo setValue:[instance responseData]
+                    forKey:SSYSynchronousHttpReceivedDataErrorKey];
 		if ([instance responseData] && [[instance responseData] length] < 2048) {
-			NSString* stringData = [NSString stringWithDataUTF8:[instance responseData]] ;
+            NSString* stringData = [[NSString alloc] initWithData:[instance responseData] encoding:NSUTF8StringEncoding];
 			if (!stringData) {
-				stringData = [NSString stringWithFormat:
-							  @"%ld bytes, failed UTF8 decoding",
-							  (long)[[instance responseData] length]] ;
+                stringData = [[NSString alloc] initWithFormat:
+                @"%ld bytes, failed UTF8 encoding",
+                (long)[[instance responseData] length]] ;
 			}
-			*error_p = [*error_p errorByAddingUserInfoObject:stringData
-													  forKey:SSYSynchronousHttpReceivedStringErrorKey] ;
-		}
+            [userInfo setObject:stringData
+             forKey:SSYSynchronousHttpReceivedStringErrorKey];
+#if !__has_feature(objc_arc)
+            [stringData release];
+#endif
+            
+        }
 		
 		if (serverError) {
 			NSString* msg = [NSString stringWithFormat:
-							 @"Retry later."] ;
-			*error_p = [*error_p errorByAddingLocalizedRecoverySuggestion:msg] ;
+							 @"Retry later."];
+            [userInfo setObject:msg
+                         forKey:NSLocalizedRecoverySuggestionErrorKey];
 		}
+        
+        NSDictionary* userInfoCopy = [userInfo copy];
+        *error_p = [NSError errorWithDomain:SSYSynchronousHttpErrorDomain
+                                       code:connectionState
+                                   userInfo:userInfoCopy];
+#if !__has_feature(objc_arc)
+        [userInfo release];
+#endif
 	}
 
-	[instance release] ;
+#if !__has_feature(objc_arc)
+    [instance release] ;
+#endif
 	
 	return (connectionState == SSYSynchronousHttpStateSucceeded) ;
 }
