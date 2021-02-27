@@ -51,8 +51,8 @@
     CGFloat offsetX = NSMidX(glyphRect) - halfWidth ;
     CGFloat offsetY = NSMidY(glyphRect) - 50 ;
     [path moveToPoint:NSMakePoint(-offsetX,-offsetY)] ;
-    [path appendBezierPathWithGlyph:glyphs[0]
-                             inFont:font] ;
+    [path appendBezierPathWithCGGlyph:glyphs[0]
+                               inFont:font] ;
 }
 
 + (void)drawCharacter:(UniChar)character
