@@ -44,23 +44,16 @@ enum SSYSynchronousHttpErrorDomainErrorCodes {
 }
 
 /*!
- @brief    A wrapper around the Apple URL Loading System which blocks
- the invoking thread until a response is received, or timeout occurs.
+ @brief    A wrapper around the Apple URL Loading System which downloads data
+ from a given URL, blocking the invoking thread until the requested data is
+ received, or timeout occurs.
 
- @param    url
- @param    httpMethod  
  @param    headers  A dictionary of additional headers which will be added
  to the request.  These should be percent-escape encoded, but because of the
  various character sets which should or should not be encoded, "we let you do it".
  The headers will be added as key=value, derived from the keys and values in the
  given dictionary, and of course all must be strings.
- @param    bodyString  
- @param    username  
- @param    password  
- @param    timeout  
  @param    userAgent  defaults to CFNetwork if nil
- @param    response_p  
- @param    receiveData_p  
  @param    error_p  Pointer which will, upon return, if an error
  occured and said pointer is not NULL, point to an NSError
  describing said error.  The error's domain will be

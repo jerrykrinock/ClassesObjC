@@ -16,7 +16,7 @@ enum {
 	constEnumSynchronousHttpDone
 } ;
 
-#if 11
+#if 0
 #warning Debug logging is on in SSYSynchronousHttp
 #define SSY_SYNCHRONOUS_HTTP_DEBUG_LOGGING 1
 #endif
@@ -44,12 +44,14 @@ enum {
 @synthesize responseData = m_responseData ;
 @synthesize underlyingError = m_underlyingError ;
 @synthesize connectionState = m_connectionState ;
+@synthesize session = m_session;
 
 #if !__has_feature(objc_arc)
 - (void)dealloc {
-    if (m_semaphore) {
-        dispatch_release(m_semaphore);
+    if (_semaphore) {
+        dispatch_release(_semaphore);
     }
+    [m_session release];
 	[m_username release] ;
 	[m_password release] ;
 	[m_response release] ;
@@ -60,7 +62,7 @@ enum {
 }
 #endif
 
-- (void)URLSession:(NSURLSession *)session
+- (void)       URLSession:(NSURLSession *)session
 didBecomeInvalidWithError:(NSError *)error {
     [self setResponse:nil] ;
 	// The following was commented out in BookMacster 1.7/1.6.8, because when
@@ -71,10 +73,9 @@ didBecomeInvalidWithError:(NSError *)error {
     [self finish];
 }
 
-- (void)URLSession:(NSURLSession *)session
-              task:(NSURLSessionTask *)task
+- (void)  URLSession:(NSURLSession *)session
+                task:(NSURLSessionTask *)task
 didCompleteWithError:(NSError *)error {
-    /*SSYDBL*/ NSLog(@"Did complete with status code %ld error %@", ((NSHTTPURLResponse*)task.response).statusCode, error) ;
 	if (((NSHTTPURLResponse*)task.response).statusCode >= 300) {
 		[self setConnectionState:SSYSynchronousHttpStateResponseOver299] ;
 	}
@@ -85,15 +86,15 @@ didCompleteWithError:(NSError *)error {
 	[self finish] ;
 }
 
-- (void)       URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task
+- (void)       URLSession:(NSURLSession *)session
+                     task:(NSURLSessionTask *)task
 willPerformHTTPRedirection:(NSHTTPURLResponse *)response
                newRequest:(NSURLRequest *)request
         completionHandler:(void (^)(NSURLRequest * _Nullable))completionHandler {
-    /*SSYDBL*/ NSLog(@"Will perform redirect");
     if ([response isKindOfClass:[NSHTTPURLResponse class]]) {
-        // Probably this will be overwritten when connectionDidFinishLoading:
-        // with the response from the redirect, but maybe in case the
-        // redirect fails, this would be useful.  I don't know.
+        /* Probably this will be overwritten when data is received from the
+         redirected-to resource, but maybe in case the redirect fails, this
+         might be useful.  I don't know. */
         [self setResponse:(NSHTTPURLResponse*)response] ;
     }
     if (completionHandler) {
@@ -102,14 +103,13 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
 }
 
 - (void)    URLSession:(NSURLSession *)session
+                  task:(NSURLSessionTask*)task
    didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
      completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler {
-    
-    NSURLProtectionSpace* protectionSpace = challenge.protectionSpace;
     NSURLSessionAuthChallengeDisposition disposition = NSURLSessionAuthChallengePerformDefaultHandling;
     NSURLCredential* credential = nil;
-    if (protectionSpace.authenticationMethod ==  NSURLAuthenticationMethodServerTrust) {
-        //protectionSpace.host.contains("example.com")
+    NSString* methodRequested = challenge.protectionSpace.authenticationMethod;
+    if ([methodRequested isEqualToString:NSURLAuthenticationMethodServerTrust]) {
         disposition = NSURLSessionAuthChallengePerformDefaultHandling;
     } else {
         NSString* username = [self username] ;
@@ -121,35 +121,57 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
             [session invalidateAndCancel];
         }
         else if (username && password) {
-            // NSLog(@"Responding to challenge with new credential.  username:%@ password:%@", username, password) ;
-            NSURLCredential* credential = [NSURLCredential credentialWithUser:username
-                                                                     password:password
-                                                                  persistence:NSURLCredentialPersistenceNone] ;
-            // Note: If persistence is set to NSURLCredentialPersistenceForSession, you'll never get this message
-            // again and thus be unable to change the account for any given realm/protectionSpace without
-            // relaunching the app.
+            /* Note: Before updating this code to use NSURLSession, I found
+             that, if persistence was set to NSURLCredentialPersistenceForSession,
+             you'll never get this message again and thus be unable to change
+             the account for any given realm/protectionSpace without
+             relaunching the app.  I presume that NSURLSession will work the
+             same way, so I am leaving the following statement as is. */
+            credential = [NSURLCredential credentialWithUser:username
+                                                    password:password
+                                                 persistence:NSURLCredentialPersistenceNone] ;
             
+            /* I'm not sure what the following statement does.  After updating
+             this code to use NSURLSession, I find that this method succeeeds
+             in downloading Pinboard with or without the following statement.
+             Since it was in the old code, I am leaving it in. */
             [[challenge sender] useCredential:credential
-                   forAuthenticationChallenge:challenge] ;
+                   forAuthenticationChallenge:challenge];
+
+            disposition = NSURLSessionAuthChallengeUseCredential;
         }
         else {
-            // We don't handle an authentication challenge; we simply
-            // return the fact and let our invoker handle it.  This is
-            // the logical thing to do because, for example, when
-            // requesting data or uploading with Google, sometimes we get
-            // an authentication challenge and sometimes we don't,
-            // depending on the request, and we have to detect the
-            // need for login by other means.
+            /* We don't handle an authentication challenge; we simply return
+             return the fact and let our invoker handle it.  This is the
+             the logical thing to do because, for example, when requesting
+             data or uploading with Google, sometimes we get an authentication
+             challenge and sometimes we don't, depending on the request, so we
+             must detect the need for login by other means. */
             [self setConnectionState:SSYSynchronousHttpStateNeedUsernamePasswordToMakeCredential] ;
             [self finish];
         }
     }
-    
+
+    /* The following statment is to implement the most accepted answer in
+     https://stackoverflow.com/questions/46099940/credstore-perform-query-error
+     which is supposed to eliminate the logging of:
+     CredStore - performQuery - Error copying matching creds.  Error=-25300
+     when this method is called for the first time for https://api.pinboard.in/v1/posts/update
+     Unfortunately it has no effect.  I still get that error logged.  I also
+     tried most of the other answers in that article, but could not get any
+     of them to work.  Note that the error is logged on the *first* time
+     through, when methodRequested is NSURLAuthenticationMethodServerTrust.
+     After that, this method is called again, and on the second time through,
+     taking the other branch, after username and password are provided, there
+     is no error logged. */
+    [[NSURLCredentialStorage sharedCredentialStorage] setDefaultCredential:credential
+                                                        forProtectionSpace:challenge.protectionSpace
+                                                                      task:task];
+
     completionHandler(disposition, credential);
 }
 
 - (void)finish {
-    /*SSYDBL*/ NSLog(@"Finished") ;
     if (self.semaphore) {
         dispatch_semaphore_signal(self.semaphore);
         self.semaphore = nil;
@@ -173,14 +195,14 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
 	SSYSynchronousHttp* instance = nil ;
     NSMutableURLRequest* mutableRequest = nil ;
 
-	// Apply the Johannnes Fahrenkrug workaround: Append a "#".  See:
-	// http://www.springenwerk.com/2008/11/i-am-currently-building-iphone.html
-	// (If that doesn't work, try replacing 'www' with 'blog')
-	// This workaround fixes what I believe to be a bug in NSURLConnection that makes
-	// it impossible to log out from a service such as del.icio.us and then log
-	// back in as a different user.  You remain as the old user until you quit the
-	// app/process.  It was very frustrating.
-#if 11
+    /* Apply the Johannnes Fahrenkrug workaround: Append a "#".  See:
+     http://www.springenwerk.com/2008/11/i-am-currently-building-iphone.html
+     (If that doesn't work, try replacing 'www' with 'blog').  This workaround
+     fixes what I believe to be a bug in NSURLConnection that makes it
+     impossible to log out from a service such as del.icio.us and then log
+     back in as a different user.  You remain as the old user until you quit
+     the app/process.  It was very frustrating. */
+#if 0
 #warning Bypassing Johannnes Fahrenkrug workaround in SSYSynchronousHttp
 #else
 	urlString = [urlString stringByAppendingString:@"#"] ;
@@ -246,10 +268,15 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
 	// So our run loop will not exit immediately,
 	[instance setConnectionState:SSYSynchronousHttpStateWaiting] ;
 	
-    instance.semaphore = dispatch_semaphore_create(0);
-    NSURLSession* session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    instance.semaphore = semaphore;
+#if !__has_feature(objc_arc)
+    dispatch_release(semaphore); // OK since .semaphore is a retained property
+#endif
+   NSURLSession* session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]
                                                           delegate:instance
                                                      delegateQueue:nil];
+    instance.session = session;
     /* Of course, the actual work needs to be done on a secondary thread since
      we are going to block this thread with dispatch_semaphore_wait(). */
     dispatch_queue_t aSerialQueue = dispatch_queue_create(
@@ -258,7 +285,6 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
                                                           ) ;
 
     dispatch_async(aSerialQueue, ^{
-        /*SSYDBL*/ NSLog(@"Creating task with request %@", request) ;
         NSURLSessionDataTask* task = [session dataTaskWithRequest:mutableRequest
                                                 completionHandler:^(NSData * _Nullable data,
                                                                     NSURLResponse * _Nullable response,
@@ -295,7 +321,6 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
             [instance finish];
         }];
         [task resume];
-        /*SSYDBL*/ NSLog(@"Did resume task %@", task) ;
     });
     
     NSTimeInterval semaphoreTimeoutSeconds = (timeout + 2.0);
@@ -303,7 +328,7 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
                                                      DISPATCH_TIME_NOW,
                                                      semaphoreTimeoutSeconds * NSEC_PER_SEC);
     long result = dispatch_semaphore_wait(
-                                          instance.semaphore,
+                                          semaphore,
                                           semaphoreTimeout);
     if (result != 0) {
         NSLog(@"Error 382-9773 Result=%ld indicates timeout after %0.2f secs.  Session timeout of %0.2f should have timed out first",
@@ -313,7 +338,6 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
     }
 
 #if !__has_feature(objc_arc)
-    dispatch_release(instance.semaphore) ;
     [mutableRequest release] ;  // Prior to 20100312, was -autorelease
 #endif
     
@@ -348,10 +372,6 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
 	}
 
 end:;
-    
-#if !__has_feature(objc_arc)
-	[mutableRequest release] ;
-#endif
     
 	BOOL serverError = NO ;
 
@@ -594,6 +614,7 @@ end:;
                                        code:connectionState
                                    userInfo:userInfoCopy];
 #if !__has_feature(objc_arc)
+        [userInfoCopy release];
         [userInfo release];
 #endif
 	}
