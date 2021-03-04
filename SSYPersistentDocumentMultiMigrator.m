@@ -104,6 +104,7 @@ NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotification = 
              */
             storeMetadata = [NSPersistentStoreCoordinator metadataForPersistentStoreOfType:NSSQLiteStoreType
                                                                                        URL:url
+                                                                                   options:newStoreOptions
                                                                                      error:&underlyingError] ;
         }
         @catch (NSException* exception) {
