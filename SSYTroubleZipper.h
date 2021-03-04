@@ -7,10 +7,7 @@ extern NSString* const constKeySSYTroubleZipperURL ;
  @brief    Class with one method, for downloading, unzipping,
  and running a Trouble Zipper app.
 */
-@interface SSYTroubleZipper : NSObject <NSURLDownloadDelegate> {
-	NSURLDownload* m_download ;
-	NSString* m_destinationPath ;
-	BOOL m_downloadDone ;
+@interface SSYTroubleZipper : NSObject {
 }
 
 /*!
