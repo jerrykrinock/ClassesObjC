@@ -462,7 +462,7 @@ end:;
     NSString* password = [SSYKeychain passwordForServost:[self keychainServiceName]
                                              trySubhosts:nil
                                                  account:[[self accounter] accountName]
-                                                   class:(NSString*)kSecClassGenericPassword
+                                                   clase:(NSString*)kSecClassGenericPassword
                                                  error_p:NULL] ;
 	if (password) {
 		// Since the password is accessible i.e. corruptible by the user
@@ -532,7 +532,7 @@ end:;
     [SSYKeychain setPassword:password
                   forServost:[self keychainServiceName]
                      account:[[self accounter] accountName]
-                       class:(NSString*)kSecClassGenericPassword
+                       clase:(NSString*)kSecClassGenericPassword
                      error_p:NULL] ;
 }
 

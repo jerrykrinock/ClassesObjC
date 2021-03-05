@@ -211,20 +211,6 @@
 
 #pragma mark - Accessors
 
-- (void)setPasswordObject:(id<NSCoding>)object {
-    [self setPasswordData:[NSKeyedArchiver archivedDataWithRootObject:object]] ;
-}
-
-
-- (id<NSCoding>)passwordObject {
-    id<NSCoding> answer = nil ;
-    if ([[self passwordData] length] > 0) {
-        answer = [NSKeyedUnarchiver unarchiveObjectWithData:[self passwordData]] ;
-    }
-    return answer ;
-}
-
-
 - (void)setPassword:(NSString *)password {
     [self setPasswordData:[password dataUsingEncoding:NSUTF8StringEncoding]] ;
 }
@@ -361,7 +347,7 @@
             message = (NSString*)SecCopyErrorMessageString((OSStatus)code, NULL) ;
             [message autorelease] ;
 #else
-            message = (__bridge_transfer NSString *)SecCopyErrorMessageString(code, NULL) ;
+            message = (__bridge_transfer NSString *)SecCopyErrorMessageString((int)code, NULL) ;
 #endif
 #endif
     }

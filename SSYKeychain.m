@@ -11,7 +11,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
 + (NSString*)passwordForServost:(NSString*)servostName
                     trySubhosts:(NSArray*)trySubhosts
                         account:(NSString*)account
-                          class:(NSString*)itemClass
+                          clase:(NSString*)itemClass
                         error_p:(NSError*__autoreleasing*)error_p {
     SSYKeychainQuery *query = [[SSYKeychainQuery alloc] init] ;
     [query setAccount:account] ;
@@ -63,7 +63,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
 
 + (BOOL)deletePasswordForServost:(NSString*)servostName
                          account:(NSString*)account
-                           class:(NSString*)itemClass
+                           clase:(NSString*)itemClass
                          error_p:(NSError*__autoreleasing*)error_p {
     SSYKeychainQuery *query = [[SSYKeychainQuery alloc] init] ;
     if (itemClass) {
@@ -87,7 +87,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
 + (BOOL)setPassword:(NSString*)password
          forServost:(NSString*)servostName
             account:(NSString*)account
-              class:(NSString*)itemClass
+              clase:(NSString*)itemClass
             error_p:(NSError*__autoreleasing*)error_p {
     SSYKeychainQuery *query = [[SSYKeychainQuery alloc] init] ;
     if (itemClass) {
@@ -111,7 +111,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
 
 + (NSArray*)allItemsForHost:(NSString*)hostName
                     service:(NSString*)serviceName
-                      class:(NSString*)itemClass {
+                      clase:(NSString*)itemClass {
     SSYKeychainQuery *query = [[SSYKeychainQuery alloc] init] ;
     if (hostName) {
         [query setServer:hostName] ;
@@ -130,26 +130,26 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
     return answer ;
 }
 
-+ (NSArray*)allItemsOfClass:(NSString*)itemClass {
++ (NSArray*)allItemsOfClase:(NSString*)itemClass {
     return [self allItemsForHost:nil
                          service:nil
-                           class:itemClass] ;
+                           clase:itemClass] ;
 }
 
 + (NSArray*)allInternetItemsForHost:(NSString*)hostName {
     return [self allItemsForHost:hostName
                          service:nil
-                           class:(NSString*)(NSString*)kSecClassInternetPassword] ;
+                           clase:(NSString*)(NSString*)kSecClassInternetPassword] ;
 }
 
 + (NSArray*)allGenericItemsForService:(NSString*)serviceName {
     return [self allItemsForHost:nil
                          service:serviceName
-                           class:(NSString*)kSecClassGenericPassword] ;
+                           clase:(NSString*)kSecClassGenericPassword] ;
 }
 
 + (NSArray*)accountNamesForServost:(NSString*)servostName
-                             class:(NSString*)itemClass
+                             clase:(NSString*)itemClass
                            error_p:(NSError**)error_p {
     SSYKeychainQuery *query = [[SSYKeychainQuery alloc] init] ;
     if (itemClass) {
@@ -177,11 +177,11 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
 
 + (NSArray*)accountNamesForServost:(NSString*)servostName
                        trySubhosts:(NSArray*)trySubhosts
-                             class:(NSString*)itemClass
+                             clase:(NSString*)itemClass
                            error_p:(NSError**)error_p {
     NSError* error = nil ;
     NSArray* array = [self accountNamesForServost:servostName
-                                            class:itemClass
+                                            clase:itemClass
                                           error_p:&error] ;
     if (!array) {
         array = [NSMutableArray array] ;
@@ -195,7 +195,7 @@ static CFTypeRef SSYKeychainAccessibilityType = NULL ;
                                subhost,
                                servostName] ;
             moreAccounts = [self accountNamesForServost:aHost
-                                                  class:itemClass
+                                                  clase:itemClass
                                                 error_p:&error] ;
             array = [array arrayByAddingObjectsFromArray:moreAccounts] ;
             if (error && ([error code] != errSecItemNotFound)) {

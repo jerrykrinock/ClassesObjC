@@ -81,13 +81,6 @@ typedef NS_ENUM(NSUInteger, SSYKeychainQuerySynchronizationMode) {
 
 /*!
  @brief  Convenience accessor for the receiver's `passwordData` property,
- transformed by NSKeyedArchiver or NSKeyedUnarchiver
- */
-- (id<NSCoding>)passwordObject ;
-- (void)setPasswordObject:(id<NSCoding>)passwordObject ;
-
-/*!
- @brief  Convenience accessor for the receiver's `passwordData` property,
  transformed by UTF8 string encoding */
 - (NSString*)password ;
 - (void)setPassword:(NSString*)password ;
