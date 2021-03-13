@@ -72,7 +72,10 @@ static SSYLinearFileWriter* sharedFileWriter = nil ;
 		[[self fileHandle] writeData:data] ;
 	}
 	else {
-		NSLog(@"Internal Error 810-1149 No fileHandle") ;
+		/* This will happen if the calling app sent a +writeLine: message
+         but did not send +setToPath: first.  Since not sending +setToPath:
+         may be a legitimate way of muting log entries, we consider this branch
+         to be expected behavior and do not log an error or anything here. */
 	}
 }
 					
