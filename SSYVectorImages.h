@@ -90,7 +90,11 @@ typedef enum SSYVectorImageStyles_enum SSYVectorImageStyle ;
  you are left with zero.
  
  @details  Known Bug: Not all of the image styles obey the color, rotateDegrees
- and inset parameters.  It's a todo.
+ and inset parameters.  It's a todo.  UPDATE:  Actually I will never DO this
+ TODO, because…
+ 
+ This class should not be used for new designs deployed to macOS 10.15 or iOS
+ 13 or later.  Use Apple's SF Symbols instead.
  */
 + (NSImage*)imageStyle:(SSYVectorImageStyle)style
                 wength:(CGFloat)wength
