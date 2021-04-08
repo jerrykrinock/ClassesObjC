@@ -93,8 +93,15 @@ typedef enum SSYVectorImageStyles_enum SSYVectorImageStyle ;
  and inset parameters.  It's a todo.  UPDATE:  Actually I will never DO this
  TODO, because…
  
- This class should not be used for new designs deployed to macOS 10.15 or iOS
- 13 or later.  Use Apple's SF Symbols instead.
+ This class should maybe not be initially used for new designs deployed to
+ macOS 10.15 or iOS 13 or later.  Consider using Apple's SF Symbols instead.
+ Unfortunately it is a lot more complicated.  For example, the code to just
+ draw a triangle in this class is about 700 characters.  The .svg file to
+ draw a triangle compatible with SF Symbols is about 27,000 characters, and
+ you are probably going to need an SVG editor app.  I tried this and found
+ another issue – you need to actually copy your symbols 26 times to make the
+ 27 images.  But you also get nice rounded corners, 27 different variations,
+ guides for text.  Pick your poison.
  */
 + (NSImage*)imageStyle:(SSYVectorImageStyle)style
                 wength:(CGFloat)wength
