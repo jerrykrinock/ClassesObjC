@@ -92,32 +92,9 @@ static SSYMOCManager* sharedMOCManager = nil ;
 	switch(recoveryOption) {
 		case NSAlertFirstButtonReturn:;
 			// "Move"
-			NSString* oldPath = [[[error userInfo] objectForKey:constKeyStoreUrl] path] ;
-			NSString* oldFilename = [oldPath lastPathComponent] ;
-			NSString* oldBaseFilename = [oldFilename stringByDeletingPathExtension] ;
-			NSString* extension = [oldFilename pathExtension] ;
-			NSString* newFilename = [NSString stringWithFormat:
-									 @"%@-Unreadable-%@",
-									 [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"],
-									 oldBaseFilename] ;
-			// We used CFBundleExecutable instead of CFBundleName to get an unlocalized app name.
-			newFilename = [newFilename stringByAppendingPathExtension:extension] ;
-			NSString* newPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Desktop"] ;
-			newPath = [newPath stringByAppendingPathComponent:newFilename] ;
-			NSLog(@"Moving database file \n   oldPath: %@\n   newPath: %@", oldPath, newPath) ;
-			// In case the user already did this, movePath:toPath:handler requires
-			// that the destination not already exist, so we must "remove" it first.
-			NSFileManager* fm = [NSFileManager defaultManager] ;
-
-            NSError* error = nil ;
-			[fm removeItemAtPath:newPath
-						   error:NULL] ;
-			BOOL ok = [fm moveItemAtPath:oldPath
-								  toPath:newPath
-								   error:&error] ;
-            if (!ok) {
-                NSLog(@"Error in %s: %@", __PRETTY_FUNCTION__, error) ;
-            }
+            NSURL* url = [[error userInfo] objectForKey:constKeyStoreUrl];
+            [[self class] removeStoreAtUrl:url
+                                   tildefy:YES];
 
 			// Since the old corrupted file is gone, +[SSYMOCManager addPersistentStoreWithType:::::]
 			// will create a new file the next time it is invoked.  Problem should be solved.
@@ -151,6 +128,55 @@ static SSYMOCManager* sharedMOCManager = nil ;
 + (BOOL)sqliteStoreExistsForIdentifier:(NSString*)identifier {
 	NSURL* url = [self sqliteStoreURLWithIdentifier:identifier] ;
 	return [[NSFileManager defaultManager] fileExistsAtPath:[url path]] ;
+}
+
++ (void)removeStoreAtUrl:(NSURL*)url
+                 tildefy:(BOOL)tildefy {
+    /* In some cases, you may want to keep all tildefied files, adding more
+     tildes, for example, Foo~~.sql.  I have written code which does that
+     for document files, but we do not use it here.  Prior prior tildefied
+     files are removed. */
+
+    /* We ignore any errors produced by File Manager calls in this method,
+     because it is expected that an indicated file may not always exist, for
+     various reasons.  In particular, if the subject file Foo.sql is really bad,
+     sometimes Core Data may have already moved it to Foo.unreadable.sql.  */
+
+    NSString* originalPath = [url path];
+    NSString* originalShmPath = [originalPath stringByAppendingString:@"-shm"];
+    NSString* originalWalPath = [originalPath stringByAppendingString:@"-wal"];
+    
+    if (tildefy) {
+        NSString* tildefiedPath = [originalPath tildefiedPath];
+        NSString* tildefiedShmPath = [originalShmPath tildefiedPath];
+        NSString* tildefiedWalPath = [originalWalPath tildefiedPath];
+
+        /* -moveItemAtPath::: will fail if there happens to already be a
+         file at the destination, so we clear those out first. */
+        [[NSFileManager defaultManager] removeItemAtPath:tildefiedPath
+                                                   error:NULL];
+        [[NSFileManager defaultManager] removeItemAtPath:tildefiedShmPath
+                                                   error:NULL];
+        [[NSFileManager defaultManager] removeItemAtPath:tildefiedWalPath
+                                                   error:NULL];
+
+        [[NSFileManager defaultManager] moveItemAtPath:originalPath
+                                                toPath:tildefiedPath
+                                                 error:NULL];
+        [[NSFileManager defaultManager] moveItemAtPath:originalShmPath
+                                                toPath:tildefiedShmPath
+                                                 error:NULL] ;
+        [[NSFileManager defaultManager] moveItemAtPath:originalWalPath
+                                                toPath:tildefiedWalPath
+                                                 error:NULL];
+    } else {
+        [[NSFileManager defaultManager] removeItemAtPath:originalPath
+                                                   error:NULL];
+        [[NSFileManager defaultManager] removeItemAtPath:originalShmPath
+                                                   error:NULL];
+        [[NSFileManager defaultManager] removeItemAtPath:originalWalPath
+                                                   error:NULL];
+    }
 }
 
 + (NSPersistentStoreCoordinator*)persistentStoreCoordinatorType:(NSString*)storeType
@@ -258,9 +284,9 @@ static SSYMOCManager* sharedMOCManager = nil ;
 				   BOOL fileExists = [fm fileExistsAtPath:[url path]] ;
 				   if (fileExists) {
                        if (nukeAndPaveIfCorrupt) {
-                           // If we did not get a store but file exists, must be a corrupt file.
-                           [fm removeItemAtURL:url
-                                         error:NULL];
+                           // If we did not get a store but file exists, must be a corrupt file or store.
+                           [self removeStoreAtUrl:url
+                                          tildefy:NO];
                            persistentStore = [newPSC addPersistentStoreWithType:NSSQLiteStoreType
                                                                   configuration:nil
                                                                             URL:url
@@ -269,11 +295,11 @@ static SSYMOCManager* sharedMOCManager = nil ;
                        }
 
                        if (!persistentStore) {
-                           NSString* msg = [NSString stringWithFormat:@"Click 'Move' to move the unreadable database\n%@\nto your desktop and start a new database.  The item properties in your old database will not be available to %@.",
-                                            [url path],
-                                            [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"]] ;
-                           // We used CFBundleExecutable instead of CFBundleName to get an unlocalized app name.
                            if (error_p) {
+                               NSString* msg = [NSString stringWithFormat:@"Click 'Move' to move the unreadable database\n%@\nto your desktop and start a new database.  The item properties in your old database will not be available to %@.",
+                                                [url path],
+                                                [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"]] ;
+                               // We used CFBundleExecutable instead of CFBundleName to get an unlocalized app name.
                                *error_p = [*error_p errorByAddingLocalizedRecoverySuggestion:msg] ;
                                NSArray* recoveryOptions = [NSArray arrayWithObjects:
                                                            [NSString localize:@"move"],
@@ -299,33 +325,8 @@ static SSYMOCManager* sharedMOCManager = nil ;
 		   }
 		   else if ([*error_p involvesCode:SSYPersistentDocumentMultiMigratorErrorCodeNoSourceModel
 									domain:SSYPersistentDocumentMultiMigratorErrorDomain]) {
-			   NSString* originalPath = [url path];
-               NSString* originalShmPath = [originalPath stringByAppendingString:@"-shm"];
-               NSString* originalWalPath = [originalPath stringByAppendingString:@"-wal"];
-			   NSString* tildefiedPath = [originalPath tildefiedPath];
-               NSString* tildefiedShmPath = [originalShmPath tildefiedPath];
-               NSString* tildefiedWalPath = [originalWalPath tildefiedPath];
-			   BOOL movedOk = [[NSFileManager defaultManager] moveItemAtPath:originalPath
-																	  toPath:tildefiedPath
-																	   error:NULL] ;
-			   if (!movedOk) {
-				   // This may happen in two situations that I know of…
-				   // 1.  If the subject file is really bad, sometimes Core Data may have already
-				   //     moved subject file Foo.sql to Foo.unreadable.sql.  In this case,
-				   //     the error will be NSCocoaErrorDomain Code=4 "The file “Logs.sql” doesn’t exist."
-				   // 2.  If the subject file did not exist to begin with.
-				   // In either case, moveITemAtPath::: will return an error with
-				   // Domain=NSCocoaErrorDomain Code=4, containing an underlying error with
-				   // Error Domain=NSPOSIXErrorDomain Code=2.  We ignore it, don't even ask for it.
-			   }
-
-               /* Move -shm and -wal files, if they exist, too */
-               [[NSFileManager defaultManager] moveItemAtPath:originalShmPath
-                                                       toPath:tildefiedShmPath
-                                                        error:NULL] ;
-               [[NSFileManager defaultManager] moveItemAtPath:originalWalPath
-                                                       toPath:tildefiedWalPath
-                                                        error:NULL] ;
+               [[self class] removeStoreAtUrl:url
+                                      tildefy:YES] ;
 		   }
 	   }
    }
@@ -565,9 +566,9 @@ static SSYMOCManager* sharedMOCManager = nil ;
 }
 
 + (void)removeSqliteStoreForIdentifier:(NSString*)identifier {
-	NSURL* url = [self sqliteStoreURLWithIdentifier:identifier] ;
-	[[NSFileManager defaultManager] removeItemAtPath:[url path]
-											   error:NULL] ;
+	NSURL* url = [self sqliteStoreURLWithIdentifier:identifier];
+    [self removeStoreAtUrl:url
+                   tildefy:NO];
 }
 
 

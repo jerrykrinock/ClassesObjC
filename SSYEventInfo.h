@@ -18,8 +18,9 @@
 @interface SSYEventInfo : NSObject {
 }
 
-+ (BOOL)alternateKeyDown ;
-
-+ (BOOL)shiftKeyDown ;
++ (BOOL)alternateKeyDown;
++ (BOOL)shiftKeyDown;
++ (BOOL)commandKeyDown;
++ (BOOL)controlKeyDown;
 
 @end
