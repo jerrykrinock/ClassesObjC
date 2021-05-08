@@ -79,7 +79,9 @@ FourCharCode AppleScriptSubroutineName = 'snam';
         }
 
         if (!error) {
-            [requestEvent setParamDescriptor:parmListDescriptor forKeyword:keyDirectObject];
+            if (parmListDescriptor) {
+                [requestEvent setParamDescriptor:parmListDescriptor forKeyword:keyDirectObject];
+            }
         }
     }
 
