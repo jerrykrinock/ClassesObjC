@@ -6,10 +6,6 @@ NSString* const SSYHintArrowDidCloseNotification = @"SSYHintArrowDidCloseNotific
 
 NSString* const SSYHintArrowEventKey = @"SSYHintArrowEventKey" ;
 
-#define SSYHINTARROW_TOP_COLOR [NSColor colorWithCalibratedRed:(80.0/256.0) green:(111.0/256.0) blue:(246.0/256.0) alpha:1.0]
-#define SSYHINTARROW_BOTTOM_COLOR [NSColor colorWithCalibratedRed:(27.0/256.0) green:(68.0/256.0) blue:(243.0/256.0) alpha:1.0]
-#define SSYHINTARROW_BORDER_COLOR [NSColor whiteColor]
-
 static SSYHintArrow* static_helpArrow = nil ;
 
 @implementation SSYHintArrow
@@ -115,26 +111,27 @@ static SSYHintArrow* static_helpArrow = nil ;
     NSImage* bg = [NSImage imageWithSize:[self frame].size
                                  flipped:NO
                           drawingHandler:^(NSRect dstRect) {
-                              NSBezierPath* bgPath = [self backgroundPath] ;
-                              [NSGraphicsContext saveGraphicsState] ;
-                              [bgPath addClip] ;
+        NSBezierPath* bgPath = [self backgroundPath] ;
+        [NSGraphicsContext saveGraphicsState] ;
+        [bgPath addClip] ;
+        
+        // Draw background gradient.
+        
+        [m_innerColor set];
+        [bgPath fill];
                               
-                              // Draw background gradient.
-                              [m_gradient drawInBezierPath:bgPath
-                                                     angle:270.0] ;
-                              
-                              // Draw border if appropriate.
-                              if (m_borderWidth > 0) {
-                                  // Double the borderWidth since we're drawing inside the path.
-                                  [bgPath setLineWidth:(m_borderWidth * 2.0) * [self scaleFactor]] ;
-                                  [m_borderColor set] ;
-                                  [bgPath stroke] ;
-                              }
-                              [NSGraphicsContext restoreGraphicsState] ;
-
-                              return YES ;
-                          }] ;
-
+        // Draw border if appropriate.
+        if (m_borderWidth > 0) {
+            // Double the borderWidth since we're drawing inside the path.
+            [bgPath setLineWidth:(m_borderWidth * 2.0) * [self scaleFactor]] ;
+            [m_borderColor set] ;
+            [bgPath stroke] ;
+        }
+        [NSGraphicsContext restoreGraphicsState] ;
+        
+        return YES ;
+    }] ;
+    
     return [NSColor colorWithPatternImage:bg] ;
 }
 
@@ -176,10 +173,16 @@ static SSYHintArrow* static_helpArrow = nil ;
 								   backing:NSBackingStoreBuffered 
 									 defer:NO])) {
 		// Parameters for displaying the fat blue arrow.
-		m_gradient = [[NSGradient alloc] initWithStartingColor:SSYHINTARROW_TOP_COLOR
-															  endingColor:SSYHINTARROW_BOTTOM_COLOR] ;
-		m_size = NSMakeSize(74.0, 28.0) ; 
-		m_borderColor = [SSYHINTARROW_BORDER_COLOR copy] ;
+        NSColor* color;
+        if (@available(macOS 10.14, *)) {
+            color = [NSColor controlAccentColor];
+        } else {
+            color = [NSColor colorWithCalibratedRed:(54.0/256.0) green:(90.0/256.0) blue:(245.0/256.0) alpha:0.0];
+        }
+        m_innerColor = [[color colorWithAlphaComponent:0.5] retain];
+
+		m_size = NSMakeSize(74.0, 28.0) ;
+		m_borderColor = [[NSColor whiteColor] retain];
 		m_borderWidth = 3.0 ;
 		m_viewMargin = 3.0 ;
 		m_cornerRadius = 10.0 ;
@@ -221,7 +224,7 @@ static SSYHintArrow* static_helpArrow = nil ;
 
 - (void)dealloc {
 	[m_borderColor release] ;
-	[m_gradient release] ;
+	[m_innerColor release] ;
 	
     [super dealloc] ;
 }
@@ -286,7 +289,7 @@ static SSYHintArrow* static_helpArrow = nil ;
 	NSInteger i ;
 	for (i = 0; i < 3; ++i) {
 		CGPathAddLineToPoint(shakePath, NULL, NSMinX(frame), NSMinY(frame)) ;
-		CGPathAddLineToPoint(shakePath, NULL, NSMinX(frame) + 15.0, NSMinY(frame)) ;
+		CGPathAddLineToPoint(shakePath, NULL, NSMinX(frame) + 25.0, NSMinY(frame)) ;
 	}
 	CGPathCloseSubpath(shakePath) ;
 	shakeAnimation.path = shakePath ;
