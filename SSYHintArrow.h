@@ -63,6 +63,7 @@ extern NSString* const SSYHintArrowDidCloseNotification ;
  http://www.mugginsoft.com
 */
 @interface SSYHintArrow : NSWindow {
+    NSColor* m_innerColor;
     NSColor* m_borderColor ;
     CGFloat m_borderWidth ;
     CGFloat m_viewMargin ;
@@ -71,7 +72,6 @@ extern NSString* const SSYHintArrowDidCloseNotification ;
     NSSize m_size ;
 	
     @private
-	NSGradient* m_gradient ;
     NSView* m_view ;
     NSWindow* m_window ;
     NSPoint m_point ;
