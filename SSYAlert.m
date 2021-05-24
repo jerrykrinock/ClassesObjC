@@ -107,16 +107,27 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 													userInfo:nil];
 			[ex raise] ;
 		}
-		archive = [NSKeyedArchiver archivedDataWithRootObject:self] ;		
-        if (archive) {
-            copy = [NSKeyedUnarchiver unarchiveObjectWithData:archive] ;
-        } else {
-            NSLog(@"Error[1]: %@: Returning self since could not archive/copy %@", NSStringFromSelector(_cmd), self) ;
+        NSError* error = nil;
+		archive = [NSKeyedArchiver archivedDataWithRootObject:self
+                                        requiringSecureCoding:YES
+                                                        error:&error];
+        if (error) {
+            NSLog(@"Internal Error 243-5742: %@: Returning self since could not archive %@", NSStringFromSelector(_cmd), self) ;
             copy = self;
+        }
+
+        if (archive  && !error) {
+            copy = [NSKeyedUnarchiver unarchivedObjectOfClass:[SSYAlert class]
+                                                     fromData:archive
+                                                        error:&error];
+            if (!copy || error) {
+                NSLog(@"Internal Error 243-5743: %@: Returning self since could not unarchive %@", NSStringFromSelector(_cmd), self) ;
+                copy = self;
+            }
         }
 	}
 	@catch (NSException* ex) {
-		NSLog(@"Error[2]: %@: Exception: %@.  Returning self since could not un/archive %@", NSStringFromSelector(_cmd), ex, self) ;
+		NSLog(@"Internal Error 243-5741]: %@: Exception: %@.  Returning self since could not un/archive %@", NSStringFromSelector(_cmd), ex, self) ;
 		copy = self ;
 	}
 	@finally { }
