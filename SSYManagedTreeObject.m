@@ -374,8 +374,7 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 	NSError* error = nil ;
     NSDictionary* dic = nil;
     if (dataRepresentation) {
-	    dic = [NSKeyedUnarchiver unarchiveObjectSafelyWithData:dataRepresentation
-                                                       error_p:&error] ;
+	    dic = [NSKeyedUnarchiver unarchiveObjectFromData:dataRepresentation] ;
     }
 	if (!dic) {
 		if (error_p) {
