@@ -2382,14 +2382,22 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		[self setTitleText:title] ;			
 	}
 	
-	// Set Help Anchor
+	// Set Help Anchor if given by help anchor
 	{
 		NSString* helpAddress = [error helpAnchor] ;
 		if (helpAddress) {
 			[self setHelpAddress:helpAddress] ;
 		}
 	}
-	
+
+    // Set Help Anchor if given by help URL (may override helpAnchor)
+    {
+        NSURL* helpUrl = [[error userInfo] objectForKey:SSYHelpUrlErrorKey] ;
+        if (helpUrl) {
+            [self setHelpAddress:helpUrl.absoluteString] ;
+        }
+    }
+
 	// Set smallText
 	[self setSmallText:[error localizedDeepDescription]] ;
 	
