@@ -140,7 +140,6 @@ static SSYHintArrow* static_helpArrow = nil ;
     // it in this class to let us set the entire background image of the window 
     // as an NSColor patternImage.
     [super setBackgroundColor:[self backgroundColorPatternImage]] ;
-    /*SSYDBL*/ NSLog(@"Updating hint arrow background") ;
     if ([self isVisible]) {
         [self display] ;
         [self invalidateShadow] ;
@@ -153,7 +152,6 @@ static SSYHintArrow* static_helpArrow = nil ;
     }
     
     m_isResizingLockout = YES ;
-    /*SSYDBL*/ NSLog(@"Redisplaying hint arrow") ;
     [self updateGeometry] ;
     [self updateBackground] ;
     m_isResizingLockout = NO ;
