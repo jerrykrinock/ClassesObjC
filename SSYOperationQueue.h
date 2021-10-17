@@ -21,9 +21,9 @@ extern NSString* const constKeySSYOperationQueueDoneSelectorName ;
  for example, in BookMacster, because during a Save
  operation, for example, the run loop does not enter into
  the required wait state to post the notification until the
- Save is already complete to the hard disk.  If an Agent
+ Save is already complete to the hard disk.  If an Syncer
  had a From Cloud trigger, this would fire its kqueue and the
- Worker would find the Agent to be uninhibited, and do its
+ Worker would find the Syncer to be uninhibited, and do its
  work, which is undesired.  At first, testing of NSPostASAP
  seemed like it was working but then we found that if the
  Save was preceded by an Import 30 seconds earlier, it was

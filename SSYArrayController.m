@@ -188,7 +188,7 @@ NSString* SSYArrayControllerRowsType = @"SSYArrayControllerRowsType" ;
 	 this array controller is bound as the detail in a
 	 master-detail relationship, it will also add the new
 	 object to the master, as shown in this call stack:
-	 #12	0x000fa34e in -[Agent setTriggersOrdered:] at Agent.m:422
+	 #12	0x000fa34e in -[Syncer setTriggersOrdered:] at Syncer.m:422
 	 #13	0x93907c95 in _NSSetObjectValueAndNotify
 	 #14	0x90a05d1a in -[NSManagedObject setValue:forKey:]
 	 #15	0x93917acf in -[NSObject(NSKeyValueCoding) setValue:forKeyPath:]

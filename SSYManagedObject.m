@@ -356,10 +356,10 @@ end:;
 		// This was added in BookMacster 1.11, after I found that -[NSMutableSet unionSet:]
 		// will stupidly add members to a set that are already in the set.  In the case
 		// of a managed object this, this invokes _PFInvokeMutationMethodForEachMemberOfSet,
-		// which in turn invokes -[Agent add<Foo>Object:], which if I have overridden that
-		// with a custom setter as in the case of -[Agent addTriggersObject:], will
+		// which in turn invokes -[Syncer add<Foo>Object:], which if I have overridden that
+		// with a custom setter as in the case of -[Syncer addTriggersObject:], will
 		// post notifications etc. indicating that a trigger has been added, which
-		// is not true.  (I also fixed in in -[Agent addTriggersObject:], just for good
+		// is not true.  (I also fixed in in -[Syncer addTriggersObject:], just for good
 		// measure.)
 		return ;
 	}
