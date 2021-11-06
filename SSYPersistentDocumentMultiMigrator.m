@@ -545,6 +545,7 @@ end:
 		}
 	}
 	
+    NSLog(@"Finished migration ok=%hhd errorCode=%ld for %@", ok, errorCode, documentPath) ;
 	return ok ;
 }
 

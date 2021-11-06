@@ -49,7 +49,7 @@ enum SSYModelChangeAction_enum {   // Examples:
 	 the Safe Limit number of changes to be not detected as such.  In other words,
 	 Change Counts wants to see Modify by a higher priority than Move and Slide.
 	 However, I discovered while developing BookMacster 1.7/1.6.8 that this change
-	 caused a regression in exporting to Google Chrome via Proper API because that
+	 caused a regression in exporting to Google Chrome with Style 2 because that
 	 JavaScript needs to do moves and slides first; otherwise items may be attempted
 	 to be placed with gaps in families, which will cause errors in the JavaScript
 	 background.html function doNextPut().  To solve this problem I introduced the
