@@ -846,6 +846,25 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 
     // Steal the icon.  (Could also get this from NSBundle I suppose.)
     NSImage* rawIcon = [nsAlert icon] ;
+
+    /* The next line was added to fix a crash during subsequent app quitting
+     which started in macOS 12:
+     * Assertion failed: (![[NSApp _openWindows] NS_containsObjectIdenticalTo:self]), function -[NSWindow dealloc], file NSWindow.m, line 1579
+     I only noticed this if I quit after licensing.  After licensing, there
+     are two SSYAlert objects created and destroyed in succession.  The first
+     one shows the downloaded License Information and the second one I forgot
+     what it shows.  Anyhow, I noticted that if I quit the app immediately
+     after dismissing those two SSYAlerts in succession, the array returned by
+     [NSApplication windows] included two _NSAlertPanel which I found were
+     attached to the `nsAlert` created here.  Even after the fix, these two
+     _NSAlertPanel objects remain in [NSApplication windows] for some time, but
+     will be found to be gone later if you do not quit immediately.  Although
+     sending either -close or -performClose: fixed the assertion+crash, I
+     decided on the former since the latter calls NSBeep, probably because
+     the "window doesn’t have a close button", as explained in documentation
+     of -[NSWindow performClose:].  */
+    [nsAlert.window close];
+    
 #if !__has_feature(objc_arc)
     [nsAlert release] ;
 #endif
