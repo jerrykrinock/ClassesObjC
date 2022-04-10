@@ -710,6 +710,15 @@ extern NSObject <SSYAlertErrorHideManager> * gSSYAlertErrorHideManager ;
  If the error returns a -localizedFailureReason, presents that in the smallText 
  following a localized label "Possible reason for Error:".
  
+ If the error contains a SSYHelpUrlErrorKey in its info dictionary, presents a
+ help button which upon being clicked opens that Help URL in the user's default
+ web browser.
+ 
+ If the error returns a -helpAnchor and does not contain a SSYHelpUrlErrorKey
+ in its info dictionary, presents a help button which upon being clicked
+ opens that help anchor in the app's Help Book.  If both the SSYHelpUrlErrorKey
+ and -helpAnchor are present in the error, the latter is ignored.
+ 
  If the error returns a -localizedRecoverySuggestion, presents that in the small text
  folowing a localized label "Suggestion to Fix this Error:".
  

@@ -239,8 +239,12 @@ NSString* const constKeySSYOperationGroup = @"SSYOperationGroup" ;
                  
                  Sorry, on 20200601, again while running the Safari/run.sh test
                  AppleScript, it crashed again.  So I increased the sleep time
-                 to 2. */
-                sleep(2);
+                 to 2.
+                 
+                 Sorry, on 202103XX, again while running the Safari/run.sh test
+                 AppleScript, it crashed again.  So I increased the sleep time
+                 to 5. */
+                sleep(5);
                 [scriptCommand resumeExecutionWithResult:[self scriptResult]] ;
                 [self setScriptCommand:nil] ;
             }
