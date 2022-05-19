@@ -37,11 +37,24 @@ extern NSString* const SSYPersistentDocumentMultiMigratorDidEndMigrationNotifica
 #define SSYPersistentDocumentMultiMigratorErrorCodeUserCancelledUndisplayableRestore 315023
 
 /*!
- @brief    Class which provides a method automatically migrating
+ @brief    DEPRECATED Class which provides a method automatically migrating
  persistent stores in Core Data document-based apps over multiple
  versions
 
- @details  Although earlier versions of this class played with apps using
+ @details  *** DEPRECATION NOTICE ***
+ SSYPersistentDocumentMultiMigrator is *** DEPRECATED *** because
+ I had some trouble using this class in May 2022.  The trouble may be that
+ SSYPersistentDocumentMultiMigrator does not support modern SQLite stores with
+ write-ahead logging (-shm and -wal files).  I'm not sure because instead of
+ troubleshooting it, I forked a modern example from another developer and
+ replaced SSYPersistentDocumentMultiMigrator in my projects with the Swift code
+ in this fork:
+ 
+ https://github.com/jerrykrinock/CoreDataProgressiveMigration
+ 
+ *** END OF DEPRECATION NOTICE ***
+ 
+ Although earlier versions of this class played with apps using
  NSPersistentDocument, currently it requires that your app is using
  the open-source BSManagedDocument and not NSPersistentDocument.  There are
  many good reasons to do this, as explained here:
