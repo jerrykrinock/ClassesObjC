@@ -85,7 +85,7 @@
  the application's Resources which contains the various versions of
  managed object models (.mom) files required to migrate an existing
  sqlite store.  This parameter is needed to perform multi-hop migration
- of existing sqlite stores by SSYPersistentDocumentMultiMigrator.
+ of existing sqlite stores by CoreDataProgressiveMigration classes.
  If you do not wish to support multi-hop migration, you may pass nil
  and only Core Data's built-in single-hop automatic migration will
  be used.  For store types other than sqlite, this parameter is ignored.
