@@ -220,7 +220,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
         BOOL fileExists = NO ;
         
         if (ok) {
-            [fm fileExistsAtPath:parentPath isDirectory:&isDirectory] ;
+            fileExists = [fm fileExistsAtPath:parentPath isDirectory:&isDirectory] ;
             if (fileExists && !isDirectory) {
                 // Someone put a file where our directory should be
                 ok = [fm removeItemAtPath:parentPath
