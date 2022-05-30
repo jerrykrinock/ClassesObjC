@@ -249,10 +249,11 @@ static SSYMOCManager* sharedMOCManager = nil ;
         }
         
         if (ok) {
-            ok = [self migrateIfNeededWithUrl:url
-                                     momdName:momdName
-                                        error:&error];
-            
+            if ([fm fileExistsAtPath:url.path isDirectory:NULL]) {
+                ok = [self migrateIfNeededWithUrl:url
+                                         momdName:momdName
+                                            error:&error];
+            }
             if (ok) {
                 // Add persistent store to it
                 persistentStore = [newPSC addPersistentStoreWithType:NSSQLiteStoreType
