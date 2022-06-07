@@ -14,7 +14,9 @@ extern NSString* const constKeyMinute ;
  @details  Use the constant NSUndefinedDateComponent to
  indicate "any" or "every".
 */
-@interface SSYRecurringDate : NSObject <NSCoding, NSCopying> {
+/* NSSecureCoding is, I think, only required to migrate legacy data. */
+
+@interface SSYRecurringDate : NSObject <NSCoding, NSSecureCoding, NSCopying> {
 	NSInteger weekday ;
 	NSInteger hour ;
 	NSInteger minute ;
@@ -33,8 +35,11 @@ extern NSString* const constKeyMinute ;
 
 + (NSArray*)weekdayChoices ;
 + (NSString*)displayStringForWeekday:(NSInteger)weekday ;
+
 - (NSString*)displayWeekday ;
-- (NSString*)displaySummary ;
+
++ (SSYRecurringDate*)recurringDateWithString:(NSString*)string;
+- (NSString*)stringRepresentation;
 
 @end
 
@@ -47,7 +52,7 @@ extern NSString* const constKeyMinute ;
 - (void)testRecurringDate:(SSYRecurringDate*)rd {
     NSTimeInterval ti = [rd timeIntervalToNextOccurrence];
     NSDate* nd = [NSDate dateWithTimeIntervalSinceNow:ti];
-    NSLog(@"%@ : %@  (in %0.1f minutes)", [rd displaySummary], [nd geekDateTimeString], ti / 60);
+    NSLog(@"dateDayTime : %@  (in %0.1f minutes)", [rd displaySummary], [nd geekDateTimeString], ti / 60);
 }
 
 SSYRecurringDate* rd = [SSYRecurringDate new];

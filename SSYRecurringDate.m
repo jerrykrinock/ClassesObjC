@@ -12,6 +12,10 @@ NSString* const constKeyMinute = @"minute" ;
 @synthesize hour ;
 @synthesize minute ;
 
++ (BOOL)supportsSecureCoding {
+    return YES;
+}
+
 + (NSArray*)weekdayChoices {
 	NSInteger i ;
 	NSMutableArray* choices = [[NSMutableArray alloc] init] ;
@@ -88,15 +92,6 @@ NSString* const constKeyMinute = @"minute" ;
 	return displayTime ;
 }
 
-- (NSString*)displaySummary {
-	NSString* answer = [NSString localizeFormat:
-						@"dateDayTime",
-						[self displayWeekday],
-						[self displayTime]] ;
-	
-	return answer ;						
-}
-
 - (NSString*)description {
 	return [NSString stringWithFormat:
 			@"%@ <%p> d=%@ t=%@",
@@ -106,6 +101,31 @@ NSString* const constKeyMinute = @"minute" ;
 			[self displayTime]] ;
 }
 
+- (NSString*)stringRepresentation {
+    return [NSString stringWithFormat:
+            @"%ld_%ld_%ld",
+            self.weekday,
+            self.hour,
+            self.minute];
+}
+
++ (SSYRecurringDate*)recurringDateWithString:(NSString*)string {
+    if ([string respondsToSelector:@selector(componentsSeparatedByString:)]) {
+        NSArray* components = [string componentsSeparatedByString:@"_"];
+        if (components.count == 3) {
+            SSYRecurringDate* rd = [[SSYRecurringDate alloc] init];
+            rd.weekday = [[components objectAtIndex:0] integerValue];
+            rd.hour = [[components objectAtIndex:1] integerValue];
+            rd.minute = [[components objectAtIndex:2] integerValue];
+            return [rd autorelease];
+        }
+    } else if ([string isKindOfClass:[self class]]) {
+        /* Defensive programming in case legacy data which could assign
+         a SSYRecurringData to Watch.subject, */
+        return (SSYRecurringDate*)string;
+    }
+    return nil;
+}
 
 - (BOOL)isEqual:(SSYRecurringDate*)otherDate {
 	// It would be nice to add a 'tolerance' parameter to this, so that
