@@ -89,7 +89,7 @@
  If you do not wish to support multi-hop migration, you may pass nil
  and only Core Data's built-in single-hop automatic migration will
  be used.  For store types other than sqlite, this parameter is ignored.
-  @param    nukeAndPaveIfCorrupt.  If YES, and if the requested managed object
+  @param    recreateIfCorrupt.  If YES, and if the requested managed object
  context cannot be created becaus the underlying store file on the disk is
  corrupt, will silently delete the file and start a new empty one as if nothing
  bad happened.  Ignored if the storeType is not NSSQLiteStoreType.
@@ -101,7 +101,7 @@
                                               owner:(id)owner
                                          identifier:(NSString*)identifier
                                            momdName:(NSString*)momdName
-                                nukeAndPaveIfCorrupt:(BOOL)nukeAndPaveIfCorrupt
+                                  recreateIfCorrupt:(BOOL)recreateIfCorrupt
                                             error_p:(NSError**)error_p ;
 
 /*!

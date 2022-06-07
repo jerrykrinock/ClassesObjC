@@ -192,9 +192,10 @@ static SSYMOCManager* sharedMOCManager = nil ;
                                                      identifier:(NSString*)identifier
                                                        momdName:(NSString*)momdName
                                                         options:(NSDictionary*)options
-                                           nukeAndPaveIfCorrupt:(BOOL)nukeAndPaveIfCorrupt
+                                              recreateIfCorrupt:(BOOL)recreateIfCorrupt
                                                         error_p:(NSError**)error_p {
-    NSPersistentStore* persistentStore = nil ;
+    NSPersistentStore* persistentStore = nil;
+    NSError* error = nil;
     
     NSArray* bundles = [NSArray arrayWithObject:[NSBundle mainAppBundle]] ;
     NSManagedObjectModel* mergedMOM = [NSManagedObjectModel mergedModelFromBundles:bundles] ;
@@ -224,11 +225,10 @@ static SSYMOCManager* sharedMOCManager = nil ;
             if (fileExists && !isDirectory) {
                 // Someone put a file where our directory should be
                 ok = [fm removeItemAtPath:parentPath
-                                    error:error_p] ;
+                                    error:&error] ;
             }
         }
         
-        NSError* error = nil ;
         if (ok && ((fileExists && !isDirectory) || !fileExists)) {
             // Create parent directory
             ok = [fm createDirectoryAtPath:parentPath
@@ -242,10 +242,6 @@ static SSYMOCManager* sharedMOCManager = nil ;
                              @"Could not create directory at %@",
                              parentPath] ;
             error = [SSYMakeError(95745, msg) errorByAddingUnderlyingError:error] ;
-            NSLog(@"%@", error) ;
-            if (error_p) {
-                *error_p = error ;
-            }
         }
         
         if (ok) {
@@ -260,14 +256,14 @@ static SSYMOCManager* sharedMOCManager = nil ;
                                                        configuration:nil
                                                                  URL:url
                                                              options:options
-                                                               error:error_p] ;
+                                                               error:&error] ;
 #if SIMULATE_BAD_STORE
                 if (!didSimulateBadStoreOnce) {
                     persistentStore = nil ;
                     NSString* simulatedErrorDescription = [NSString stringWithFormat:
                                                            @"Can't use this stinkin' store at\n%@",
                                                            url.path];
-                    *error_p = SSYMakeError(12345, simulatedErrorDescription) ;
+                    error = SSYMakeError(12345, simulatedErrorDescription) ;
                     NSLog(@"61745: Simulating bad store at %@", url.path);
                     didSimulateBadStoreOnce = YES;
                 }
@@ -275,7 +271,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
                 if (!persistentStore) {
                     BOOL fileExists = [fm fileExistsAtPath:[url path]] ;
                     if (fileExists) {
-                        if (nukeAndPaveIfCorrupt) {
+                        if (recreateIfCorrupt) {
                             // If we did not get a store but file exists, must be a corrupt file or store.
                             [self removeStoreAtUrl:url
                                            tildefy:NO];
@@ -283,49 +279,43 @@ static SSYMOCManager* sharedMOCManager = nil ;
                                                                    configuration:nil
                                                                              URL:url
                                                                          options:options
-                                                                           error:error_p] ;
+                                                                           error:&error] ;
                         }
                         
                         if (!persistentStore) {
-                            if (error_p) {
-                                NSString* msg = [NSString stringWithFormat:@"Click 'Move' to move the unreadable database\n%@\nto your desktop and start a new database.  The item properties in your old database will not be available to %@.",
-                                                 [url path],
-                                                 [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"]] ;
-                                // We used CFBundleExecutable instead of CFBundleName to get an unlocalized app name.
-                                *error_p = [*error_p errorByAddingLocalizedRecoverySuggestion:msg] ;
-                                NSArray* recoveryOptions = [NSArray arrayWithObjects:
-                                                            [NSString localize:@"move"],
-                                                            [NSString localize:@"cancel"],
-                                                            nil] ;
-                                *error_p = [*error_p errorByAddingLocalizedRecoveryOptions:recoveryOptions] ;
-                                *error_p = [*error_p errorByAddingRecoveryAttempter:[self sharedMOCManager]] ;
-                                *error_p = [*error_p errorByAddingUserInfoObject:url
-                                                                          forKey:constKeyStoreUrl] ;
-                            }
+                            NSString* msg = [NSString stringWithFormat:@"Click 'Move' to move the unreadable database\n%@\nto your desktop and start a new database.  The item properties in your old database will not be available to %@.",
+                                             [url path],
+                                             [[NSBundle mainAppBundle] objectForInfoDictionaryKey:@"CFBundleExecutable"]] ;
+                            // We used CFBundleExecutable instead of CFBundleName to get an unlocalized app name.
+                            error = [error errorByAddingLocalizedRecoverySuggestion:msg] ;
+                            NSArray* recoveryOptions = [NSArray arrayWithObjects:
+                                                        [NSString localize:@"move"],
+                                                        [NSString localize:@"cancel"],
+                                                        nil] ;
+                            error = [error errorByAddingLocalizedRecoveryOptions:recoveryOptions] ;
+                            error = [error errorByAddingRecoveryAttempter:[self sharedMOCManager]] ;
+                            error = [error errorByAddingUserInfoObject:url
+                                                                forKey:constKeyStoreUrl] ;
                         }
                     }
                     else {
                         NSString* msg = [NSString stringWithFormat:
                                          @"Could not create persistent store file at path %@",
                                          [url absoluteString]] ;
-                        NSLog(@"%@", msg) ;
-                        if (error_p) {
-                            *error_p = SSYMakeError(51298, msg) ;
-                        }
+                        error = SSYMakeError(51298, msg) ;
                     }
                 }
             }
         }
-    }
-    else if ([storeType isEqualToString:NSInMemoryStoreType]) {
+    } else if ([storeType isEqualToString:NSInMemoryStoreType]) {
         persistentStore = [newPSC addPersistentStoreWithType:NSInMemoryStoreType
                                                configuration:nil
                                                          URL:nil
                                                      options:options
-                                                       error:error_p] ;
+                                                       error:&error] ;
         
         if (!persistentStore) {
-            NSLog(@"Internal Error 535-1498.  Failed to create inMemory persistent store") ;
+            error = [SSYMakeError(5351498, @"Failed to create inMemory persistent store") errorByAddingUnderlyingError:error];
         }
     }
     
@@ -336,6 +326,10 @@ static SSYMOCManager* sharedMOCManager = nil ;
         newPSC = nil ;
     }
     
+    if (error && error_p) {
+        *error_p = error ;
+    }
+    
     return [newPSC autorelease] ;
 }
 
@@ -344,8 +338,9 @@ static SSYMOCManager* sharedMOCManager = nil ;
 										 identifier:(NSString*)identifier
 										   momdName:(NSString*)momdName
                                             options:(NSDictionary*)options
-                               nukeAndPaveIfCorrupt:(BOOL)nukeAndPaveIfCorrupt
+                                  recreateIfCorrupt:(BOOL)recreateIfCorrupt
 											error_p:(NSError**)error_p {
+    NSError* error = nil;
 	NSManagedObjectContext* managedObjectContext = nil ;
     NSMutableDictionary* mocDics = nil ;
     if ([type isEqualToString:NSInMemoryStoreType]) {
@@ -367,8 +362,8 @@ static SSYMOCManager* sharedMOCManager = nil ;
 																					  identifier:identifier
 																						momdName:momdName
                                                                                          options:options
-                                                                            nukeAndPaveIfCorrupt:nukeAndPaveIfCorrupt
-																						 error_p:error_p] ;
+                                                                               recreateIfCorrupt:recreateIfCorrupt
+																						 error_p:&error] ;
 		if (coordinator) {
             managedObjectContext = [[NSManagedObjectContext alloc] initWithConcurrencyType:NSMainQueueConcurrencyType] ;
             // NSLog(@"Created for %@ moc %p on thread %p isMain=%hhd", identifier, managedObjectContext, [NSThread currentThread], [[NSThread currentThread] isMainThread]) ;
@@ -391,6 +386,10 @@ static SSYMOCManager* sharedMOCManager = nil ;
             ;
 		}
 	}
+    
+    if (error && error_p) {
+        *error_p = error ;
+    }
 	
 	return managedObjectContext ;
 }
@@ -526,17 +525,21 @@ static SSYMOCManager* sharedMOCManager = nil ;
 											  owner:(id)owner
 										 identifier:(NSString*)identifier
 										   momdName:(NSString*)momdName
-                               nukeAndPaveIfCorrupt:(BOOL)nukeAndPaveIfCorrupt
+                                  recreateIfCorrupt:(BOOL)recreateIfCorrupt
                                             error_p:(NSError**)error_p {
     NSDictionary* options = nil ;
-
+    NSError* error = nil;
 	NSManagedObjectContext* moc = [[self sharedMOCManager] managedObjectContextType:type
 																			  owner:owner
 																		 identifier:identifier
 																		   momdName:momdName
                                                                             options:options
-                                                               nukeAndPaveIfCorrupt:nukeAndPaveIfCorrupt
-																			error_p:error_p] ;
+                                                                  recreateIfCorrupt:recreateIfCorrupt
+																			error_p:&error] ;
+    if (error && error_p) {
+        *error_p = error ;
+    }
+
 	return moc ;
 }
 
