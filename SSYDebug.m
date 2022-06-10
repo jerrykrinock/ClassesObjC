@@ -232,3 +232,29 @@ void SSYDebugLogObjCMethods(Class clz) {
     printf("\n\n");
     free(methods);
 }
+
+/* This function was copied from
+ https://stackoverflow.com/questions/2094702/get-all-methods-of-an-objective-c-class-or-instance
+ answer by Buzzy */
+void ClassDump(Class clz) {
+
+    unsigned int methodCount = 0;
+    Method *methods = class_copyMethodList(clz, &methodCount);
+
+    printf("Found %d methods on '%s':\n", methodCount, class_getName(clz));
+
+    for (unsigned int i = 0; i < methodCount; i++) {
+        Method method = methods[i];
+
+        printf("%s with encoding '%s'\n",
+               sel_getName(method_getName(method)),
+               method_getTypeEncoding(method));
+
+        /**
+         *  Or do whatever you need here...
+         */
+    }
+
+    free(methods);
+}
+

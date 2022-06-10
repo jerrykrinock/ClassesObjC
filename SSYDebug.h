@@ -77,3 +77,11 @@ BOOL SSYDebugLogObjcClassesByBundleToFile (
 void SSYDebugLogResponderChain(void);
 
 void SSYDebugLogObjCMethods(Class clz);
+
+/*
+ To get instance methods, ClassDump([someInstance class])
+ To get class methods, ClassDump(object_getClass(YourClass))
+ Copied from contributor 'Buzzy'
+ https://stackoverflow.com/questions/2094702/get-all-methods-of-an-objective-c-class-or-instance
+ */
+void ClassDump(Class clz);
