@@ -19,10 +19,18 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	pid_t pid = 0 ; // not found
 	
 	if (bundleIdentifier) {
-        // Running the main run loop is necessary for -runningApplications to
-        // update.  The next line is actually necessary in tools which may be lacking
-        // a running run loop, and it actually works.
-        [[NSRunLoop mainRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.01]] ;
+        /* Running the main run loop is necessary for -runningApplications to
+         update.  It is necessary to create and run once a run loop in command
+         line tools which may not have a running run loop.  However, I saw in
+         macOS 13 Ventura that if there is a running run loop, such as in
+         an app, sending -runUntilDate: caused an infinite loop in one
+         particular situation.  Fortunately, NSRunLoop.durrentMode is
+         documented to return nil if the run loop is not running, so we
+         have a good indicator of whether or not to invoke -runUntilDate: */
+        if ([[NSRunLoop mainRunLoop] currentMode] == nil) {
+            [[NSRunLoop mainRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.01]];
+        }
+
         NSArray* runningApps = [[NSWorkspace sharedWorkspace] runningApplications] ;
 		for (NSRunningApplication* runningApp in runningApps) {
 			if ([[runningApp bundleIdentifier] isEqualToString:bundleIdentifier]) {
