@@ -286,13 +286,23 @@ end:
     NSError* error = nil ;
     BOOL ok = NO ;
     @try {
-        ok = [[self managedObjectContext] save:&error] ;
-        // The following was added in BookMacster 1.12 because Cocoa error
-        // 134030 error is sometimes received from users and, and I think it's
-        // probably coming from here, but I want to prove it.  With this change,
-        // 134030 will now be the underlying error.
-        if (!ok) {
-            error = [SSYMakeError(149034, @"Error saving local settings") errorByAddingUnderlyingError:error] ;
+        /* I don't know why a call to -[NSManagedObjectContext hasChanges] is
+         not built into -[NSManagedObjectContext save:], but apparently it is
+         not, as I have seen the latter function spin for a long time,
+         degrading performance, when there are no changes to be saved.  Anyhow,
+         Paul Hudson says that Apple recommends the following test before
+         saving.  https://www.hackingwithswift.com/books/ios-swiftui/conditional-saving-of-nsmanagedobjectcontext */
+        if ([[self managedObjectContext] hasChanges]) {
+            ok = [[self managedObjectContext] save:&error];
+            // The following was added in BookMacster 1.12 because Cocoa error
+            // 134030 error is sometimes received from users and, and I think it's
+            // probably coming from here, but I want to prove it.  With this change,
+            // 134030 will now be the underlying error.
+            if (!ok) {
+                error = [SSYMakeError(149034, @"Error saving local settings") errorByAddingUnderlyingError:error] ;
+            }
+        } else {
+            ok = YES;
         }
     }
     @catch (NSException* exception) {
@@ -303,7 +313,7 @@ end:
         error = [error errorByAddingUnderlyingException:exception] ;
     }
 
-    if (error_p) {
+    if (error && error_p) {
         NSPersistentStore* store = [[self managedObjectContext] store1] ;
         error = [error errorByAddingUserInfoObject:[store description]
                                             forKey:@"Store"] ;
