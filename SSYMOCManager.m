@@ -268,6 +268,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
                     didSimulateBadStoreOnce = YES;
                 }
 #endif
+                NSString* errorDesc = nil;
                 if (!persistentStore) {
                     BOOL fileExists = [fm fileExistsAtPath:[url path]] ;
                     if (fileExists) {
@@ -296,13 +297,17 @@ static SSYMOCManager* sharedMOCManager = nil ;
                             error = [error errorByAddingRecoveryAttempter:[self sharedMOCManager]] ;
                             error = [error errorByAddingUserInfoObject:url
                                                                 forKey:constKeyStoreUrl] ;
+                            errorDesc = [NSString stringWithFormat:
+                                         @"Could replace bad persistent store file at path %@",
+                                         [url path]] ;
+                            error = [SSYMakeError(51284, errorDesc) errorByAddingUnderlyingError:error];
                         }
                     }
                     else {
-                        NSString* msg = [NSString stringWithFormat:
-                                         @"Could not create persistent store file at path %@",
-                                         [url absoluteString]] ;
-                        error = SSYMakeError(51298, msg) ;
+                        errorDesc = [NSString stringWithFormat:
+                                     @"Could not create persistent store file at path %@",
+                                     [url path]] ;
+                        error = SSYMakeError(51298, errorDesc) ;
                     }
                 }
             }
@@ -315,7 +320,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
                                                        error:&error] ;
         
         if (!persistentStore) {
-            error = [SSYMakeError(5351498, @"Failed to create inMemory persistent store") errorByAddingUnderlyingError:error];
+            error = [SSYMakeError(535498, @"Failed to create inMemory persistent store") errorByAddingUnderlyingError:error];
         }
     }
     
