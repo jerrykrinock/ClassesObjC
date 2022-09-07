@@ -82,16 +82,20 @@ extern NSString* const SSYOperationQueueDidEndWorkNotification ;
  operations after that to be cancelled, until the receiver's queue is
  emptied.  When the queue is emptied, this property is set to nil. 
 
- An augmented replica error will be available to the doneTarget/doneSelector as
- the value for info dictionary key constKeySSYOperationQueueError.  The
- augmentation is that the error's userInfo dictionary will include a value
- for the key constKeySSYOperationGroup copied from the operation passed to
- setError:.  You can use this key to avoid displaying the same error
- in the doneTarget/doneSelector of subsequent operation groups.
+ An optionally augmented replica error will be available to the
+ doneTarget/doneSelector as the value for info dictionary key
+ constKeySSYOperationQueueError.  The optional augmentation is that the
+ error's userInfo dictionary will include a value for the key
+ constKeySSYOperationGroup setError:.  You can use this key to avoid
+ displaying the same error in the doneTarget/doneSelector of subsequent
+ operation groups.
 
  Before the resumeExecutionWithResult: message is sent to the receiver's
  scriptError, if any, the scriptError's scriptErrorNumber and scriptErrorString
  will be set to, respectively, this error's code and its localizedDescription.
+ 
+ @param    operationGroup  Value of optional augmentation, described above.
+ May be nil.
  */
 - (void)setError:(NSError*)error
   operationGroup:(NSString*)operationGroup ;
