@@ -229,7 +229,8 @@ https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Memor
 /*!
  @brief    Posts a SSYManagedObjectWillUpdateNotification notification.
 
- @details  This is a workaround for Apple Bug 6624874, using Solution 2.
+ @details  This is a workaround for Apple Feedback FB6059706, formerly
+ known as Bug 6624874, using Solution 2.
  
  Solution 2.  Use Custom Setters.  For each key/value in each object that
  is to be observed, implement a custom setter, and in each such custom setter
