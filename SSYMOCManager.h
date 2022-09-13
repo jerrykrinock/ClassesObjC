@@ -166,13 +166,19 @@
 */
 + (BOOL)destroyManagedObjectContext:(NSManagedObjectContext*)managedObjectContext ;
 
-/*@brief    Removes any managed object context with a give identifier,
-which would be returned by -managedObjectContextType:::::, from the
+/*
+ @brief    Removes any managed object context with a give identifier,
+ which would be returned by -managedObjectContextType:::::, from the
  receiver's instance's data.
-
-@details  Ditto the details from +destroyManagedObjectContext:.
+ 
+ @details  Ditto the details from +destroyManagedObjectContext:.
+ 
+ @param    ofType  Must be NSSQLiteStoreType or NSInMemoryStoreType to destroy
+ one of the sqlite mocs or in memory mocs.  Otherwise, this method is a no-op.
+ You cannot destroy doc mocs with this method.
  */
-+ (void)destroyManagedObjectContextWithIdentifier:(NSString*)identifier ;
++ (void)destroyManagedObjectContextWithIdentifier:(NSString*)identifier
+                                           ofType:(NSString*)type;
 
 /*!
  @brief    Deletes the local store file on disk for an sqlite store with a given

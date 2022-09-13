@@ -471,12 +471,15 @@ static SSYMOCManager* sharedMOCManager = nil ;
 	return answer ;
 }
 
-- (void)destroyManagedObjectContextWithIdentifier:(NSString*)identifier {
+- (void)destroyManagedObjectContextWithIdentifier:(NSString*)identifier
+                                           ofType:(NSString*)type {
     @synchronized(self) {
         if (identifier) {
-            [[self inMemoryMOCDics] removeObjectForKey:identifier] ;
-            [[self sqliteMOCDics] removeObjectForKey:identifier] ;
-            [[self docMOCDics] removeObjectForKey:identifier] ;
+            if ([type isEqualToString:NSInMemoryStoreType]) {
+                [[self inMemoryMOCDics] removeObjectForKey:identifier];
+            } else if ([type isEqualToString:NSSQLiteStoreType]) {
+                [[self sqliteMOCDics] removeObjectForKey:identifier];
+            }
         }
     }
 }
@@ -556,8 +559,10 @@ static SSYMOCManager* sharedMOCManager = nil ;
 	return [[self sharedMOCManager] destroyManagedObjectContext:managedObjectContext] ;
 }
 
-+ (void)destroyManagedObjectContextWithIdentifier:(NSString*)identifier {
-	[[self sharedMOCManager] destroyManagedObjectContextWithIdentifier:identifier] ;
++ (void)destroyManagedObjectContextWithIdentifier:(NSString*)identifier
+                                           ofType:(NSString*)type {
+	[[self sharedMOCManager] destroyManagedObjectContextWithIdentifier:identifier
+                                                                ofType:type];
 }
 
 + (void)removeSqliteStoreForIdentifier:(NSString*)identifier {
