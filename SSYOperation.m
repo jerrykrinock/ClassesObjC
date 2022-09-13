@@ -7,7 +7,7 @@
 #if DEBUG
 #if 0
 #warning Logging running of operations in SSYOperation.  DO NOT SHIP THIS!
-/* For this to work, you must set the file path of the singleton
+/* ¡¡IMPORTANTE!! For this to work, you must set the file path of the singleton
  SSYLinearFileWriter object before beginning operations. */
 #define LOG_RUNNING_OF_OPERATIONS 1
 #import "SSYLinearFileWriter.h"
