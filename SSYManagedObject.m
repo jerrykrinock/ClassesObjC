@@ -16,10 +16,12 @@
 
 // Public Notifications
 NSString* const SSYManagedObjectWillUpdateNotification = @"SSYManagedObjectWillUpdateNotification" ;
+NSString* const SSYManagedObjectDidUpdateNotification = @"SSYManagedObjectDidUpdateNotification" ;
 NSString* const SSYManagedObjectWillFaultNotification = @"SSYManagedObjectWillFaultNotification" ;
 
 // Keys inside Notification UserInfo Dictionaries
 NSString* const constKeySSYChangedKey = @"BkmxKey" ;
+NSString* const constKeyOldValue = @"BkmxOldValue";
 NSString* const constKeyNewValue = @"BkmxNewValue" ;
 
 NSString* const constKeyObserver = @"observer" ;
@@ -437,6 +439,20 @@ end:;
          which receives this notifications.  Chances are that it will find no change
          between newValue and oldValue, and thus do an early return. 
          I imagine there are many other test cases that would break also.*/
+    }
+}
+
+- (void)postDidChangeOldValue:(id)value
+                       forKey:(NSString*)key {
+    if (![NSObject isEqualHandlesNilObject1:[self valueForKey:key]
+                            object2:value]) {
+        NSDictionary* info = [NSDictionary dictionaryWithObjectsAndKeys:
+                              key, constKeySSYChangedKey,
+                              value, constKeyOldValue,  // May be nil, so keep this last!
+                              nil] ;
+        [[NSNotificationCenter defaultCenter] postNotificationName:SSYManagedObjectDidUpdateNotification
+                                                            object:self
+                                                          userInfo:info] ;
     }
 }
 

@@ -2,10 +2,12 @@
 
 // Public Notifications
 extern NSString* const SSYManagedObjectWillUpdateNotification ;
+extern NSString* const SSYManagedObjectDidUpdateNotification ;
 extern NSString* const SSYManagedObjectWillFaultNotification ;
 
 // Keys inside Notification UserInfo Dictionaries
 extern NSString* const constKeySSYChangedKey ;
+extern NSString* const constKeyOldValue ;
 extern NSString* const constKeyNewValue ;
 
 
@@ -255,6 +257,11 @@ https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Memor
 */
 - (void)postWillSetNewValue:(id)value
 					 forKey:(NSString*)key ;
+
+/* Added in BkmkMgrs 3.0 because I'm not getting the newValue in a
+ .prior notification from Swift KVO in my Tag class. */
+- (void)postDidChangeOldValue:(id)value
+                       forKey:(NSString*)key;
 
 - (void)breakRetainCycles ;
 
