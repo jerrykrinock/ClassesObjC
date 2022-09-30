@@ -104,6 +104,13 @@
                                   recreateIfCorrupt:(BOOL)recreateIfCorrupt
                                             error_p:(NSError**)error_p ;
 
++ (NSPersistentStoreCoordinator*)persistentStoreCoordinatorType:(NSString*)storeType
+                                                     identifier:(NSString*)identifier
+                                                       momdName:(NSString*)momdName
+                                                        options:(NSDictionary*)options
+                                              recreateIfCorrupt:(BOOL)recreateIfCorrupt
+                                                        error_p:(NSError**)error_p;
+
 /*!
  @brief    Adds a managed object context to the document managed object contexts
  managed by the shared MOC manager.
