@@ -65,10 +65,10 @@
 				NSLog(@"Internal Error 842-0828.  NSCompoundPredicateType %ld not supported", (long)type) ;
 		}
 	}
-	NSError* error = nil ;
+	NSError* __block error = nil ;
 	NSFetchRequest* fetchRequest = [[NSFetchRequest alloc] init] ;
     NSManagedObjectContext* managedObjectContext = [self managedObjectContext] ;
-	NSArray* fetches = nil ;
+	NSArray* __block fetches = nil ;
 	if (managedObjectContext) {
 		[fetchRequest setEntity:[NSEntityDescription SSY_entityForName:[self entityName]
                                                 inManagedObjectContext:managedObjectContext]] ;
@@ -76,18 +76,24 @@
 			[fetchRequest setPredicate:compoundPredicate] ;
 		}
 		
-		
         @try {
-            fetches = [managedObjectContext executeFetchRequest:fetchRequest
-                                                          error:&error] ;
+            [managedObjectContext performBlockAndWait:^{
+                fetches = [managedObjectContext executeFetchRequest:fetchRequest
+                                                              error:&error] ;
+                [fetches retain];
+                [error retain];
+            }];
         }
         @catch (NSException *exception) {
             if (!error) {
                 error = SSYMakeError(149045, @"Exception fetching with subpredicates") ;
             }
+            [error autorelease];
             error = [error errorByAddingUnderlyingException:exception] ;
+            [error retain];
         }
-		
+        [error autorelease];
+        
 		if (error) {
             error = [error errorByAddingUserInfoObject:compoundPredicate
                                                 forKey:@"Predicate"] ;
@@ -100,7 +106,8 @@
 		}
 	}
 	[fetchRequest release] ;
-	
+    [fetches autorelease];
+    
 	return fetches ; 
 }
 
@@ -260,7 +267,7 @@
 }
 
 - (void)deleteObject:(NSManagedObject*)object {
-	[[self managedObjectContext] deleteObject:object] ;
+	[[object managedObjectContext] deleteObject:object] ;
 }
 
 - (BOOL)deleteAllObjectsError_p:(NSError**)error_p {
@@ -273,9 +280,8 @@
 		goto end ;
 	}
 	
-	NSManagedObjectContext* moc = [self managedObjectContext] ;
 	for (NSManagedObject* object in allObjects) {
-		[moc deleteObject:object] ;
+		[[object managedObjectContext] deleteObject:object] ;
 	}
 	
 end:	
