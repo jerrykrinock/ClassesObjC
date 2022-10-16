@@ -317,17 +317,18 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
                             timeout:(NSTimeInterval)timeout;
 
 /*!
- @brief    Finds a running app, owned by the current user,
+ @brief    Finds the process behind any running app, owned by the current user,
  with a given bundle identifier, sends it a "kill -9" BSD signal,
- and returns when the app is killed or timeout occurs, whichever comes first.
+ and returns when such process(es) are killed or timeout occurs, whichever
+ comes first
  
  @details  May block its thread up to the timeout.  Sleeps for 0.5
  seconds between polls.
- @param    bundleIdentifier  The bundle identifier of the application to be 
- killed, or nil to no-op.
- @result   YES if the target app was not running, or if it dies within
- the allowed timeout, or if bundleIdentifier is nil.  NO if app was still
- running when timeout expired.
+ @param    bundleIdentifier  The bundle identifier of the application
+ process(es)to be killed, or nil to no-op.
+ @result   YES if no such process was running, or if all such processes die
+ within the allowed timeout, or if bundleIdentifier is nil.  NO if one or more
+ such processes are still running when timeout expired.
  */
 + (BOOL)killThisUsersAppWithBundleIdentifier:(NSString*)bundleIdentifier
 									 timeout:(NSTimeInterval)timeout ;

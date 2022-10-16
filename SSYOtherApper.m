@@ -15,6 +15,25 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 
 @implementation SSYOtherApper
 
++ (NSArray<NSNumber*>*)pidsOfThisUsersAppsWithBundleIdentifier:(NSString*)bundleIdentifier {
+    NSMutableArray* pids = [NSMutableArray new];
+    if (bundleIdentifier) {
+        NSArray* runningApps = [[NSWorkspace sharedWorkspace] runningApplications];
+        for (NSRunningApplication* runningApp in runningApps) {
+            if ([[runningApp bundleIdentifier] isEqualToString:bundleIdentifier]) {
+                pid_t pid = [runningApp processIdentifier];
+                [pids addObject: @(pid)];
+            }
+        }
+    }
+    
+    NSArray<NSNumber*>* answer = [pids copy];
+    [pids release];
+    [answer autorelease];
+    
+    return answer;
+}
+
 + (pid_t)pidOfThisUsersAppWithBundleIdentifier:(NSString*)bundleIdentifier {
 	pid_t pid = 0 ; // not found
 	
@@ -24,7 +43,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
          line tools which may not have a running run loop.  However, I saw in
          macOS 13 Ventura that if there is a running run loop, such as in
          an app, sending -runUntilDate: caused an infinite loop in one
-         particular situation.  Fortunately, NSRunLoop.durrentMode is
+         particular situation.  Fortunately, NSRunLoop.currentMode is
          documented to return nil if the run loop is not running, so we
          have a good indicator of whether or not to invoke -runUntilDate: */
         if ([[NSRunLoop mainRunLoop] currentMode] == nil) {
@@ -931,22 +950,37 @@ end:
 	}
 	
 	NSDate* endDate = [NSDate dateWithTimeIntervalSinceNow:timeout] ;
-	pid_t pid = [self pidOfThisUsersAppWithBundleIdentifier:bundleIdentifier] ;
-	if (pid != 0) {
-		kill(pid, SIGKILL) ;
-		
-		while (YES) {
-			if (![self isThisUsersAppRunningWithBundleIdentifier:bundleIdentifier]) {
-				return YES ;
-			}
-			
-			if ([(NSDate*)[NSDate date] compare:endDate] == NSOrderedDescending) {
-				return NO ;
-			}
-			
-			[NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]] ;
-		}
-	}
+    BOOL allKilled = NO;
+    do {
+        NSArray* pids = [self pidsOfThisUsersAppsWithBundleIdentifier:bundleIdentifier];
+        for (NSNumber* pid in pids) {
+            pid_t pidValue = pid.unsignedShortValue;
+            if (pidValue != 0) {
+                kill(pidValue, SIGKILL);
+            }
+        }
+            
+        allKilled = YES;
+        for (NSNumber* pid in pids) {
+            pid_t pidValue = pid.shortValue;
+            if (pidValue != 0) {
+                if ([self isProcessRunningPid:pidValue
+                                 thisUserOnly:YES]) {
+                    allKilled = NO;
+                }
+            }
+        }
+        
+        if (allKilled) {
+            break;
+        }
+
+        if ([(NSDate*)[NSDate date] compare:endDate] == NSOrderedDescending) {
+            break;
+        }
+        
+        [NSThread sleepUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
+    } while (YES);
 	
     /* We return YES because, due to the infinite `while(YES)` above,  the only
      way we could get here is if pid == 0, which means the relevant app is
