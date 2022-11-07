@@ -114,6 +114,11 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
     [self forgetCachedChildrenOrdered] ;
 }
 
+- (void)handleDidChangeOldChildren:(NSSet*)newValue {
+    [self postDidChangeOldValue:newValue
+                         forKey:constKeyChildren] ;
+}
+
 /* Testing indicates that this method can be invoked, and children can by
  mutated, without invoking -setChildren: or any other setter.  In other words,
  this method seems to be an independent value-changer.  Therefore, the following
@@ -130,15 +135,20 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
 - (void)setChildren:(NSSet *)value
 {    
 	[self handleWillSetNewChildren:value] ;
-	
+    NSSet* oldChildren = self.children.copy;
+
     [self willChangeValueForKey:constKeyChildren];
     [self setPrimitiveChildren:[NSMutableSet setWithSet:value]];
     [self didChangeValueForKey:constKeyChildren];
+    
+    [self handleDidChangeOldChildren:oldChildren];
+    [oldChildren release];
 }
 
 - (void)addChildrenObject:(SSYManagedTreeObject *)value 
-{    
+{
 	[self handleWillSetNewChildren:[[self children] setByAddingObject:value]] ;
+    NSSet* oldChildren = self.children.copy;
 	
     NSSet *changedObjects = [[NSSet alloc] initWithObjects:&value count:1];
     
@@ -147,12 +157,16 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
     [self didChangeValueForKey:constKeyChildren withSetMutation:NSKeyValueUnionSetMutation usingObjects:changedObjects];
     
     [changedObjects release];
+    
+    [self handleDidChangeOldChildren:oldChildren];
+    [oldChildren release];
 }
 
 - (void)removeChildrenObject:(SSYManagedTreeObject *)value 
 {
 	[self handleWillSetNewChildren:[[self children] setByRemovingObject:value]] ;
-	
+    NSSet* oldChildren = self.children.copy;
+
     NSSet *changedObjects = [[NSSet alloc] initWithObjects:&value count:1];
     
     [self willChangeValueForKey:constKeyChildren withSetMutation:NSKeyValueMinusSetMutation usingObjects:changedObjects];
@@ -160,28 +174,43 @@ NSString* const SSYManagedObjectParentNodeIdKey = @"pi" ;
     [self didChangeValueForKey:constKeyChildren withSetMutation:NSKeyValueMinusSetMutation usingObjects:changedObjects];
     
     [changedObjects release];
+    
+    [self handleDidChangeOldChildren:oldChildren];
+    [oldChildren release];
 }
 
 - (void)addChildren:(NSSet *)value 
-{    
+{
 	[self handleWillSetNewChildren:[[self children] setByAddingObjectsFromSet:value]] ;
-	
+    NSSet* oldChildren = self.children.copy;
+
     [self willChangeValueForKey:constKeyChildren withSetMutation:NSKeyValueUnionSetMutation usingObjects:value];
     [[self primitiveChildren] unionSet:value];
     [self didChangeValueForKey:constKeyChildren withSetMutation:NSKeyValueUnionSetMutation usingObjects:value];
+    
+    [self handleDidChangeOldChildren:oldChildren];
+    [oldChildren release];
 }
 
 - (void)removeChildren:(NSSet *)value 
 {
 	[self handleWillSetNewChildren:[[self children] setByRemovingObjectsFromSet:value]] ;
-	
+    NSSet* oldChildren = self.children.copy;
+
     [self willChangeValueForKey:constKeyChildren withSetMutation:NSKeyValueMinusSetMutation usingObjects:value];
     [[self primitiveChildren] minusSet:value];
     [self didChangeValueForKey:constKeyChildren withSetMutation:NSKeyValueMinusSetMutation usingObjects:value];
+    
+    [self handleDidChangeOldChildren:oldChildren];
+    [oldChildren release];
 }
 
 - (void)removeAllChildren {
-	[self removeChildren:[self children]] ;
+    [self removeChildren:[self children]] ;
+    NSSet* oldChildren = self.children.copy;
+
+    [self handleDidChangeOldChildren:oldChildren];
+    [oldChildren release];
 }
 
 - (void)setIndex:(NSNumber*)newValue  {
