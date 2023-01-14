@@ -1,7 +1,7 @@
 #import <Cocoa/Cocoa.h>
 
 
-@interface SSYTransformIndexBase0To1 : NSObject {
+@interface SSYTransformIndexBase0To1 : NSValueTransformer {
 }
 
 @end

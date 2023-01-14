@@ -7,7 +7,7 @@ the two trees have different formats; that is, different keys and sub-keys.
 
 
 
-@interface SSYTreeTransformer : NSObject
+@interface SSYTreeTransformer : NSValueTransformer
 {
 	SEL _reformatter;
 	SEL _childrenInExtractor ;
