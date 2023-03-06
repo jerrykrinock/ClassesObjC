@@ -988,19 +988,19 @@ end:
 	return YES ;
 }
 
-+ (NSString*)applicationPathForUrl:(NSURL*)url {
-    CFErrorRef error = nil ;
++ (NSURL*)applicationUrlForUrl:(NSURL*)url {
+    CFErrorRef error = nil;
     CFURLRef appUrl = LSCopyDefaultApplicationURLForURL((CFURLRef)url,
                                                         kLSRolesViewer,
                                                         &error
-                                                        ) ;
-    NSString* path = [(NSURL*)appUrl path] ;
-    
-    if (appUrl) {
-        CFRelease(appUrl) ;
-    }
-    
-    return path ;
+                                                        );
+    return [(NSURL*)appUrl autorelease];
+}
+
++ (NSString*)applicationPathForUrl:(NSURL*)url {
+    CFErrorRef error = nil;
+    NSURL* appUrl = [self applicationUrlForUrl:url];
+    return [appUrl path];
 }
 
 + (NSString*)nameOfDefaultWebBrowser {
@@ -1009,6 +1009,11 @@ end:
 	NSString* name = [path stringByDeletingPathExtension] ;
 	name = [[name pathComponents] lastObject] ;
 	return name ;
+}
+
++ (NSURL*)urlOfDefaultWebBrowser {
+    NSURL* url = [NSURL URLWithString:@"http://apple.com"];
+    return [self applicationUrlForUrl:url];
 }
 
 + (NSString*)nameOfDefaultEmailClient {

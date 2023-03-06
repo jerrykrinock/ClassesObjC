@@ -336,6 +336,11 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 
 
 /*!
+ @brief    Returns the URL of the user's default web browser, for example,
+ "file:///Applications/Safari.app"
+*/
++ (NSURL*)urlOfDefaultWebBrowser;
+/*!
  @brief    Returns the name of the user's default web browser, for example,
  "Safari"
 */
