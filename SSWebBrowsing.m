@@ -4,7 +4,7 @@
 @implementation NSString (FirefoxQuicksearch)
 
 + (CFURLRef)sampleHttpUrl {
-	return (CFURLRef)[NSURL URLWithString:@"http://xx.xx"] ;
+    return (__bridge CFURLRef)[NSURL URLWithString:@"http://xx.xx"] ;
 }
 
 - (NSString*)stringByFixingFirefoxQuicksearch {
@@ -25,7 +25,9 @@
 		// I tried removing with query (which wasn't easy because NSURL wouldn't initWithString until
 		// I first replaced %s with the app name).  But this caused an "Internal Server Error" at
 		// answers.com, either with or without the ? query delimiter character.
-		[temp release] ;
+#if !__has_feature(objc_arc)
+		[temp release];
+#endif
 	}
 	else {
 		output = self ;
@@ -40,17 +42,24 @@
 @implementation SSWebBrowsing
 
 + (CFURLRef)sampleHttpUrl {
-	return (CFURLRef)[NSURL URLWithString:@"http://xx.xx"] ;
+    return (__bridge CFURLRef)[NSURL URLWithString:@"http://xx.xx"] ;
+}
+
++ (NSURL*)defaultBrowserUrl {
+    NSURL* answer = (NSURL*)CFBridgingRelease(LSCopyDefaultApplicationURLForURL([self sampleHttpUrl],
+                                                                                kLSRolesViewer,
+                                                                                NULL));
+#if !__has_feature(objc_arc)
+    [answer autorelease];
+#endif
+    return answer;
 }
 
 + (NSString*)defaultBrowserDisplayName {
 	CFErrorRef error = nil ;
 
 	// Get browser's URL
-	NSURL *defaultBrowserURL = nil ;
-    defaultBrowserURL = (NSURL*)LSCopyDefaultApplicationURLForURL([self sampleHttpUrl],
-                                                                  kLSRolesViewer,
-                                                                  &error) ;
+    NSURL *defaultBrowserURL = [self defaultBrowserUrl];
 	NSString* name = nil ;
 	if (!error && defaultBrowserURL) {
 		name = [[NSFileManager defaultManager] displayNameAtPath:[defaultBrowserURL path]] ;
@@ -64,28 +73,22 @@
 		name = @"??" ;
 	}
     
-    if (defaultBrowserURL) {
-        CFRelease(defaultBrowserURL) ;
-    }
-	
 	return name ;
 }
 
 + (NSString*)defaultBrowserBundleIdentifier {
-    NSError* error ;
-    CFURLRef browserUrl = LSCopyDefaultApplicationURLForURL(
-                                                            [self sampleHttpUrl],
-                                                            kLSRolesViewer,
-                                                            (CFErrorRef*)&error) ;
-	
+    CFURLRef browserUrl = (__bridge CFURLRef)(CFBridgingRelease(LSCopyDefaultApplicationURLForURL(
+                                                                                                  [self sampleHttpUrl],
+                                                                                                  kLSRolesViewer,
+                                                                                                  NULL)));
+                                            
 	// Get path (NSString*)
-    NSString* path = [(NSURL*)browserUrl path] ;
+    NSString* path = [(__bridge NSURL*)browserUrl path] ;
+#if !__has_feature(objc_arc)
     if (browserUrl) {
         CFRelease(browserUrl) ;
     }
-	if (!path) {
-		NSLog(@"Internal Error 324-5847  %@", error) ;
-	}
+#endif
 	
 	// Get bundle
 	NSBundle* bundle = nil ;
@@ -114,9 +117,9 @@
 + (void)browseToURLString:(NSString*)urlString
   browserBundleIdentifier:(NSString*)browserBundleIdentifier
 				 activate:(BOOL)activate {
-	NSWorkspaceLaunchOptions options = NSWorkspaceLaunchAsync ;
-	if (!activate) {
-		options = options | NSWorkspaceLaunchWithoutActivation ;
+    NSWorkspaceOpenConfiguration* configuration = [NSWorkspaceOpenConfiguration new];
+    if (!activate) {
+        configuration.activates = NO;
 	}
 	
 	if (!browserBundleIdentifier) {
@@ -136,20 +139,11 @@
 	
 	if (url) {
 		NSArray* urls = [NSArray arrayWithObject:url] ;
-		
-        BOOL ok = [[NSWorkspace sharedWorkspace] openURLs:urls
-                                  withAppBundleIdentifier:browserBundleIdentifier
-                                                  options:options
-                           additionalEventParamDescriptor:nil
-                                        launchIdentifiers:NULL] ;
-        if (!ok) {
-            NSLog(
-                  @"%s: Failed to visit with %@ with options %ld : %@",
-                  __PRETTY_FUNCTION__,
-                  browserBundleIdentifier,
-                  (long)options,
-                  url) ;
-        }
+        NSURL* browserUrl = [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:browserBundleIdentifier];
+        [[NSWorkspace sharedWorkspace] openURLs:urls
+                                  withApplicationAtURL:browserUrl
+                                            configuration:configuration
+                                        completionHandler:NULL];
 	}
 	else {
         /* If this is a regular, foreground, dock-resident GUI app … */
@@ -160,15 +154,22 @@
             NSBeep();
         }
 	}
+
+#if !__has_feature(objc_arc)
+    [configuration release];
+#endif
 }
 
 + (NSImage*)faviconForDomain:(NSString*)domain {
 	NSString* urlString = [[NSString alloc] initWithFormat:
 						   @"http://%@/favicon.ico", domain] ;	
 	NSImage* favicon = [[NSImage alloc] initWithContentsOfURL:[NSURL URLWithString:urlString]] ;
-	[urlString release] ;
-	
-	return [favicon autorelease] ;
+#if !__has_feature(objc_arc)
+	[urlString release];
+    [favicon autorelease];
+#endif
+    
+	return favicon;
 }	
 
 @end

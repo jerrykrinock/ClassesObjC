@@ -14,7 +14,7 @@
 }
 
 + (NSString*)rawVersionStringFromBundleIdentifier:(NSString*)bundleIdentifier {
-	NSString* bundlePath = [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleIdentifier] ;
+    NSString* path = [[[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:bundleIdentifier] path];
 	// Note: The above is more reliable than -fullPathForApplication,
 	// but still not reliable enough.  The problem is that its behavior
 	// when more than one version of an app is installed is not defined.
@@ -37,7 +37,7 @@
 	//  (a) App installed in FileVault
 	//  (b) App installed in ~/Applications
 	
-	NSBundle* bundle = [NSBundle bundleWithPath:bundlePath] ;
+	NSBundle* bundle = [NSBundle bundleWithPath:path] ;
 	
 	NSString* versionNumberString = [self rawVersionStringFromBundle:bundle] ;
 

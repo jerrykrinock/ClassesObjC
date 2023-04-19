@@ -3,6 +3,7 @@
 #import "SSYMailto.h"
 #import "SSYSystemDescriber.h"
 #import "SSYWrappingCheckbox.h"
+#import "SSWebBrowsing.h"
 
 #import "NSError+InfoAccess.h"
 #import "NSString+Truncate.h"
@@ -681,11 +682,12 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 - (IBAction)help:(id)sender {
     NSURL* url = [NSURL URLWithString:self.helpAddress];
     if ([[url scheme] hasPrefix:@"http"]) {
+        NSWorkspaceOpenConfiguration* config = [NSWorkspaceOpenConfiguration new];;
         [[NSWorkspace sharedWorkspace] openURLs:@[url]
-                        withAppBundleIdentifier:nil
-                                        options:NSWorkspaceLaunchAsync
-                 additionalEventParamDescriptor:nil
-                              launchIdentifiers:NULL];
+                           withApplicationAtURL:[SSWebBrowsing defaultBrowserUrl]
+                                  configuration:config
+                              completionHandler:NULL];
+        [config release];
     } else {
         /* Help Anchors are broken in macOS 10.14, at least, as they are formed
          in my app's Help Book.  Until I get a workaround that works, I

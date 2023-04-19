@@ -130,12 +130,13 @@ NSString* const constKeySSYTroubleZipperURL = @"SSYTroubleZipperURL" ;
                             }
                             
                             if (appUrl) {
-                                NSString* appleScriptAppPath = appUrl.path;
-                                BOOL ok = [[NSWorkspace sharedWorkspace] launchApplication:appleScriptAppPath] ;
-                                if (!ok) {
-                                    [self alertErrorCode:159433
-                                         underlyingError:error] ;
-                                }
+                                [[NSWorkspace sharedWorkspace] openApplicationAtURL:appUrl
+                                                                      configuration:[NSWorkspaceOpenConfiguration configuration] completionHandler:^(NSRunningApplication * _Nullable app, NSError * _Nullable error) {
+                                    if (error) {
+                                        [self alertErrorCode:159433
+                                             underlyingError:error] ;
+                                    }
+                                }];
                             }
                             else {
                                 [self alertErrorCode:159429] ;

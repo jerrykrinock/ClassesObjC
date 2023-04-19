@@ -10,7 +10,14 @@ NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
 		switch (algorithm) {
 			case SSYDigesterAlgorithmMd5:
                 m_algorithm = SSYDigesterAlgorithmMd5 ;
+                /* Using MD5 hash is deprecated in macOS 10.15.  But it is still used
+                 still used by Pinboard to generate a bookmark's exide from its URL,
+                 and by Chrome to generate the checksum for its bookmarks file.
+                 So, I ignore the deprecation*/
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
                 CC_MD5_Init(&m_context_md5) ;
+#pragma clang diagnostic pop
 				break;
             case SSYDigesterAlgorithmSha1:;
                 m_algorithm = SSYDigesterAlgorithmSha1 ;
@@ -33,7 +40,15 @@ NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
 - (void)updateWithData:(NSData*)data {
     switch (m_algorithm) {
         case SSYDigesterAlgorithmMd5:
+            m_algorithm = SSYDigesterAlgorithmMd5 ;
+            /* Using MD5 hash is deprecated in macOS 10.15.  But it is still used
+             still used by Pinboard to generate a bookmark's exide from its URL,
+             and by Chrome to generate the checksum for its bookmarks file.
+             So, I ignore the deprecation*/
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
             CC_MD5_Update(&m_context_md5, [data bytes], (CC_LONG)[data length]) ;
+#pragma clang diagnostic pop
             break ;
         case SSYDigesterAlgorithmSha1:
             CC_SHA1_Update(&m_context_sha1, [data bytes], (CC_LONG)[data length]) ;
@@ -90,8 +105,16 @@ NSString* const msgSSYDigesterContextIsDefunct = @"Context is defunct." ;
     switch (m_algorithm) {
         case SSYDigesterAlgorithmMd5:;
             hash = [[NSMutableData alloc] initWithLength:CC_MD5_DIGEST_LENGTH] ;
+            m_algorithm = SSYDigesterAlgorithmMd5 ;
+            /* Using MD5 hash is deprecated in macOS 10.15.  But it is still used
+             still used by Pinboard to generate a bookmark's exide from its URL,
+             and by Chrome to generate the checksum for its bookmarks file.
+             So, I ignore the deprecation*/
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
             CC_MD5_Final([hash mutableBytes], &m_context_md5) ;
-            break ;
+#pragma clang diagnostic pop
+break ;
         case SSYDigesterAlgorithmSha1:;
             hash = [[NSMutableData alloc] initWithLength:CC_SHA1_DIGEST_LENGTH] ;
             CC_SHA1_Final([hash mutableBytes], &m_context_sha1) ;

@@ -113,28 +113,11 @@
     
     if (ok) {
         NSMutableDictionary *query = [self query] ;
-#if TARGET_OS_IPHONE
-        status = SecItemDelete((__bridge CFDictionaryRef)query) ;
+        OSStatus status = SecItemDelete((__bridge CFDictionaryRef)query) ;
+        /*SSYDBL*/ NSLog(@"Deleted with status %d", (int)status);
         if (status != errSecSuccess) {
             error = [[self class] errorWithCode:status] ;
         }
-#else
-        CFTypeRef result = NULL ;
-        [query setObject:@YES forKey:(__bridge id)kSecReturnRef] ;
-        OSStatus status = SecItemCopyMatching((
-                                               __bridge CFDictionaryRef)query,
-                                              &result) ;
-        if (status == errSecSuccess) {
-            status = SecKeychainItemDelete((SecKeychainItemRef)result) ;
-            CFRelease(result) ;
-            if (status != errSecSuccess) {
-                error = [[self class] errorWithCode:status] ;
-            }
-        }
-        else if (status != errSecItemNotFound) {
-            error = [[self class] errorWithCode:status] ;
-        }
-#endif
 
         ok = ((status == errSecSuccess) || (status == errSecItemNotFound)) ;
     }

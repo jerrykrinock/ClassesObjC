@@ -11,10 +11,8 @@
 
 + (NSSet*)standardToolbarIdentifiers {
 	return [NSSet setWithObjects:
-			NSToolbarSeparatorItemIdentifier,
 			NSToolbarSpaceItemIdentifier,
 			NSToolbarFlexibleSpaceItemIdentifier,
-			NSToolbarCustomizeToolbarItemIdentifier,
 			nil] ;
 }
 
@@ -103,7 +101,6 @@
 			if (YES
 				// Flexible Space and Separator are not "real" items
 				&& ![theIdentifier isEqualToString:NSToolbarFlexibleSpaceItemIdentifier]
-				&& ![theIdentifier isEqualToString:NSToolbarSeparatorItemIdentifier]
 				) {
 				[ibOutlet_tabView selectTabViewItem:theItem] ;
 				didFindFirstRealItem = YES ;

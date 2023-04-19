@@ -19,6 +19,7 @@
 
 }
 
++ (NSURL*)defaultBrowserUrl;
 + (NSString*)defaultBrowserDisplayName ;
 
 + (NSString*)defaultBrowserBundleIdentifier ;

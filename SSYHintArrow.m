@@ -68,7 +68,7 @@ static SSYHintArrow* static_helpArrow = nil ;
 	CGFloat maxY = floor(NSMaxY(contentArea) * scaleFactor - 0.5f) ;
 	
     NSBezierPath* path = [NSBezierPath bezierPath] ;
-    [path setLineJoinStyle:NSRoundLineJoinStyle] ;
+    [path setLineJoinStyle:NSLineJoinStyleRound] ;
     
     // Begin at top-left.
     NSPoint currPt = NSMakePoint(minX, maxY) ;

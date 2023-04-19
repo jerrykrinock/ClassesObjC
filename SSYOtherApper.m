@@ -190,7 +190,7 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 
 
 + (NSImage*)iconForAppWithBundleIdentifier:(NSString*)bundleIdentifier {
-	NSString* path = [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleIdentifier] ;
+	NSString* path = [[[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:bundleIdentifier] path];
 	NSImage* answer ;
 	if (path) {
 		answer = [[NSWorkspace sharedWorkspace] iconForFile:path] ;
@@ -204,13 +204,12 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 
 
 + (NSString*)fullPathForAppWithBundleIdentifier:(NSString*)bundleIdentifier {
-	NSString* fullPath = nil ;
+	NSString* path = nil ;
 	if (bundleIdentifier) {
-		NSWorkspace* sharedWorkspace = [NSWorkspace sharedWorkspace] ;
-		fullPath = [sharedWorkspace absolutePathForAppBundleWithIdentifier:bundleIdentifier] ;
+        path = [[[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:bundleIdentifier] path];
 	}
 	
-	return fullPath ;
+	return path ;
 }
 
 + (NSArray*)pidsExecutablesFull:(BOOL)fullExecutablePath {
@@ -998,7 +997,6 @@ end:
 }
 
 + (NSString*)applicationPathForUrl:(NSURL*)url {
-    CFErrorRef error = nil;
     NSURL* appUrl = [self applicationUrlForUrl:url];
     return [appUrl path];
 }
