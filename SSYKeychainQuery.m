@@ -114,7 +114,6 @@
     if (ok) {
         NSMutableDictionary *query = [self query] ;
         OSStatus status = SecItemDelete((__bridge CFDictionaryRef)query) ;
-        /*SSYDBL*/ NSLog(@"Deleted with status %d", (int)status);
         if (status != errSecSuccess) {
             error = [[self class] errorWithCode:status] ;
         }

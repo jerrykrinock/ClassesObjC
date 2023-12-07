@@ -387,7 +387,7 @@ static SSYMOCManager* sharedMOCManager = nil ;
 			[mocDics setObject:mocDic
 						forKey:identifier] ;
 			
-			[managedObjectContext release] ; // balances +alloc, above
+			[managedObjectContext autorelease] ; // balances +alloc, above
             ;
 		}
 	}
