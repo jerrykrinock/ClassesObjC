@@ -212,7 +212,8 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	return path ;
 }
 
-+ (NSArray*)pidsExecutablesFull:(BOOL)fullExecutablePath {
++ (NSArray*)pidsExecutablesFull:(BOOL)fullExecutablePath
+                        error_p:(NSError**)error_p {
 	// Run unix task "ps" and get results as an array, with each element containing process command and user
 	// The invocation to be constructed is: ps -xa[c]awww -o pid -o user -o command
 	// -ww is required for long command path strings!!
@@ -220,14 +221,15 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	NSString* options = fullExecutablePath ? @"-xaww" : @"-xacww" ;
 	NSArray* args = [[NSArray alloc] initWithObjects:options, @"-o", @"pid=", @"-o", @"etime=", @"-o", @"user=", @"-o", @"comm=", nil] ;
 	// In args, the "=" say to omit the column headers
-	[SSYShellTasker doShellTaskCommand:@"/bin/ps"
+    NSError* error = nil;
+    [SSYShellTasker doShellTaskCommand:@"/bin/ps"
 							 arguments:args
 						   inDirectory:nil
 							 stdinData:nil
 						  stdoutData_p:&stdoutData
 						  stderrData_p:NULL
 							   timeout:5.0
-							   error_p:NULL] ;
+							   error_p:&error];
 	[args release] ;
 	NSMutableArray* processInfoDics = nil ;
 	if (stdoutData) {
@@ -333,7 +335,11 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	
 	NSArray* result = [processInfoDics copy] ;
 	[processInfoDics release] ;
-
+    
+    if (error && error_p) {
+        *error_p = error ;
+    }
+    
 	return [result autorelease] ;
 }
 
@@ -342,7 +348,8 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	pid_t pid = 0 ;  // not found
 	NSString* targetUser = NSUserName() ;
 	
-	for (NSDictionary* processInfoDic in [self pidsExecutablesFull:NO]) {
+	for (NSDictionary* processInfoDic in [self pidsExecutablesFull:NO
+                                                           error_p:NULL]) {
 		NSString* user = [processInfoDic objectForKey:SSYOtherApperKeyUser] ;
 		NSString* command = [processInfoDic objectForKey:SSYOtherApperKeyExecutable] ;
 		if ([targetUser isEqualToString:user] && [executableName isEqualToString:command]) {
@@ -375,7 +382,8 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 
 	NSMutableArray* pids = [[NSMutableArray alloc] init] ;
 	NSString* targetUser = NSUserName() ;
-	for (NSDictionary* processInfoDic in [self pidsExecutablesFull:NO]) {
+	for (NSDictionary* processInfoDic in [self pidsExecutablesFull:NO
+                                                           error_p:NULL]) {
 		NSString* user = [processInfoDic objectForKey:SSYOtherApperKeyUser] ;
 		NSString* command = [processInfoDic objectForKey:SSYOtherApperKeyExecutable] ;
 		if (command) {
@@ -472,7 +480,8 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 
 + (pid_t)pidOfProcessNamed:(NSString*)processName
 					  user:(NSString*)user {
-	NSArray* infos = [self pidsExecutablesFull:NO] ;
+	NSArray* infos = [self pidsExecutablesFull:NO
+                                       error_p:NULL] ;
 	pid_t pid = 0 ;
     BOOL foundIt = NO ;
 	for (NSDictionary* info in infos) {
@@ -499,8 +508,11 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 }
 
 + (NSSet*)infosOfProcessesNamed:(NSSet*)processNames
-                          user:(NSString*)user {
-	NSArray* infos = [self pidsExecutablesFull:YES] ;
+                          user:(NSString*)user
+                        error_p:(NSError**)error_p {
+    NSError* error = nil;
+	NSArray* infos = [self pidsExecutablesFull:YES
+                                       error_p:&error] ;
     NSMutableSet* results = [[NSMutableSet alloc] init] ;
 	for (NSString* processName in processNames) {
         for (NSDictionary* info in infos) {
@@ -517,6 +529,10 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
                 }
             }
         }
+    }
+    
+    if (error && error_p) {
+        *error_p = error ;
     }
     
     NSSet* answer = [results copy] ;

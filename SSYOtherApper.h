@@ -196,7 +196,8 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  executable name or a full path.  See class documentation for definition of
  "executable".
 */
-+ (NSArray*)pidsExecutablesFull:(BOOL)fullExecutablePath ;
++ (NSArray*)pidsExecutablesFull:(BOOL)fullExecutablePath
+                        error_p:(NSError**)error_p;
 
 /*!
  @brief    Returns an array with one element for each running executable whose
@@ -211,7 +212,8 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  @result   Same as for +pidsExecutablesFull:
  */
 + (NSSet*)infosOfProcessesNamed:(NSSet*)processNames
-                           user:(NSString*)user ;
+                           user:(NSString*)user
+                        error_p:(NSError**)error;
 
 /*!
  @brief    Returns whether or not a process with a given unix process
