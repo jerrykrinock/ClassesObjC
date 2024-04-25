@@ -209,7 +209,12 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
 #endif
 	NSURL* url = [NSURL URLWithString:urlString] ;
 	if (!url) {
-		return SSYSynchronousHttpStateBadUrlString ;
+        if (error_p) {
+            *error_p = [NSError errorWithDomain:SSYSynchronousHttpErrorDomain
+                                           code:SSYSynchronousHttpStateBadUrlString
+                                       userInfo:@{NSLocalizedDescriptionKey: @"Bad URL string"}];
+        }
+        return NO;
 	}
 	
 	//[url setProperty:[self userAgent] forKey:@"User-Agent"]; 
@@ -220,7 +225,12 @@ willPerformHTTPRedirection:(NSHTTPURLResponse *)response
 											 cachePolicy:NSURLRequestReloadIgnoringCacheData
 										 timeoutInterval:timeout] ;
     if (!request) {
-        return SSYSynchronousHttpStateCouldNotCreateRequestObject ;
+        if (error_p) {
+            *error_p = [NSError errorWithDomain:SSYSynchronousHttpErrorDomain
+                                           code:SSYSynchronousHttpStateCouldNotCreateRequestObject
+                                       userInfo:@{NSLocalizedDescriptionKey: @"Could not create a request object"}];
+        }
+        return NO;
     }
 
 
