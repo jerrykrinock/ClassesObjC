@@ -1,5 +1,5 @@
+#import "SSYSwift-Swift.h"
 #import "SSYOtherApper.h"
-#import "SSYShellTasker.h"
 #import "NSError+LowLevel.h"
 #import "NSString+SSYExtraUtils.h"
 #import "NSFileManager+SomeMore.h"
@@ -14,6 +14,10 @@ NSString* const SSYOtherApperKeyEtime = @"etime" ;
 NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 
 @implementation SSYOtherApper
+
++ (NSTimeInterval)psTimeout {
+    return 10.0;
+}
 
 + (NSArray<NSNumber*>*)pidsOfThisUsersAppsWithBundleIdentifier:(NSString*)bundleIdentifier {
     NSMutableArray* pids = [NSMutableArray new];
@@ -222,116 +226,118 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	NSArray* args = [[NSArray alloc] initWithObjects:options, @"-o", @"pid=", @"-o", @"etime=", @"-o", @"user=", @"-o", @"comm=", nil] ;
 	// In args, the "=" say to omit the column headers
     NSError* error = nil;
-    [SSYShellTasker doShellTaskCommand:@"/bin/ps"
-							 arguments:args
-						   inDirectory:nil
-							 stdinData:nil
-						  stdoutData_p:&stdoutData
-						  stderrData_p:NULL
-							   timeout:5.0
-							   error_p:&error];
-	[args release] ;
-	NSMutableArray* processInfoDics = nil ;
-	if (stdoutData) {
-		NSString* processInfosString = [[NSString alloc] initWithData:stdoutData encoding:[NSString defaultCStringEncoding]] ;
-		NSArray* processInfoStrings = [processInfosString componentsSeparatedByString:@"\n"] ;
-		[processInfosString release] ;
-		/* We must now parse processInfoStrings which looks like this (with fullExecutablePath = NO):
-		 *     1 root           launchd
-		 *    10 root           kextd
-		 *     …
-		 *    82 jk             loginwindow
-		 *    84 root           KernelEventAgent
-		 *     …
-		 * 30903 jk             CrashReporter
-		 * 32814 b              Google Chrome
-		 *     …
-		 * 48329 jk             Google Chrome Helper
-		 * 48330 jk             Google Chrome Helper EH
-		 *     …
-		 * 50253 root           activitymonitord
-		 * 53399 jk             CocoaMySQL
-		 * 53410 jk             mdworker
-		 * 53642 jk             gdb-i386-apple-darwin
-		 * 53651 jk             BookMacster
-		 *     …
-		 */		
-		
-		processInfoDics = [[NSMutableArray alloc] init] ;
-		NSScanner* scanner = nil ;
-		for (NSString* processInfoString in processInfoStrings) {
-			NSInteger pid ;
-			NSString* user = nil ;
-            NSString* etimeString = nil ;
-			NSString* command ;
-			BOOL ok ;
-			
-			scanner = [[NSScanner alloc] initWithString:processInfoString] ;
-			[scanner setCharactersToBeSkipped:nil] ;
-
-			// Scan leading whitespace, if any
-			[scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
-								intoString:NULL] ;
-
-			// Scan pid
-			ok = [scanner scanInteger:&pid] ;
-			if (!ok) {
-                [scanner release] ;
-				continue ;
-			}
-			
-			// Scan whitespace between pid and etime
-			ok = [scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
-								intoString:NULL] ;
-			if (!ok) {
-                [scanner release] ;
-				continue ;
-			}
-
-			/*
-             Scan process elapsed time.  I would have preferred to get the
-             start time using lstart or start rather than etime, but after a
-             half hour of research, decided that their formats were too
-             unpredictable to be parseable.
+    NSDictionary* programResults = [SSYTask run:[NSURL fileURLWithPath:@"/bin/ps"]
+                                      arguments:args
+                                    inDirectory:nil
+                                       stdinput:nil
+                                        timeout:[self psTimeout]];
+    [args release];
+    NSMutableArray* processInfoDics = nil ;
+    stdoutData = [programResults objectForKey:SSYTask.stdoutKey];
+    if ([[programResults objectForKey:SSYTask.exitStatusKey] integerValue] == EXIT_SUCCESS) {
+        if (stdoutData) {
+            NSString* processInfosString = [[NSString alloc] initWithData:stdoutData encoding:[NSString defaultCStringEncoding]] ;
+            NSArray* processInfoStrings = [processInfosString componentsSeparatedByString:@"\n"] ;
+            [processInfosString release] ;
+            /* We must now parse processInfoStrings which looks like this (with fullExecutablePath = NO):
+             *     1 root           launchd
+             *    10 root           kextd
+             *     …
+             *    82 jk             loginwindow
+             *    84 root           KernelEventAgent
+             *     …
+             * 30903 jk             CrashReporter
+             * 32814 b              Google Chrome
+             *     …
+             * 48329 jk             Google Chrome Helper
+             * 48330 jk             Google Chrome Helper EH
+             *     …
+             * 50253 root           activitymonitord
+             * 53399 jk             CocoaMySQL
+             * 53410 jk             mdworker
+             * 53642 jk             gdb-i386-apple-darwin
+             * 53651 jk             BookMacster
+             *     …
              */
-			[scanner scanCharactersFromSet:[[NSCharacterSet whitespaceCharacterSet] invertedSet]
-								intoString:&etimeString] ;
-			
-			// Scan whitespace between etime and user
-			ok = [scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
-									 intoString:NULL] ;
-			if (!ok) {
+            
+            processInfoDics = [[NSMutableArray alloc] init] ;
+            NSScanner* scanner = nil ;
+            for (NSString* processInfoString in processInfoStrings) {
+                NSInteger pid ;
+                NSString* user = nil ;
+                NSString* etimeString = nil ;
+                NSString* command ;
+                BOOL ok ;
+                
+                scanner = [[NSScanner alloc] initWithString:processInfoString] ;
+                [scanner setCharactersToBeSkipped:nil] ;
+                
+                // Scan leading whitespace, if any
+                [scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
+                                    intoString:NULL] ;
+                
+                // Scan pid
+                ok = [scanner scanInteger:&pid] ;
+                if (!ok) {
+                    [scanner release] ;
+                    continue ;
+                }
+                
+                // Scan whitespace between pid and etime
+                ok = [scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
+                                         intoString:NULL] ;
+                if (!ok) {
+                    [scanner release] ;
+                    continue ;
+                }
+                
+                /*
+                 Scan process elapsed time.  I would have preferred to get the
+                 start time using lstart or start rather than etime, but after a
+                 half hour of research, decided that their formats were too
+                 unpredictable to be parseable.
+                 */
+                [scanner scanCharactersFromSet:[[NSCharacterSet whitespaceCharacterSet] invertedSet]
+                                    intoString:&etimeString] ;
+                
+                // Scan whitespace between etime and user
+                ok = [scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
+                                         intoString:NULL] ;
+                if (!ok) {
+                    [scanner release] ;
+                    continue ;
+                }
+                
+                // Scan user.  Fortunately, short user names in macOS cannot contain whitespace
+                [scanner scanCharactersFromSet:[[NSCharacterSet whitespaceCharacterSet] invertedSet]
+                                    intoString:&user] ;
+                
+                // Scan whitespace between user and command
+                ok = [scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
+                                         intoString:NULL] ;
+                if (!ok) {
+                    [scanner release] ;
+                    continue ;
+                }
+                
+                // Get command which is the remainder of the string
+                NSInteger commandBeginsAt = [scanner scanLocation] ;
                 [scanner release] ;
-				continue ;
-			}
-			
-			// Scan user.  Fortunately, short user names in macOS cannot contain whitespace
-			[scanner scanCharactersFromSet:[[NSCharacterSet whitespaceCharacterSet] invertedSet]
-								intoString:&user] ;
-			
-			// Scan whitespace between user and command
-			ok = [scanner scanCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
-									 intoString:NULL] ;
-			if (!ok) {
-                [scanner release] ;
-				continue ;
-			}
-			
-			// Get command which is the remainder of the string
-			NSInteger commandBeginsAt = [scanner scanLocation] ;
-			[scanner release] ;
-			scanner = nil ;
-			command = [processInfoString substringFromIndex:commandBeginsAt] ;
-
-            NSDictionary* processInfoDic = [NSDictionary dictionaryWithObjectsAndKeys:
-											[NSNumber numberWithInteger:pid], SSYOtherApperKeyPid,
-											user, SSYOtherApperKeyUser,
-                                            etimeString, SSYOtherApperKeyEtime,
-											command, SSYOtherApperKeyExecutable,
-											nil ] ;
-			[processInfoDics addObject:processInfoDic] ;
-		}
-	}
+                scanner = nil ;
+                command = [processInfoString substringFromIndex:commandBeginsAt] ;
+                
+                NSDictionary* processInfoDic = [NSDictionary dictionaryWithObjectsAndKeys:
+                                                [NSNumber numberWithInteger:pid], SSYOtherApperKeyPid,
+                                                user, SSYOtherApperKeyUser,
+                                                etimeString, SSYOtherApperKeyEtime,
+                                                command, SSYOtherApperKeyExecutable,
+                                                nil ] ;
+                [processInfoDics addObject:processInfoDic] ;
+            }
+        }
+    } else {
+        error = [programResults objectForKey:SSYTask.errorKey];
+    }
 	
 	NSArray* result = [processInfoDics copy] ;
 	[processInfoDics release] ;
@@ -431,14 +437,16 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
     NSString* pidString = [NSString stringWithFormat:@"%ld", (long)pid] ;
 	NSArray* args = [[NSArray alloc] initWithObjects:options, @"-o", @"state=", pidString, nil] ;
 	// In args, the "=" say to omit the column headers
-	[SSYShellTasker doShellTaskCommand:@"/bin/ps"
-							 arguments:args
-						   inDirectory:nil
-							 stdinData:nil
-						  stdoutData_p:&stdoutData
-						  stderrData_p:NULL
-							   timeout:5.0
-							   error_p:NULL] ;
+    NSDictionary* programResults = [SSYTask run:[NSURL fileURLWithPath:@"/bin/ps"]
+                                      arguments:args
+                                    inDirectory:nil
+                                       stdinput:nil
+                                        timeout:[self psTimeout]];
+    stdoutData = [programResults objectForKey:SSYTask.stdoutKey];
+    if ([[programResults objectForKey:SSYTask.exitStatusKey] integerValue] == EXIT_SUCCESS) {
+        if (stdoutData) {
+        }
+    }
 	[args release] ;
 	SSYOtherApperProcessState processState ;
     if ([stdoutData length] == 0) {
@@ -614,14 +622,12 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	
 	NSString* answer = nil ;
 	NSData* stdoutData ;
-	[SSYShellTasker doShellTaskCommand:@"/bin/ps"
-							 arguments:args
-						   inDirectory:nil
-							 stdinData:nil
-						  stdoutData_p:&stdoutData
-						  stderrData_p:NULL
-							   timeout:5.0
-							   error_p:NULL] ;
+    NSDictionary* programResults = [SSYTask run:[NSURL fileURLWithPath:@"/bin/ps"]
+                                      arguments:args
+                                    inDirectory:nil
+                                       stdinput:nil
+                                        timeout:[self psTimeout]];
+    stdoutData = [programResults objectForKey:SSYTask.stdoutKey];
 	if (stdoutData) {
 		answer = [[NSString alloc] initWithData:stdoutData
                                        encoding:NSUTF8StringEncoding] ;
@@ -650,14 +656,12 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 
     NSString* answer = nil ;
     NSData* stdoutData ;
-    [SSYShellTasker doShellTaskCommand:@"/bin/ps"
-                             arguments:args
-                           inDirectory:nil
-                             stdinData:nil
-                          stdoutData_p:&stdoutData
-                          stderrData_p:NULL
-                               timeout:5.0
-                               error_p:NULL] ;
+    NSDictionary* programResults = [SSYTask run:[NSURL fileURLWithPath:@"/bin/ps"]
+                                      arguments:args
+                                    inDirectory:nil
+                                       stdinput:nil
+                                        timeout:[self psTimeout]];
+    stdoutData = [programResults objectForKey:SSYTask.stdoutKey];
     if (stdoutData) {
         NSString* raw = [[NSString alloc] initWithData:stdoutData
                                        encoding:NSUTF8StringEncoding];
@@ -764,15 +768,15 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 				nil] ;
 	}
 
-	NSData* stdoutData ;
-	[SSYShellTasker doShellTaskCommand:@"/bin/ps"
-							 arguments:args
-						   inDirectory:nil
-							 stdinData:nil
-						  stdoutData_p:&stdoutData
-						  stderrData_p:NULL
-							   timeout:5.0
-							   error_p:NULL] ;
+	NSData* stdoutData = nil;
+    NSDictionary* programResults = [SSYTask run:[NSURL fileURLWithPath:@"/bin/ps"]
+                                      arguments:args
+                                    inDirectory:nil
+                                       stdinput:nil
+                                        timeout:[self psTimeout]];
+    if ([[programResults objectForKey:SSYTask.exitStatusKey] integerValue] == EXIT_SUCCESS) {
+        stdoutData = [programResults objectForKey:SSYTask.stdoutKey];
+    }
 	if (stdoutData) {
 		NSString* pidsString = [[NSString alloc] initWithData:stdoutData
 													 encoding:NSUTF8StringEncoding] ;
@@ -912,19 +916,17 @@ end:
 	return ok ;
 }
 
-/*
- + (void)killProcessPID:(pid_t)pid
+
+ /*
+  + (void)killProcessPID:(pid_t)pid
 		 waitUntilExit:(BOOL)wait {
 	if (pid) {
 		NSArray* args = [[NSArray alloc] initWithObjects: @"-9", [NSString stringWithFormat:@"%i", pid], nil] ;
-		[SSYShellTasker doShellTaskCommand:@"/bin/kill"
-								 arguments:args
-							   inDirectory:nil
-								 stdinData:nil
-							  stdoutData_p:NULL
-							  stderrData_p:NULL
-							 waitUntilExit:YES
-								   error_p:NULL] ;
+        NSDictionary* programResults = [SSYTask run:[NSURL fileURLWithPath:@"/bin/kill"]
+                                          arguments:args
+                                        inDirectory:nil
+                                           stdinput:nil
+                                            timeout:10.0];
 	}
 }
 */
@@ -1065,15 +1067,14 @@ end:
 	NSData* stdoutData = nil ;
 	NSData* stderrData = nil ;
 	
-	NSString* const command = @"/bin/ps" ;
-	psReturnValue = [SSYShellTasker doShellTaskCommand:command
-											 arguments:args
-										   inDirectory:nil
-											 stdinData:nil
-										  stdoutData_p:&stdoutData
-										  stderrData_p:&stderrData
-											   timeout:timeout
-											   error_p:NULL] ;
+    NSDictionary* programResults = [SSYTask run:[NSURL fileURLWithPath:@"/bin/ps"]
+                                      arguments:args
+                                    inDirectory:nil
+                                       stdinput:nil
+                                        timeout:timeout];
+    psReturnValue = [[programResults objectForKey:SSYTask.exitStatusKey] integerValue];
+    stdoutData = [programResults objectForKey:SSYTask.stdoutKey];
+    stderrData = [programResults objectForKey:SSYTask.stderrKey];
 	if (psReturnValue == 0) {
 		if (stdoutData && cpuPercent_p) {
 			NSString* cpuUsageString = [[NSString alloc] initWithData:stdoutData
@@ -1120,24 +1121,27 @@ end:
 }
 
 + (NSInteger)secondsRunningPid:(pid_t)pid {
-	NSArray* arguments = [NSArray arrayWithObjects:
-						  @"-p",
-						  [NSString stringWithFormat:@"%ld", (long)pid],
-						  @"-o",
-						  @"etime=",
-						  nil] ;
+    NSArray* args = [NSArray arrayWithObjects:
+                     @"-p",
+                     [NSString stringWithFormat:@"%ld", (long)pid],
+                     @"-o",
+                     @"etime=",
+                     nil] ;
 	
 	NSData* stdoutData = nil ;
 	NSInteger seconds = -1 ;
-	NSInteger returnValue = [SSYShellTasker doShellTaskCommand:@"/bin/ps"
-											   arguments:arguments
-											 inDirectory:nil
-											   stdinData:nil
-											stdoutData_p:&stdoutData
-											stderrData_p:NULL
-												 timeout:3.0
-												 error_p:NULL] ;
-	if (returnValue == 0) {
+    NSDictionary* programResults = [SSYTask run:[NSURL fileURLWithPath:@"/bin/ps"]
+                                      arguments:args
+                                    inDirectory:nil
+                                       stdinput:nil
+                                        timeout:[self psTimeout]];
+    NSInteger psReturnValue = [[programResults objectForKey:SSYTask.exitStatusKey] integerValue];
+    stdoutData = [programResults objectForKey:SSYTask.stdoutKey];
+    if ([[programResults objectForKey:SSYTask.exitStatusKey] integerValue] == EXIT_SUCCESS) {
+        if (stdoutData) {
+        }
+    }
+	if (psReturnValue == EXIT_SUCCESS) {
 		NSString* string = [[NSString alloc] initWithData:stdoutData
 												 encoding:NSUTF8StringEncoding] ;
 		/*  Some examples of 'string'

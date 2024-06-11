@@ -1,5 +1,5 @@
 #import "SSYSystemUptimer.h"
-#import "SSYShellTasker.h"
+#import "SSYSwift-Swift.h"
 
 NSString* const SSYSystemUptimerErrorDomain = @"SSYSystemUptimerErrorDomain";
 NSInteger const SSYSystemUptimerSystemCommandFailedErrorCode = 214751;
@@ -14,28 +14,29 @@ NSInteger const SSYSystemUptimerCouldNotParseSystemResponse = 214752;
     /* I tested using "/usr/bin/pmset -g log", but that seemed to generate
      much more stdout than this:  */
     NSString* command = @"/usr/sbin/sysctl";
-    NSArray* arguments = [NSArray arrayWithObjects:
-                          @"-a",
-                          nil];
+    NSArray* args = [NSArray arrayWithObjects:
+                     @"-a",
+                     nil];
     NSData* stdoutData = nil;
-    NSInteger result = [SSYShellTasker doShellTaskCommand:command
-                                                arguments:arguments
-                                              inDirectory:nil
-                                                stdinData:nil
-                                             stdoutData_p:&stdoutData
-                                             stderrData_p:NULL
-                                                  timeout:5.0
-                                                  error_p:&error];
-    if (result != 0) {
+    NSDictionary* programResults = [SSYTask run:[NSURL fileURLWithPath:command]
+                                      arguments:args
+                                    inDirectory:nil
+                                       stdinput:nil
+                                        timeout:0.0];
+    NSInteger exitStatus = [[programResults objectForKey:SSYTask.exitStatusKey] integerValue];
+    NSError* underlyingError = [programResults objectForKey:SSYTask.errorKey];
+    if (exitStatus != EXIT_SUCCESS) {
         error = [NSError errorWithDomain:SSYSystemUptimerErrorDomain
                                     code:SSYSystemUptimerSystemCommandFailedErrorCode
                                 userInfo:@{
                                            NSLocalizedDescriptionKey: NSLocalizedString(@"System command failed", nil),
                                            @"Command": command,
-                                           @"Arguments": arguments,
-                                           @"Result": [NSNumber numberWithInteger:result],
-                                           NSUnderlyingErrorKey: error
+                                           @"Arguments": args,
+                                           @"Result": [NSNumber numberWithInteger:exitStatus]
                                            }];
+        if (underlyingError) {
+            error = [error errorByAddingUnderlyingError:underlyingError];
+        }
     } else {
         NSString* stdoutString = [[NSString alloc] initWithData:stdoutData
                                                        encoding:NSUTF8StringEncoding] ;

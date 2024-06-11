@@ -1,6 +1,6 @@
+#import "SSYSwift-Swift.h"
 #import "SSYTroubleZipper.h"
 #import "NSFileManager+TempFile.h"
-#import "SSYShellTasker.h"
 #import "SSYAlert.h"
 #import "SSYUuid.h"
 
@@ -107,16 +107,14 @@ NSString* const constKeySSYTroubleZipperURL = @"SSYTroubleZipperURL" ;
                                                                                                      NSError* _Nullable error) {
                 if (location) {
                     NSURL* directory = [location URLByDeletingLastPathComponent];
-                    /* If macOS 10.15+ you could use -[NSData decompressedDataUsingAlgorithm:error:] instead of this… */
-                    NSInteger result = [SSYShellTasker doShellTaskCommand:@"/usr/bin/unzip"
-                                                                arguments:[NSArray arrayWithObjects:@"-o", @"-d", directory.path, location.path, nil]
-                                                              inDirectory:[location.path stringByDeletingLastPathComponent]
-                                                                stdinData:nil
-                                                             stdoutData_p:NULL
-                                                             stderrData_p:NULL
-                                                                  timeout:5.0
-                                                                  error_p:&error] ;
-                    if (result == 0) {
+                    NSDictionary* programResults = [SSYTask run:[NSURL fileURLWithPath:@"/usr/bin/unzip"]
+                                                      arguments:[NSArray arrayWithObjects:@"-o", @"-d", directory.path, location.path, nil]
+                                                    inDirectory:nil
+                                                       stdinput:nil
+                                                        timeout:5.0];
+                    NSInteger exitStatus = [[programResults objectForKey:SSYTask.exitStatusKey] integerValue];
+                    NSError* error = [programResults objectForKey:SSYTask.errorKey];
+                    if (exitStatus == EXIT_SUCCESS) {
                         NSArray* fileUrls = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:directory
                                                                            includingPropertiesForKeys:nil
                                                                                               options:0

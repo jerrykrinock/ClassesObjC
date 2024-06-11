@@ -54,6 +54,7 @@ typedef enum SSYOtherApperProcessState_enum SSYOtherApperProcessState ;
 */
 __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 
++ (NSTimeInterval)psTimeout;
 
 /*!
  @brief    Launches an application specified by its bundle path (i.e.
