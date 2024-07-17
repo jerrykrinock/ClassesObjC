@@ -1,4 +1,4 @@
-#import "SSYSwift-Swift.h"
+@import SSYSwift;
 #import "SSYTroubleZipper.h"
 #import "NSFileManager+TempFile.h"
 #import "SSYAlert.h"

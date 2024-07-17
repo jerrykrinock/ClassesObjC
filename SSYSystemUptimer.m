@@ -1,5 +1,5 @@
 #import "SSYSystemUptimer.h"
-#import "SSYSwift-Swift.h"
+@import SSYSwift;
 
 NSString* const SSYSystemUptimerErrorDomain = @"SSYSystemUptimerErrorDomain";
 NSInteger const SSYSystemUptimerSystemCommandFailedErrorCode = 214751;

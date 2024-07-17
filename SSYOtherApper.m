@@ -1,4 +1,4 @@
-#import "SSYSwift-Swift.h"
+@import SSYSwift;
 #import "SSYOtherApper.h"
 #import "NSError+LowLevel.h"
 #import "NSString+SSYExtraUtils.h"
