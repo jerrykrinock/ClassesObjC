@@ -43,11 +43,11 @@ typedef enum SSYOtherApperProcessState_enum SSYOtherApperProcessState ;
 
  Many of the methods in this class refer to a process' Executable.  This is the
  string returned for the "comm" keyword of /bin/ps.  The documentation
- `man ps` defines this as the "command" of the process, and implies that it
- is the path to the running executable.  However, for some XPC Services, and
- this happens for BkmxAgent which is launched by SMLoginItemSetEnabled(),
- you get instead the bundle identifier of the XPC Service.  I don't know why.
- It looks like Arq Agent is similarly a Login Item of Arq (it is located at
+ `man ps` defines this as the "command" of the process.  Usually, this is the
+ path to the running executable.  However, for some Services or Login Items and
+ some macOS versions (for example BkmxAgent launched by SMLoginItemSetEnabled(),
+ you get instead the bundle identifier of the XPC Service.  It looks like Arq
+ Agent is similarly a Login Item of Arq (it is located at
  Arq.app/Library/LoginItems/Arq Agent.app), but its "command" shows in -ps as:
  /Applications/Arq.app/Contents/Library/LoginItems/Arq Agent.app/Contents/MacOS/Arq Agent,
  in other words, the path to the executable.
@@ -151,7 +151,8 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 
 /*!
  @brief    Returns the unix process ID (pid) of any process whose last path
- component matches a given process name, and whose user id is the same
+ component matches a given process name, or whose service bundle identifier
+ matches the given bundle identifier, and whose user id is the same
  user id as the current process, or 0 if no such process is running.
 
  @details  Starting with BookMacster 1.9, this method is now based on
@@ -165,11 +166,15 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
  Will not return zombie (Z) or (UEs) processes.  It also did not properly
  discriminate users.
  
+ You may pass nil for either the processName of bundleIdentifier if you are
+ sure which one will be returned by the unix `ps` tool.
+ 
  @param   user  The short name, that is, the Home directory name, of the user
  whose process we want the pid of.  Pass NSUserName() for the current user.
  Pass nil for any user.
  */
 + (pid_t)pidOfProcessNamed:(NSString*)processName
+        orBundleIdentifier:(NSString*)bundleIdentifier
 					  user:(NSString*)user ;
 
 /*!
@@ -248,15 +253,20 @@ __attribute__((visibility("default"))) @interface SSYOtherApper : NSObject {}
 + (NSString*)descriptionOfPid:(pid_t)pid ;
 
 /*!
- @brief    Returns the elapsed time since the process with a given process
- identifier (pid) was launched, in a human readable English form
+ @brief    Returns the elapsed time from either the raw eTime returned by the
+ unix `ps` program, or else the launch date, for a given process
 
+ If both rawEtime and launchDate are passed in, uses launchDate
+ 
  @result   Examples:
  2 days 3 hours 35 minutes 11 seconds
  23 minutes 8 seconds
  5 seconds
+ ???
+ the "???" occurs if both passed-in parameters are nil
  */
-+ (NSString*)humanReadableElapsedRunningTimeOfPid:(pid_t)pid;
++ (NSString*)humanReadableEtime:(NSString*)rawEtime
+                     launchDate:(NSDate*)launchDate ;
 
 /*!
  @brief    Finds a running app, owned by the current user,

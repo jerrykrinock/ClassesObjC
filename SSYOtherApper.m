@@ -487,14 +487,15 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 }
 
 + (pid_t)pidOfProcessNamed:(NSString*)processName
+        orBundleIdentifier:(NSString*)bundleIdentifier
 					  user:(NSString*)user {
 	NSArray* infos = [self pidsExecutablesFull:NO
                                        error_p:NULL] ;
 	pid_t pid = 0 ;
     BOOL foundIt = NO ;
 	for (NSDictionary* info in infos) {
-		NSString* aPath = [info objectForKey:SSYOtherApperKeyExecutable] ;
-		if ([aPath isEqualToString:processName]) {
+		NSString* executableIdentifier = [info objectForKey:SSYOtherApperKeyExecutable] ;
+        if ([processName isEqualToString:executableIdentifier] || [bundleIdentifier isEqualToString:executableIdentifier]) {
             if (user) {
                 NSString* aUser = [info objectForKey:SSYOtherApperKeyUser] ;
                 if ([aUser isEqualToString:user] ) {
@@ -643,65 +644,76 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
 	return answer ;
 }
 
-+ (NSString*)humanReadableElapsedRunningTimeOfPid:(pid_t)pid {
-    NSArray* args = [NSArray arrayWithObjects:
-                     @"-www",      // Allow 4x the normal column width.  Should be enough!!
++ (NSString*)humanReadableEtime:(NSString*)rawEtime
+                     launchDate:(NSDate *)launchDate {
+    NSString* answer = nil;
+    NSString* days = nil;
+    NSString* hours = nil;
+    NSString* minutes = nil;
+    NSString* seconds = nil;
+    BOOL gotInput = NO;
 
-                     @"-o",        // Print the following column (= means to suppress header line)
-                     @"etime=",    // elapsed running time
-
-                     @"-p",        // subject pid follows
-                     [NSString stringWithFormat:@"%ld", (long)pid],
-                     nil] ;
-
-    NSString* answer = nil ;
-    NSData* stdoutData ;
-    NSDictionary* programResults = [SSYTask run:[NSURL fileURLWithPath:@"/bin/ps"]
-                                      arguments:args
-                                    inDirectory:nil
-                                       stdinput:nil
-                                        timeout:[self psTimeout]];
-    stdoutData = [programResults objectForKey:SSYTask.stdoutKey];
-    if (stdoutData) {
-        NSString* raw = [[NSString alloc] initWithData:stdoutData
-                                       encoding:NSUTF8StringEncoding];
+    if (launchDate) {
+        gotInput = YES;
+        NSTimeInterval timeInterval = [[NSDate date] timeIntervalSinceDate:launchDate];
+        NSInteger secs = round(timeInterval);
+        NSInteger minuteSecs = 60;
+        NSInteger hourSecs = 60 * minuteSecs;
+        NSInteger daySecs = 24 * hourSecs;
+        NSInteger nDays = secs % daySecs;
+        secs -= nDays * daySecs;
+        NSInteger nHours = secs % hourSecs;
+        secs -= nHours * hourSecs;
+        NSInteger nMinutes = secs % minuteSecs;
+        secs -= nMinutes * minuteSecs;
+        NSInteger nSeconds = secs;
+        
+        if (nDays > 0) {
+            days = [NSString stringWithFormat:@"%ld", (long)nDays];
+        }
+        if (nHours > 0) {
+            hours = [NSString stringWithFormat:@"%ld", (long)nHours];
+        }
+        if (nMinutes > 0) {
+            minutes = [NSString stringWithFormat:@"%ld", (long)nMinutes];
+        }
+        seconds = [NSString stringWithFormat:@"%ld", (long)nSeconds];
+    }
+    else if (rawEtime) {
+        gotInput = YES;
         /* raw can be one of several forms.  Here is what I got in
          macOS 10.14.2, 2018-12-29:
          02-02:57:50  means 2 days, 2 hours, 57 minutes and 50 seconds
          19:29        means 19 minutes and 29 seconds
          00:22        means 0 minutes and 22 seconds */
-
-        NSString* trimmed = [raw stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        [raw release];
+        
+        NSString* trimmed = [rawEtime stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         NSArray* comps = [trimmed componentsSeparatedByString:@"-"];
-        NSString* days;
         NSString* hms;
         if (comps.count > 1) {
             days = [comps objectAtIndex:0];
             hms = [comps objectAtIndex:1];
         } else {
-            days = nil;
             hms = [comps objectAtIndex:0];
         }
-
+        
         comps = [hms componentsSeparatedByString:@":"];
-        NSString* hours;
-        NSString* minutes;
-        NSString* seconds;
         if (comps.count > 2) {
             hours = [comps objectAtIndex:0];
             minutes = [comps objectAtIndex:1];
             seconds = [comps objectAtIndex:0];
         } else if (comps.count > 1) {
-            hours = nil;
             minutes = [comps objectAtIndex:0];
             seconds = [comps objectAtIndex:1];
         } else {
-            hours = nil;
-            minutes = nil;
             seconds = [comps objectAtIndex:0];
         }
+    } else {
+        answer = @"???";
+        [answer retain];
+    }
 
+    if (gotInput) {
         if (hours.integerValue == 0) {
             /* This branch will never occur with the year 2018 implementation
              of `ps` because 0 hours are omitted.  But just in case. */
@@ -712,11 +724,11 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
              of `ps` because 0 minutes are returned by `ps` as "00".  */
             minutes = nil;
         }
-
+        
         NSMutableString* string = [[NSMutableString alloc] init];
         if (days) {
             [string appendString:days];
-            [string appendString:@" dayss"];
+            [string appendString:@" days"];
         }
         if (hours) {
             if (string.length > 0) {
@@ -739,11 +751,11 @@ NSString* const SSYOtherApperKeyExecutable = @"executable" ;
             [string appendString:seconds];
             [string appendString:@" seconds"];
         }
-
+        
         answer = [string copy];
         [string release];
     }
-
+    
     [answer autorelease];
     return answer ;
 }

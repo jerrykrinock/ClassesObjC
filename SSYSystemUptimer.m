@@ -1,4 +1,5 @@
 #import "SSYSystemUptimer.h"
+#import "NSError+InfoAccess.h"
 @import SSYSwift;
 
 NSString* const SSYSystemUptimerErrorDomain = @"SSYSystemUptimerErrorDomain";
