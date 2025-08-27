@@ -210,6 +210,7 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 @property (assign) NSModalSession modalSession ;
 @property (assign) NSPoint windowTopCenter ;
 @property (assign) NSTimeInterval nextProgressUpdate ;
+@property (assign) BOOL userDidMoveWindow ;
 // @property (retain, readonly) NSMutableArray* otherSubviews ; // in public @interface
 
 @end
@@ -2084,16 +2085,29 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 	// argument must be YES to avoid flicker.  Counterintuitive,
 	// but it took me the better part of a day to discover that.
 	
-	// Reposition the window so that the title bar remains at the original "top center"
-	NSRect frame = [self.window frame] ;
-	frame.origin.x = self.windowTopCenter.x - frame.size.width/2 ;
-	frame.origin.y = self.windowTopCenter.y - frame.size.height ;
-    if (frame.origin.y < 0.0) {
-        frame.origin.y = 0.0 ;
-    }
+    if (!self.userDidMoveWindow) {
+        // *We* are going to move the window, so don't say the user did it.
+        [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                        name:NSWindowDidMoveNotification
+                                                      object:nil];
 
-    [self.window setFrame:frame display:NO] ; // This "display" is only "ifNeeded"
-	
+        // Reposition the window so that the title bar remains at the original "top center"
+        NSRect frame = [self.window frame] ;
+        frame.origin.x = self.windowTopCenter.x - frame.size.width/2 ;
+        frame.origin.y = self.windowTopCenter.y - frame.size.height ;
+        if (frame.origin.y < 0.0) {
+            frame.origin.y = 0.0 ;
+        }
+        
+        [self.window setFrame:frame display:NO] ; // This "display" is only "ifNeeded"
+        
+        // We are done.  Any subsequent window movement must have been due to the user.
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(userDidMoveWindowNote:)
+                                                     name:NSWindowDidMoveNotification
+                                                   object:nil];
+    }
+    
     NSInteger i = 0;
     for (NSView* subview in self.window.contentView.subviews) {
         subview.autoresizingMask = [originalAutoresizeMasks objectAtIndex:i].integerValue;
@@ -2263,6 +2277,10 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		/* We're a freestanding dialog. */
 		[self.window close] ;
 	}
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:NSWindowDidMoveNotification
+                                                  object:nil];
 
     [self releaseFromStatic] ;
 }
@@ -2396,9 +2414,18 @@ NSString* const SSYAlertDidProcessErrorNotification = @"SSYAlertDidProcessErrorN
 		self.windowTopCenter = windowTopCenter_ ;
         
         [self retainToStatic] ;
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(userDidMoveWindowNote:)
+                                                     name:NSWindowDidMoveNotification
+                                                   object:nil];
 	}
 
 	return self ;
+}
+
+- (void)userDidMoveWindowNote:(NSNotification *)notification {
+    self.userDidMoveWindow = YES;
 }
 
 - (void)doLayoutError:(NSError*)error {
