@@ -174,7 +174,14 @@ static NSString* const constKeyToolTip = @"toolTip" ;
  the toolbar displays in a product built with Xcode 12.  The numbers (32)
  do not matter. */
 - (NSSize)intrinsicContentSize {
-    return self.ssyIntrinsicContentSize;
+    NSSize size = self.ssyIntrinsicContentSize;
+    size.width = size.width * 1.5;
+    return size;
+}
+
+- (CGFloat)macOSOffsetX {
+    CGFloat answer = (0.17)*self.intrinsicContentSize.width;
+    return answer;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
@@ -199,7 +206,7 @@ static NSString* const constKeyToolTip = @"toolTip" ;
 
     [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
     [image drawInRect:NSMakeRect(
-                                 0.0,
+                                 0.0 + self.macOSOffsetX,
                                  0.0,
                                  [image size].width,
                                  [image size].height)
@@ -208,7 +215,7 @@ static NSString* const constKeyToolTip = @"toolTip" ;
              fraction:1.0];
 
     [self.toolbarItem.backgroundImage drawInRect:NSMakeRect(
-                                                            0.0,
+                                                            0.0 + self.macOSOffsetX,
                                                             0.0,
                                                             self.toolbarItem.backgroundImage.size.width,
                                                             self.toolbarItem.backgroundImage.size.height)
