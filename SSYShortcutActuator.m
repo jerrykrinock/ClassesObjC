@@ -402,8 +402,9 @@ OSStatus SSYShortcutActuate(
 		 *    characters; a good choice is the usual DTS-registered creator
 		 *    OSType, but you can use any constant that you like."
 		 OK, we'll use this… */
-		NSString* signature = @"SSYS" ;
-		hotKeyID.signature = UTGetOSTypeFromString((CFStringRef)signature) ;
+		// The FourCharCode for "SSYS", packed big-endian.  Formerly obtained via
+		// UTGetOSTypeFromString(), which was deprecated in macOS 12.0.
+		hotKeyID.signature = ('S' << 24) | ('S' << 16) | ('Y' << 8) | 'S' ;
 		
 		status = RegisterEventHotKey(
 									 keyCode,
