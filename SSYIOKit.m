@@ -288,7 +288,7 @@ CFDataRef CreateMACAddress(io_iterator_t intfIterator)
 	char                       *s, *t;
 	char                       firstPart[64], secondPart[64];
 	
-	kr = IOMasterPort(MACH_PORT_NULL, &masterPort);                
+	kr = IOMainPort(MACH_PORT_NULL, &masterPort);
 	if (kr == noErr) {
 		entry = IORegistryGetRootEntry(masterPort);
 		if (entry != MACH_PORT_NULL) {
